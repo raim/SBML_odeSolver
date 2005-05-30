@@ -1,7 +1,7 @@
-# $Id: Makefile.am,v 1.1 2005/05/30 19:49:12 raimc Exp $
-if MAKE_INVERSE
-   SUBDIRS = . inverse
-endif
+# $Id: Makefile.am,v 1.2 2005/05/30 20:24:18 raimc Exp $
+#if MAKE_INVERSE
+#   SUBDIRS = . inverse
+#endif
 INCLUDES = @CVODE_CFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
            @SBML_CFLAGS@ \
