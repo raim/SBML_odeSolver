@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-30 16:00:11 raim>
-  $Id: odeSolver.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-30 22:48:18 raim>
+  $Id: odeSolver.c,v 1.2 2005/05/30 21:23:46 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -429,12 +429,10 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   */
   if ( SBMLDocument_getLevel(d) == 1 ) {
     d2 = convertModel(d);
-    m = SBMLDocument_getModel(d2);
+    d = d2;
   }
-  else {
-    m = SBMLDocument_getModel(d);
-  }
-  
+  m = SBMLDocument_getModel(d);
+    
   if(!(results = (SBMLResults *)calloc(vary.steps+1, sizeof(*results)))){
     fprintf(stderr, "failed!\n");
   }
