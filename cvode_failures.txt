@@ -1,0 +1,50 @@
+Please, consult p. 49 ff. of the CVODE User Guide to learn about 
+the CVode failures.
+Here only some short information, taken from there, and personal 
+experiences with the SBML_odeSolver are given.
+
+0	SUCCESS:
+	CVode completed integration with no errors.
+-1	CVODE_NO_MEM:
+	The cvode_mem argument passed to CVode was null.
+	Should not happen in SBML_odeSolver. 
+-2	ILL_INPUT:
+	One of the inputs to CVode was illegal, including the 
+	situation when one of the error vectors becomes < 0 
+	during CVode's internal time stepping. The printed
+	error message will give specific information.
+	In SBML_odeSolver, this failure occurs when e.g. 
+	the outtime passed with --time is `0'. 
+-3 	TOO_MUCH_WORK:
+	The solver took MXSTEP internal steps but could not
+	reach outtime. MXSTEP is an argument of the iopt
+	input array passed to CVode. 
+	In the SBML_odeSolver it is set to 100000, which is 
+	quite high.
+-4	TOO_MUCH_ACC:
+	The solver could not satisfy the accuracy demanded by 
+	SBML_odeSolver (i.e. can currently not be set by the user)
+	for some internal step. Has so far never occured with the
+	SBML_odeSolver.
+-5	ERR_FAILURE:
+	Error test failures occured too many times during one internal
+	time step or occured with |h| = hmin.
+	Has so far never occured with the SBML_odeSolver.
+-6 	CONV_FAILURE:
+	Convergence test failures occurred too many times 
+	(= MXMCF = 10) during one internal time step or occured with 
+	|h| = hmin. 
+	This can sometimes happen with or without use of the
+	automatically generated Jacobian matrix. For that case
+	the odeSolver tries to integrate again, but now without or
+	with use of the Jacobian matrix, i.e. resetting the option
+	'-j'. 
+	In other cases this error can be avoided if allowing a bigger
+	error tolerance with command line option '--error'; default
+	is 1e-18.
+-7	SETUP_FAILURE:
+	The linear solver's setup routine failed in an unrecoverable 
+	manner. Has so far never occured with the SBML_odeSolver.
+-8	SOLVE_FAILURE:
+        The linear solver's solve routine failed in an unrecoverable
+	manner. Has so far never occured with the SBML_odeSolver.

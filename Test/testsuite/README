@@ -1,0 +1,44 @@
+This folder contains scripts for testing with the SBML SEMANTIC TEST SUITE,
+and result and log files for tests with the version 
+released on Tue, 19 Oct 2004.
+
+To reproduce the result files, download and unpack the SBML Semantic Test Suite 
+from http://www.cds.caltech.edu/~afinney/semantic-test-suite.tar.gz
+unpack to this folder, change to the directory semantic-test-suite and run 
+`runtests.bsh -vwrapper=../odeSolver-wrapper.bsh >> testlog.txt'
+in a bash.
+
+odeSolver-wrapper.bsh:
+	A bash script to call odeSolver-wrapper-once.pl several times, 
+	if the previous run failed, passing a lower absolute error treshold.
+	This script is called from the scripts provided by the Test Suite,
+	and adds the absolute error value. It start with a very low error,
+	and tries again with higher error tolerance if the SBML_odeSolver
+	failed.
+odeSolver-wrapper-once.pl:
+        A Perl script that calls the SBML_odeSolver, with time/printstep 
+	values passed by the calling Test Suite script (runtests.bsh/test.bsh) 
+	and an error value added by the script odeSolver-wrapper.bsh.
+	It then reads the output of the SBML_odeSolver, and writes 
+	results to testout.csv needed by the Test Suite scripts.
+	If CVODE fails, it writes TRY AGAIN as a message to the calling
+	script, to try again with higher error tolerance.
+	It also writes a log file "testlog.txt" of SBML_odeSolver output 
+	during the test run.
+testlog.txt:
+	A log file from one test run with all provided tests of the 
+	SBML Semantic Test Suite, produced by calling the runtests.bsh
+	script with `runtests.bsh -vwrapper=odeSolver-wrapper.bsh >> testlog.txt.
+	Thus this file contains the outputs of 
+	a) runtests.bsh
+	b) the wrapper script odeSolver-wrapper-once.pl, and
+	c) the odeSolver itself (via (b)).
+workingtest.txt:
+	Text file used by runtests.txt, contains all tests that tested
+	correctly with the SBML_odeSolver; not working tests are commented
+	out by removing `TEST' and `.test' text.
+testlist.txt:
+	Original testlist provided by the SBML Semantic Test Suite
+	
+	
+	

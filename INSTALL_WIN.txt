@@ -1,0 +1,149 @@
+INSTALLATION of the SBML_odeSolver 
+in a Windows / MinGW environment
+
+by
+Akira Funahashi, Ph.D. | Kitano Symbiotic Systems Project,
+[funa@symbio.jst.go.jp]| ERATO-SORST, JST
+
+with comments by
+Rainer Machne
+raim@tbi.univie.ac.at
+Institute for Theoretical Chemistry, University of Vienna
+
+
+-----------------------------------------------------------------------
+
+
+... good news. I've succeeded to compile odeSolver on
+Windows. The compiled "examples/example.exe" runs on "cmd.exe" :-)
+
+=======================================================================
+(ex.)
+  C:$somewhere\examples> example.exe ..\Test\MAPK.xml 1000 100
+  ...
+  1000 96.9163 3.08369 204.9 64.981 30.1189 3.43619 10.196 286.368
+  ##CONCENTRATIONS
+  #t MKKK MKKK_P MKK MKK_P MKK_PP MAPK MAPK_P MAPK_PP
+=======================================================================
+
+I've compiled odeSolver-1.5.0pre with MinGW (Minimal GNU set for
+Windows). Although I have to tweak around with the code, it was not
+so hard. Here is what I have done to compile odeSolver-1.5.0pre on
+Windows.
+
+ 1. Install MinGW-3.2.0-rc-3.
+    The release version of MinGW is MinGW-3.1.0-1, but it doesn't
+    have a function acosh(), atanh() etc in math library(libm). 
+    So you have to use the release-candidate version of MinGW.
+
+ 2. Install MSYS-1.0.10.exe
+    MSYS is like a xterm,rxvt which runs on Windows.
+    You can download it from the official site of MinGW.
+
+ 3. Install msysDTK-1.0.1.exe
+    msysDTK is a set of useful commands (cvs, ssh, perl) for MinGW.
+    You can download it from the official site of MinGW.
+
+ 4. Install libsbml-2.2.0 for Windows.
+    I've installed a binary version of libsbml-2.2.0.
+    libsbml-2.2.0 will be installed to 
+    "C:\Program Files\SBML\libsbml-2.2.0-xerces" by default.
+
+ 5. Execute MSYS.exe, which you can see on your desktop.
+    The following commands must be executed on MSYS window.
+
+ 6. Mount MINGW's file system.
+     $ cd /etc
+     $ mv fstab.sample fstab
+
+ 7. Copy DLL and header files from libsbml-2.2.0 to your MinGW's
+    home directory. Just drag & drop the folder 
+    "C:\Program Files\SBML\libsbml-2.2.0-xerces\win32" to 
+    "C:\msys\1.0\home\funa" (my home directory is /home/funa in MinGW),
+    and rename "win32" to "libsbml".
+
+ 8. Compile CVODE.
+    In the MSYS window, please do the following:
+     $ cd
+     $ tar xvzf cvode.tar.gz
+     $ cd CVODE
+     $ make
+
+ 9. Compile odeSolver-1.5.0pre.
+     $ cd
+     $ tar xvzf SBML_odeSolver-1.5.0pre.tar.gz
+     $ cd SBML_odeSolver-1.5.0pre
+     $ CPPFLAGS="-I$HOME/libsbml/include" LDFLAGS="-L$HOME/libsbml/bin \
+        -lsbml" ./configure --with-libcvode="$HOME/CVODE"
+     $ make
+       ... The compile will fail because there is no definition of
+           ENTRY in /usr/include/search.h (I don't know why. I guess
+           this is a MinGW's problem)
+	   
+COMMENT: ENTRY is not used anywhere. You can just delete the line
+
+  if(!(data->val = (ENTRY *) safe_calloc(neq, sizeof(ENTRY))))
+      fprintf(stderr, "failed!\n");
+
+from src/cvodedata.c, and the two lines
+
+  #include <search.h> /* for ENTRY type and hashing (not functional) */
+and
+  ENTRY *val;
+
+from the file src/cvodedata.h. 
+Alternatively, you can add the following to cvodedata.h :
+	   
+     $ vi src/cvodedata.h
+       /* --- add following lines --- */
+          typedef struct entry {
+              char  *key;
+              void  *data;
+          } ENTRY;
+       /* --- end --- */
+       
+     $ make
+       ... The compile will fail because MinGW doesn't have a function
+           safe_calloc().
+     $ vi src/cvodedata.c
+       replace all "safe_calloc" to "calloc" by following "ex" command.
+       :%s/safe_calloc/calloc/g
+
+COMMENT: safe_calloc stems from libSBML example programs, that can be
+compiled within a testing/memory tracing environment, used by Ben Bornstein
+in libSBML development. It wasn't used for the odeSolver, and you can
+replace all occurences of safe_calloc with calloc.
+
+     $ make
+       ... Compile will work now.
+
+10. Compile examples/main.c. 
+     $ cd examples/
+     $ vi Makefile
+       modify include path and library path, and delete libgrace things.
+     $ make
+     $ objdump -p example.exe | grep DLL  # check the dependency of libraries
+       DLL Name: KERNEL32.dll
+       DLL Name: msvcrt.dll
+       DLL Name: libsbml.dll
+
+11. Test
+    Launch "cmd.exe" from Windows Start Menu, and execute example.exe.
+
+    ===================================================================
+    C:$somewhere\examples> example.exe ..\Test\MAPK.xml 1000 100
+    ...
+    1000 96.9163 3.08369 204.9 64.981 30.1189 3.43619 10.196 286.368
+    ##CONCENTRATIONS
+    #t MKKK MKKK_P MKK MKK_P MKK_PP MAPK MAPK_P MAPK_PP
+    ===================================================================
+
+I haven't used cygwin, which is well-known for emulating UN*X
+environment on Windows. The compiled binary by cygwin requires
+cygwin.dll for its execution, which makes the end-user confused to use 
+the binary. MinGW generates pure Windows native binary so the compiled
+binary won't require any extra library.
+
+-- 
+Akira Funahashi, Ph.D. | Kitano Symbiotic Systems Project,
+[funa@symbio.jst.go.jp]| ERATO-SORST, JST

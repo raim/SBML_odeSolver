@@ -1,0 +1,6 @@
+SBMLDocument_free() in main() causes a segmentation fault,
+when the sbml file is read from a remote computer
+and constructODEs(m) has been called ???  
+
+jacobian and determinant expressions are (printed out) incomplete
+for larger equations 

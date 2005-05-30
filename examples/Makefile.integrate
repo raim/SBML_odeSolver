@@ -1,0 +1,22 @@
+# $Id: Makefile.integrate,v 1.1 2005/05/30 19:49:13 raimc Exp $
+# vars
+CC	= gcc
+WARN    = -Wall -pedantic
+OPTI    = -g
+INCL	= -I/home/fremdling/raim/programs/SBML_odeSolver/src -I/home/fremdling/raim/include/sbml -I/home/fremdling/raim/include
+CFLAGS  = $(WARN) $(OPTI) $(INCL) #-DDMALLOC
+LIBS    = ../src/libODES.a \
+          -L/usr/local/grace/lib -lgrace_np \
+          -L/usr/local/lib/cvode -lcvode \
+	  -L/home/fremdling/raim/lib -lsbml \
+	  -L/usr/local/lib/graphviz -ldotneato \
+	  -L/usr/local/lib -lxerces-c \
+	  -lm
+RPATH   = -Wl,-rpath,/usr/local/lib/graphviz -Wl,-rpath,/home/fremdling/raim/lib
+PROG	= integrate
+OBJS    = integrate.o
+# rules
+$(PROG):  $(OBJS)
+	  $(CC) -o $(PROG) $(CFLAGS) $(OBJS) $(LIBS) $(RPATH)
+clean:
+	  rm -f $(OBJS) $(PROG)

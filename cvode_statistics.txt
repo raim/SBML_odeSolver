@@ -1,0 +1,17 @@
+The SBML_odeSolver prints some statistics from CVode's integration
+procedure after a finished integration. Please consult the 
+CVODE User Guide for more detailed information. Here is some
+short information on the printed statistics, as taken from p. 52 f.
+of the User Guide.
+
+nst	cumulative number of internal steps taken by
+	the solver. 
+nfe	number of calls to the ODE evaluation function `f'
+nsetups	numver of calls to the linear solver's setup routine	
+nje	numver of Jacobian evalutions, i.e. either calls to the 
+	function that evaluates the automatically generated
+	Jacobian matrix expressions or the internal approximation
+	CVDenseDQJac.
+nni 	number of NEWTON iterations performed.
+ncfn	number of nonlinear convergence failures that have occured.
+netf	number of local error test failures that have occured.

@@ -1,0 +1,15 @@
+Example use of the SBML_odeSolver as a library
+
+Usage:
+
+After compiling the odeSolver source code (see INSTALL file
+in main directory), change to the examples directory,
+edit the Makefile to link to the required libraries,
+and type `make'.
+Then e.g.:
+./integrate ../Test/MAPK.xml 1000 100
+
+will integrate the SBML model ../Test/MAPK.xml from time 0 to time
+1000, and will print out the time course of species concentrations in
+100 steps.
+

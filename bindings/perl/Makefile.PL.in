@@ -1,0 +1,32 @@
+# Last changed Time-stamp: <2005-05-23 17:42:02 xtof>
+# $Id: Makefile.PL.in,v 1.1 2005/05/30 19:49:13 raimc Exp $
+use ExtUtils::MakeMaker;
+
+my @Xtralib = map{chomp; $_} <DATA>;
+WriteMakefile(MAKEFILE => 'Makefile-perl',
+              NAME     => 'LibODES',
+              LIBS     => [join(' ', @Xtralib)],
+	      dynamic_lib =>
+	      {LDDLFLAGS=> '@SBML_RPATH@ @SBML_LDFLAGS@ @SBML_LIBS@'},
+              INC      => '-I../swig -I../../src -I/usr/local/include @SBML_CFLAGS@',
+              MYEXTLIB => '../../src/libODES.a',
+              OBJECT   => 'LibODES_wrap.o',
+              AUTHOR   => 'Christoph Flamm <xtof@tbi.univie.ac.at>',
+              VERSION  => '@PACKAGE_VERSION@',
+);
+
+sub MY::postamble {
+	return <<'MAKE_FRAG';
+LibODES_wrap.c:
+	swig -Wall -perl5 -proxy -I../../src/ @SBML_CFLAGS@ LibODES.i
+MAKE_FRAG
+}
+
+__DATA__
+@CVODE_LDFLAGS@ @CVODE_LIBS@
+@GRACE_LDFLAGS@ @GRACE_LIBS@
+@GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
+@CVODE_LDFLAGS@ @CVODE_LIBS@
+@SBML_LDFLAGS@ @SBML_LIBS@
+-lxerces-c
+-lm
