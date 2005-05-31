@@ -1,0 +1,42 @@
+* batchIntegrator:
+	* change in CvodeData, 
+	  don't construct ODEs twice (use ODE SBML model, see below)
+
+* SBML ODE Model vs. CvodeData ODE Model
+	* SBML: should be correct SBML (for export),
+	  with varying state of replacements (see below)
+	* CvodeData: keep all consts, params, ass.rules, f.defs. in SBML
+	  and replace just before integration;
+	  allow params to be kept in formulas, for online change
+	  
+
+* Constants, Parameter, Assignment Rule and 
+  Function Definition Replacement:
+  	* should be separate, 
+	* implement in evaulate/differentiateAST
+
+* transfer to SUNDIALS' CVODE
+
+* implement SUNDIALS' daeSolver IDA
+
+* eventDetector:
+	* use combination of interpolation and exact integration
+	  to event trigger
+
+* SBW: write interface function
+
+* BioUML: explore interface possibility
+
+* HASH name lookup: 
+	* coordinate with Ben's plans
+	* evaluateAST could use a SBML model that contains current values?
+
+
+* command-line and interactive usage
+	* change visualization to GNUPLOT (3D!)
+	* bioLog_resultVisualizer: ...
+	* adapt printout accuracy to CVODE errors
+
+* CVODE Settings: 
+	* choose errors automatically for each ODE??	
+	
