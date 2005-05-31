@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-03-09 18:12:22 xtof>
-  $Id: libodes.i,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 16:04:04 raim>
+  $Id: libodes.i,v 1.2 2005/05/31 14:05:46 raimc Exp $
 */
 
 %module libodes
@@ -8,33 +8,35 @@
 %{
 #include <sbml/SBMLTypes.h>
 #include <sbml/common/common.h>
-#include "cvodedata.h"
-#include "batchIntegrator.h"
-#include "drawGraph.h"
-#include "odeConstruct.h"
-#include "options.h"
-#include "sbml.h"
-#include "interactive.h"
-#include "odeIntegrate.h"
-#include "printModel.h"
-#include "util.h"
-#include "modelSimplify.h"
-#include "odeSolver.h"
-#include "processAST.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/sbmlResults.h"
+#include "sbmlsolver/batchIntegrator.h"
+#include "sbmlsolver/drawGraph.h"
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/sbml.h"
+#include "sbmlsolver/interactive.h"
+#include "sbmlsolver/odeIntegrate.h"
+#include "sbmlsolver/printModel.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/processAST.h"
 %}
 
 %constant double VERSION = 1.5;
 
-%include cvodedata.h
-%include batchIntegrator.h
-%include drawGraph.h
-%include odeConstruct.h
-%include options.h
-%include sbml.h
-%include interactive.h
-%include odeIntegrate.h
-%include printModel.h
-%include util.h
-%include modelSimplify.h
-%include odeSolver.h
-%include processAST.h
+%include sbmlsolver/cvodedata.h
+%include sbmlsolver/sbmlResults.h
+%include sbmlsolver/batchIntegrator.h
+%include sbmlsolver/drawGraph.h
+%include sbmlsolver/odeConstruct.h
+%include sbmlsolver/options.h
+%include sbmlsolver/sbml.h
+%include sbmlsolver/interactive.h
+%include sbmlsolver/odeIntegrate.h
+%include sbmlsolver/printModel.h
+%include sbmlsolver/util.h
+%include sbmlsolver/modelSimplify.h
+%include sbmlsolver/odeSolver.h
+%include sbmlsolver/processAST.h
