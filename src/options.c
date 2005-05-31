@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:31:47 raim>
-  $Id: options.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: options.c,v 1.3 2005/05/31 15:47:29 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,8 +73,8 @@ initializeOptions (void)
   strcpy(Opt.Schema11,   "sbml-l1v1.xsd");
   strcpy(Opt.Schema12,   "sbml-l1v2.xsd");
   strcpy(Opt.Schema21,   "sbml-l2v1.xsd");
-  Opt.Error           = 1e-18;
-  Opt.RError          = 1e-14;
+  Opt.Error           = 1e-9;
+  Opt.RError          = 1e-4;
   Opt.Mxstep          = 100000;
   Opt.PrintStep       = 1000;
   Opt.Time            = 1000;
