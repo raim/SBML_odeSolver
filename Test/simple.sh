@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
 # Last changed Time-stamp: <2005-02-14 21:46:44 xtof>
-# $Id: simple.sh,v 1.1 2005/05/30 19:49:14 raimc Exp $
+# $Id: simple.sh,v 1.2 2005/05/31 15:41:26 raimc Exp $
 
 XMGR=$(which xmgrace)
 PERL=$(which perl)
@@ -13,7 +13,7 @@ set -e
 if test -x $GR; then \rm $GR; fi
 
 # integrate the MAPK.xml model
-OK=$(../src/odeSolver --time=1e4 $XML -l> $GR)
+OK=$(../src/odeSolver $XML --time 1e4 --error 1e-7 --rerror 1e-3 -l> $GR)
 if [ $OK ]; then
   echo ""
   echo "!!! Error: something went wrong !!!"
