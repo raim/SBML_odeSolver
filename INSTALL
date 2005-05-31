@@ -20,7 +20,7 @@ SHORT INSTALLATION INFORMATION:
 
  Required libraries (SBML and numerical integration):
 	libSBML:        http://sbml.org/software/libsbml/
-			Version 2.3.1 or higher required!
+			Version 2.3.2 or higher required!
 	CVODE:          http://robotics.stanford.edu/people/scohen/
 			Please see CVODE specific instructions below!
 	        
