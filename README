@@ -28,6 +28,10 @@ results directly to Grace and drawing graphs of the reaction network, and a
 Jacobian interaction graph of the ODE system via graphviz' graph drawing
 library.
 
+The SBML ODE Solver can be used as a programming library, similar in style
+to the use of libSBML. Please, see the examples directory for usage within 
+other programs, and linking issues.
+
 INSTALLATION 
  
 See file INSTALL in the main directory of the SBML_odeSolver. 
@@ -43,9 +47,10 @@ for more information on program and output control via command-line options.
 
 ARCHITECTURE
 
-Currently, the SBML_odeSolver has only been tested on Fedora Core 2 Linux,
-and MasOS X/Darwin platforms. It is, however, written in pure ANSI C and
-should thus also run on other systems. We would highly appreciate any reports! 
+Currently, the SBML_odeSolver has been tested on Fedora Core 2 Linux, 
+MasOS X/Darwin and Windows. It is written in pure ANSI C and
+should thus also run on other systems. 
+We would highly appreciate any reports! 
 
 BUG REPORTS
 Please report any BUGS to the authors, see email addresses above.

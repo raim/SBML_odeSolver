@@ -18,10 +18,13 @@ could `hand-write' your own Makefile, and which paths need to be given.
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
 1000, and will print out the time course of species concentrations (and
 other variable parameters or compartments, if a model includes such), and
-reaction fluxes in 100 time steps.
+reaction fluxes in 100 time steps (producing 101 time points, including 
+the initial conditions.
 
-./batchIntegrate ../Test/MAPK.xml 1000 100 10 1000 30 MKKK
+./batchIntegrate ../Test/MAPK.xml 1000 2 10 1000 30 MKKK
 
-will do the same integration as above, but 31 times, varying the initial
+will do the same integration as above, with only 2 time steps, 
+but 31 integration runs, varying the initial
 concentration of the species `MKKK' from 10 to 1000 in 30 steps.
 It will then print out one timecourse after the other. 
+The last argument can be a species, a compartment or a global parameter.
