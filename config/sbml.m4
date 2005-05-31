@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.1 2005/05/30 19:49:14 raimc Exp $
+dnl $Id: sbml.m4,v 1.2 2005/05/31 15:20:08 raimc Exp $
 
 dnl
 dnl look for SBML Library headers in some standard set of directories
@@ -89,7 +89,8 @@ AC_DEFUN([CONFIG_LIB_SBML],
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
-    AC_MSG_ERROR([Can not link to SBML Library])
+    AC_MSG_ERROR([Can not link to SBML Library:
+		  Please, make sure to use libSBML version >= 2.3.2])
   fi
 
   dnl check for version of libSBML, could be in separate function
