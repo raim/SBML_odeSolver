@@ -1,6 +1,6 @@
 /**
  * Filename    : util.c
- * Revision    : $Id: util.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+ * Revision    : $Id: util.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
  * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/util.c,v $
  */
 
@@ -11,7 +11,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#include "util.h"
+/* own header files */
+#include "sbmlsolver/util.h"
 
 /*-------------------------------------------------------------------------*/
 void nrerror(const char message[])

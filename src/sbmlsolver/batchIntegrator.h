@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-30 13:37:14 raim>
-  $Id: batchIntegrator.h,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  $Id: batchIntegrator.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
 */
 #ifndef _BATCHINTEGRATOR_H_
 #define _BATCHINTEGRATOR_H_

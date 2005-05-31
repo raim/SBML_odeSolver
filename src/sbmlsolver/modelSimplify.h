@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2004-11-14 15:36:36 raim>
-  $Id: modelSimplify.h,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  $Id: modelSimplify.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
 */
 #ifndef _MODEL_H_
 #define _MODEL_H_

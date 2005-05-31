@@ -1,15 +1,18 @@
 /*
-  Last changed Time-stamp: <2005-05-09 07:29:18 raim>
-  $Id: sbml.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:28:47 raim>
+  $Id: sbml.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
+
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 #include <sbml/common/common.h>
 
-#include "sbml.h"
-#include "util.h"
-#include "options.h"
+/* own header files */
+#include "sbmlsolver/sbml.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
 
 /** C.1 Load, validate and parse SBML file,
     also converts SBML level 1 to level 2 files

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-30 12:47:44 raim>
-  $Id: odeConstruct.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:26:25 raim>
+  $Id: odeConstruct.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,12 +10,12 @@
 #include <sbml/common/common.h>  /* for safe_free */
 #include <sbml/SBMLTypes.h>
 
-#include "options.h"
-#include "util.h"
-#include "cvodedata.h"
-#include "odeConstruct.h"
-#include "modelSimplify.h"
-#include "processAST.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/processAST.h"
 
 static void
 ODEs_replaceConstants(Model_t *m, Model_t *ode);

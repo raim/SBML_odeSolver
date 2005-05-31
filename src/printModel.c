@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-17 06:27:49 raim>
-  $Id: printModel.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:25:48 raim>
+  $Id: printModel.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,12 +16,12 @@
 #include "config.h"
 
 /* Own Header Files */
-#include "util.h"
-#include "options.h"
-#include "cvodedata.h"
-#include "printModel.h"
-#include "modelSimplify.h"
-#include "processAST.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/printModel.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/processAST.h"
 
 
 /*

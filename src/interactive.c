@@ -1,24 +1,26 @@
 /*
-  Last changed Time-stamp: <2005-05-30 13:12:32 raim>
-  $Id: interactive.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:28:10 raim>
+  $Id: interactive.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 #include <sbml/common/common.h> 
 
-#include "util.h"
-#include "options.h"
-#include "sbml.h"
-#include "cvodedata.h"
-#include "odeConstruct.h"
-#include "odeIntegrate.h"
-#include "processAST.h"
-#include "printModel.h"
-#include "drawGraph.h"
+/* own header files */
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/sbml.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/odeIntegrate.h"
+#include "sbmlsolver/processAST.h"
+#include "sbmlsolver/printModel.h"
+#include "sbmlsolver/drawGraph.h"
 
 
 static void

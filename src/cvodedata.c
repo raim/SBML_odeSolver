@@ -1,17 +1,19 @@
 /*
-  Last changed Time-stamp: <2005-05-26 12:59:33 raim>
-  $Id: cvodedata.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:29:56 raim>
+  $Id: cvodedata.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 #include <sbml/common/common.h>
 
-#include "options.h"
-#include "cvodedata.h"
-#include "util.h"
+/* own header files */
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/util.h"
 
 /*
   The functions

@@ -1,11 +1,11 @@
 /*
-  Last changed Time-stamp: <2005-05-30 16:26:23 raim>
-  $Id: integrate.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:37:57 raim>
+  $Id: integrate.c,v 1.2 2005/05/31 13:55:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <odeSolver.h>
+#include <sbmlsolver/odeSolver.h>
 
 int
 main (int argc, char *argv[]){

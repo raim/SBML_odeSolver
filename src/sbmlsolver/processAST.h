@@ -1,12 +1,15 @@
 /*
-  Last changed Time-stamp: <2005-03-07 15:27:54 raim>
-  $Id: processAST.h,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:33:42 raim>
+  $Id: processAST.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
 */
 #ifndef _PROCESSAST_H_
 #define _PROCESSAST_H_
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include "cvodedata.h"
+
+/* own header files */
+#include "sbmlsolver/cvodedata.h"
 
 #define SQR(x) ((x)*(x))
 #define SQRT(x) pow((x),(.5))

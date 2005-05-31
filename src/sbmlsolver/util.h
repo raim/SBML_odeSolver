@@ -1,7 +1,7 @@
 /*
  * Filename    : util.c
- * Revision    : $Id: util.h,v 1.1 2005/05/30 19:49:13 raimc Exp $
- * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/Attic/util.h,v $
+ * Revision    : $Id: util.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+ * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/sbmlsolver/util.h,v $
 */
 
 #ifndef _UTIL_H_

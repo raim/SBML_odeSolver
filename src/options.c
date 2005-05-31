@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2004-12-23 17:07:12 raim>
-  $Id: options.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:31:47 raim>
+  $Id: options.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,8 +8,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "util.h"
-#include "options.h"
+/* own header files */
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
 
 static struct option const long_options[] =
 { {"modelgraph",    no_argument,       0, 'g'},

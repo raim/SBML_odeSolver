@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-30 22:48:18 raim>
-  $Id: odeSolver.c,v 1.2 2005/05/30 21:23:46 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:25:00 raim>
+  $Id: odeSolver.c,v 1.3 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "odeSolver.h"
+#include "sbmlsolver/odeSolver.h"
 
 
 

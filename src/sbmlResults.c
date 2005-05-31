@@ -1,15 +1,17 @@
 /*
-  Last changed Time-stamp: <2005-05-26 13:29:30 raim>
-  $Id: sbmlResults.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:29:29 raim>
+  $Id: sbmlResults.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 #include <sbml/common/common.h>
 
-#include "sbmlResults.h"
+/* own header files */
+#include "sbmlsolver/sbmlResults.h"
 
 static TimeCourse
 TimeCourse_create(int names, int timepoints);

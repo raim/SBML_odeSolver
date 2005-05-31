@@ -1,16 +1,18 @@
 /*
-  Last changed Time-stamp: <2005-05-10 04:28:14 raim>
-  $Id: modelSimplify.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:31:27 raim>
+  $Id: modelSimplify.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 
-#include "odeConstruct.h"
-#include "modelSimplify.h"
-#include "processAST.h"
+/* own header files */
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/processAST.h"
 
 /** Replaces all parameters 'name' appearing in the formula
     'math' by the value 'x'.

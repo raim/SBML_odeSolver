@@ -1,8 +1,8 @@
 /*
-  Last changed Time-stamp: <2005-05-27 16:58:48 raim>
-  $Id: odeIntegrate.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:26:59 raim>
+  $Id: odeIntegrate.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
   Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  $Id: odeIntegrate.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,14 +17,14 @@
 #include "cvdense.h"  
 #include "dense.h"
 
-#include "util.h"
-#include "options.h"
-#include "cvodedata.h"
-
-#include "odeConstruct.h"
-#include "odeIntegrate.h"
-#include "printModel.h"
-#include "processAST.h"
+/* own header files */
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/odeIntegrate.h"
+#include "sbmlsolver/printModel.h"
+#include "sbmlsolver/processAST.h"
 
 
 /* static void */

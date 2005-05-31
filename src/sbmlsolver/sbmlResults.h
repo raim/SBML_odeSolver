@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-26 12:56:10 raim>
-  $Id: sbmlResults.h,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  $Id: sbmlResults.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
 */
 #ifndef _SBMLRESULTS_H_
 #define _SBMLRESULTS_H_

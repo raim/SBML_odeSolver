@@ -11,7 +11,7 @@ fi
 AC_INIT([odeSolver],ODES_VERSION, [{raim,xtof}@tbi.univie.ac.at], [SBML_odeSolver])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR(src/util.c)
-AC_CONFIG_HEADERS(src/config.h)
+AC_CONFIG_HEADERS(src/sbmlsolver/config.h)
 
 AM_INIT_AUTOMAKE
 
@@ -203,9 +203,6 @@ else
 fi
 echo ""
 echo "NOTE:"
-echo "  For libSBML versions older than 2.2.0,"
-echo "  please edit src/config.h now (e.g. vi +41 src/config.h):"
-echo "  change the line"
-echo "	               \"#define OLD_LIBSBML 0\" to"
-echo "	               \"#define OLD_LIBSBML 1\""
+echo "     Unfortunately the current version of the SBML ODE Solver"
+echo "     only works with the latest libSBML release 2.3.2.       "
 echo ""

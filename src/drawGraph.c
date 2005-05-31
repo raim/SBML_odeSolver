@@ -1,10 +1,10 @@
 /*
 <<<<<<< drawGraph.c
-  Last changed Time-stamp: <2004-11-14 16:39:31 raim>
-  $Id: drawGraph.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:27:31 raim>
+  $Id: drawGraph.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 =======
   Last changed Time-stamp: <2004-10-04 14:31:24 raim>
-  $Id: drawGraph.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  $Id: drawGraph.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 >>>>>>> 1.6
 */
 #include <stdio.h>
@@ -18,12 +18,12 @@
    created by configure script */
 #include "config.h"
 
-/* own Header files and definitions */
-#include "util.h"
-#include "options.h"
-#include "cvodedata.h"
-#include "processAST.h"
-#include "drawGraph.h"
+/* own header files */
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/processAST.h"
+#include "sbmlsolver/drawGraph.h"
 
 /* Header Files for Graphviz */
 #if USE_GRAPHVIZ

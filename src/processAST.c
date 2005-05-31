@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-27 16:07:19 raim>
-  $Id: processAST.c,v 1.1 2005/05/30 19:49:13 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:25:23 raim>
+  $Id: processAST.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,10 +14,10 @@
    created by configure script */
 #include "config.h"
 
-#include "options.h"
-#include "util.h"
-#include "cvodedata.h"
-#include "processAST.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/processAST.h"
 
 /**
  * function pointer to user defined function

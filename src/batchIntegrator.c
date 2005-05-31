@@ -1,19 +1,21 @@
 /*
-  Last changed Time-stamp: <2005-05-30 14:28:53 raim>
-  $Id: batchIntegrator.c,v 1.1 2005/05/30 19:49:12 raimc Exp $
+  Last changed Time-stamp: <2005-05-31 12:30:39 raim>
+  $Id: batchIntegrator.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/* libSBML header files */
 #include <sbml/SBMLTypes.h>
 
-#include "util.h"
-#include "options.h"
-#include "cvodedata.h"
-#include "odeConstruct.h"
-#include "odeIntegrate.h"
-#include "odeSolver.h"
+/* own header files */
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/options.h"
+#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/odeIntegrate.h"
+#include "sbmlsolver/odeSolver.h"
 
 
 void 
