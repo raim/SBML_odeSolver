@@ -146,4 +146,4 @@ binary won't require any extra library.
 
 -- 
 Akira Funahashi, Ph.D. | Kitano Symbiotic Systems Project,
-[funa@symbio.jst.go.jp]| ERATO-SORST, JST
+		       | ERATO-SORST, JST
