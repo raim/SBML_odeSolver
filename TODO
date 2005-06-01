@@ -1,5 +1,15 @@
+* general accuracy / performance:
+	* check usage of double, float, long float etc.
+	* choose CVODE error tolerances automatically for each ODE??
+	* choose other solvers from the CVODE package
+
+* HASH name lookup:
+        * coordinate with Ben's plans
+	* evaluateAST could use a SBML model that contains current
+	* values?
+
 * batchIntegrator:
-	* change in CvodeData, 
+	* change parameter in CvodeData, 
 	  don't construct ODEs twice (use ODE SBML model, see below)
 
 * SBML ODE Model vs. CvodeData ODE Model
@@ -9,34 +19,36 @@
 	  and replace just before integration;
 	  allow params to be kept in formulas, for online change
 	  
-
 * Constants, Parameter, Assignment Rule and 
   Function Definition Replacement:
-  	* should be separate, 
+  	* should be separate
 	* implement in evaulate/differentiateAST
+	* allow online change of parameters (e.g. for inverse methods)
 
-* transfer to SUNDIALS' CVODE
-
-* implement SUNDIALS' daeSolver IDA
+* transfer to SUNDIALS
+	* CVODE
+	* CVODES for sensitivity analysis
+	* use of parallel capabilities
+	* KINSOL for steady state detection
+	* daeSolver IDA
 
 * eventDetector:
 	* use combination of interpolation and exact integration
 	  to event trigger
 
+* online communication
+	* use callback and user-defined-functions
+	  for communication with other tools/solver 
+	  (e.g. stochastic)
+
+* compilation:
+	* use TCC runtime compilation of CVODE code
+
 * SBW: write interface function
 
 * BioUML: explore interface possibility
-
-* HASH name lookup: 
-	* coordinate with Ben's plans
-	* evaluateAST could use a SBML model that contains current values?
-
 
 * command-line and interactive usage
 	* change visualization to GNUPLOT (3D!)
 	* bioLog_resultVisualizer: ...
 	* adapt printout accuracy to CVODE errors
-
-* CVODE Settings: 
-	* choose errors automatically for each ODE??	
-	
