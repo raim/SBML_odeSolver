@@ -3,7 +3,8 @@ in a Windows / MinGW environment
 
 by
 Akira Funahashi, Ph.D. | Kitano Symbiotic Systems Project,
-[funa@symbio.jst.go.jp]| ERATO-SORST, JST
+                       | ERATO-SORST, JST
+http://www.symbio.jst.go.jp/~funa/		       
 
 with comments by
 Rainer Machne
