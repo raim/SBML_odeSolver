@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:29:29 raim>
-  $Id: sbmlResults.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-06 18:33:55 raim>
+  $Id: sbmlResults.c,v 1.3 2005/06/06 16:36:23 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +36,7 @@ SBMLResults_create(Model_t *m, int timepoints){
   Reaction_t *r;
   SBMLResults results;
 
-  if(!(results = (SBMLResults) safe_calloc(1, sizeof(*results)))){
+  if(!(results = (SBMLResults) calloc(1, sizeof(*results)))){
     fprintf(stderr, "failed!\n");
   }
   
@@ -45,7 +45,7 @@ SBMLResults_create(Model_t *m, int timepoints){
   /* Allocating the time array:
      number of output times, plus 1 for the initial values. */
   if(!(results->time =
-       (double *)safe_calloc(timepoints, sizeof(double)))) {
+       (double *)calloc(timepoints, sizeof(double)))) {
     fprintf(stderr, "failed!\n");
   }
   
@@ -134,20 +134,20 @@ TimeCourse_create(int num_val, int timepoints){
   TimeCourse tc;
 
   /* timecourse variables */  
-  if(!(tc = (TimeCourse)safe_calloc(1, sizeof(struct _TimeCourse)))){
+  if(!(tc = (TimeCourse)calloc(1, sizeof(struct _TimeCourse)))){
     fprintf(stderr, "failed!\n");
   }
   tc->num_val = num_val;
   tc->timepoints = timepoints;
-  if(!(tc->names =  (char **)safe_calloc(num_val, sizeof(char*)))){
+  if(!(tc->names =  (char **)calloc(num_val, sizeof(char*)))){
     fprintf(stderr, "failed!\n");
   }  
-  if(!(tc->values =  (double **)safe_calloc(timepoints, sizeof(double*)))){
+  if(!(tc->values =  (double **)calloc(timepoints, sizeof(double*)))){
     fprintf(stderr, "failed!\n");
   }
   for ( i=0; i<tc->timepoints; i++ ) {
     if(!(tc->values[i] =
-	 (double *)safe_calloc(num_val, sizeof(double)))){
+	 (double *)calloc(num_val, sizeof(double)))){
       fprintf(stderr, "failed!\n");
     }
   }

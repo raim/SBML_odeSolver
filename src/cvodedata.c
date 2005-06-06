@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:29:56 raim>
-  $Id: cvodedata.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-06 18:33:38 raim>
+  $Id: cvodedata.c,v 1.3 2005/06/06 16:36:23 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,40 +31,40 @@ CvodeData_create(int neq, int nconst, int nass, int nevents){
   int i;
   CvodeData data;
 
-  if(!(data = (CvodeData) safe_calloc(1, sizeof(*data))))
+  if(!(data = (CvodeData) calloc(1, sizeof(*data))))
     fprintf(stderr, "failed!\n");
   
-  if(!(data->trigger = (int *) safe_calloc(nevents, sizeof(int))))
+  if(!(data->trigger = (int *) calloc(nevents, sizeof(int))))
     fprintf(stderr, "failed!\n");
 
-  if(!(data->value =  (double *)safe_calloc(neq, sizeof(double))))
+  if(!(data->value =  (double *)calloc(neq, sizeof(double))))
     fprintf(stderr, "failed!\n");
-  if(!(data->species = (char **)safe_calloc(neq, sizeof(char *))))
+  if(!(data->species = (char **)calloc(neq, sizeof(char *))))
     fprintf(stderr, "failed!\n");
-  if(!(data->speciesname = (char **)safe_calloc(neq, sizeof(char *))))
+  if(!(data->speciesname = (char **)calloc(neq, sizeof(char *))))
     fprintf(stderr, "failed!\n");
-  if(!(data->ode = (ASTNode_t **)safe_calloc(neq, sizeof(ASTNode_t *))))    
+  if(!(data->ode = (ASTNode_t **)calloc(neq, sizeof(ASTNode_t *))))    
     fprintf(stderr, "failed!\n");
   
   if(!(data->jacob =
-       (ASTNode_t ***)safe_calloc(neq, sizeof(ASTNode_t **))))
+       (ASTNode_t ***)calloc(neq, sizeof(ASTNode_t **))))
     fprintf(stderr, "failed!\n");
   for ( i=0; i<neq; i++ ) {
-    if(!(data->jacob[i] = (ASTNode_t **)safe_calloc(neq, sizeof(ASTNode_t *))))
+    if(!(data->jacob[i] = (ASTNode_t **)calloc(neq, sizeof(ASTNode_t *))))
       fprintf(stderr, "failed!\n");     
   }
 
-  if(!(data->pvalue =  (double *)safe_calloc(nconst, sizeof(double))))
+  if(!(data->pvalue =  (double *)calloc(nconst, sizeof(double))))
     fprintf(stderr, "failed!\n");
-  if(!(data->parameter = (char **)safe_calloc(nconst, sizeof(char *))))
+  if(!(data->parameter = (char **)calloc(nconst, sizeof(char *))))
     fprintf(stderr, "failed!\n");
   
-  if(!(data->avalue =  (double *)safe_calloc(nass, sizeof(double))))
+  if(!(data->avalue =  (double *)calloc(nass, sizeof(double))))
     fprintf(stderr, "failed!\n");
-  if(!(data->ass_parameter = (char **)safe_calloc(nass, sizeof(char *))))
+  if(!(data->ass_parameter = (char **)calloc(nass, sizeof(char *))))
     fprintf(stderr, "failed!\n");
   if(!(data->assignment =
-       (ASTNode_t **)safe_calloc(nass, sizeof(ASTNode_t *))))    
+       (ASTNode_t **)calloc(nass, sizeof(ASTNode_t *))))    
     fprintf(stderr, "failed!\n");  
 
   /** Set the filename to write results to.    */
@@ -186,12 +186,12 @@ CvodeResults_create(CvodeData data){
   int i;
   CvodeResults results;
 
-  if(!(results = (CvodeResults) safe_calloc(1, sizeof(*results)))){
+  if(!(results = (CvodeResults) calloc(1, sizeof(*results)))){
     fprintf(stderr, "failed!\n");
   }
   
   /* The `time' array of contains all timepoints  */
-  if(!(results->time = (double *)safe_calloc(data->nout+1, sizeof(double)))){
+  if(!(results->time = (double *)calloc(data->nout+1, sizeof(double)))){
     fprintf(stderr, "failed!\n");
   }
   
@@ -199,12 +199,12 @@ CvodeResults_create(CvodeData data){
      calculated by ODEs (SBML species, or compartments and parameters
      defined by rate rules.
   */
-  if(!(results->value = (double **)safe_calloc(data->neq, sizeof(double*)))){
+  if(!(results->value = (double **)calloc(data->neq, sizeof(double*)))){
     fprintf(stderr, "failed!\n");
   }
   for(i=0;i<data->neq;++i){
     if(!(results->value[i] =
-	 (double *)safe_calloc(data->nout+1, sizeof(double)))){
+	 (double *)calloc(data->nout+1, sizeof(double)))){
       fprintf(stderr, "failed!\n");
     }
   }
@@ -215,12 +215,12 @@ CvodeResults_create(CvodeData data){
      results.
   */
   if(!(results->pvalue =
-       (double **)safe_calloc(data->nconst, sizeof(double*)))){
+       (double **)calloc(data->nconst, sizeof(double*)))){
     fprintf(stderr, "failed!\n");
   }
   for(i=0;i<data->nconst;++i){
     if(!(results->pvalue[i] =
-	 (double *)safe_calloc(data->nout+1, sizeof(double)))){
+	 (double *)calloc(data->nout+1, sizeof(double)))){
       fprintf(stderr, "failed!\n");
     }
   }
@@ -231,12 +231,12 @@ CvodeResults_create(CvodeData data){
      integration, but convenient to have for output of results.
    */
   if(!(results->avalue =
-       (double **)safe_calloc(data->nass, sizeof(double*)))){
+       (double **)calloc(data->nass, sizeof(double*)))){
     fprintf(stderr, "failed!\n");
   }
   for(i=0;i<data->nass;++i){
     if(!(results->avalue[i] =
-	 (double *)safe_calloc(data->nout+1, sizeof(double)))){
+	 (double *)calloc(data->nout+1, sizeof(double)))){
       fprintf(stderr, "failed!\n");
     }
   }
