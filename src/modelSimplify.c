@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:31:27 raim>
-  $Id: modelSimplify.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-06 15:12:33 raim>
+  $Id: modelSimplify.c,v 1.3 2005/06/06 13:13:19 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,7 +138,11 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 
   for ( i=0; i<List_size(names); i++ ) {
     old = List_get(names,i);
+    /* if `old' is the searched function defintion ... */
     if ( strcmp(ASTNode_getName(old), name) == 0 ) {
+      
+      /* replace the arguments of the function definition copied to `new', 
+         with the arguments passed by the function call(s) in `math' */
       for ( j=0; j<(ASTNode_getNumChildren(function)-1); j++ ) {
 
 	AST_replaceNameByFormula(new,
@@ -146,8 +150,14 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 								  j)),
 				 ASTNode_getChild(old, j));
       }
+
+      /* copy the `new' function defintion with replaced parameters
+	 into the `old' function call */
+      
+      /* first set possible names or numbers */
       if ( ASTNode_isName(new) ) {
 	ASTNode_setName(old, ASTNode_getName(new));
+	
       }
       else if ( ASTNode_isInteger(new) ) {
 	ASTNode_setInteger(old, ASTNode_getInteger(new));
@@ -155,27 +165,19 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
       else if ( ASTNode_isReal(new) ) {
 	ASTNode_setReal(old, ASTNode_getReal(new));
       }
+      /* ... if none of the above, just set the AST Type ... */
       else {
 	ASTNode_setType(old, ASTNode_getType(new));
-	/* a user defined function has a name that must be set */
+	/* (a user defined function has a name that must be set) */
 	if ( ASTNode_getType(new) == AST_FUNCTION ) {
 	  ASTNode_setName(old, ASTNode_getName(new));
 	}
-	/* Here we prepend the childs of 'new', which
-	   carries the function with replaced variables.
-	   This way the old children of the node 'old',
-	   which carry the arguments to the function
-	   are moved to the back and hopefully cause
-	   no errors during evalution. This is a very
-	   dirty solution though. There should be a way
-	   to free those children.
-	 */
-	for ( k=ASTNode_getNumChildren(new); k>0; k-- ) {
-	  ASTNode_prependChild(old, copyAST(ASTNode_getChild(new,k-1)));
-	}
+	/* ... and exchange the children. That should be it! */
+	ASTNode_swapChildren(old, new);
       }
     }
   }
+
   List_free(names);
   ASTNode_free(new); 
 }
@@ -205,7 +207,7 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
   /**
      Starting from the back, because variables defined by
      assignment rules can be used is subsequent assignments.
-     Thus this direction should catch replace all assignments.
+     Thus this direction should catch all assignments.
   */
   for ( i=(Model_getNumRules(m)-1); i>=0; i-- ) {
     rl = Model_getRule(m, i);
