@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-06 15:12:33 raim>
-  $Id: modelSimplify.c,v 1.3 2005/06/06 13:13:19 raimc Exp $
+  Last changed Time-stamp: <2005-06-07 19:13:51 raim>
+  $Id: modelSimplify.c,v 1.4 2005/06/07 17:14:52 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,18 +133,17 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
   ASTNode_t *old, *new;
   List_t *names;
 
-  new     = copyAST(ASTNode_getRightChild(function));
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isFunction);
 
   for ( i=0; i<List_size(names); i++ ) {
+    new     = copyAST(ASTNode_getRightChild(function));
     old = List_get(names,i);
     /* if `old' is the searched function defintion ... */
     if ( strcmp(ASTNode_getName(old), name) == 0 ) {
-      
+
       /* replace the arguments of the function definition copied to `new', 
          with the arguments passed by the function call(s) in `math' */
       for ( j=0; j<(ASTNode_getNumChildren(function)-1); j++ ) {
-
 	AST_replaceNameByFormula(new,
 				 ASTNode_getName(ASTNode_getChild(function,
 								  j)),
@@ -174,12 +173,11 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 	}
 	/* ... and exchange the children. That should be it! */
 	ASTNode_swapChildren(old, new);
+        ASTNode_free(new);
       }
     }
   }
-
   List_free(names);
-  ASTNode_free(new); 
 }
 
 /** Replace all constants of a model in an AST math */
