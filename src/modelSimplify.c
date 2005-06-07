@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-07 19:13:51 raim>
-  $Id: modelSimplify.c,v 1.4 2005/06/07 17:14:52 raimc Exp $
+  Last changed Time-stamp: <2005-06-07 19:23:43 raim>
+  $Id: modelSimplify.c,v 1.5 2005/06/07 17:26:22 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,9 +173,10 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 	}
 	/* ... and exchange the children. That should be it! */
 	ASTNode_swapChildren(old, new);
-        ASTNode_free(new);
       }
+        
     }
+    ASTNode_free(new);
   }
   List_free(names);
 }
