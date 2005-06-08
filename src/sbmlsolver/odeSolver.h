@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-08 10:20:10 raim>
-  $Id: odeSolver.h,v 1.2 2005/06/08 08:36:07 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 11:09:04 raim>
+  $Id: odeSolver.h,v 1.3 2005/06/08 09:37:48 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -26,10 +26,13 @@
 
 /* Settings for batch integration with parameter variation */
 typedef struct _VarySettings {
-  char *id;
-  double start;
-  double end;
-  int steps;
+  char *id;         /* SBML ID of the species, compartment or parameter
+		       to be varied */
+  char *rid;        /* SBML Reaction ID, if a local parameter is to be
+		       varied */ 
+  double start;     /* start value for parameter variation */
+  double end;       /* end value for parameter variation */
+  int steps;        /* number of steps for parameter variation */
 } VarySettings;
 
 VarySettings vary;
@@ -47,7 +50,7 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
 SBMLResults
 Results_fromCvode(CvodeData data);
 int
-Model_setValue(Model_t *m, const char *id, double value);
+Model_setValue(Model_t *m, const char *id, const char *rid, double value);
 
 #endif
 

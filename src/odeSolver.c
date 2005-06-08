@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-08 10:22:43 raim>
-  $Id: odeSolver.c,v 1.4 2005/06/08 08:35:18 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 11:29:36 raim>
+  $Id: odeSolver.c,v 1.5 2005/06/08 09:36:21 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -443,7 +443,7 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   for ( i=0; i<=vary.steps; i++ ) {
     
       
-    if ( ! Model_setValue(m, vary.id, value) ) {
+    if ( ! Model_setValue(m, vary.id, vary.rid, value) ) {
       Warn(stderr, "Parameter for variation not found in the model.", vary.id);
       return(NULL);
     }
@@ -495,14 +495,14 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
   increment2 = (vary2.end - vary2.start) / vary2.steps;
   
   for ( i=0; i<=vary1.steps; i++ ) {
-    if ( ! Model_setValue(m, vary1.id, value1) ) {
+    if ( ! Model_setValue(m, vary1.id, vary1.rid, value1) ) {
       Warn(stderr, "Parameter for variation not found in the model.",
 	   vary1.id);
       return(NULL);
     }
     
     for ( j=0; j<=vary2.steps; j++ ) {      
-      if ( ! Model_setValue(m, vary2.id, value2) ) {
+      if ( ! Model_setValue(m, vary2.id, vary2.rid, value2) ) {
 	Warn(stderr, "Parameter for variation not found in the model.",
 	     vary2.id);
       return(NULL);
@@ -524,12 +524,25 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
 }
 
 int
-Model_setValue(Model_t *m, const char *id, double value) {
+Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
 
+  int i;
   Compartment_t *c;
   Species_t *s;
   Parameter_t *p;
+  Reaction_t *r;
+  KineticLaw_t *kl;
 
+  if ( (r = Model_getReactionById(m, rid)) != NULL ) {
+    kl = Reaction_getKineticLaw(r);
+    for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
+      p = KineticLaw_getParameter(kl, i);
+      if ( strcmp(id, Parameter_getId(p)) == 0 ) {
+	Parameter_setValue(p, value);
+	return 1;
+      }
+    }
+  }
   if ( (c = Model_getCompartmentById(m, id)) != NULL ) {
     Compartment_setSize(c, value);
     return 1;
