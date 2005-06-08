@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:25:00 raim>
-  $Id: odeSolver.c,v 1.3 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 10:22:43 raim>
+  $Id: odeSolver.c,v 1.4 2005/06/08 08:35:18 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -449,6 +449,69 @@ Model_odeSolverBatch (SBMLDocument_t *d,
     }
     results[i] = Model_odeSolver(d, settings);
     value = value + increment;
+  }
+
+  /* free temporary level 2 version of the document */
+  if ( d2 != NULL ) {
+    SBMLDocument_free(d2);
+  }
+
+  return(results);
+
+}
+
+SBMLResults **
+Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
+		      VarySettings vary1, VarySettings vary2) {
+
+  int i, j;
+  double value1, increment1, value2, increment2;
+  SBMLResults **results;
+  SBMLDocument_t *d2 = NULL;
+  Model_t *m;
+
+  /** Convert SBML Document level 1 to level 2, and
+      get the contained model
+  */
+  if ( SBMLDocument_getLevel(d) == 1 ) {
+    d2 = convertModel(d);
+    d = d2;
+  }
+  m = SBMLDocument_getModel(d);
+    
+  if(!(results = (SBMLResults **)calloc(vary1.steps+1, sizeof(**results)))){
+    fprintf(stderr, "failed!\n");
+  }
+  for ( i=0; i<=vary1.steps; i++ ) {
+    if(!(results[i] = (SBMLResults *)calloc(vary2.steps+1, sizeof(*results)))){
+      fprintf(stderr, "failed!\n");
+    }    
+  }
+
+  value1 = vary1.start;
+  increment1 = (vary1.end - vary1.start) / vary1.steps;
+  
+  value2 = vary2.start;
+  increment2 = (vary2.end - vary2.start) / vary2.steps;
+  
+  for ( i=0; i<=vary1.steps; i++ ) {
+    if ( ! Model_setValue(m, vary1.id, value1) ) {
+      Warn(stderr, "Parameter for variation not found in the model.",
+	   vary1.id);
+      return(NULL);
+    }
+    
+    for ( j=0; j<=vary2.steps; j++ ) {      
+      if ( ! Model_setValue(m, vary2.id, value2) ) {
+	Warn(stderr, "Parameter for variation not found in the model.",
+	     vary2.id);
+      return(NULL);
+      }
+      
+      results[i][j] = Model_odeSolver(d, settings);
+      value2 = value2 + increment2;
+    }
+    value1 = value1 + increment1;
   }
 
   /* free temporary level 2 version of the document */

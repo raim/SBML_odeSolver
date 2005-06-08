@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:32:48 raim>
-  $Id: odeSolver.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 10:20:10 raim>
+  $Id: odeSolver.h,v 1.2 2005/06/08 08:36:07 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -39,8 +39,11 @@ odeSolver (int argc, char *argv[]);
 SBMLResults
 Model_odeSolver(SBMLDocument_t *d, CvodeSettings set);
 SBMLResults *
-Model_odeSolverBatch(SBMLDocument_t *d,
-		     CvodeSettings settings, VarySettings vary);
+Model_odeSolverBatch(SBMLDocument_t *d, CvodeSettings settings,
+		     VarySettings vary);
+SBMLResults **
+Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
+		      VarySettings vary1, VarySettings vary2);
 SBMLResults
 Results_fromCvode(CvodeData data);
 int
