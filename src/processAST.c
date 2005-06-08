@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:25:23 raim>
-  $Id: processAST.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: processAST.c,v 1.3 2005/06/08 15:23:14 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +18,23 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
+
+#ifdef WIN32
+double acosh(double x)
+{
+	return log(x + (sqrt(x - 1) * sqrt(x + 1)));
+}
+
+double asinh(double x)
+{
+	return log(x + sqrt((x * x) + 1));
+}
+
+double atanh(double x)
+{
+	return (log(1 + x) - log(1-x))/2 ;
+}
+#endif /* WIN32 */
 
 /**
  * function pointer to user defined function
