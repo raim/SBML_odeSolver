@@ -6,7 +6,7 @@
 * HASH name lookup:
         * coordinate with Ben's plans
 	* evaluateAST could use a SBML model that contains current
-	* values?
+	  values?
 
 * batchIntegrator:
 	* change parameter in CvodeData, 
@@ -33,6 +33,7 @@
 	* daeSolver IDA
 
 * eventDetector:
+	* integrate from last to current timestep, until trigger < CVODE ERROR
 	* use combination of interpolation and exact integration
 	  to event trigger
 
