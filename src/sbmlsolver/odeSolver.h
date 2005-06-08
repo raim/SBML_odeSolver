@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:09:04 raim>
-  $Id: odeSolver.h,v 1.3 2005/06/08 09:37:48 raimc Exp $
+  $Id: odeSolver.h,v 1.4 2005/06/08 15:28:42 afinney Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -23,6 +23,7 @@
 #include "sbmlsolver/interactive.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/sbmlResults.h"
+#include "sbmlsolver/exportdefs.h"
 
 /* Settings for batch integration with parameter variation */
 typedef struct _VarySettings {
@@ -37,7 +38,7 @@ typedef struct _VarySettings {
 
 VarySettings vary;
 
-int
+SBML_ODESOLVER_API int
 odeSolver (int argc, char *argv[]);
 SBMLResults
 Model_odeSolver(SBMLDocument_t *d, CvodeSettings set);
