@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:30:39 raim>
-  $Id: batchIntegrator.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 11:09:42 raim>
+  $Id: batchIntegrator.c,v 1.3 2005/06/08 09:37:03 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ batchIntegrator(Model_t *m) {
   
   for ( l=0; l<=steps; l++ ) {
     
-    Model_setValue(m, Opt.Parameter, l*(value/steps));
+    Model_setValue(m, Opt.Parameter, "", l*(value/steps));
     data = constructODEs(m);
 
     if ( data->errors > 0 ) {
