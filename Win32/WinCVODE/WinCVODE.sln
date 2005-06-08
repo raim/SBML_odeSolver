@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinCVODE", "WinCVODE\WinCVODE.vcproj", "{E92D4874-0AB6-472D-B7FD-8CD9866B85CC}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{E92D4874-0AB6-472D-B7FD-8CD9866B85CC}.Debug.ActiveCfg = Debug|Win32
+		{E92D4874-0AB6-472D-B7FD-8CD9866B85CC}.Debug.Build.0 = Debug|Win32
+		{E92D4874-0AB6-472D-B7FD-8CD9866B85CC}.Release.ActiveCfg = Release|Win32
+		{E92D4874-0AB6-472D-B7FD-8CD9866B85CC}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
