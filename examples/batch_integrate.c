@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:38:12 raim>
-  $Id: batch_integrate.c,v 1.2 2005/05/31 13:55:43 raimc Exp $
+  Last changed Time-stamp: <2005-06-08 11:29:08 raim>
+  $Id: batch_integrate.c,v 1.3 2005/06/08 09:35:44 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +16,7 @@ main (int argc, char *argv[]){
   int i;
   char model[256];
   char parameter[256];
+  char reaction[256];
   double start, end, steps, value;
   double time = 0.0;
   double printstep = 1.0;
@@ -41,9 +42,15 @@ main (int argc, char *argv[]){
   sscanf(argv[5], "%lf", &end);
   sscanf(argv[6], "%lf", &steps);
   strcpy(parameter, argv[7]);
-
-  printf("Varying parameter %s from %f to %f in %f steps\n",
-	 parameter, start, end, steps);
+  if ( argc > 8 ) {
+    strcpy(reaction, argv[8]);
+  }
+  else{
+    strcpy(reaction,"");
+  }
+  
+  printf("Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
+	 parameter, reaction, start, end, steps);
   
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -61,7 +68,7 @@ main (int argc, char *argv[]){
   set.PrintOnTheFly = 0;  
   set.PrintMessage = 0;
   set.HaltOnEvent = 0;
-  set.SteadyState = 1;
+  set.SteadyState = 0;
   set.UseJacobian = 1;
 
   /* Setting SBML Ode Solver batch integration parameters */
@@ -69,6 +76,7 @@ main (int argc, char *argv[]){
   vary.end = end;
   vary.steps = steps;
   vary.id = parameter;
+  vary.rid = reaction;
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */
   results = Model_odeSolverBatch(d, set, vary);  
@@ -82,7 +90,8 @@ main (int argc, char *argv[]){
 
   value = start;
   for ( i=0; i<(steps+1); i++ ) {
-    printf("RESULTS FOR RUN # %d, with %s = %f:\n", i+1, parameter, value);
+    printf("RESULTS FOR RUN # %d, with (reaction: %s) %s = %f:\n",
+	   i+1, reaction, parameter, value);
     printResults(results[i]);
     SBMLResults_free(results[i]);
     value = value + ((end-start)/steps);
