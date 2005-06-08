@@ -1,8 +1,8 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:26:59 raim>
-  $Id: odeIntegrate.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: odeIntegrate.c,v 1.3 2005/06/08 15:15:29 afinney Exp $
   Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: odeIntegrate.c,v 1.3 2005/06/08 15:15:29 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -226,18 +226,22 @@ integrator(CvodeData data)
       print initial values, if on-the-fly printint is set
   */
   if ( data->PrintOnTheFly && data->run == 0 ) {
-    fprintf(stderr, "\nPrinting results on the fly to %s!\n",
-	    data->filename == NULL ? "stdout" :
-	    data->filename);
-    fprintf(stderr, "Overruling all other print options!!\n\n");      
-    fprintf(data->outfile, "#t ");
-    for ( i=0; i<data->neq; i++ )
-      fprintf(data->outfile, "%s ", data->speciesname[i]);
-    for ( i=0; i<data->nass; i++ )
-      fprintf(data->outfile, "%s ", data->ass_parameter[i]);
-    for ( i=0; i<data->nconst; i++ )
-      fprintf(data->outfile, "%s ", data->parameter[i]);
-    fprintf(data->outfile, "\n");
+	if ( data->t0 == 0.0 )
+	{
+      fprintf(stderr, "\nPrinting results on the fly to %s!\n",
+	          data->filename == NULL ? "stdout" :
+	          data->filename);
+      fprintf(stderr, "Overruling all other print options!!\n\n");      
+      fprintf(data->outfile, "#t ");
+      for ( i=0; i<data->neq; i++ )
+        fprintf(data->outfile, "%s ", data->speciesname[i]);
+      for ( i=0; i<data->nass; i++ )
+        fprintf(data->outfile, "%s ", data->ass_parameter[i]);
+      for ( i=0; i<data->nconst; i++ )
+        fprintf(data->outfile, "%s ", data->parameter[i]);
+      fprintf(data->outfile, "\n");
+	}
+
     fprintf(data->outfile, "%g ", data->t0);
     for ( i=0; i<data->neq; i++ )
       fprintf(data->outfile, "%g ", data->value[i]);
@@ -513,9 +517,10 @@ checkTrigger(CvodeData data){
     e = Model_getEvent(data->simple, i);
     trigger = (ASTNode_t *) Event_getTrigger(e);
     if ( data->trigger[i] == 0 && evaluateAST(trigger, data) ) {
-      fprintf(data->outfile,
-	      "# Trigger %d : %s fired at %g. Aborting simulation!!\n",
-	      i, SBML_formulaToString(trigger), data->t0 + data->currenttime);
+      if (data->HaltOnEvent)
+		  fprintf(data->outfile,
+	        "# Trigger %d : %s fired at %g. Aborting simulation!!\n",
+	        i, SBML_formulaToString(trigger), data->t0 + data->currenttime);
       fired++;
       data->trigger[i] = 1;      
       for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
