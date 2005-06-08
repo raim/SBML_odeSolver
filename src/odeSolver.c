@@ -1,10 +1,12 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:29:36 raim>
-  $Id: odeSolver.c,v 1.5 2005/06/08 09:36:21 raimc Exp $
+  $Id: odeSolver.c,v 1.6 2005/06/08 15:19:09 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <string.h>
 
 #include <sbml/SBMLTypes.h>
@@ -31,7 +33,7 @@
     functions, using graphviz layout algorithms.   
 */
 
-int
+SBML_ODESOLVER_API int
 odeSolver (int argc, char *argv[])
 {
   SBMLDocument_t *d  = NULL;
