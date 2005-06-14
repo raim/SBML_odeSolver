@@ -1,8 +1,13 @@
 /*
+<<<<<<< odeIntegrate.c
+  Last changed Time-stamp: <2005-06-14 11:29:00 raim>
+  $Id: odeIntegrate.c,v 1.4 2005/06/14 09:33:34 raimc Exp $
+=======
   Last changed Time-stamp: <2005-05-31 12:26:59 raim>
-  $Id: odeIntegrate.c,v 1.3 2005/06/08 15:15:29 afinney Exp $
+  $Id: odeIntegrate.c,v 1.4 2005/06/14 09:33:34 raimc Exp $
+>>>>>>> 1.3
   Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.3 2005/06/08 15:15:29 afinney Exp $
+  $Id: odeIntegrate.c,v 1.4 2005/06/14 09:33:34 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +74,7 @@ integrator(CvodeData data)
   long int iopt[OPT_SIZE];
   N_Vector y, abstol;
   void *cvode_mem;
-  int iout, nout, flag, i;
+  int iout, nout, flag, flag2, i;
   CvodeResults results; 
 
   
@@ -293,12 +298,13 @@ integrator(CvodeData data)
 	  data->pvalue[i] = results->pvalue[i][0];
 	}
 	data->currenttime = data->t0;
-	if ( integrator(data) < 0 ) {
+	flag2 = integrator(data);
+	if ( flag2 < 0 ) {
 	  Warn(stderr,
-	       "Integration not successful. Results may not be complete.");
-	  return 0;
+	       "Integration nr. %d not successful."
+	       " Results may not be complete.",	data->run);
 	}
-	return 1;
+	return (flag2);
       }
       else {
       	fprintf(data->outfile, "# CVode failed, with flag=%d, at time %g\n",
@@ -442,7 +448,7 @@ static void f(integer N, real t, N_Vector y, N_Vector ydot, void *f_data)
 
   /* evaluate ODEs */
   for ( i=0; i<data->neq; i++ ) {
-    N_VIth(ydot,i) = evaluateAST(data->ode[i],data);
+    N_VIth(ydot,i) = evaluateAST(data->ode[i], data);
   } 
 
   /* update CvodeData */
