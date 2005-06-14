@@ -1,0 +1,3 @@
+* The old suspect AST_replaceFunctionDefinition indeed caused problems.
+  Thanks to Andrew Finneys observations and the new libSBML function
+  ASTNode_swapChildren, this bug could be resolved. June 8, 2005
