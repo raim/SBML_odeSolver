@@ -1,4 +1,9 @@
+- example for UsrDefFnct: 
+	- interpolation from external data file
+	- callBack Fnct
+
 * general accuracy / performance:
+        * adapt printout accuracy to CVODE errors
 	* check usage of double, float, long float etc.
 	* choose CVODE error tolerances automatically for each ODE??
 	* choose other solvers from the CVODE package
@@ -52,4 +57,3 @@
 * command-line and interactive usage
 	* change visualization to GNUPLOT (3D!)
 	* bioLog_resultVisualizer: ...
-	* adapt printout accuracy to CVODE errors
