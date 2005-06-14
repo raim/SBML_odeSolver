@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:29:08 raim>
-  $Id: batch_integrate.c,v 1.3 2005/06/08 09:35:44 raimc Exp $
+  $Id: batch_integrate.c,v 1.4 2005/06/14 11:13:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +33,7 @@ main (int argc, char *argv[]){
       step will not be needed anymore!!
   */
   initializeOptions();
-  /* Opt.PrintMessage = 1; */
+  Opt.PrintMessage = 1; 
   
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
@@ -49,7 +49,7 @@ main (int argc, char *argv[]){
     strcpy(reaction,"");
   }
   
-  printf("Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
+  printf("### Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
 	 parameter, reaction, start, end, steps);
   
   /* parsing the SBML model with libSBML */
@@ -66,7 +66,7 @@ main (int argc, char *argv[]){
   set.Mxstep = 10000;
 
   set.PrintOnTheFly = 0;  
-  set.PrintMessage = 0;
+  set.PrintMessage = 1;
   set.HaltOnEvent = 0;
   set.SteadyState = 0;
   set.UseJacobian = 1;
@@ -83,14 +83,14 @@ main (int argc, char *argv[]){
   SBMLDocument_free(d);
 
   if ( results == NULL ) {
-    printf("Parameter variation not succesfull!\n");
+    printf("### Parameter variation not succesfull!\n");
     return(0);
   }
   
 
   value = start;
   for ( i=0; i<(steps+1); i++ ) {
-    printf("RESULTS FOR RUN # %d, with (reaction: %s) %s = %f:\n",
+    printf("### RESULTS FOR RUN # %d, with (reaction: %s) %s = %f:\n",
 	   i+1, reaction, parameter, value);
     printResults(results[i]);
     SBMLResults_free(results[i]);
@@ -108,8 +108,8 @@ printResults(SBMLResults results) {
   int i, j;
   
   /* print all species  */
-  printf("Printing Species time courses\n");
-  printf("time ");
+  printf("### Printing Species time courses\n");
+  printf("#time ");
   for ( j=0; j<results->species->num_val; j++) {
     printf("%s ", results->species->names[j]);
   }
@@ -123,12 +123,12 @@ printResults(SBMLResults results) {
   }
   /* print variable compartments */
   if ( results->compartments->num_val == 0 ) {
-    printf("No variable compartments.\n");
+    printf("### No variable compartments.\n");
 
   }
   else {
-    printf("Printing variable Compartment time courses\n");
-    printf("time ");
+    printf("### Printing variable Compartment time courses\n");
+    printf("#time ");
     for ( j=0; j<results->compartments->num_val; j++) {
       printf("%s ", results->compartments->names[j]);
     }
@@ -143,11 +143,11 @@ printResults(SBMLResults results) {
   }
   /* print variable parameters */
   if ( results->parameters->num_val == 0 ) {
-    printf("No variable parameters.\n");
+    printf("### No variable parameters.\n");
   }
   else {
-    printf("Printing variable Parameter time courses\n");
-    printf("time ");
+    printf("### Printing variable Parameter time courses\n");
+    printf("#time ");
     for ( j=0; j<results->parameters->num_val; j++) {
       printf("%s ", results->parameters->names[j]);
     }
@@ -161,16 +161,16 @@ printResults(SBMLResults results) {
     }
   }
   /* print fluxes */
-  printf("Printing Reaction Fluxes\n");
-  printf("time ");
+  printf("### Printing Reaction Fluxes\n");
+  printf("#time ");
   for ( j=0; j<results->fluxes->num_val; j++) {
-    printf("%s ", results->fluxes->names[j]);
+    printf("#%s ", results->fluxes->names[j]);
   }
   printf("\n");
   for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
+    printf("#%g ", results->time[i]);
     for ( j=0; j<results->fluxes->num_val; j++) {
-      printf("%g ", results->fluxes->values[i][j]);
+      printf("#%g ", results->fluxes->values[i][j]);
     }
     printf("\n");
   }
