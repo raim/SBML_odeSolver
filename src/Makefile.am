@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.3 2005/05/31 13:54:00 raimc Exp $
+# $Id: Makefile.am,v 1.4 2005/06/15 12:58:36 raimc Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -32,7 +32,7 @@ pkginclude_HEADERS = sbmlsolver/odeSolver.h sbmlsolver/util.h \
                      sbmlsolver/odeIntegrate.h  sbmlsolver/printModel.h \
                      sbmlsolver/drawGraph.h  sbmlsolver/interactive.h \
                      sbmlsolver/cvodedata.h sbmlsolver/batchIntegrator.h \
-		     sbmlsolver/sbmlResults.h
+		     sbmlsolver/sbmlResults.h sbmlsolver/exportdefs.h
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c
 odeSolver_LDADD   = -L. -lODES \
