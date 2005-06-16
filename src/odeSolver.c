@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:29:36 raim>
-  $Id: odeSolver.c,v 1.6 2005/06/08 15:19:09 afinney Exp $
+  $Id: odeSolver.c,v 1.7 2005/06/16 20:16:36 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -502,7 +502,7 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
 	   vary1.id);
       return(NULL);
     }
-    
+    value2 = vary2.start; 
     for ( j=0; j<=vary2.steps; j++ ) {      
       if ( ! Model_setValue(m, vary2.id, vary2.rid, value2) ) {
 	Warn(stderr, "Parameter for variation not found in the model.",
