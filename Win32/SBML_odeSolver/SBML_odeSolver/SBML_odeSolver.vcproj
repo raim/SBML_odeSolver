@@ -127,6 +127,9 @@
 				RelativePath="..\..\..\src\drawGraph.c">
 			</File>
 			<File
+				RelativePath="..\..\..\src\integratorInstance.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\interactive.c">
 			</File>
 			<File
@@ -139,7 +142,13 @@
 				RelativePath="..\..\..\src\odeConstruct.c">
 			</File>
 			<File
+				RelativePath="..\..\..\src\odeConstructUsingOptions.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\odeIntegrate.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\odeModel.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\odeSolver.c">
@@ -163,6 +172,12 @@
 				RelativePath="..\..\..\src\sbmlResults.c">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlUsingOptions.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\solverError.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\util.c">
 			</File>
 		</Filter>
@@ -183,6 +198,9 @@
 				RelativePath="..\..\..\src\sbmlsolver\exportdefs.h">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\integratorInstance.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\interactive.h">
 			</File>
 			<File
@@ -192,7 +210,13 @@
 				RelativePath="..\..\..\src\sbmlsolver\odeConstruct.h">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\odeConstructUsingOptions.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeIntegrate.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\odemodeldatatype.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeSolver.h">
@@ -211,6 +235,12 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\sbmlResults.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\sbmlUsingOptions.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\solverError.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\util.h">
