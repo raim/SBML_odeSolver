@@ -1,10 +1,10 @@
 /*
 <<<<<<< drawGraph.c
-  Last changed Time-stamp: <2005-05-31 12:27:31 raim>
-  $Id: drawGraph.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-22 14:46:48 raim>
+  $Id: drawGraph.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
 =======
   Last changed Time-stamp: <2004-10-04 14:31:24 raim>
-  $Id: drawGraph.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: drawGraph.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
 >>>>>>> 1.6
 */
 #include <stdio.h>
@@ -112,7 +112,7 @@ drawJacoby(CvodeData data) {
   agxset(g, a->index, "scale");
 
   /* set graph label */
-  sprintf(label, "%s at time %g", data->modelName, data->tout);
+  sprintf(label, "%s at time %g", data->model->modelName, data->tout);
   a = agraphattr(g, "label", "");
   agxset(g, a->index, label);
   
@@ -123,35 +123,35 @@ drawJacoby(CvodeData data) {
     if negative.
   */
 
-  for ( i=0; i<data->neq; i++ ) {
-    for ( j=0; j<data->neq; j++ ) {
-      if ( evaluateAST(data->jacob[i][j], data) != 0 ) {
+  for ( i=0; i<data->model->neq; i++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
+      if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
 	
-	sprintf(name, "%s", data->species[j]);
+	sprintf(name, "%s", data->model->species[j]);
 	r = agnode(g,name);
-	agset(r, "label", data->speciesname[j]);
+	agset(r, "label", data->model->speciesname[j]);
 
-	sprintf(label, "%s.htm", data->species[j]);
+	sprintf(label, "%s.htm", data->model->species[j]);
 	a = agnodeattr(g, "URL", "");
 	agxset(r, a->index, label);
 	
-	sprintf(name,"%s", data->species[i]);
+	sprintf(name,"%s", data->model->species[i]);
 	s = agnode(g,name);
-	agset(s, "label", data->speciesname[i]);
+	agset(s, "label", data->model->speciesname[i]);
 
-	sprintf(label, "%s.htm", data->species[i]);	
+	sprintf(label, "%s.htm", data->model->species[i]);	
 	a = agnodeattr(g, "URL", "");
 	agxset(s, a->index, label);
 	
 	e = agedge(g,r,s);
 
 	a = agedgeattr(g, "label", "");
-	sprintf(name, "%g",  evaluateAST(data->jacob[i][j], data)); 
+	sprintf(name, "%g",  evaluateAST(data->model->jacob[i][j], data)); 
 	agxset (e, a->index, name);
 
 
 	
-	if ( evaluateAST(data->jacob[i][j], data) < 0 ) {
+	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
 	  a = agedgeattr(g, "arrowhead", "");
 	  agxset(e, a->index, "tee");
 	  a = agedgeattr(g, "color", "");
@@ -189,7 +189,7 @@ drawJacobyTxt(CvodeData data) {
 
   printf("digraph jacoby {\n");
   printf("overlap=scale;\n");
-  printf("label=\"%s at time %g\";\n", data->modelName, data->tout);
+  printf("label=\"%s at time %g\";\n", data->model->modelName, data->tout);
 
 
   /*
@@ -200,15 +200,15 @@ drawJacobyTxt(CvodeData data) {
   */
 
 
-  for ( i=0; i<data->neq; i++ ) {
-    for ( j=0; j<data->neq; j++ ) {
-      if ( evaluateAST(data->jacob[i][j], data) != 0 ) {
+  for ( i=0; i<data->model->neq; i++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
+      if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
 	printf("%s->%s [label=\"%g\" ",
-	       data->species[j],
-	       data->species[i],
-	       evaluateAST(data->jacob[i][j],
+	       data->model->species[j],
+	       data->model->species[i],
+	       evaluateAST(data->model->jacob[i][j],
 			   data));
-	if ( evaluateAST(data->jacob[i][j], data) < 0 ) {
+	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
 	  printf("arrowhead=tee color=red];\n");
 	}
 	else {
@@ -217,8 +217,8 @@ drawJacobyTxt(CvodeData data) {
       }
     }
   }
-  for ( i=0; i<data->neq; i++ ) {
-    printf("%s [label=\"%s\"];", data->species[i], data->speciesname[i]);
+  for ( i=0; i<data->model->neq; i++ ) {
+    printf("%s [label=\"%s\"];", data->model->species[i], data->model->speciesname[i]);
   }   
   printf("}\n");
   return 0;

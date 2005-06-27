@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:26:25 raim>
-  $Id: odeConstruct.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: odeConstruct.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,205 +10,17 @@
 #include <sbml/common/common.h>  /* for safe_free */
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/options.h"
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/processAST.h"
+#include "sbmlsolver/solverError.h"
 
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode);
+ODEs_replaceConstants(Model_t *m, Model_t *ode, const char *parameterNotToBeReplaced);
 static void
 ODEs_copyConstants(Model_t *m, Model_t *ode);
-
-static void
-ODEs_constructJacobian (CvodeData data);
-
-     
-/**
-  This function initializes and fills the CvodeData for CVODE:
-  neq: the number of time-dependent variables and ODEs
-  ode[neq]: the ODEs
-  species[neq]: the names of the  time-dependent variables,
-                as they appear in the ODEs (kinetic laws, rate rules).
-  value[neq]:   the initial values of the time-dependent variables
-
-  When finished with ODE construction successfully, it (optionally)
-  attempts to construct the Jacobian matrix by calling the function
-  ODEs_constructJacobian.
-*/
-
-/** I.1: Initialize Data for Integration
-    Use the new simplified model to initialize and
-    fill the data structure CvodeData, that can then
-    be passed to CVODE for integration      
-*/
-
-CvodeData 
-constructODEs(Model_t *m) {
-  
-  int i, j, errors, found, neq, nconst, nass, nevents;
-  Model_t *ode;
-  Parameter_t *p;
-  Species_t *s;
-  Rule_t *rl;
-  AssignmentRule_t *ar;
-  RateRule_t *rr;
-  SBMLTypeCode_t type;  
-  ASTNode_t *math;  
-  CvodeData data;
-
-  /* C: construct ODE model */
-  ode = Model_reduceToOdes(m);
-
-  if ( ode == NULL ) {
-    data = CvodeData_create(0,0,0,0);
-    data->errors = 1;
-    return data;
-  }
-  errors = 0;
-  neq    = 0;
-  nconst = 0;
-  nass   = 0;
-  found  = 0;
-
-  /*
-    counting number of equations (ODEs/rateRules) and Parameters
-    to initialize CvodeData structure
-  */
-  for ( j=0; j<Model_getNumRules(ode); j++ ) {
-
-    rl = Model_getRule(ode,j);
-    type = SBase_getTypeCode((SBase_t *)rl);    
-    if ( type == SBML_RATE_RULE ) {
-      neq++;
-    }
-    if ( type == SBML_ASSIGNMENT_RULE ) {
-      nass++;
-    }    
-  }
-  for ( j=0; j<Model_getNumParameters(ode); j++ ) {
-    p = Model_getParameter(ode,j);
-    if ( Parameter_getConstant(p) ) {
-      nconst++;
-    }
-  }
-  
-  nevents = Model_getNumEvents(ode);
-  
-  data = CvodeData_create(neq, nconst, nass, nevents);
-  data->neq = neq;
-  data->nconst = nconst;
-  data->nass = nass;
-
-  /*
-    filling CvodeData structure with data from
-    the ODE model
-  */
-  nconst = 0;  
-  for ( i=0; i<Model_getNumParameters(ode); i++ ) {
-    p = Model_getParameter(ode, i);
-    if ( Parameter_getConstant(p) ) {     
-      data->parameter[nconst] =
-	(char *) calloc(strlen(Parameter_getId(p))+1, sizeof(char));
-      sprintf(data->parameter[nconst], Parameter_getId(p));
-      data->pvalue[nconst] = Parameter_getValue(p);
-      nconst++;
-    }
-  }
-
-  neq  = 0;
-  nass = 0;
-  
-  for ( j=0; j<Model_getNumRules(ode); j++ ) {
-    rl = Model_getRule(ode,j);
-    type = SBase_getTypeCode((SBase_t *)rl);
-  
-    if ( type == SBML_RATE_RULE ) {
-
-      rr = (RateRule_t *)rl;
-      math = copyAST(Rule_getMath(rl));
-      data->ode[neq] = math;
-      s = Model_getSpeciesById(ode, RateRule_getVariable(rr));
-      data->value[neq] = Species_getInitialConcentration(s);
-
-      data->species[neq] =
-	(char *) calloc(strlen(RateRule_getVariable(rr))+1, sizeof(char));
-      sprintf(data->species[neq],RateRule_getVariable(rr));
-
-      if ( Species_isSetName(s) ) {
-	data->speciesname[neq] =
-	  (char *) calloc(strlen(Species_getName(s))+1, sizeof(char));
-	sprintf(data->speciesname[neq],Species_getName(s));
-      }
-      else {
-	data->speciesname[neq] =
-	  (char *) calloc(strlen(RateRule_getVariable(rr))+1, sizeof(char));
-	sprintf(data->speciesname[neq], RateRule_getVariable(rr));
-      }
-      neq++;      
-    }
-    else if ( type == SBML_ASSIGNMENT_RULE ) {
-      
-      ar = (AssignmentRule_t *)rl;
-      math = copyAST(Rule_getMath(rl));
-      data->assignment[nass] = math;
-
-      data->ass_parameter[nass] =
-	(char *) calloc(strlen(AssignmentRule_getVariable(ar))+1,
-			sizeof(char));
-      sprintf(data->ass_parameter[nass], AssignmentRule_getVariable(ar));
-      data->avalue[nass] = evaluateAST(data->assignment[nass], data);
-      nass++;      
-    }
-  }
-
-  /* setting model name and id and pointing to sbml model */    
-  if ( Model_isSetName(m) ) {
-    data->modelName = (char *)calloc(strlen(Model_getName(m))+1,
-				     sizeof(char));
-    sprintf(data->modelName, Model_getName(m));    
-  }
-  else {
-    data->modelName = (char *)calloc(strlen(Model_getId(m))+1,
-				     sizeof(char));
-    sprintf(data->modelName, Model_getId(m));
-  }
-  data->modelId = (char *)calloc(strlen(Model_getId(m))+1,
-				 sizeof(char));
-  sprintf(data->modelId, Model_getId(m));
-
-  data->m = m;
-  data->simple = ode; 
-  data->errors = errors;
-
-  /* data->run is set to 0, will be used for trying a rerun
-     of integration withour or with generated Jacobian,
-     or with lower error tolerance,
-     when first integration with or without generated Jacobian failed
-     with CVODE flag -6/CONV_FAILURE
-   */
-  data->run = 0;
-
-  if ( Opt.Simplify ) {
-    ODEs_constructJacobian(data);
-  }
-  else {
-    Warn(stderr,
-	 "Model not simplified; Jacobian matrix construction skipped");
-    data->UseJacobian = 0;
-    Opt.PrintJacobian = 0;
-    Opt.DrawJacobian = 0;
-    for ( i=0; i<data->neq; i++ ) {
-      safe_free(data->jacob[i]);
-    }
-    safe_free(data->jacob);
-    data->jacob = NULL;
-  }
-
-  return data;
-}
 
 /** C: Create an ODE system
     of the reaction network of the passed models
@@ -217,7 +29,7 @@ constructODEs(Model_t *m) {
 */
 
 Model_t*
-Model_reduceToOdes(Model_t *m) {
+Model_reduceToOdes(Model_t *m, int simplify, const char *parameterNotToBeReplaced) {
 
   Model_t *ode;
   Parameter_t *p;
@@ -322,12 +134,15 @@ Model_reduceToOdes(Model_t *m) {
     if ( found == 0 ) {
       if ( !Species_getConstant(s) && !Species_getBoundaryCondition(s) ) {
 
-	math = Species_odeFromReactions(s, m);
+    math = Species_odeFromReactions(s, m);
 
 	if ( math == NULL ) {
-	  Warn(stderr, "ODE could not be constructed for species %s!",
-	       Species_getId(s));
-	  errors++;
+      errors++;
+      SolverError_error(
+          ERROR_ERROR_TYPE,
+          SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
+          "ODE could not be constructed for species %s!",
+	      Species_getId(s));
 	}
 	else {
 	  rl_new = RateRule_create();
@@ -350,7 +165,7 @@ Model_reduceToOdes(Model_t *m) {
 			     Compartment_getSize(c));
 	}
 	if ( Species_isSetName(s) ) {
-	  Parameter_setName(p, Species_getName(s));
+      Parameter_setName(p, Species_getName(s));
 	}
 	Model_addParameter(ode, p);       
       }
@@ -464,8 +279,14 @@ Model_reduceToOdes(Model_t *m) {
       Event_addEventAssignment(e_new, ea_new);
     }
     Model_addEvent(ode, e_new);
-    Warn(stderr, "Sorry: Events cannot be handled at the moment.");
-    Warn(stderr, "Integration will be aborted, if event is detected.");
+    if (!i)
+        SolverError_error(
+            WARNING_ERROR_TYPE,
+            SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
+            "The model contains events. "
+            "The SBML_odeSolver implementation of events is not fully SBML conformant. "
+            "Results will depend on the simulation duration and the number of output steps.");
+    /* Warn(stderr, "Integration will be aborted, if event is detected."); */
     /* errors++; */  
   }
   
@@ -474,7 +295,7 @@ Model_reduceToOdes(Model_t *m) {
 
   */
   
-  for ( i=0; i<Model_getNumRules(m); i++ ) {
+  for ( j=i=0; i<Model_getNumRules(m); i++ ) {
     rl = Model_getRule(m, i);
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_ALGEBRAIC_RULE ) {
@@ -484,9 +305,13 @@ Model_reduceToOdes(Model_t *m) {
 	alr_new = AlgebraicRule_create();
 	Rule_setMath((Rule_t *)alr_new, math);
 	Model_addRule(ode, (Rule_t *)alr_new);
-	Warn(stderr, "Sorry: Algebraic Rules require techniques for");
-	Warn(stderr, "solving differential algebraic equation systems.");
-  	errors++; 
+    errors++;
+    if (!j)
+        SolverError_error(
+            ERROR_ERROR_TYPE,
+            SOLVER_ERROR_THE_MODEL_CONTAINS_ALGEBRAIC_RULES,
+            "The model contains Algebraic Rules.  SBML_odeSolver is unable to solve models of this type.");
+    j++;
       }
     }
   }
@@ -523,15 +348,18 @@ Model_reduceToOdes(Model_t *m) {
       Option, default is '1', i.e.
       replacing all constants
   */
-  if ( Opt.Simplify ) {
-    ODEs_replaceConstants(m, ode);
+  if ( simplify ) {
+    ODEs_replaceConstants(m, ode, parameterNotToBeReplaced);
   }
   else {
     ODEs_copyConstants(m, ode);
   }
   
   if ( errors>0 ) {
-    Warn(stderr, "ODE model could not be constructed!");
+    SolverError_error(
+        ERROR_ERROR_TYPE,
+        SOLVER_ERROR_ODE_MODEL_COULD_NOT_BE_CONSTRUCTED,
+        "ODE model could not be constructed");
     return NULL;
   }
   else {
@@ -581,7 +409,7 @@ Model_getValueById(Model_t *m, const char *id) {
     ODEs_replaceConstants(Model_t *m, Model_t *ode) {}
 */
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode) {
+ODEs_replaceConstants(Model_t *m, Model_t *ode, const char *parameterNotToBeReplaced) {
 
 
   int i, j, k;
@@ -710,7 +538,7 @@ ODEs_replaceConstants(Model_t *m, Model_t *ode) {
     p = Model_getParameter(m, i);
     if ( Parameter_getConstant(p) ) {
 
-      if ( strcmp(Parameter_getId(p), Opt.Parameter) == 0 ) {
+      if ( strcmp(Parameter_getId(p), parameterNotToBeReplaced) == 0 ) {
 	p_var = Parameter_create();
 	Parameter_setId(p_var, Parameter_getId(p));
 	Parameter_setValue(p_var, Parameter_getValue(p));
@@ -919,7 +747,6 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
   ASTNode_t *simple, *ode, *tmp, *reactant;
 
   errors = 0;
-  kl = NULL;
   ode = NULL;
 
   /* search for the species in all reactions, and
@@ -928,171 +755,180 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
      an ODE */
 
   for ( j=0; j<Model_getNumReactions(m); j++ ) {
-    r = Model_getReaction(m,j);
-    if ( Reaction_isSetKineticLaw(r) ) {
-      kl = Reaction_getKineticLaw(r);
-    }
-    for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
-      sref = Reaction_getReactant(r,k);
-      if ( strcmp(SpeciesReference_getSpecies(sref),Species_getId(s)) == 0 ) {
-	if ( kl != NULL ) {
-
-	  /** Construct expression for reactant
-	      by multiplying the kinetic law
-	      with stoichiometry (math) and putting
-	      a minus in front of it
-	  */
-	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
-	    reactant = ASTNode_create();
-	    ASTNode_setCharacter(reactant, '*');
-	    ASTNode_addChild(reactant,
-			     copyAST( \
-			      SpeciesReference_getStoichiometryMath(sref)));
-	    ASTNode_addChild(reactant, copyAST( KineticLaw_getMath(kl)));
-	  }
-	  else {
-	    if ( SpeciesReference_getStoichiometry(sref) == 1. ) {
-	      reactant = copyAST(KineticLaw_getMath(kl));
-	    }
-	    else {
-	      reactant = ASTNode_create();
-	      ASTNode_setCharacter(reactant, '*');
-	      ASTNode_addChild(reactant, ASTNode_create());
-	      ASTNode_setReal(ASTNode_getChild(reactant,0), 
-			      SpeciesReference_getStoichiometry(sref));
-	      ASTNode_addChild(reactant, copyAST( KineticLaw_getMath(kl)));
-	    }
-	  }
-
-	  /* replace local parameters by their value, before adding to ODE */
-	  AST_replaceNameByParameters(reactant,
-				      KineticLaw_getListOfParameters(kl));
-	  /** Add reactant expression to ODE
-	  */
-	  if ( ode == NULL ) {
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode,'-');
-	    ASTNode_addChild(ode, reactant);
-	  }
-	  else {
-	    tmp = copyAST(ode);
-	    ASTNode_free(ode);
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode, '-');
-	    ASTNode_addChild(ode, tmp);
-	    ASTNode_addChild(ode, reactant);
-	  }
-	  
-	}
-	else {
-	  Warn(stderr, "No Kinetic Law found for reaction %s!",
-		  Reaction_getId(r));
-	  ++errors;
-	}
+      r = Model_getReaction(m,j);
+      if ( Reaction_isSetKineticLaw(r) ) {
+          kl = Reaction_getKineticLaw(r);
       }
-    }
+      else
+          kl = NULL;
 
-    for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
-      sref = Reaction_getProduct(r,k);
-      if ( strcmp(SpeciesReference_getSpecies(sref),Species_getId(s)) == 0 ) {
-	if ( kl != NULL ) {
+      for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
+          sref = Reaction_getReactant(r,k);
+          if ( strcmp(SpeciesReference_getSpecies(sref),Species_getId(s)) == 0 ) {
+              if ( kl != NULL ) {
 
-	  reactant = ASTNode_create();
-	  ASTNode_setCharacter(reactant, '*');
-	    
-	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
-	    ASTNode_addChild(reactant,
-			     copyAST( \
-			      SpeciesReference_getStoichiometryMath(sref)));
-	  }
-	  else {
-	    ASTNode_addChild(reactant, ASTNode_create());
-	    ASTNode_setReal(ASTNode_getChild(reactant,0),
-			    SpeciesReference_getStoichiometry(sref));
-	  }
-	  ASTNode_addChild(reactant, copyAST(KineticLaw_getMath(kl)));
+                  /** Construct expression for reactant
+                  by multiplying the kinetic law
+                  with stoichiometry (math) and putting
+                  a minus in front of it
+                  */
+                  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
+                      reactant = ASTNode_create();
+                      ASTNode_setCharacter(reactant, '*');
+                      ASTNode_addChild(reactant,
+                          copyAST( \
+                          SpeciesReference_getStoichiometryMath(sref)));
+                      ASTNode_addChild(reactant, copyAST( KineticLaw_getMath(kl)));
+                  }
+                  else {
+                      if ( SpeciesReference_getStoichiometry(sref) == 1. ) {
+                          reactant = copyAST(KineticLaw_getMath(kl));
+                      }
+                      else {
+                          reactant = ASTNode_create();
+                          ASTNode_setCharacter(reactant, '*');
+                          ASTNode_addChild(reactant, ASTNode_create());
+                          ASTNode_setReal(ASTNode_getChild(reactant,0), 
+                              SpeciesReference_getStoichiometry(sref));
+                          ASTNode_addChild(reactant, copyAST( KineticLaw_getMath(kl)));
+                      }
+                  }
 
-	  /* replace local parameters by their value, before adding to ODE */
-	  AST_replaceNameByParameters(reactant,
-				      KineticLaw_getListOfParameters(kl));
-	  /** Add reactant expression to ODE
-	  */
-	  if ( ode == NULL ) {
-	    ode = reactant;
-	  }
-	  else {
-	    tmp = copyAST(ode);
-	    ASTNode_free(ode);
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode, '+');
-	    ASTNode_addChild(ode, tmp);
-	    ASTNode_addChild(ode, reactant);
-	  }	  
-	
-	}
-	else {
-	  Warn(stderr, "No Kinetic Law found for reaction %s!",
-		  Reaction_getId(r));
-	  ++errors;
-	}
+                  /* replace local parameters by their value, before adding to ODE */
+                  AST_replaceNameByParameters(reactant,
+                      KineticLaw_getListOfParameters(kl));
+                  /** Add reactant expression to ODE
+                  */
+                  if ( ode == NULL ) {
+                      ode = ASTNode_create();
+                      ASTNode_setCharacter(ode,'-');
+                      ASTNode_addChild(ode, reactant);
+                  }
+                  else {
+                      tmp = copyAST(ode);
+                      ASTNode_free(ode);
+                      ode = ASTNode_create();
+                      ASTNode_setCharacter(ode, '-');
+                      ASTNode_addChild(ode, tmp);
+                      ASTNode_addChild(ode, reactant);
+                  }
+
+              }
+              else {
+                  SolverError_error(
+                      ERROR_ERROR_TYPE,
+                      SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
+                      "The model has no kinetic law for reaction %s!",
+                      Reaction_getId(r));
+                  ++errors;
+              }
+          }
       }
-    }
+
+      for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
+          sref = Reaction_getProduct(r,k);
+          if ( strcmp(SpeciesReference_getSpecies(sref),Species_getId(s)) == 0 ) {
+              if ( kl != NULL ) {
+
+                  reactant = ASTNode_create();
+                  ASTNode_setCharacter(reactant, '*');
+
+                  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
+                      ASTNode_addChild(reactant,
+                          copyAST( \
+                          SpeciesReference_getStoichiometryMath(sref)));
+                  }
+                  else {
+                      ASTNode_addChild(reactant, ASTNode_create());
+                      ASTNode_setReal(ASTNode_getChild(reactant,0),
+                          SpeciesReference_getStoichiometry(sref));
+                  }
+                  ASTNode_addChild(reactant, copyAST(KineticLaw_getMath(kl)));
+
+                  /* replace local parameters by their value, before adding to ODE */
+                  AST_replaceNameByParameters(reactant,
+                      KineticLaw_getListOfParameters(kl));
+                  /** Add reactant expression to ODE
+                  */
+                  if ( ode == NULL ) {
+                      ode = reactant;
+                  }
+                  else {
+                      tmp = copyAST(ode);
+                      ASTNode_free(ode);
+                      ode = ASTNode_create();
+                      ASTNode_setCharacter(ode, '+');
+                      ASTNode_addChild(ode, tmp);
+                      ASTNode_addChild(ode, reactant);
+                  }	  
+
+              }
+              else {
+                  SolverError_error(
+                      ERROR_ERROR_TYPE,
+                      SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
+                      "The model has no kinetic law for reaction %s!",
+                      Reaction_getId(r));
+                  ++errors;
+              }
+          }
+      }
   }
 
   /* Divide ODE by Name of the species' compartment, if the
-     compartment is set variable, by the size if the compartment is
-     constant (but not if Volume is constant AND 1),
-     
-     If formula is empty skip division by compartment and set formula
-     to 0.  The latter case can happen, if a species is neither
-     constant nor a boundary condition but appears only as a modifier
-     in reactions.  The rate for such species is set to 0. */
+  compartment is set variable, by the size if the compartment is
+  constant (but not if Volume is constant AND 1),
+
+  If formula is empty skip division by compartment and set formula
+  to 0.  The latter case can happen, if a species is neither
+  constant nor a boundary condition but appears only as a modifier
+  in reactions.  The rate for such species is set to 0. */
 
   if( ode != NULL ) {
-    for ( j=0; j<Model_getNumCompartments(m); j++ ) {
-      c = Model_getCompartment(m,j);
-      if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
-	if ( Compartment_getConstant(c) ) {
-	  if ( Compartment_getSize(c) != 1 ) {
-	    tmp = copyAST(ode);
-	    ASTNode_free(ode);
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode, '/');
-	    ASTNode_addChild(ode, tmp);
-	    ASTNode_addChild(ode, ASTNode_create());
-	    ASTNode_setReal(ASTNode_getChild(ode,1), Compartment_getSize(c));
-	  }
-	}
-	else if ( !(Compartment_getConstant(c)) ) {
-	  tmp = copyAST(ode);
-	  ASTNode_free(ode);
-	  ode = ASTNode_create();
-	  ASTNode_setCharacter(ode, '/');
-	  ASTNode_addChild(ode, tmp);
-	  ASTNode_addChild(ode, ASTNode_create());
-	  ASTNode_setName(ASTNode_getChild(ode,1), Compartment_getId(c));
-	}
-      }
-    }	 
+      for ( j=0; j<Model_getNumCompartments(m); j++ ) {
+          c = Model_getCompartment(m,j);
+          if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
+              if ( Compartment_getConstant(c) ) {
+                  if ( Compartment_getSize(c) != 1 ) {
+                      tmp = copyAST(ode);
+                      ASTNode_free(ode);
+                      ode = ASTNode_create();
+                      ASTNode_setCharacter(ode, '/');
+                      ASTNode_addChild(ode, tmp);
+                      ASTNode_addChild(ode, ASTNode_create());
+                      ASTNode_setReal(ASTNode_getChild(ode,1), Compartment_getSize(c));
+                  }
+              }
+              else if ( !(Compartment_getConstant(c)) ) {
+                  tmp = copyAST(ode);
+                  ASTNode_free(ode);
+                  ode = ASTNode_create();
+                  ASTNode_setCharacter(ode, '/');
+                  ASTNode_addChild(ode, tmp);
+                  ASTNode_addChild(ode, ASTNode_create());
+                  ASTNode_setName(ASTNode_getChild(ode,1), Compartment_getId(c));
+              }
+          }
+      }	 
   }
   else {
-    /*
+      /*
       for modifier species that never appear as products or reactants
       but are not defined as constant or boundarySpecies, set ODE to 0.
-    */
-    ode = ASTNode_create();
-    ASTNode_setInteger(ode, 0);
+      */
+      ode = ASTNode_create();
+      ASTNode_setInteger(ode, 0);
   }
 
   simple = AST_simplify(ode);
   ASTNode_free(ode);
 
   if ( errors>0 ) {
-    ASTNode_free(simple);
-    return NULL;
+      ASTNode_free(simple);
+      return NULL;
   }
   else {
-    return simple;
+      return simple;
   }
 }
 
@@ -1103,8 +939,8 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
    Jacobian matrix.
 */
 
-static void
-ODEs_constructJacobian(CvodeData data) {
+void
+ODEs_constructJacobian(odeModel_t *data, int determinant) {
   
   int i, j, k, failed;
   ASTNode_t *fprime, *det, *simple, *dsimple;
@@ -1137,18 +973,20 @@ ODEs_constructJacobian(CvodeData data) {
     }
 
     if ( failed != 0 ) {
-      Warn(stderr,
-	   "%d entries of the Jacobian matrix could not be constructed,\n"
-           "due to failure of differentiation. Cvode will use internal\n"
-           "approximation of the Jacobian instead.");
-      data->UseJacobian = 0;
+       SolverError_error(
+            WARNING_ERROR_TYPE,
+            SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+	        "%d entries of the Jacobian matrix could not be constructed,\n"
+            "due to failure of differentiation. Cvode will use internal\n"
+            "approximation of the Jacobian instead.", failed);
+      data->simplified = 0;
       /* Opt.Jacobian = 0; */
     }
     else {
-      data->UseJacobian = 1;
+      data->simplified = 1;
     }
     
-    if ( Opt.Determinant == 1 ) {
+    if ( determinant == 1 ) {
       det = determinantNAST(data->jacob, data->neq);
       dsimple = AST_simplify(det);
       ASTNode_free(det);

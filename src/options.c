@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:31:47 raim>
-  $Id: options.c,v 1.4 2005/06/01 08:33:22 raimc Exp $
+  $Id: options.c,v 1.5 2005/06/27 15:12:20 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -261,7 +261,7 @@ processOptions (int argc, char *argv[])
       Opt.DrawJacobian = 1;
       break;
     case 'n':
-      Opt.PrintOnTheFly = 1;
+      /* AMF removed 10 June 2005 Opt.PrintOnTheFly = 1; */
       Opt.HaltOnEvent   = 0;
       break;
     case 'e':

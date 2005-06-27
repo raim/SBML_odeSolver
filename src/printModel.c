@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:25:48 raim>
-  $Id: printModel.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  Last changed Time-stamp: <2005-06-22 14:44:16 raim>
+  $Id: printModel.c,v 1.3 2005/06/27 15:12:20 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -327,7 +327,7 @@ printODEsToSBML(CvodeData data){
   SBMLDocument_t *d;
   char *model;
   d = SBMLDocument_create();
-  SBMLDocument_setModel(d, data->simple);
+  SBMLDocument_setModel(d, data->model->simple);
   model = writeSBMLToString(d);
   printf("%s", model);
   free(model);
@@ -335,17 +335,18 @@ printODEsToSBML(CvodeData data){
 
 
 void
-printODEs(CvodeData data){
+printODEs(CvodeData x){
   
   int i;
   char *f;
+  odeModel_t *data = x->model;
 
   printf("\n");
   printf("# Derived system of Ordinary Differential Equations (ODEs):\n");
 
   printf("# Parameters:\n");
   for ( i=0; i<data->nconst; i++ ) {
-    printf("%s = %g\n", data->parameter[i], data->pvalue[i]);
+    printf("%s = %g\n", data->parameter[i], x->pvalue[i]);
   }
   
   for ( i=0; i<data->neq; i++ ) {
@@ -361,17 +362,19 @@ printODEs(CvodeData data){
   }
   printf("\n");
 
+  /* change in behaviour AMF 27th June 05 
   if ( data->errors>0 ) {
     printf("# %d ODEs could not be constructed."
 	   " Try to add or correct kinetic laws!\n",
-	   data->errors);
-  }
+	   data->errors); 
+  }*/
   return;
 }
 
 void 
-printJacobian(CvodeData data){
+printJacobian(CvodeData x){
   
+  odeModel_t *data = x->model;
   int i, j;
   if ( data == NULL ) {
     fprintf(stderr, "No data available.\n");
@@ -430,10 +433,10 @@ printDeterminantTimeCourse(CvodeData data) {
   for ( i = 0; i<=results->nout; i++ ) {
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       data->value[j] = results->value[j][i];
     }
-    fprintf(f, "%g\n", evaluateAST(data->det, data));
+    fprintf(f, "%g\n", evaluateAST(data->model->det, data));
   }
   fprintf(f, "##DETERMINANT OF THE JACOBIAN MATRIX\n");
   fprintf(f, "#t det(j)\n");
@@ -468,9 +471,9 @@ printJacobianTimeCourse(CvodeData data){
     fprintf(stderr, "Printing time course of the jacobian matrix.\n\n");
   
   fprintf(f, "#t ");
-  for ( i=0; i<data->neq; i++ ) {
-    for ( j=0; j<data->neq; j++ ) {
-      fprintf(f, "%s ", data->species[j]);
+  for ( i=0; i<data->model->neq; i++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
+      fprintf(f, "%s ", data->model->species[j]);
     }
   }
   fprintf(f, "\n");
@@ -478,21 +481,21 @@ printJacobianTimeCourse(CvodeData data){
   for ( k = 0; k<=results->nout; k++ ) {
     fprintf(f, "%g ", results->time[k]);
     data->currenttime = results->time[k];
-    for ( i=0; i<data->neq; i++ ) {
+    for ( i=0; i<data->model->neq; i++ ) {
       data->value[i] = results->value[i][k];
     }
-    for ( i=0; i<data->neq; i++ ) {
-      for ( j=0; j<data->neq; j++ ) {	    	   
-	fprintf(f, "%g ", evaluateAST(data->jacob[i][j], data));
+    for ( i=0; i<data->model->neq; i++ ) {
+      for ( j=0; j<data->model->neq; j++ ) {	    	   
+	fprintf(f, "%g ", evaluateAST(data->model->jacob[i][j], data));
       }
     }
     fprintf(f, "\n");
   }
   fprintf(f, "##JACOBIAN MATRIX VALUES\n");
   fprintf(f, "#t ");				      
-  for ( i=0; i<data->neq; i++ ) {
-    for ( j=0; j<data->neq; j++ ) {
-      fprintf(f, "%s ", data->species[j]);
+  for ( i=0; i<data->model->neq; i++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
+      fprintf(f, "%s ", data->model->species[j]);
     }
   }
   fprintf(f, "\n");
@@ -504,9 +507,9 @@ printJacobianTimeCourse(CvodeData data){
 	    data->currenttime);
     fprintf(stderr, "Simulation aborted at steady state!\n");
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->neq;i++) 
+    for(i=0;i<data->model->neq;i++) 
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->species[i], fabs(evaluateAST(data->ode[i],data)));
+	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
     fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
 	    data->dy_mean, data->dy_std);
@@ -551,24 +554,24 @@ printOdeTimeCourse(CvodeData data){
     fprintf(stderr, "\nPrinting time course of the ODEs.\n\n");
     
   fprintf(f, "#t ");
-  for (i=0; i<data->neq; i++ ) {
-    fprintf(f, "%s ", data->species[i]);
+  for (i=0; i<data->model->neq; i++ ) {
+    fprintf(f, "%s ", data->model->species[i]);
   }
   fprintf(f, "\n");
   fprintf(f, "##ODE VALUES\n");
   for ( i=0; i<=results->nout; ++i ) { 
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       data->value[j] = results->value[j][i];
-      fprintf(f, "%g ", evaluateAST(data->ode[j],data));
+      fprintf(f, "%g ", evaluateAST(data->model->ode[j],data));
     }
     fprintf(f, "\n");
   }
   fprintf(f, "##ODE VALUES\n");
   fprintf(f, "#t ");
-  for ( i=0; i<data->neq; i++ ) {
-    fprintf(f, "%s ", data->species[i]);
+  for ( i=0; i<data->model->neq; i++ ) {
+    fprintf(f, "%s ", data->model->species[i]);
   }
   fprintf(f, "\n");
   fflush(f);
@@ -579,9 +582,9 @@ printOdeTimeCourse(CvodeData data){
 	    data->currenttime);
     fprintf(stderr, "Simulation aborted at steady state!\n");
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->neq;i++)
+    for(i=0;i<data->model->neq;i++)
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->species[i], fabs(evaluateAST(data->ode[i],data)));
+	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
     fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
 	    data->dy_mean, data->dy_std);
@@ -624,7 +627,7 @@ printReactionTimeCourse(CvodeData data) {
   }
 #endif
   
-  m = data->m;
+  m = data->model->m;
   f = data->outfile;
   results = data->results;
   if ( Opt.PrintMessage )
@@ -651,7 +654,7 @@ printReactionTimeCourse(CvodeData data) {
   for ( i=0; i<=results->nout; ++i ) {
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       data->value[j] = results->value[j][i];
     }
     for ( j=0; j<Model_getNumReactions(m); j++ ) {      
@@ -677,9 +680,9 @@ printReactionTimeCourse(CvodeData data) {
 	    data->currenttime);
     fprintf(stderr, "Simulation aborted at steady state!\n");
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->neq;i++)
+    for(i=0;i<data->model->neq;i++)
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->species[i], fabs(evaluateAST(data->ode[i],data)));
+	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
     fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
 	    data->dy_mean, data->dy_std);
@@ -714,29 +717,29 @@ printConcentrationTimeCourse(CvodeData data){
   
   results = data->results;
   fprintf(f, "#t ");
-  for(i=0;i<data->neq;i++) fprintf(f, "%s ", data->species[i]);
-  for(i=0;i<data->nass;i++) fprintf(f, "%s ", data->ass_parameter[i]);
-  for(i=0;i<data->nconst;i++) fprintf(f, "%s ", data->parameter[i]);
+  for(i=0;i<data->model->neq;i++) fprintf(f, "%s ", data->model->species[i]);
+  for(i=0;i<data->model->nass;i++) fprintf(f, "%s ", data->model->ass_parameter[i]);
+  for(i=0;i<data->model->nconst;i++) fprintf(f, "%s ", data->model->parameter[i]);
   fprintf(f, "\n");
   fprintf(f, "##CONCENTRATIONS\n");
   for ( i=0; i<=results->nout; ++i ) {
     fprintf(f, "%g ", results->time[i]);
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       fprintf(f, "%g ", results->value[j][i]);
     }
-    for ( j=0; j<data->nass; j++ ) {
+    for ( j=0; j<data->model->nass; j++ ) {
       fprintf(f, "%g ", results->avalue[j][i]);
     }
-    for ( j=0; j<data->nconst; j++ ) {
+    for ( j=0; j<data->model->nconst; j++ ) {
       fprintf(f, "%g ", results->pvalue[j][i]);
     }
     fprintf(f, "\n");
   }
   fprintf(f, "##CONCENTRATIONS\n");
   fprintf(f, "#t ");
-  for(i=0;i<data->neq;i++) fprintf(f, "%s ", data->species[i]);
-  for(i=0;i<data->nass;i++) fprintf(f, "%s ", data->ass_parameter[i]);
-  for(i=0;i<data->nconst;i++) fprintf(f, "%s ", data->parameter[i]);
+  for(i=0;i<data->model->neq;i++) fprintf(f, "%s ", data->model->species[i]);
+  for(i=0;i<data->model->nass;i++) fprintf(f, "%s ", data->model->ass_parameter[i]);
+  for(i=0;i<data->model->nconst;i++) fprintf(f, "%s ", data->model->parameter[i]);
   fprintf(f, "\n\n");
   
   /* Print if simulation was aborted at steady state */
@@ -745,9 +748,9 @@ printConcentrationTimeCourse(CvodeData data){
 	    data->currenttime);
     fprintf(stderr, "Simulation aborted at steady state!\n");
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->neq;i++) 
+    for(i=0;i<data->model->neq;i++) 
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->species[i], fabs(evaluateAST(data->ode[i],data)));
+	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
     fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
 	    data->dy_mean, data->dy_std);
@@ -781,7 +784,7 @@ printConcentrationTimeCourse(CvodeData data){
 */
 
 void
-printPhase(CvodeData data){
+printPhase(CvodeData data) {
 
 #if !USE_GRACE
 
@@ -827,7 +830,7 @@ printPhase(CvodeData data){
   GracePrintf("xaxis tick major %g", (1.25*maxX)/12.5);
   /*     GracePrintf("xaxis tick minor %d", (int) data->tout/100); */
   GracePrintf("yaxis tick major %g", (1.25*maxY)/12.5 );
-  GracePrintf("subtitle \"%s, %s\"", data->modelName, "phase diagram");
+  GracePrintf("subtitle \"%s, %s\"", data->model->modelName, "phase diagram");
   GracePrintf("xaxis label \"species 1\"");
   GracePrintf("yaxis label \"species 2\"");
 
@@ -848,14 +851,14 @@ printPhase(CvodeData data){
   /* check if species exist */
   xvalue = 1;
   yvalue = 1;
-  for ( j=0; j<data->neq; j++ ) {
-    if ( !strcmp(x, data->species[j]) ) {
+  for ( j=0; j<data->model->neq; j++ ) {
+    if ( !strcmp(x, data->model->species[j]) ) {
       xvalue = 0;
-      GracePrintf("xaxis label \"%s\"", data->speciesname[j]);
+      GracePrintf("xaxis label \"%s\"", data->model->speciesname[j]);
     }
-    if ( !strcmp(y, data->species[j]) ) {
+    if ( !strcmp(y, data->model->species[j]) ) {
       yvalue = 0;
-      GracePrintf("yaxis label \"%s\"", data->speciesname[j]);
+      GracePrintf("yaxis label \"%s\"", data->model->speciesname[j]);
     }
   }
   if ( xvalue || yvalue ) {
@@ -870,11 +873,11 @@ printPhase(CvodeData data){
   fprintf(stderr, "Printing phase diagram to XMGrace!\n");
 
   for ( i=0; i<=results->nout; ++i ) {     
-    for ( j=0; j<data->neq; j++ ){
-      if ( !strcmp(x, data->species[j]) ) {
+    for ( j=0; j<data->model->neq; j++ ){
+      if ( !strcmp(x, data->model->species[j]) ) {
 	xvalue = results->value[j][i];
       }
-      if ( !strcmp(y, data->species[j]) ) {
+      if ( !strcmp(y, data->model->species[j]) ) {
 	yvalue = results->value[j][i];
       }
     }
@@ -948,15 +951,15 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
   
   GracePrintf("yaxis label \"%s\"", "jacobian matrix value");
   GracePrintf("subtitle \"%s, %s\"",
-		  data->modelName, "jacobian matrix time course");
+		  data->model->modelName, "jacobian matrix time course");
 
 
   /* print legend */  
   n = 1;  
-  for ( i=0; i<data->neq; i++ ) {
-    for ( j=0; j<data->neq; j++ ) {
+  for ( i=0; i<data->model->neq; i++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       GracePrintf("g0.s%d legend  \"%s / %s\"\n",
-		  n, data->speciesname[i], data->speciesname[j]);
+		  n, data->model->speciesname[i], data->model->speciesname[j]);
       n++;
     }
   }  
@@ -969,14 +972,14 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
   for ( k = 0; k<=results->nout; k++ ) {  
     n = 1;
     data->currenttime = results->time[i];
-    for ( i=0; i<data->neq; i++ ) {
+    for ( i=0; i<data->model->neq; i++ ) {
       
       /* set specie values to values at time[k] */
       data->value[i] = results->value[i][k];
       
-      for ( j=0; j<data->neq; j++ ) {
+      for ( j=0; j<data->model->neq; j++ ) {
 	
-	result =  evaluateAST(data->jacob[i][j], data);
+	result =  evaluateAST(data->model->jacob[i][j], data);
 	
 	if ( result > maxY ) {	  
 	  maxY = result;
@@ -1041,14 +1044,14 @@ printXMGOdeTimeCourse(CvodeData data){
   }
 
   GracePrintf("yaxis label \"%s\"", "ODE values");
-  GracePrintf("subtitle \"%s, %s\"", data->modelName,
+  GracePrintf("subtitle \"%s, %s\"", data->model->modelName,
 		  "ODEs time course");
 
   /* print legend */  
   n = 1;  
-  for ( i=0; i<data->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) {
       GracePrintf("g0.s%d legend  \"%s\"\n",
-		  n, data->speciesname[i]);
+		  n, data->model->speciesname[i]);
       n++;
   }  
   GracePrintf("legend 1.155, 0.85");
@@ -1060,11 +1063,11 @@ printXMGOdeTimeCourse(CvodeData data){
   for ( i=0; i<=results->nout; ++i ) {
     n = 1;
     data->currenttime = results->time[i];
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       data->value[j] = results->value[j][i];
     }
-    for ( j=0; j<data->neq; j++ ) {
-      result = evaluateAST(data->ode[j],data);
+    for ( j=0; j<data->model->neq; j++ ) {
+      result = evaluateAST(data->model->ode[j],data);
       if ( result > maxY ) {
 	maxY = result;
 	GracePrintf("world ymax %g", 1.25*maxY);
@@ -1130,7 +1133,7 @@ printXMGConcentrationTimeCourse(CvodeData data){
   
   for ( i=0; i<=results->nout; ++i ) {
     n=1; 
-    for ( j=0; j<data->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ ) {
       if ( results->value[j][i] > maxY ) {
 	maxY = results->value[j][i];
 	GracePrintf("world ymax %g", 1.25*maxY);	
@@ -1143,7 +1146,7 @@ printXMGConcentrationTimeCourse(CvodeData data){
 		  n, results->time[i], results->value[j][i]);
       n++;
     }
-    for ( j=0; j<data->nass; j++ ) {
+    for ( j=0; j<data->model->nass; j++ ) {
       if ( results->avalue[j][i] > maxY ) {
 	maxY = results->avalue[j][i];
 	GracePrintf("world ymax %g", 1.25*maxY);	
@@ -1177,12 +1180,12 @@ printXMGLegend(CvodeData data){
   int n;
   n=1;
   
-  for ( i=0; i<data->neq; i++ ) {
-    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->speciesname[i]);    
+  for ( i=0; i<data->model->neq; i++ ) {
+    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->model->speciesname[i]);    
     n++;
   }
-  for ( i=0; i<data->nass; i++ ) {
-    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->ass_parameter[i]);    
+  for ( i=0; i<data->model->nass; i++ ) {
+    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->model->ass_parameter[i]);    
     n++;
   }
 
@@ -1229,7 +1232,7 @@ openXMGrace(CvodeData data){
       GracePrintf("yaxis label \"concentration\"");    
       GracePrintf("yaxis ticklabel font 4");
       GracePrintf("yaxis ticklabel char size 0.7");
-      GracePrintf("subtitle \"%s\"", data->modelName);
+      GracePrintf("subtitle \"%s\"", data->model->modelName);
       GracePrintf("subtitle font 8");   
     }
   }

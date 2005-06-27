@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:09:42 raim>
-  $Id: batchIntegrator.c,v 1.3 2005/06/08 09:37:03 raimc Exp $
+  $Id: batchIntegrator.c,v 1.4 2005/06/27 15:12:19 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,15 +13,17 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/odeConstructUsingOptions.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/solverError.h"
 
 
 void 
 batchIntegrator(Model_t *m) {
 
-  int j, l, steps, flag;
+  int j, l, steps;
   double value;
   CvodeData data;
   FILE *outfile;
@@ -55,17 +57,13 @@ batchIntegrator(Model_t *m) {
     Model_setValue(m, Opt.Parameter, "", l*(value/steps));
     data = constructODEs(m);
 
-    if ( data->errors > 0 ) {
-      fatal(stderr, "%s:%d batchIntegrator.c(): "
-	    "Can't construct ODEs for Model >%s/%s<",
-	    __FILE__, __LINE__, Opt.ModelPath, Opt.ModelFile);
-    }
+    SolverError_haltOnErrors();
 
     if ( l == 0 ) {
       fprintf(outfile, "#%s ", Opt.Parameter);
       
-      for ( j=0; j<data->neq; j++ ) {
-        fprintf(outfile, "%s ", data->species[j]);
+      for ( j=0; j<data->model->neq; j++ ) {
+        fprintf(outfile, "%s ", data->model->species[j]);
       }
       fprintf(outfile, "time ");
       fprintf(outfile, "\n");
@@ -108,31 +106,34 @@ batchIntegrator(Model_t *m) {
     fprintf(stderr, "Parameter %s = %g\n",
 	    Opt.Parameter, l*(value/steps));
 
-    flag = integrator(data);
+    integrator(data);
 
-    if ( flag > -1 ) {
-      /* print out values at last time step */
-      fprintf(stderr, "Batch run nr. %d finished.\n", l+1);
-      fprintf(stderr, "Writing results to %s.\n", filename);
-      fprintf(outfile, "%g ", l*(value/steps));
-      for ( j=0; j<data->neq; j++ ) {
-	fprintf(outfile, "%g ",
-		data->results->value[j][data->results->nout]);
-      }
-      fprintf(outfile, "%g ", data->currenttime);
-      fprintf(outfile, "\n");
-      if ( data->steadystate == 1 ) {
-	fprintf(outfile,
-		"# Found steady state; aborted at time %g\n",
-		data->currenttime);
-      }
-      fprintf(stderr, "\n\n");
+    if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+    {
+        SolverError_dumpAndClearErrors();
+        Warn(stderr, "CVODE failed for %s = %g !",
+            Opt.Parameter, l*(value/steps));
+        fprintf(outfile, "# CVODE failed for %s = %g\n",
+            Opt.Parameter, l*(value/steps));
     }
-    else {
-      Warn(stderr, "CVODE failed with flag %d for %s = %g !",
-	   flag, Opt.Parameter, l*(value/steps));
-      fprintf(outfile, "# CVODE failed with flag %d for %s = %g\n",
-	      flag, Opt.Parameter, l*(value/steps));
+    else
+    {
+        /* print out values at last time step */
+        fprintf(stderr, "Batch run nr. %d finished.\n", l+1);
+        fprintf(stderr, "Writing results to %s.\n", filename);
+        fprintf(outfile, "%g ", l*(value/steps));
+        for ( j=0; j<data->model->neq; j++ ) {
+            fprintf(outfile, "%g ",
+                data->results->value[j][data->results->nout]);
+        }
+        fprintf(outfile, "%g ", data->currenttime);
+        fprintf(outfile, "\n");
+        if ( data->steadystate == 1 ) {
+            fprintf(outfile,
+                "# Found steady state; aborted at time %g\n",
+                data->currenttime);
+        }
+        fprintf(stderr, "\n\n");
     }
     CvodeData_free(data);
   }

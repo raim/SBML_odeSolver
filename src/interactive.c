@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:28:10 raim>
-  $Id: interactive.c,v 1.2 2005/05/31 13:54:00 raimc Exp $
+  $Id: interactive.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,13 +14,15 @@
 /* own header files */
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/options.h"
-#include "sbmlsolver/sbml.h"
+#include "sbmlsolver/sbmlUsingOptions.h"
 #include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/odeConstructUsingOptions.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/printModel.h"
 #include "sbmlsolver/drawGraph.h"
+#include "sbmlsolver/sbml.h"
+#include "sbmlsolver/solverError.h"
 
 
 static void
@@ -63,7 +65,7 @@ interactive() {
   Model_t        *m  = NULL;
   CvodeData data     = NULL;
 
-  sr = newSBMLReader();
+  sr = newSBMLReader(Opt.SchemaPath, Opt.Schema11, Opt.Schema12, Opt.Schema21);
   
   printf("\n\nWelcome to the simple SBML ODE solver.\n");
   printf("You have entered the interactive mode.\n");
@@ -133,7 +135,9 @@ interactive() {
     
     if(strcmp(select,"o")==0){      
       data = constructODEs(m);
-      printODEs(data);
+      SolverError_dumpAndClearErrors();
+      if (data)
+          printODEs(data);
     }
 
     if(strcmp(select,"i")==0){
@@ -163,8 +167,8 @@ interactive() {
     }
 
     if(strcmp(select,"dt")==0){
-      if ( data != NULL && data->jacob != NULL ) {
-	data->det = determinantNAST(data->jacob, data->neq);
+      if ( data != NULL && data->model->jacob != NULL ) {
+	data->model->det = determinantNAST(data->model->jacob, data->model->neq);
 	printDeterminantTimeCourse(data);
       }
       else {
@@ -213,13 +217,18 @@ interactive() {
       if ( data == NULL ) {
 	Opt.Jacobian = 1;
 	data = constructODEs(m);
+    SolverError_dumpAndClearErrors();
+    
 	Opt.Jacobian = 0;	
       }
-      drawJacoby(data);
+      if (data)
+        drawJacoby(data);
     }
     if(strcmp(select,"j")==0){
       data = constructODEs(m);
-      printJacobian(data);
+      SolverError_dumpAndClearErrors();
+      if (data)
+          printJacobian(data);
     }
     if(strcmp(select,"q")==0){
       quit = 1;
@@ -341,34 +350,39 @@ setFormat(void) {
 static SBMLDocument_t * 
 loadFile(SBMLReader_t *sr){
 
-  char *filename;
-  SBMLDocument_t *d;
+    char *filename;
+    SBMLDocument_t *d;
 
-  while(1){
-    printf("Please enter a filename: ");
-    filename = get_line(stdin);
-    filename = util_trim(filename);
-    if ( (strlen(filename)) == 0 ) {
-      printf("No filename found.\n\n");
+    while(1){
+        printf("Please enter a filename: ");
+        filename = get_line(stdin);
+        filename = util_trim(filename);
+        if ( (strlen(filename)) == 0 ) {
+            printf("No filename found.\n\n");
+        }
+        else {
+            if ( (d = parseModel(filename)) == 0 ) {
+                if ( Opt.Validate ) 
+                    SolverError_error(
+                        WARNING_ERROR_TYPE,
+                        SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH,
+                        "Please make sure that path >%s< contains"
+                        "the correct SBML schema for validation."
+                        "Or try running without validation.", Opt.SchemaPath);
+
+                SolverError_error(
+                    ERROR_ERROR_TYPE,
+                    SOLVER_ERROR_CANNOT_PARSE_MODEL,
+                    "Can't parse Model >%s<", filename);
+                SolverError_dumpAndClearErrors();
+            }
+            else {
+                printf("SBML file %s successfully loaded.\n", filename);
+                return d;
+            }
+        }
+        safe_free(filename);
     }
-    else {
-      if ( (d = parseModel(filename)) == 0 ) {
-	if ( Opt.Validate ) {
-	  Warn(stderr, "Please make sure that path >%s< contains",
-	       Opt.SchemaPath);
-	  Warn(stderr, "the correct SBML schema for validation.");
-	  Warn(stderr, "Or try running without validation.");
-	}
-	Warn(stderr, "%s:%d loadFile(): Can't parse Model >%s<",
-	     __FILE__, __LINE__, filename);
-      }
-      else {
-	printf("SBML file %s successfully loaded.\n", filename);
-	return d;
-      }
-    }
-    safe_free(filename);
-  }
     return NULL;
 }
 
@@ -382,12 +396,13 @@ callIntegrator(Model_t *m){
 
   data = constructODEs(m);
   
-  if ( data->errors > 0 ) {
-    Warn(stderr, "%s:%d callIntegrator(): Can't construct ODEs for Model",
-	 __FILE__, __LINE__);
+  /* chnage of behaviour by AMF no intergation if errors in ODE construction - 23rd June 2005 */
+  if (!data)
+  {
+      SolverError_dumpAndClearErrors();
+      return NULL;
   }
      
-  
   printf("Please enter end time in seconds:           ");
   tout =  get_line(stdin);
   tout = util_trim(tout);
@@ -422,14 +437,12 @@ callIntegrator(Model_t *m){
 	   " = %f s\n output interval: %f s\n\n",
 	   data->t0, data->tout, data->tout/data->nout);
     
-    if ( integrator(data) < 0 ) {
-      Warn(stderr,
-	   "Integration not successful. Results may not be complete.");
-    }
-    
+    integrator(data);
+    SolverError_dumpAndClearErrors();
   }
-  safe_free(nout);
-  safe_free(tout);
+    
+  free(nout);
+  free(tout);
  
   return data;
 }

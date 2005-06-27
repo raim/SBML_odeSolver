@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-05-31 12:25:23 raim>
-  $Id: processAST.c,v 1.3 2005/06/08 15:23:14 afinney Exp $
+  $Id: processAST.c,v 1.4 2005/06/27 15:12:20 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,16 +195,16 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	found++;
       }
       if ( found == 0 ) {
-	for ( j=0; j<data->nconst; j++ ) {
-	  if ( (strcmp(ASTNode_getName(n),data->parameter[j]) == 0) ) {
+	for ( j=0; j<data->model->nconst; j++ ) {
+	  if ( (strcmp(ASTNode_getName(n),data->model->parameter[j]) == 0) ) {
 	    result = data->pvalue[j];
 	    found++;
 	  }
 	}
       }
       if ( found == 0 ) {
-	for ( j=0; j<data->neq; j++ ) {
-	  if ( (strcmp(ASTNode_getName(n),data->species[j]) == 0) ) {
+	for ( j=0; j<data->model->neq; j++ ) {
+	  if ( (strcmp(ASTNode_getName(n),data->model->species[j]) == 0) ) {
 	    result = data->value[j];
 	    found++;
 	  }
@@ -218,17 +218,17 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	result = (double) atof(unknown);
 	free(unknown);
 	/* reallocate constants array and set value */
-	data->nconst++;
+	data->model->nconst++;
 	if(!(data->pvalue =
-	     (double *)realloc(data->pvalue, data->nconst*sizeof(double))))
+	     (double *)realloc(data->pvalue, data->model->nconst*sizeof(double))))
 	  fprintf(stderr, "failed!\n");
-	if(!(data->parameter =
-	     (char **) realloc(data->parameter, data->nconst*sizeof(char *))))
+	if(!(data->model->parameter =
+	     (char **) realloc(data->model->parameter, data->model->nconst*sizeof(char *))))
 	  fprintf(stderr, "failed!\n");
-	data->parameter[data->nconst - 1] =
+	data->model->parameter[data->model->nconst - 1] =
 	  (char *) calloc(strlen(ASTNode_getName(n))+1, sizeof(char));
-	sprintf(data->parameter[data->nconst - 1], ASTNode_getName(n));
-	data->pvalue[data->nconst - 1] = result;
+	sprintf(data->model->parameter[data->model->nconst - 1], ASTNode_getName(n));
+	data->pvalue[data->model->nconst - 1] = result;
       }
       break;
     case AST_FUNCTION_DELAY:

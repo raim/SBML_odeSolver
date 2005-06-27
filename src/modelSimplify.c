@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-07 19:23:43 raim>
-  $Id: modelSimplify.c,v 1.5 2005/06/07 17:26:22 raimc Exp $
+  $Id: modelSimplify.c,v 1.6 2005/06/27 15:12:19 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -129,7 +129,7 @@ void
 AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 	 const ASTNode_t *function) {
   
-  int i, j, k;  
+  int i, j;  
   ASTNode_t *old, *new;
   List_t *names;
 
