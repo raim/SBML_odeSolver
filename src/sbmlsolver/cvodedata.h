@@ -1,23 +1,51 @@
 /*
   Last changed Time-stamp: <2005-05-30 12:43:32 raim>
-  $Id: cvodedata.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  $Id: cvodedata.h,v 1.2 2005/06/27 15:17:57 afinney Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
 
-/* Settings for CVODE Integration */
-typedef struct _CvodeSettings {
-  double Time;          /* Time to which model is integrated */
-  double PrintStep;     /* Number of output steps from 0 to 'Time' */
-  double Error;         /* absolute tolerance in Cvode integration */
-  double RError;        /* relative tolerance in Cvode integration */
-  double Mxstep;        /* maximum step number for CVode integration */
-  int PrintMessage;     /* Print messages */
-  int PrintOnTheFly;    /* Print species concentration during integration */
-  int HaltOnEvent;      /* Stops integration upon an event */
-  int SteadyState;      /* Stops integration upon a steady state */
-  int UseJacobian;      /* Toggle use of Jacobian ASTs or approximation */
-} CvodeSettings;
+#include <stdio.h>
+#include <sbml/SBMLTypes.h>
+
+#include "SBMLSolver/cvodedatatype.h"
+#include "SBMLSolver/odemodeldatatype.h"
+#include "CvodeSettings.h"
+
+struct odeModel
+{
+  Model_t *m;
+  Model_t *simple;
+  char *modelName;
+  char *modelId;
+
+  /* was the model simplified and the jacobian constructed */
+  int simplified ;
+  
+  /* Constants: stores constant species, and species,
+     compartments or parameters, that can be changed by an event */
+  int nconst;
+  char **parameter; 
+
+  /* Assigned variables: stores species, compartments and parameters,
+     that are set by an assignment rule */
+  int nass;
+  char **ass_parameter;
+  ASTNode_t **assignment;
+
+  /* The main data: number, names, and equation ASTs
+     of the ODEs. The value array is used to write and read the
+     current value of the ODE variables during simulation. */
+  int neq;  
+  ASTNode_t **ode; 
+  char **species;
+  char **speciesname;
+
+    /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
+  ASTNode_t ***jacob;
+  /* The determinant of the jacobian */
+  ASTNode_t *det;
+};
 
 CvodeSettings Set;
 
@@ -51,43 +79,26 @@ typedef struct _CvodeResults {
    and the SBML version of the ODE model.
  */
 
-typedef struct _CvodeData {
+struct _CvodeData {
 
+  odeModel_t *model ;
+
+  /* results file */
   char *filename;
   FILE *outfile; 
 
-  Model_t *m;
-  Model_t *simple;
-  char *modelName;
-  char *modelId;
-
   /* Constants: stores constant species, and species,
      compartments or parameters, that can be changed by an event */
-  int nconst;
-  char **parameter;  
   double *pvalue;
 
   /* Assigned variables: stores species, compartments and parameters,
      that are set by an assignment rule */
-  int nass;
-  char **ass_parameter;
   double *avalue;
-  ASTNode_t **assignment;
  
-  /* The main data: number, names, initial values and equation ASTs
-     of the ODEs. The value array is used to write and read the
+  /* The value array is used to write and read the
      current value of the ODE variables during simulation. */
-  int neq;  
-  ASTNode_t **ode; 
-  char **species;
-  char **speciesname;
   double *value;
 
-  /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
-  ASTNode_t ***jacob;
-  /* The determinant of the jacobian */
-  ASTNode_t *det;
-  
   /* stores the current time of the integration */
   float currenttime;
 
@@ -124,22 +135,29 @@ typedef struct _CvodeData {
      structure (see above) */
   CvodeResults results;
 
-  /* Errors are counted during ODE creation. If errors occured, the
-     procedure is aborted. */
-  int errors;
-  
   /* The flag `run' remembers if already tried with or without use
      of generated Jacobian matrix or internal approximation,
      or with lower error tolerance. It is used to restart the integrator
      with changed settings upon failure. */
   int run;
+
+  /* flag 'storeResults' indicates whether the results field should be allocated and populated */
+  int storeResults;
   
-} *CvodeData;
+};
 
 CvodeData
-CvodeData_create(int neq, int nconst, int nass, int nevents);
+CvodeData_create(int neq, int nconst, int nass, int nevents, const char *resultsFileName);
+
+CvodeData CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFileName);
+
+CvodeData 
+constructODEsPassingOptions(Model_t *m, const char *resultsFilename, int simplify, int determinant, const char *parameterNotToBeReplaced);
+
 void
 CvodeData_free(CvodeData data);
+void
+CvodeData_freeExcludingModel(CvodeData data);
 CvodeResults
 CvodeResults_create(CvodeData data);
 

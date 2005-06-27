@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:09:04 raim>
-  $Id: odeSolver.h,v 1.4 2005/06/08 15:28:42 afinney Exp $
+  $Id: odeSolver.h,v 1.5 2005/06/27 15:17:57 afinney Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -12,8 +12,8 @@
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/options.h"
-#include "sbmlsolver/sbml.h"
-#include "sbmlsolver/odeConstruct.h"
+#include "sbmlsolver/sbmlUsingOptions.h"
+#include "sbmlsolver/odeConstructUsingOptions.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/batchIntegrator.h"
