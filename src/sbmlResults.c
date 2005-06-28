@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-06 18:33:55 raim>
-  $Id: sbmlResults.c,v 1.3 2005/06/06 16:36:23 raimc Exp $
+  Last changed Time-stamp: <2005-06-28 16:49:38 raim>
+  $Id: sbmlResults.c,v 1.4 2005/06/28 14:59:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,6 @@
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include <sbml/common/common.h>
 
 /* own header files */
 #include "sbmlsolver/sbmlResults.h"

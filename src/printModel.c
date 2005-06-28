@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-22 14:44:16 raim>
-  $Id: printModel.c,v 1.4 2005/06/28 13:50:19 raimc Exp $
+  Last changed Time-stamp: <2005-06-28 16:54:25 raim>
+  $Id: printModel.c,v 1.5 2005/06/28 14:59:36 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 
 /* Header Files from the SBML Library libsbml */
 #include <sbml/SBMLTypes.h>
-#include <sbml/util/util.h>
+#include <sbml/util/util.h> /* only for util_trim */
 
 /* System specific definitions,
    created by configure script */

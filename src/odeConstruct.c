@@ -1,13 +1,12 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:26:25 raim>
-  $Id: odeConstruct.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 16:46:01 raim>
+  $Id: odeConstruct.c,v 1.4 2005/06/28 14:59:35 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#include <sbml/common/common.h>  /* for safe_free */
 #include <sbml/SBMLTypes.h>
 
 #include "sbmlsolver/util.h"
@@ -18,7 +17,8 @@
 #include "sbmlsolver/solverError.h"
 
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode, const char *parameterNotToBeReplaced);
+ODEs_replaceConstants(Model_t *m, Model_t *ode,
+		      const char *parameterNotToBeReplaced);
 static void
 ODEs_copyConstants(Model_t *m, Model_t *ode);
 
@@ -29,7 +29,8 @@ ODEs_copyConstants(Model_t *m, Model_t *ode);
 */
 
 Model_t*
-Model_reduceToOdes(Model_t *m, int simplify, const char *parameterNotToBeReplaced) {
+Model_reduceToOdes(Model_t *m, int simplify,
+		   const char *parameterNotToBeReplaced) {
 
   Model_t *ode;
   Parameter_t *p;
@@ -63,7 +64,7 @@ Model_reduceToOdes(Model_t *m, int simplify, const char *parameterNotToBeReplace
   name = (char *) calloc(strlen(Model_getId(m))+12, sizeof(char));
   sprintf(name, "%s_simplified", Model_getId(m));
   ode = Model_createWith(name);
-  safe_free(name);
+  free(name);
   c = Compartment_create();
   Compartment_initDefaults(c);
   Compartment_setId(c, "compartment");
@@ -409,7 +410,8 @@ Model_getValueById(Model_t *m, const char *id) {
     ODEs_replaceConstants(Model_t *m, Model_t *ode) {}
 */
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode, const char *parameterNotToBeReplaced) {
+ODEs_replaceConstants(Model_t *m, Model_t *ode,
+		      const char *parameterNotToBeReplaced) {
 
 
   int i, j, k;

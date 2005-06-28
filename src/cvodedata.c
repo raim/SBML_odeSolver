@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 15:42:01 raim>
-  $Id: cvodedata.c,v 1.5 2005/06/28 13:50:19 raimc Exp $
+  Last changed Time-stamp: <2005-06-28 16:27:15 raim>
+  $Id: cvodedata.c,v 1.6 2005/06/28 14:59:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,9 +187,14 @@ CvodeResults_create(CvodeData data){
 }
 
 CvodeData 
-constructODEsPassingOptions(Model_t *m, const char *resultsFilename, int simplify, int determinant, const char *parameterNotToBeReplaced)
-{
-    odeModel_t *om = ODEModel_createFromModelAndOptions(m, simplify, determinant, parameterNotToBeReplaced);
+constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
+			    int simplify, int determinant,
+			    const char *parameterNotToBeReplaced)
+{     
+    odeModel_t *om =
+      ODEModel_createFromModelAndOptions(m, simplify,
+					 determinant,
+					 parameterNotToBeReplaced);
 
     SolverError_dump(); /* write out all everything including warnings */
     RETURN_ON_ERRORS_WITH(NULL);
@@ -217,7 +222,9 @@ constructODEsPassingOptions(Model_t *m, const char *resultsFilename, int simplif
     be passed to CVODE for integration      
 */
 
-CvodeData CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFilename)
+CvodeData
+CvodeData_createFromODEModel(odeModel_t *m,
+			     const char *resultsFilename)
 {
   int i, j, neq, nconst, nass, nevents;
   Model_t *ode = m->simple;

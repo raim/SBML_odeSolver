@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:28:10 raim>
-  $Id: interactive.c,v 1.3 2005/06/27 15:12:19 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 16:54:31 raim>
+  $Id: interactive.c,v 1.4 2005/06/28 14:59:35 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include <sbml/common/common.h> 
+#include <sbml/util/util.h> /* only for util_trim */
 
 /* own header files */
 #include "sbmlsolver/util.h"
@@ -381,7 +381,7 @@ loadFile(SBMLReader_t *sr){
                 return d;
             }
         }
-        safe_free(filename);
+        free(filename);
     }
     return NULL;
 }

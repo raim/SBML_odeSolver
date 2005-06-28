@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 15:47:28 raim>
-  $Id: sbml.c,v 1.4 2005/06/28 13:50:19 raimc Exp $
+  Last changed Time-stamp: <2005-06-28 16:43:26 raim>
+  $Id: sbml.c,v 1.5 2005/06/28 14:59:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +33,7 @@ parseModelPassingOptions(
     char *schema12FileName,
     char *schema21FileName)
 {
-    unsigned int i ;
+    unsigned int i, errors ;
     SBMLDocument_t *d;
     SBMLDocument_t *d2;
     SBMLReader_t *sr;
@@ -54,10 +54,14 @@ parseModelPassingOptions(
 
     d = SBMLReader_readSBML(sr, file);
     SBMLReader_free(sr);
-
+    
+    errors = 0;
+    if ( validate ) {
+      errors = SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d);
+    }
+    
     /* convert level 1 models to level 2 */
-    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) != 0
-	&& SBMLDocument_getLevel(d) == 1 ) {
+    if ( (errors == 0) && SBMLDocument_getLevel(d) == 1 ) {
       
         d2 = convertModel(d);
         SBMLDocument_free(d);

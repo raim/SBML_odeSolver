@@ -1,13 +1,13 @@
 /*
 <<<<<<< odeIntegrate.c
-  Last changed Time-stamp: <2005-06-28 15:42:43 raim>
-  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
+  Last changed Time-stamp: <2005-06-28 16:49:31 raim>
+  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
 =======
   Last changed Time-stamp: <2005-05-31 12:26:59 raim>
-  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
+  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
 >>>>>>> 1.3
   Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
+  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +15,6 @@
 #include <math.h>
 
 #include <sbml/SBMLTypes.h>
-#include <sbml/common/common.h> 
 
 /* Header Files for CVODE */
 #include "cvode.h"    

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-08 11:29:36 raim>
-  $Id: odeSolver.c,v 1.8 2005/06/27 15:12:20 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 16:21:23 raim>
+  $Id: odeSolver.c,v 1.9 2005/06/28 14:59:36 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,7 +155,8 @@ odeSolver (int argc, char *argv[])
       printReactions(m);
 
       data = constructODEs(m);
-      /* slight change in behavour - halt now rather than continue with null model
+      /* slight change in behavour - halt now rather than continue
+	 with null model
          used to continue with empty model */
       SolverError_haltOnErrors();
       printODEs(data);
@@ -179,7 +180,8 @@ odeSolver (int argc, char *argv[])
     if ( Opt.PrintODEsToSBML == 1 ) {
 
       data = constructODEs(m);
-      /* slight change in behavour - halt now rather than continue with null model
+      /* slight change in behavour - halt now rather than
+	 continue with null model
          used to continue with empty model */
       SolverError_haltOnErrors();
       printODEsToSBML(data);
@@ -233,7 +235,6 @@ odeSolver (int argc, char *argv[])
 	runtime printing of results.
 	And then ..
     */
-
 
     data->tout  = Opt.Time;
     data->nout  = Opt.PrintStep;

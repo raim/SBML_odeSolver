@@ -1,13 +1,12 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:25:23 raim>
-  $Id: processAST.c,v 1.4 2005/06/27 15:12:20 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 16:49:19 raim>
+  $Id: processAST.c,v 1.5 2005/06/28 14:59:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-/* #include <sbml/common.h> */
 #include <sbml/SBMLTypes.h>
 
 /* System specific definitions,

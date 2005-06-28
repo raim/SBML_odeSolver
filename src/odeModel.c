@@ -3,8 +3,6 @@
 #include <malloc.h>
 #include <string.h>
 
-#include <sbml/common/common.h>  /* for safe_free */
-
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/processAST.h"
@@ -89,6 +87,7 @@ ODEModel_createFromModelAndOptions(Model_t *m,
     counting number of equations (ODEs/rateRules) and Parameters
     to initialize CvodeData structure
   */
+
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
 
     rl = Model_getRule(ode,j);
@@ -201,9 +200,9 @@ ODEModel_createFromModelAndOptions(Model_t *m,
         SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
         "Model not simplified; Jacobian matrix construction skipped");
     for ( i=0; i<data->neq; i++ ) {
-      safe_free(data->jacob[i]);
+      free(data->jacob[i]);
     }
-    safe_free(data->jacob);
+    free(data->jacob);
     data->jacob = NULL;
   }
 
@@ -258,18 +257,18 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
   }
 
   /* free model name and id */
-  safe_free(data->modelName);
-  safe_free(data->modelId);
+  free(data->modelName);
+  free(data->modelId);
 
   /* free ODEs */
   for ( i=0; i<data->neq; i++ ) {
-    safe_free(data->species[i]);
-    safe_free(data->speciesname[i]);
+    free(data->species[i]);
+    free(data->speciesname[i]);
     ASTNode_free(data->ode[i]);
   }
-  safe_free(data->species);
-  safe_free(data->speciesname);
-  safe_free(data->ode);
+  free(data->species);
+  free(data->speciesname);
+  free(data->ode);
 
   /* free Jacobian matrix */
   if ( data->jacob != NULL ) {
@@ -277,9 +276,9 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
       for ( j=0; j<data->neq; j++ ) {
 	ASTNode_free(data->jacob[i][j]);
       }
-      safe_free(data->jacob[i]);
+      free(data->jacob[i]);
     }
-    safe_free(data->jacob);
+    free(data->jacob);
   }
 
   /* free determinant of Jacobian matrix */
@@ -289,17 +288,17 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
 
   /* free assignments */
   for ( i=0; i<data->nass; i++ ) {
-    safe_free(data->ass_parameter[i]);
+    free(data->ass_parameter[i]);
     ASTNode_free(data->assignment[i]);
   }  
-  safe_free(data->ass_parameter);
-   safe_free(data->assignment);
+  free(data->ass_parameter);
+   free(data->assignment);
 
   /* free constants */
   for ( i=0; i<data->nconst; i++ ) {
-    safe_free(data->parameter[i]);
+    free(data->parameter[i]);
   }  
-  safe_free(data->parameter);
+  free(data->parameter);
 
   /* free simplified ODE model */
   if ( data->simple != NULL ) {
@@ -307,10 +306,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
   }
 
   /* free model structure */
-  safe_free(data);
+  free(data);
 }       
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *data, char *symbol)
+SBML_ODESOLVER_API variableIndex_t *
+ODEModel_getVariableIndex(odeModel_t *data, char *symbol)
 {
     int i;
     variableIndex_t *vi = malloc(sizeof(variableIndex_t));

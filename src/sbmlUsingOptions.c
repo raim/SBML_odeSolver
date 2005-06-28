@@ -3,7 +3,8 @@
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/sbml.h"
 
-SBMLDocument_t*parseModel (char *file)
+SBMLDocument_t*
+parseModel (char *file)
 {
     return parseModelPassingOptions(
         file, Opt.PrintMessage, Opt.Validate, Opt.SchemaPath,
