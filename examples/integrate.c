@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:37:57 raim>
-  $Id: integrate.c,v 1.2 2005/05/31 13:55:43 raimc Exp $
+  Last changed Time-stamp: <2005-06-17 16:56:05 raim>
+  $Id: integrate.c,v 1.3 2005/06/28 14:02:01 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ main (int argc, char *argv[]){
   set.Mxstep = 10000;
 
   set.PrintOnTheFly = 0;  
-  set.PrintMessage = 0;
+  set.PrintMessage = 1;
   set.HaltOnEvent = 0;
   set.SteadyState = 1;
   set.UseJacobian = 1;
