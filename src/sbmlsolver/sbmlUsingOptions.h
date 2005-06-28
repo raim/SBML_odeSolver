@@ -5,4 +5,5 @@
 
 SBMLDocument_t*parseModel (char *file);
 
-#endif /* _SBMLUSINGOPTIONS_H_ */
+#endif
+/* _SBMLUSINGOPTIONS_H_ */

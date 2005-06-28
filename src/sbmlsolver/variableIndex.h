@@ -14,4 +14,5 @@ struct variableIndex
     int index ;
 } ;
 
-#endif /* _VARIABLEINDEX_H_ */
+#endif
+/* _VARIABLEINDEX_H_ */

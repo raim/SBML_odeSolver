@@ -3,4 +3,6 @@
 
 typedef struct _CvodeData *CvodeData ;
 
-#endif /* _CVODEDATATYPE_H_ */
+#endif 
+/* _CVODEDATATYPE_H_ */
+

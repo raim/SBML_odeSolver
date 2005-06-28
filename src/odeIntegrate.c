@@ -1,13 +1,13 @@
 /*
 <<<<<<< odeIntegrate.c
-  Last changed Time-stamp: <2005-06-14 11:29:00 raim>
-  $Id: odeIntegrate.c,v 1.5 2005/06/27 15:12:19 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 15:42:43 raim>
+  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
 =======
   Last changed Time-stamp: <2005-05-31 12:26:59 raim>
-  $Id: odeIntegrate.c,v 1.5 2005/06/27 15:12:19 afinney Exp $
+  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
 >>>>>>> 1.3
   Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.5 2005/06/27 15:12:19 afinney Exp $
+  $Id: odeIntegrate.c,v 1.6 2005/06/28 13:50:19 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,8 +34,8 @@
 
 /* static void */
 /* checkData(CvodeData data); */
-static int
-calculateResults(CvodeData data);
+/* static int */
+/* calculateResults(CvodeData data); */
 static int
 updateModel(CvodeData data, int nout);
 
@@ -108,30 +108,36 @@ updateModel(CvodeData data, int nout) {
   Parameter_t *p;  
   
   for ( i=0; i<data->model->neq; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m, data->model->species[i])) != NULL ) {
+    if ( (s = Model_getSpeciesById(data->model->m,
+				   data->model->species[i])) != NULL ) {
       Species_setInitialConcentration(s,
 				      data->results->value[i][nout]);
     }
-    else if ( (c = Model_getCompartmentById(data->model->m, data->model->species[i])) !=
+    else if ( (c = Model_getCompartmentById(data->model->m,
+					    data->model->species[i])) !=
 	      NULL ) {
       Compartment_setSize(c, data->results->value[i][nout]);
     }
-    else if ( (p = Model_getParameterById(data->model->m, data->model->species[i])) !=
+    else if ( (p = Model_getParameterById(data->model->m,
+					  data->model->species[i])) !=
 	      NULL ) {
       Parameter_setValue(p, data->results->value[i][nout]);
     }
   }
   for ( i=0; i<data->model->nass; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m, data->model->ass_parameter[i]))
+    if ( (s = Model_getSpeciesById(data->model->m,
+				   data->model->ass_parameter[i]))
 	 != NULL ) {
       Species_setInitialConcentration(s,
 				      data->results->avalue[i][nout]);
     }
-    else if ( (c = Model_getCompartmentById(data->model->m, data->model->ass_parameter[i]))
+    else if ( (c = Model_getCompartmentById(data->model->m,
+					    data->model->ass_parameter[i]))
 	      != NULL ) {
       Compartment_setSize(c, data->results->avalue[i][nout]);
     }
-    else if ( (p = Model_getParameterById(data->model->m, data->model->ass_parameter[i]))
+    else if ( (p = Model_getParameterById(data->model->m,
+					  data->model->ass_parameter[i]))
 	      != NULL ) {
       Parameter_setValue(p, data->results->avalue[i][nout]);
     }
@@ -142,11 +148,13 @@ updateModel(CvodeData data, int nout) {
       Species_setInitialConcentration(s,
 				      data->results->pvalue[i][nout]);
     }
-    else if ( (c = Model_getCompartmentById(data->model->m, data->model->parameter[i]))
+    else if ( (c = Model_getCompartmentById(data->model->m,
+					    data->model->parameter[i]))
 	      != NULL ) {
       Compartment_setSize(c, data->results->pvalue[i][nout]);
     }
-    else if ( (p = Model_getParameterById(data->model->m, data->model->parameter[i]))
+    else if ( (p = Model_getParameterById(data->model->m,
+					  data->model->parameter[i]))
 	      != NULL ) {
       Parameter_setValue(p, data->results->pvalue[i][nout]);
     }

@@ -12,7 +12,8 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 
-static odeModel_t *ODEModel_allocate(int neq, int nconst, int nass, int nevents)
+static odeModel_t *ODEModel_allocate(int neq, int nconst,
+				     int nass, int nevents)
 {
   int i;
   odeModel_t *data;
@@ -47,7 +48,8 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst, int nass, int nevents)
   return data ;
 }
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModel(Model_t *model)
+SBML_ODESOLVER_API odeModel_t *
+ODEModel_createFromModel(Model_t *model)
 {
     return ODEModel_createFromModelAndOptions(
                 model,
@@ -56,7 +58,11 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModel(Model_t *model)
                 "" /* all parameters to be replaced during simplification */);
 }
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModelAndOptions(Model_t *m, int simplify, int determinant, const char *parameterNotToBeReplaced)
+SBML_ODESOLVER_API odeModel_t *
+ODEModel_createFromModelAndOptions(Model_t *m,
+				   int simplify,
+				   int determinant,
+				   const char *parameterNotToBeReplaced)
 {
   int i, j, found, neq, nconst, nass, nevents;
   Model_t *ode;
@@ -204,7 +210,8 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModelAndOptions(Model_t *m, in
   return data;
 }
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_create(char *sbmlFileName)
+SBML_ODESOLVER_API odeModel_t *
+ODEModel_create(char *sbmlFileName)
 {
     SBMLDocument_t *d;
     Model_t *m;

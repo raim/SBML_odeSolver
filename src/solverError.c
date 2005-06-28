@@ -47,7 +47,7 @@ char *SolverError_getMessage(errorType_t type, int errorNum)
 }
 
 /* get error code */
-int SolverError_getCode(errorType_t type, int errorNum)
+errorCode_t SolverError_getCode(errorType_t type, int errorNum)
 {
     return SolverError_getError(type, errorNum)->errorCode ; 
 }

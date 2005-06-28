@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-06 18:33:38 raim>
-  $Id: cvodedata.c,v 1.4 2005/06/27 15:12:19 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 15:42:01 raim>
+  $Id: cvodedata.c,v 1.5 2005/06/28 13:50:19 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,6 @@
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
 #include <sbml/Model.h>
-#include <sbml/common/common.h>
 
 /* own header files */
 #include "sbmlsolver/cvodedata.h"
@@ -29,7 +28,8 @@
 
 
 CvodeData
-CvodeData_create(int neq, int nconst, int nass, int nevents, const char *resultsFilename){
+CvodeData_create(int neq, int nconst, int nass,
+		 int nevents, const char *resultsFilename){
 
   CvodeData data;
 
@@ -69,33 +69,33 @@ static void CvodeData_freeStructuresExcludingModel(CvodeData data)
   /* free CVODE results if filled */
   if(data->results != NULL){
     for(i=0;i<data->model->nass;i++){
-      safe_free(data->results->avalue[i]);
+      free(data->results->avalue[i]);
     }
-    safe_free(data->results->avalue);
+    free(data->results->avalue);
     for(i=0;i<data->model->nconst;i++){
-      safe_free(data->results->pvalue[i]);
+      free(data->results->pvalue[i]);
     }
-    safe_free(data->results->pvalue);
+    free(data->results->pvalue);
     for(i=0;i<data->model->neq;i++){
-      safe_free(data->results->value[i]);
+      free(data->results->value[i]);
     }
-    safe_free(data->results->time);
-    safe_free(data->results->value);
-    safe_free(data->results);	      
+    free(data->results->time);
+    free(data->results->value);
+    free(data->results);	      
   }
 
-  safe_free(data->value);
-  safe_free(data->avalue);   
-  safe_free(data->pvalue);
+  free(data->value);
+  free(data->avalue);   
+  free(data->pvalue);
 
   /* free event trigger flags */
-  safe_free(data->trigger);
+  free(data->trigger);
   
   /* save and close results file */
   if (data->filename) {
     fclose(data->outfile);
     fprintf(stderr, "Saved results to file %s.\n\n", data->filename);
-    safe_free(data->filename);
+    free((char *) data->filename);
   }
 }
 

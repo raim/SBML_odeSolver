@@ -1,13 +1,12 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:28:47 raim>
-  $Id: sbml.c,v 1.3 2005/06/27 15:12:20 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 15:47:28 raim>
+  $Id: sbml.c,v 1.4 2005/06/28 13:50:19 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include <sbml/common/common.h>
 #include <sbml/xml/ParseMessage.h>
 
 /* own header files */
@@ -17,13 +16,15 @@
 
 void storeSBMLError(errorType_t type, const ParseMessage_t *pm)
 {
-    SolverError_error(type, ParseMessage_getId(pm), ParseMessage_getMessage(pm)); 
+    SolverError_error(type, ParseMessage_getId(pm),
+		      ParseMessage_getMessage(pm)); 
 }
 
 /** C.1 Load, validate and parse SBML file,
     also converts SBML level 1 to level 2 files
 */
-SBMLDocument_t*parseModelPassingOptions(
+SBMLDocument_t *
+parseModelPassingOptions(
     char *file,
     int printMessage,
     int validate,
@@ -42,7 +43,10 @@ SBMLDocument_t*parseModelPassingOptions(
             fprintf(stderr, "Validating SBML.\n");
             fprintf(stderr, "This can take a while for SBML level 2.\n");
         }
-        sr = newSBMLReader(schemaPath, schema11FileName, schema12FileName, schema21FileName);
+        sr = newSBMLReader(schemaPath,
+			   schema11FileName,
+			   schema12FileName,
+			   schema21FileName);
     }
     else {
         sr = SBMLReader_create();
@@ -52,7 +56,9 @@ SBMLDocument_t*parseModelPassingOptions(
     SBMLReader_free(sr);
 
     /* convert level 1 models to level 2 */
-    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) != 0 && SBMLDocument_getLevel(d) == 1 ) {
+    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) != 0
+	&& SBMLDocument_getLevel(d) == 1 ) {
+      
         d2 = convertModel(d);
         SBMLDocument_free(d);
         if ( printMessage )
@@ -78,11 +84,11 @@ SBMLDocument_t*parseModelPassingOptions(
     return (d);
 }
 
-SBMLReader_t*newSBMLReader (
-    char *schemaPath,
-    char *schema11,
-    char *schema12,
-    char *schema21)
+SBMLReader_t *
+newSBMLReader (char *schemaPath,
+	       char *schema11,
+	       char *schema12,
+	       char *schema21)
 {
   SBMLReader_t *sr;
   char *schema[3];
@@ -98,9 +104,9 @@ SBMLReader_t*newSBMLReader (
   SBMLReader_setSchemaFilenameL1v2(sr, schema[1]);
   SBMLReader_setSchemaFilenameL2v1(sr, schema[2]);
 
-  safe_free(schema[0]);
-  safe_free(schema[1]);
-  safe_free(schema[2]);
+  free(schema[0]);
+  free(schema[1]);
+  free(schema[2]);
   
   return (sr);  
 }
@@ -115,7 +121,7 @@ convertModel (SBMLDocument_t *d1)
   SBMLDocument_setVersion(d1, 1);
   model = writeSBMLToString(d1);
   d2 = readSBMLFromString(model); 
-  safe_free(model);
+  free(model);
   return d2;
 }
 

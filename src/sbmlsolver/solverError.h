@@ -31,7 +31,10 @@ typedef enum errorCode
 
 typedef enum errorType
 {
-    FATAL_ERROR_TYPE = 0, ERROR_ERROR_TYPE = 1, WARNING_ERROR_TYPE = 2, NUMBER_OF_ERROR_TYPES = 3
+    FATAL_ERROR_TYPE = 0,
+    ERROR_ERROR_TYPE = 1,
+    WARNING_ERROR_TYPE = 2,
+    NUMBER_OF_ERROR_TYPES = 3
 } errorType_t;
 
 #define RETURN_ON_ERRORS_WITH(x) \
@@ -41,30 +44,41 @@ typedef enum errorType
 {if (SolverError_getNum(FATAL_ERROR_TYPE)) return (x); }
 
 /* get number of stored errors  of given type */
-SBML_ODESOLVER_API int SolverError_getNum(errorType_t); 
+SBML_ODESOLVER_API int
+SolverError_getNum(errorType_t); 
 
 /* get a stored error message */
-SBML_ODESOLVER_API char *SolverError_getMessage(errorType_t, int errorNum);
+SBML_ODESOLVER_API char *
+SolverError_getMessage(errorType_t, int errorNum);
 
 /* get error code */
-SBML_ODESOLVER_API errorCode_t SolverError_getCode(errorType_t, int errorNum);
+SBML_ODESOLVER_API errorCode_t
+SolverError_getCode(errorType_t, int errorNum);
 
 /* get error code of last error stored of given type */
-SBML_ODESOLVER_API errorCode_t SolverError_getLastCode(errorType_t);
+SBML_ODESOLVER_API errorCode_t
+SolverError_getLastCode(errorType_t);
 
 /* empty error store */
-SBML_ODESOLVER_API void SolverError_clear();
+SBML_ODESOLVER_API void
+SolverError_clear();
 
 /* create an error */
-SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, char *format, ...);
+SBML_ODESOLVER_API void
+SolverError_error(errorType_t, errorCode_t, char *format, ...);
 
 /* exit the program if errors or fatals have been created. */
-SBML_ODESOLVER_API void SolverError_haltOnErrors();
+SBML_ODESOLVER_API void
+SolverError_haltOnErrors();
 
 /* write all errors and warnings to standard error */
-SBML_ODESOLVER_API void SolverError_dump();
+SBML_ODESOLVER_API void
+SolverError_dump();
 
 /* write all errors and warnings to standard error and then empty error store*/
-SBML_ODESOLVER_API void SolverError_dumpAndClearErrors();
+SBML_ODESOLVER_API void
+SolverError_dumpAndClearErrors();
 
-#endif /* _SOLVERERROR_H_ */
+#endif 
+/* _SOLVERERROR_H_ */
+

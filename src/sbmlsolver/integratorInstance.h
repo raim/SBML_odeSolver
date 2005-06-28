@@ -2,7 +2,7 @@
 #define _INTEGRATORINSTANCE_H_
 
 #include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/CvodeSettings.h"
+#include "sbmlsolver/cvodeSettings.h"
 #include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odeModel.h"
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-30 12:43:32 raim>
-  $Id: cvodedata.h,v 1.2 2005/06/27 15:17:57 afinney Exp $
+  Last changed Time-stamp: <2005-06-28 15:37:04 raim>
+  $Id: cvodedata.h,v 1.3 2005/06/28 13:52:20 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <sbml/SBMLTypes.h>
 
-#include "SBMLSolver/cvodedatatype.h"
-#include "SBMLSolver/odemodeldatatype.h"
-#include "CvodeSettings.h"
+#include "sbmlsolver/cvodedatatype.h"
+#include "sbmlsolver/odemodeldatatype.h"
+#include "sbmlsolver/cvodeSettings.h"
 
 struct odeModel
 {
@@ -84,7 +84,7 @@ struct _CvodeData {
   odeModel_t *model ;
 
   /* results file */
-  char *filename;
+  const char *filename;
   FILE *outfile; 
 
   /* Constants: stores constant species, and species,
@@ -141,18 +141,23 @@ struct _CvodeData {
      with changed settings upon failure. */
   int run;
 
-  /* flag 'storeResults' indicates whether the results field should be allocated and populated */
+  /* flag 'storeResults' indicates whether the results field
+     should be allocated and populated */
   int storeResults;
   
 };
 
 CvodeData
-CvodeData_create(int neq, int nconst, int nass, int nevents, const char *resultsFileName);
+CvodeData_create(int neq, int nconst, int nass,
+		 int nevents, const char *resultsFileName);
 
-CvodeData CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFileName);
+CvodeData
+CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFileName);
 
 CvodeData 
-constructODEsPassingOptions(Model_t *m, const char *resultsFilename, int simplify, int determinant, const char *parameterNotToBeReplaced);
+constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
+			    int simplify, int determinant,
+			    const char *parameterNotToBeReplaced);
 
 void
 CvodeData_free(CvodeData data);

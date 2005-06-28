@@ -4,7 +4,7 @@
 #include <sbml/SBMLTypes.h>
 
 #include "sbmlsolver/exportdefs.h"
-#include "SBMLSolver/odemodeldatatype.h"
+#include "sbmlsolver/odemodeldatatype.h"
 
 typedef struct variableIndex variableIndex_t;
 

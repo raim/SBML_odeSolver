@@ -13,7 +13,9 @@ constructODEs(Model_t *m)
         
     if (Opt.Write || Opt.Xmgrace)
     {
-        resultsFilename = (char *) calloc(strlen(Opt.ModelPath)+ strlen(Opt.ModelFile)+5, sizeof(char));
+        resultsFilename =
+	  (char *) calloc(strlen(Opt.ModelPath)+ strlen(Opt.ModelFile)+5,
+			  sizeof(char));
         sprintf(resultsFilename, "%s%s.dat", Opt.ModelPath, Opt.ModelFile);
     }
     else
@@ -25,5 +27,7 @@ constructODEs(Model_t *m)
         Opt.DrawJacobian = 0;
     }
 
-    return constructODEsPassingOptions(m, resultsFilename, Opt.Simplify, Opt.Determinant, Opt.Parameter);
+    return constructODEsPassingOptions(m, resultsFilename,
+				       Opt.Simplify,
+				       Opt.Determinant, Opt.Parameter);
 }

@@ -6,4 +6,5 @@
 CvodeData 
 constructODEs(Model_t *m);
 
-#endif /* _ODECONSTRUCTUSINGOPTIONS_H_ */
+#endif
+/* _ODECONSTRUCTUSINGOPTIONS_H_ */

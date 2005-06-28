@@ -3,6 +3,9 @@
 #include <malloc.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 
 /* Header Files for CVODE */
 #include "cvode.h"    
@@ -351,8 +354,8 @@ integratorInstance_t *IntegratorInstance_createFromCvodeData(CvodeData data)
   return engine ;
 }
 
-/* moves the current simulation one time step, returns 1 if the intergation can continue
-   0 otherwise */
+/* moves the current simulation one time step, returns 1 if
+   the intergation can continue, 0 otherwise */
 int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 {
     int i, flag ;
@@ -360,7 +363,8 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     if (engine->data->model->neq)
     {
         /* !! calling Cvode !! */
-        flag = CVode(engine->cvode_mem, engine->tout, engine->y, &engine->t, NORMAL);
+        flag = CVode(engine->cvode_mem, engine->tout,
+		     engine->y, &engine->t, NORMAL);
     
         if ( flag != SUCCESS )
         {
@@ -430,13 +434,16 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
       engine->data->value[i] = N_VIth(engine->y,i);
 
     for ( i=0; i<engine->data->model->nass; i++ )
-      engine->data->avalue[i] = evaluateAST(engine->data->model->assignment[i], engine->data);
+      engine->data->avalue[i] =
+	evaluateAST(engine->data->model->assignment[i], engine->data);
 
     if (checkTrigger(engine))
     {
-        /* recalculate assignments - they may be dependant on event assignment results */
+        /* recalculate assignments - they may be dependent
+	   on event assignment results */
         for ( i=0; i<engine->data->model->nass; i++ )
-            engine->data->avalue[i] = evaluateAST(engine->data->model->assignment[i], engine->data);
+            engine->data->avalue[i] =
+	      evaluateAST(engine->data->model->assignment[i], engine->data);
 
         if (engine->data->HaltOnEvent)
             return 0; /* stop integration */
@@ -492,7 +499,9 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     else if ( engine->data->PrintMessage ) {
       const  char chars[5] = "|/-\\";
       fprintf(stderr, "\b\b\b\b\b\b");
-      fprintf(stderr, "%.2f %c", (float)engine->iout/(float)engine->nout, chars[engine->iout % 4]);
+      fprintf(stderr, "%.2f %c",
+	      (float)engine->iout/(float)engine->nout,
+	      chars[engine->iout % 4]);
 
     }
 
@@ -513,7 +522,8 @@ int IntegratorInstance_handleError(integratorInstance_t *engine)
         
         /* on flag -6/CONV_FAILURE
         try again, but now with/without generated Jacobian matrix  */
-        if ( errorCode == CONV_FAILURE && engine->data->run == 0 && engine->data->storeResults) {
+        if ( errorCode == CONV_FAILURE && engine->data->run == 0 &&
+	     engine->data->storeResults) {
             fprintf(
                 stderr,
                 "Trying again; now with %s Jacobian matrix\n",
@@ -676,7 +686,8 @@ static int checkTrigger(integratorInstance_t *engine)
                 SolverError_error(
                     ERROR_ERROR_TYPE, SOLVER_ERROR_EVENT_TRIGGER_FIRED,
                     "Event Trigger %d : %s fired at %g. Aborting simulation.",
-                    i, SBML_formulaToString(trigger), data->t0 + data->currenttime);
+                    i, SBML_formulaToString(trigger),
+		    data->t0 + data->currenttime);
 
             fired++;
             data->trigger[i] = 1;      
@@ -753,7 +764,8 @@ static int checkSteadyState(CvodeData data){
     fprintf(stderr, "%g  ", data->currenttime);
     for ( i=0; i<data->model->neq; i++ ) {
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
+	      data->model->species[i],
+	      fabs(evaluateAST(data->model->ode[i],data)));
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
