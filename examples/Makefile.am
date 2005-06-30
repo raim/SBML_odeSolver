@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.4 2005/06/28 14:59:20 raimc Exp $
+# $Id: Makefile.am,v 1.5 2005/06/30 09:41:10 chfl Exp $
 INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@
 AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
-bin_PROGRAMS = integrate batchIntegrate simpleIntInst shareIntInst
+bin_PROGRAMS = integrate batchIntegrate simpleIntInst shareIntInst ASTIndexTest
 integrate_SOURCES = integrate.c
 integrate_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
@@ -31,3 +31,7 @@ shareIntInst_LDADD    = -L../src -L/@prefix@/lib -lODES \
                          @SBML_LDFLAGS@ @SBML_LIBS@ \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                          -lstdc++ -lxerces-c -lm
+ASTIndexTest_SOURCES = ASTIndexTest.c
+ASTIndexTest_LDADD   = -L../src -L/@prefix@/lib -lODES \
+                       @SBML_LDFLAGS@ @SBML_LIBS@ \
+                       -lstdc++ -lxerces-c -lm
