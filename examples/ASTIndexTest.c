@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
-#include "sbml/Math/FormulaParser.h"
-#include "sbml/Math/FormulaFormatter.h"
+#include "sbml/math/FormulaParser.h"
+#include "sbml/math/FormulaFormatter.h"
 #include "sbmlsolver/ASTIndexNameNode.h"
 
-void main(void)
+int main(void)
 {
     int i;
     ASTNode_t *top = SBML_parseFormula("A * B");
@@ -39,4 +40,6 @@ void main(void)
     printf("top : %s\n", SBML_formulaToString(top));
 
     ASTNode_free(top);
+
+    return(EXIT_SUCCESS);
 }
