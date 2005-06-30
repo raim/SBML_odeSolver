@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.5 2005/06/28 13:53:41 raimc Exp $
+# $Id: Makefile.am,v 1.6 2005/06/30 09:45:52 chfl Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -26,7 +26,8 @@ libODES_a_SOURCES = odeSolver.c util.c \
                     cvodedata.c batchIntegrator.c \
 		    sbmlResults.c integratorInstance.c \
 		    odeModel.c solverError.c \
-		    odeConstructUsingOptions.c sbmlUsingOptions.c
+		    odeConstructUsingOptions.c sbmlUsingOptions.c \
+                    ASTIndexNameNode.cpp
 pkginclude_HEADERS = sbmlsolver/odeSolver.h sbmlsolver/util.h \
                      sbmlsolver/options.h sbmlsolver/sbml.h \
                      sbmlsolver/modelSimplify.h \
@@ -38,7 +39,8 @@ pkginclude_HEADERS = sbmlsolver/odeSolver.h sbmlsolver/util.h \
 		     sbmlsolver/integratorInstance.h sbmlsolver/odeModel.h \
 		     sbmlsolver/odemodeldatatype.h sbmlsolver/solverError.h \
 		     sbmlsolver/odeConstructUsingOptions.h \
-		     sbmlsolver/sbmlUsingOptions.h sbmlsolver/cvodeSettings.h
+		     sbmlsolver/sbmlUsingOptions.h sbmlsolver/cvodeSettings.h \
+                     sbmlsolver/ASTIndexNameNode.h
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c
 odeSolver_LDADD   = -L. -lODES \
