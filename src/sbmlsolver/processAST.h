@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:33:42 raim>
-  $Id: processAST.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-06-30 14:07:03 raim>
+  $Id: processAST.h,v 1.2 2005/07/01 12:53:40 raimc Exp $
 */
 #ifndef _PROCESSAST_H_
 #define _PROCESSAST_H_
@@ -15,8 +15,9 @@
 #define SQRT(x) pow((x),(.5))
 /* Helper Macros to get the second or the third child
    of an Abstract Syntax Tree */
-#define AST_secondChild(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
-#define AST_thirdChild(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
+#define child(x,y)  ASTNode_getChild(x,y)
+#define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
+#define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
 
 ASTNode_t *
 copyAST(const ASTNode_t *f);

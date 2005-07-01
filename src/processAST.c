@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:49:19 raim>
-  $Id: processAST.c,v 1.5 2005/06/28 14:59:37 raimc Exp $
+  Last changed Time-stamp: <2005-06-30 14:33:53 raim>
+  $Id: processAST.c,v 1.6 2005/07/01 12:53:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,7 +130,7 @@ evaluateAST(ASTNode_t *n, CvodeData data)
   int true;
  
   ASTNodeType_t type;
-  ASTNode_t **child;
+  /* ASTNode_t **child; */
 
   char *unknown;
   double result;
@@ -146,10 +146,10 @@ evaluateAST(ASTNode_t *n, CvodeData data)
   result = 0;
 
   childnum = ASTNode_getNumChildren(n);
-  child = (ASTNode_t **)calloc(childnum, sizeof(ASTNode_t *));
+/*   child = (ASTNode_t **)calloc(childnum, sizeof(ASTNode_t *)); */
   
-  for(i=0;i<childnum;i++)
-	child[i] = ASTNode_getChild(n,i);
+/*   for(i=0;i<childnum;i++) */
+/* 	child[i] = ASTNode_getChild(n,i); */
   type = ASTNode_getType(n); 
   
   switch(type)
@@ -219,14 +219,17 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	/* reallocate constants array and set value */
 	data->model->nconst++;
 	if(!(data->pvalue =
-	     (double *)realloc(data->pvalue, data->model->nconst*sizeof(double))))
+	     (double *)realloc(data->pvalue,
+			       data->model->nconst*sizeof(double))))
 	  fprintf(stderr, "failed!\n");
 	if(!(data->model->parameter =
-	     (char **) realloc(data->model->parameter, data->model->nconst*sizeof(char *))))
+	     (char **) realloc(data->model->parameter,
+			       data->model->nconst*sizeof(char *))))
 	  fprintf(stderr, "failed!\n");
 	data->model->parameter[data->model->nconst - 1] =
 	  (char *) calloc(strlen(ASTNode_getName(n))+1, sizeof(char));
-	sprintf(data->model->parameter[data->model->nconst - 1], ASTNode_getName(n));
+	sprintf(data->model->parameter[data->model->nconst - 1],
+		ASTNode_getName(n));
 	data->pvalue[data->model->nconst - 1] = result;
       }
       break;
@@ -235,7 +238,7 @@ evaluateAST(ASTNode_t *n, CvodeData data)
       fprintf(stderr, "The delay is ignored and the current\n");
       fprintf(stderr, "value is passed.\n");
       if ( childnum>0 ) 
-	result = evaluateAST(child[0],data);
+	result = evaluateAST(child(n,0),data);
       else
 	result = 0.0;
       break;
@@ -260,24 +263,24 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 
     case AST_PLUS:
       if(childnum<2)
-	result = (evaluateAST(child[0],data));
+	result = (evaluateAST(child(n,0),data));
       else
-	result = evaluateAST(child[0],data) + evaluateAST(child[1],data);
+	result = evaluateAST(child(n,0),data) + evaluateAST(child(n,1),data);
       break;      
     case AST_MINUS:
       if(childnum<2)
-	result = - (evaluateAST(child[0],data));
+	result = - (evaluateAST(child(n,0),data));
       else
-	result = evaluateAST(child[0],data) - evaluateAST(child[1],data);
+	result = evaluateAST(child(n,0),data) - evaluateAST(child(n,1),data);
       break;
     case AST_TIMES:
-      result = evaluateAST(child[0],data) * evaluateAST(child[1],data) ;
+      result = evaluateAST(child(n,0),data) * evaluateAST(child(n,1),data) ;
       break;
     case AST_DIVIDE:
-      result = evaluateAST(child[0],data) / evaluateAST(child[1],data);
+      result = evaluateAST(child(n,0),data) / evaluateAST(child(n,1),data);
       break;
     case AST_POWER:
-      result = pow(evaluateAST(child[0],data),evaluateAST(child[1],data));
+      result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
       break;
     case AST_LAMBDA:
       fprintf(stderr,
@@ -299,96 +302,96 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	double *func_vals = NULL;
 	func_vals = (double *) calloc(childnum+1, sizeof(double));
 	for ( i=0; i<childnum; i++ ) {
-	  func_vals[i] = evaluateAST(child[i], data);
+	  func_vals[i] = evaluateAST(child(n,i), data);
 	}
 	result = UsrDefFunc((char *)ASTNode_getName(n), childnum, func_vals);
 	free(func_vals);
       }
       break;
     case AST_FUNCTION_ABS:
-      result = (double) fabs(evaluateAST(child[0],data));
+      result = (double) fabs(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCCOS:
-      result = acos(evaluateAST(child[0],data)) ;
+      result = acos(evaluateAST(child(n,0),data)) ;
       break;
     case AST_FUNCTION_ARCCOSH:
-      result = acosh(evaluateAST(child[0],data));
+      result = acosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCCOT:
       /* arccot x =  arctan (1 / x) */
-      result = atan(1./ evaluateAST(child[0],data));
+      result = atan(1./ evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCCOTH:
       /* arccoth x = 1/2 * ln((x+1)/(x-1)) */
-      result = ((1./2.)*log((evaluateAST(child[0],data)+1.)/
-			    (evaluateAST(child[0],data)-1.)) );
+      result = ((1./2.)*log((evaluateAST(child(n,0),data)+1.)/
+			    (evaluateAST(child(n,0),data)-1.)) );
       break;
     case AST_FUNCTION_ARCCSC:
       /* arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
-      result = atan( 1. / SQRT( (evaluateAST(child[0],data)-1.)*
-				(evaluateAST(child[0],data)+1.) ) );
+      result = atan( 1. / SQRT( (evaluateAST(child(n,0),data)-1.)*
+				(evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCCSCH:
       /* arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
-      result = log((1.+SQRT((1+SQR(evaluateAST(child[0],data))))) /
-		   evaluateAST(child[0],data));
+      result = log((1.+SQRT((1+SQR(evaluateAST(child(n,0),data))))) /
+		   evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCSEC:
       /* arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
-      result = atan( SQRT( (evaluateAST(child[0],data)-1.)*
-			   (evaluateAST(child[0],data)+1.) ) );
+      result = atan( SQRT( (evaluateAST(child(n,0),data)-1.)*
+			   (evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCSECH:
       /* arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
-      result = log((1.+pow((1-SQR(evaluateAST(child[0],data))),0.5))/
-		   evaluateAST(child[0],data));      
+      result = log((1.+pow((1-SQR(evaluateAST(child(n,0),data))),0.5))/
+		   evaluateAST(child(n,0),data));      
       break;
     case AST_FUNCTION_ARCSIN:
-      result = asin(evaluateAST(child[0],data));
+      result = asin(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCSINH:
-      result = asinh(evaluateAST(child[0],data));
+      result = asinh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCTAN:
-      result = atan(evaluateAST(child[0],data));
+      result = atan(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCTANH:
-      result = atanh(evaluateAST(child[0],data));
+      result = atanh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_CEILING:
-      result = ceil(evaluateAST(child[0],data));
+      result = ceil(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_COS:
-      result = cos(evaluateAST(child[0],data));
+      result = cos(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_COSH:
-      result = cosh(evaluateAST(child[0],data));
+      result = cosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_COT:
       /* cot x = 1 / tan x */
-      result = (1./tan(evaluateAST(child[0],data)));
+      result = (1./tan(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_COTH:
       /* coth x = cosh x / sinh x */
-      result = cosh(evaluateAST(child[0],data)) /
-	sinh(evaluateAST(child[0],data));
+      result = cosh(evaluateAST(child(n,0),data)) /
+	sinh(evaluateAST(child(n,0),data));
       break;  
     case AST_FUNCTION_CSC:
       /* csc x = 1 / sin x */
-      result = (1./sin(evaluateAST(child[0],data)));
+      result = (1./sin(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_CSCH:
       /* csch x = 1 / sinh x  */
-      result = (1./sinh(evaluateAST(child[0],data)));
+      result = (1./sinh(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_EXP:
-      result = exp(evaluateAST(child[0],data));
+      result = exp(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_FACTORIAL:
       {
 	int j;
-	j = floor(evaluateAST(child[0],data));
-	if ( evaluateAST(child[0],data) != j ) {
+	j = floor(evaluateAST(child(n,0),data));
+	if ( evaluateAST(child(n,0),data) != j ) {
 	  fprintf(stderr, "The factorial is only implemented.\n");
 	  fprintf(stderr, "for integer values. If a floating\n");
 	  fprintf(stderr, "point number is passed, its floor value\n");
@@ -399,57 +402,58 @@ evaluateAST(ASTNode_t *n, CvodeData data)
       }
       break;
     case AST_FUNCTION_FLOOR:
-      result = floor(evaluateAST(child[0],data));
+      result = floor(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_LN:
-      result = log(evaluateAST(child[0],data));
+      result = log(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_LOG:
       /* log(x,y) = log10(y)/log10(x) (where x is the base)  */
-      result = log10(evaluateAST(child[1],data)) /
-	log10(evaluateAST(child[0],data));
+      result = log10(evaluateAST(child(n,1),data)) /
+	log10(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_PIECEWISE:
 /*  fprintf(stderr, "The piecewise function is not implemented yet.\n"); */
 /*  fprintf(stderr, "Defaults to 0.\n"); */
-      if ( evaluateAST(child[0],data) ) {
-	result = evaluateAST(child[1],data);
+      if ( evaluateAST(child(n,0),data) ) {
+	result = evaluateAST(child(n,1),data);
       }
       else {
-	result = evaluateAST(child[2],data);
+	result = evaluateAST(child(n,2),data);
       }
       break;
     case AST_FUNCTION_POWER:
-      result = pow(evaluateAST(child[0],data),evaluateAST(child[1],data));
+      result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
       break;
     case AST_FUNCTION_ROOT:
-      result = pow(evaluateAST(child[1],data),(1./evaluateAST(child[0],data)));
+      result = pow(evaluateAST(child(n,1),data),
+		   (1./evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_SEC:
       /* sec x = 1 / cos x */
-      result = 1./cos(evaluateAST(child[0],data));
+      result = 1./cos(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_SECH:
       /* sech x = 1 / cosh x */
-      result = 1./cosh(evaluateAST(child[0],data));
+      result = 1./cosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_SIN:
-      result = sin(evaluateAST(child[0],data));
+      result = sin(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_SINH:
-      result = sinh(evaluateAST(child[0],data));
+      result = sinh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_TAN:
-      result = tan(evaluateAST(child[0],data));
+      result = tan(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_TANH:
-      result = tanh(evaluateAST(child[0],data));
+      result = tanh(evaluateAST(child(n,0),data));
       break;
 
     case AST_LOGICAL_AND:
       true = 0;
       for ( i=0; i<childnum; i++ ) {
-	true += evaluateAST(child[i],data);
+	true += evaluateAST(child(n,i),data);
       }
       if ( true == childnum ) {
 	result = 1.0;
@@ -459,12 +463,12 @@ evaluateAST(ASTNode_t *n, CvodeData data)
       }
       break;
     case AST_LOGICAL_NOT:
-      result = (double) (!(evaluateAST(child[0],data)));
+      result = (double) (!(evaluateAST(child(n,0),data)));
       break;
     case AST_LOGICAL_OR:
       true = 0;
       for ( i=0; i<childnum; i++ ) {
-	true += evaluateAST(child[i],data);
+	true += evaluateAST(child(n,i),data);
       }
       if ( true > 0 ) {
 	result = 1.0;
@@ -476,7 +480,7 @@ evaluateAST(ASTNode_t *n, CvodeData data)
     case AST_LOGICAL_XOR:
       true = 0;
       for ( i=0; i<childnum; i++ ) {
-	true += evaluateAST(child[i],data);
+	true += evaluateAST(child(n,i),data);
       }
       if ( true == 1 || true == 3 ) {
 	result = 1.0;
@@ -487,24 +491,24 @@ evaluateAST(ASTNode_t *n, CvodeData data)
       break;
       
     case AST_RELATIONAL_EQ :
-      result = (double) ((evaluateAST(child[0],data)) ==
-			 (evaluateAST(child[1],data)));
+      result = (double) ((evaluateAST(child(n,0),data)) ==
+			 (evaluateAST(child(n,1),data)));
       break;
     case AST_RELATIONAL_GEQ:
-      result = (double) ((evaluateAST(child[0],data)) >=
-			 (evaluateAST(child[1],data)));
+      result = (double) ((evaluateAST(child(n,0),data)) >=
+			 (evaluateAST(child(n,1),data)));
       break;
     case AST_RELATIONAL_GT:
-      result = (double) ((evaluateAST(child[0],data)) >
-			 (evaluateAST(child[1],data)));
+      result = (double) ((evaluateAST(child(n,0),data)) >
+			 (evaluateAST(child(n,1),data)));
       break;
     case AST_RELATIONAL_LEQ:
-      result = (double) ((evaluateAST(child[0],data)) <=
-			 (evaluateAST(child[1],data)));
+      result = (double) ((evaluateAST(child(n,0),data)) <=
+			 (evaluateAST(child(n,1),data)));
       break;
     case AST_RELATIONAL_LT :
-      result = (double) ((evaluateAST(child[0],data)) <
-			 (evaluateAST(child[1],data)));
+      result = (double) ((evaluateAST(child(n,0),data)) <
+			 (evaluateAST(child(n,1),data)));
       break;
 
     default:
@@ -512,7 +516,6 @@ evaluateAST(ASTNode_t *n, CvodeData data)
       break;
     }
   
-  free(child);
   return result;
 }
 
@@ -842,21 +845,21 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_FUNCTION_ROOT);
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,0), 2);
+      ASTNode_setInteger(child2(fprime,1,0), 2);
       /* 1 - a^2) */
       /*  1  - */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType( AST_secondChild(fprime,1,1), AST_MINUS );
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 1);
+      ASTNode_setType( child2(fprime,1,1), AST_MINUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 1);
       /*  a^2  */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(  AST_thirdChild(fprime,1,1,1), AST_POWER);
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(  child3(fprime,1,1,1), AST_POWER);
+      ASTNode_addChild( child3(fprime,1,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild( child3(fprime,1,1,1),
 			ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 2);
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCCOSH:
       /* f(x)=arccosh(a(x)) => f' =   a' / sqrt(a^2 - 1)  */
@@ -867,22 +870,22 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_FUNCTION_ROOT);
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,0), 2);
+      ASTNode_setInteger(child2(fprime,1,0), 2);
       /* a^2 - 1 */
       /*  a^2  - */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType( AST_secondChild(fprime,1,1), AST_MINUS );
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(AST_thirdChild(fprime,1,1,0), AST_POWER);
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,0),
+      ASTNode_setType( child2(fprime,1,1), AST_MINUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(child3(fprime,1,1,0), AST_POWER);
+      ASTNode_addChild(child3(fprime,1,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
     
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,0),
+      ASTNode_addChild(child3(fprime,1,1,0),
 		       ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,0),1), 2);
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,0),1), 2);
       /*  1  */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,1), 1);
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,1), 1);
       break;
     case AST_FUNCTION_ARCCOT:
       /* f(x)=arccot(a(x)) => f' = - a' / (1 + a^2) */
@@ -897,15 +900,15 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_PLUS);
       /*  1  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger( AST_secondChild(fprime,1,0), 1);
+      ASTNode_setInteger( child2(fprime,1,0), 1);
       /*  a^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(  AST_secondChild(fprime,1,1), AST_POWER);
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_setType(  child2(fprime,1,1), AST_POWER);
+      ASTNode_addChild( child2(fprime,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_addChild( child2(fprime,1,1),
 			ASTNode_create());
-      ASTNode_setInteger( AST_thirdChild(fprime,1,1,1), 2);     
+      ASTNode_setInteger( child3(fprime,1,1,1), 2);     
       break;
     case AST_FUNCTION_ARCCOTH:
       /* f(x)=arccoth(a(x)) => f' = - a' / (-1 + a^2) */
@@ -920,17 +923,17 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_PLUS);
       /*  -1  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0), AST_MINUS);
-      ASTNode_addChild(AST_secondChild(fprime,1,0), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,0,0), 1);
+      ASTNode_setType(child2(fprime,1,0), AST_MINUS);
+      ASTNode_addChild(child2(fprime,1,0), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,0,0), 1);
       /*  a^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(  AST_secondChild(fprime,1,1), AST_POWER);
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_setType(  child2(fprime,1,1), AST_POWER);
+      ASTNode_addChild( child2(fprime,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_addChild( child2(fprime,1,1),
 			ASTNode_create());
-      ASTNode_setInteger( AST_thirdChild(fprime,1,1,1), 2);    
+      ASTNode_setInteger( child3(fprime,1,1,1), 2);    
       break;
     case AST_FUNCTION_ARCCSC:
       /* f(x)=arccsc(a(x)) => f' = - a' * a * sqrt(a^2 - 1)  */
@@ -947,28 +950,28 @@ differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));    
       /*  sqrt(...)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 2);
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 2);
       /* a^2 - 1 */
       /*  a^2  - */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(AST_thirdChild(fprime,1,1,1), AST_MINUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
     
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
+      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0),
 		      AST_POWER);
    
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       copyAST(ASTNode_getChild(f,0)));
     
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(AST_thirdChild(fprime,1,1,1),0,1),
+      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1),
 			 2);
       /*  1  */
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 1);
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCCSCH:
       /* f(x)=arccos(a(x)) => f' = - a' * a * sqrt(a^2 + 1)  */
@@ -985,28 +988,28 @@ differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));    
       /*  sqrt(...)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 2);
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 2);
       /* a^2 + 1 */
       /*  a^2  + */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(AST_thirdChild(fprime,1,1,1), AST_PLUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(child3(fprime,1,1,1), AST_PLUS );
     
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
+      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0),
 		      AST_POWER);
    
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       copyAST(ASTNode_getChild(f,0)));
     
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(AST_thirdChild(fprime,1,1,1),0,1),
+      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1),
 			 2);
       /*  1  */
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 1);
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCSEC:
       /* f(x)=arcsec(a(x)) => f' = a' * a * sqrt(a^2 - 1)  */
@@ -1021,28 +1024,28 @@ differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));    
       /*  sqrt(...)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 2);
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 2);
       /* a^2 - 1 */
       /*  a^2  - */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(AST_thirdChild(fprime,1,1,1), AST_MINUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
     
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
+      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0),
 		      AST_POWER);
    
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       copyAST(ASTNode_getChild(f,0)));
     
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
 		       ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(AST_thirdChild(fprime,1,1,1),0,1),
+      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1),
 			 2);
       /*  1  */
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 1);
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCSECH:
       /* f(x)=arcsech(a(x)) => f' = - a' * a * sqrt(1 - a^2)  */
@@ -1059,25 +1062,25 @@ differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));    
       /*  sqrt(...)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 2);
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 2);
       /*  1  - */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(AST_thirdChild(fprime,1,1,1), AST_MINUS );
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),0), 1);
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),0), 1);
       /*  a^2  */   
-      ASTNode_addChild(AST_thirdChild(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1),
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
+      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),1),
 		      AST_POWER);
    
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
 		       copyAST(ASTNode_getChild(f,0)));
     
-      ASTNode_addChild(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1),
+      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
 		       ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(AST_thirdChild(fprime,1,1,1),1,1),
+      ASTNode_setInteger(child2(child3(fprime,1,1,1),1,1),
 			 2);
       break;
     case AST_FUNCTION_ARCSIN:
@@ -1090,21 +1093,21 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_FUNCTION_ROOT);
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,0), 2);
+      ASTNode_setInteger(child2(fprime,1,0), 2);
       /* 1 - a^2) */
       /*  1  - */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType( AST_secondChild(fprime,1,1), AST_MINUS );
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 1);
+      ASTNode_setType( child2(fprime,1,1), AST_MINUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 1);
       /*  a^2  */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(  AST_thirdChild(fprime,1,1,1), AST_POWER);
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(  child3(fprime,1,1,1), AST_POWER);
+      ASTNode_addChild( child3(fprime,1,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild( child3(fprime,1,1,1),
 			ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 2);
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCSINH:
       /* f(x)=arcsinh(a(x)) => f' = a' / sqrt(1 + a^2)  */
@@ -1116,21 +1119,21 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_FUNCTION_ROOT);
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,0), 2);
+      ASTNode_setInteger(child2(fprime,1,0), 2);
       /* 1 + a^2) */
       /*  1  + */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType( AST_secondChild(fprime,1,1), AST_PLUS );
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(AST_thirdChild(fprime,1,1,0), 1);
+      ASTNode_setType( child2(fprime,1,1), AST_PLUS );
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setInteger(child3(fprime,1,1,0), 1);
       /*  a^2  */
-      ASTNode_addChild(AST_secondChild(fprime,1,1), ASTNode_create());
-      ASTNode_setType(  AST_thirdChild(fprime,1,1,1), AST_POWER);
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
+      ASTNode_setType(  child3(fprime,1,1,1), AST_POWER);
+      ASTNode_addChild( child3(fprime,1,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_thirdChild(fprime,1,1,1),
+      ASTNode_addChild( child3(fprime,1,1,1),
 			ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(AST_thirdChild(fprime,1,1,1),1), 2);
+      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCTAN:
       /* f(x)=atan(a(x)) => f' = a' / (1 + a^2) */
@@ -1143,15 +1146,15 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_PLUS);
       /*  1  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger( AST_secondChild(fprime,1,0), 1);
+      ASTNode_setInteger( child2(fprime,1,0), 1);
       /*  a^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(  AST_secondChild(fprime,1,1), AST_POWER);
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_setType(  child2(fprime,1,1), AST_POWER);
+      ASTNode_addChild( child2(fprime,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_addChild( child2(fprime,1,1),
 			ASTNode_create());
-      ASTNode_setInteger( AST_thirdChild(fprime,1,1,1), 2);    
+      ASTNode_setInteger( child3(fprime,1,1,1), 2);    
       break;
     case AST_FUNCTION_ARCTANH:
       /* f(x)=atan(a(x)) => f' = a' / (1 - a^2) */
@@ -1164,15 +1167,15 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_MINUS);
       /*  1  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger( AST_secondChild(fprime,1,0), 1);
+      ASTNode_setInteger( child2(fprime,1,0), 1);
       /*  a^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(  AST_secondChild(fprime,1,1), AST_POWER);
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_setType(  child2(fprime,1,1), AST_POWER);
+      ASTNode_addChild( child2(fprime,1,1),
 			copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild( AST_secondChild(fprime,1,1),
+      ASTNode_addChild( child2(fprime,1,1),
 			ASTNode_create());
-      ASTNode_setInteger( AST_thirdChild(fprime,1,1,1), 2);     
+      ASTNode_setInteger( child3(fprime,1,1,1), 2);     
       break;
     case AST_FUNCTION_CEILING:
       /* f(x) = ceil(a(x)) */
@@ -1185,9 +1188,9 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
       ASTNode_addChild(ASTNode_getChild(fprime,0), ASTNode_create());      
-      ASTNode_setType(AST_secondChild(fprime,0,0),
+      ASTNode_setType(child2(fprime,0,0),
 		      AST_FUNCTION_SIN);
-      ASTNode_addChild(AST_secondChild(fprime,0,0),
+      ASTNode_addChild(child2(fprime,0,0),
 		       copyAST(ASTNode_getChild(f,0)));      
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
@@ -1197,9 +1200,9 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
       ASTNode_addChild(ASTNode_getChild(fprime,0), ASTNode_create());      
-      ASTNode_setType(AST_secondChild(fprime,0,0),
+      ASTNode_setType(child2(fprime,0,0),
 		      AST_FUNCTION_SINH);
-      ASTNode_addChild(AST_secondChild(fprime,0,0),
+      ASTNode_addChild(child2(fprime,0,0),
 		       copyAST(ASTNode_getChild(f,0)));      
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
@@ -1216,13 +1219,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_POWER);
       /*  sin(a)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0),
 		      AST_FUNCTION_SIN);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /*  ^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,1), 2);  
+      ASTNode_setInteger(child2(fprime,1,1), 2);  
       break;
     case AST_FUNCTION_COTH:
       /* f(x)=cot(a(x)) => f' = - a' / (sinh(a))^2 */
@@ -1237,13 +1240,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_POWER);
       /*  sinh(a)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0),
 		      AST_FUNCTION_SINH);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /*  ^2  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,1), 2);  
+      ASTNode_setInteger(child2(fprime,1,1), 2);  
       break;  
     case AST_FUNCTION_CSC:
       /* f(x)=csc(a(x)) => f' = - a' * csc(a) * cot(a) */
@@ -1258,13 +1261,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
       /* csc(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0), AST_FUNCTION_CSC);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0), AST_FUNCTION_CSC);
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* tan(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_COT);
-      ASTNode_addChild(AST_secondChild(fprime,1,1),
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_COT);
+      ASTNode_addChild(child2(fprime,1,1),
 		       copyAST(ASTNode_getChild(f,0)));
       break;
     case AST_FUNCTION_CSCH:
@@ -1280,13 +1283,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
       /* csch(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0), AST_FUNCTION_CSCH);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0), AST_FUNCTION_CSCH);
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* tanh(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_COTH);
-      ASTNode_addChild(AST_secondChild(fprime,1,1),
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_COTH);
+      ASTNode_addChild(child2(fprime,1,1),
 		       copyAST(ASTNode_getChild(f,0)));	
       break;
     case AST_FUNCTION_DELAY:
@@ -1383,13 +1386,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
       /* sec(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0), AST_FUNCTION_SEC);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0), AST_FUNCTION_SEC);
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* tan(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_TAN);
-      ASTNode_addChild(AST_secondChild(fprime,1,1),
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_TAN);
+      ASTNode_addChild(child2(fprime,1,1),
 		       copyAST(ASTNode_getChild(f,0)));		         
       break;
     case AST_FUNCTION_SECH:
@@ -1404,13 +1407,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
       /* sec(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0), AST_FUNCTION_SECH);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0), AST_FUNCTION_SECH);
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* tan(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,1), AST_FUNCTION_TANH);
-      ASTNode_addChild(AST_secondChild(fprime,1,1),
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_TANH);
+      ASTNode_addChild(child2(fprime,1,1),
 		       copyAST(ASTNode_getChild(f,0)));    
       break;
     case AST_FUNCTION_SIN:
@@ -1441,13 +1444,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_POWER);
       /* cos(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0),
 		      AST_FUNCTION_COS);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* ^2 */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,1), 2);        
+      ASTNode_setInteger(child2(fprime,1,1), 2);        
       break;
     case AST_FUNCTION_TANH:
       /* f(x)= tanh(a(x)) => f' = a' / (cosh(a))^2  */
@@ -1459,13 +1462,13 @@ differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(ASTNode_getChild(fprime,1), AST_POWER);
       /* cos(a) */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(AST_secondChild(fprime,1,0),
+      ASTNode_setType(child2(fprime,1,0),
 		      AST_FUNCTION_COSH);
-      ASTNode_addChild(AST_secondChild(fprime,1,0),
+      ASTNode_addChild(child2(fprime,1,0),
 		       copyAST(ASTNode_getChild(f,0)));
       /* ^2 */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setInteger(AST_secondChild(fprime,1,1), 2); 
+      ASTNode_setInteger(child2(fprime,1,1), 2); 
       break;
     default:
       nrerror("simplifyAST: function: impossible case");
