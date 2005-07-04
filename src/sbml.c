@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:43:26 raim>
-  $Id: sbml.c,v 1.5 2005/06/28 14:59:37 raimc Exp $
+  Last changed Time-stamp: <2005-07-01 17:49:49 raim>
+  $Id: sbml.c,v 1.6 2005/07/04 12:48:11 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +70,7 @@ parseModelPassingOptions(
         return (d2);
     }
 
-    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) != 0)
+    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
         SBMLDocument_checkConsistency(d);
 
     /* check for warnings and errors */
