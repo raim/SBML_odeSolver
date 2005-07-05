@@ -15,6 +15,8 @@ typedef struct _CvodeSettings {
   int SteadyState;      /* Stops integration upon a steady state */
   int UseJacobian;      /* Toggle use of Jacobian ASTs or approximation */
   int StoreResults;     /* Store time course history */
+  int EnableVariableChanges; /* enable modification of variables between timesteps
+                                set this to 0 for better performance from the solver */
 } CvodeSettings;
 
 #endif /* _CVODESETTINGS_H_ */

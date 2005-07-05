@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-08 11:09:42 raim>
-  $Id: batchIntegrator.c,v 1.4 2005/06/27 15:12:19 afinney Exp $
+  $Id: batchIntegrator.c,v 1.5 2005/07/05 15:30:26 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +90,8 @@ batchIntegrator(Model_t *m) {
     data->PrintMessage = Opt.PrintMessage;
     data->HaltOnEvent = Opt.HaltOnEvent;
     data->SteadyState = Opt.SteadyState;
+    data->EnableVariableChanges = 0; 
+
     /* allow setting of Jacobian,
        only if its construction was succesfull */
     if ( data->UseJacobian == 1 ) {

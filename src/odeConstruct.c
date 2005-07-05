@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:46:01 raim>
-  $Id: odeConstruct.c,v 1.4 2005/06/28 14:59:35 raimc Exp $
+  $Id: odeConstruct.c,v 1.5 2005/07/05 15:30:27 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +61,8 @@ Model_reduceToOdes(Model_t *m, int simplify,
       during integration.
   */
 
-  name = (char *) calloc(strlen(Model_getId(m))+12, sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(name, strlen(Model_getId(m))+12, char, NULL);
+
   sprintf(name, "%s_simplified", Model_getId(m));
   ode = Model_createWith(name);
   free(name);

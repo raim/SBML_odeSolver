@@ -25,7 +25,13 @@ typedef enum errorCode
     /* 2XXXX - Integration failures */
     SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL = 20000,
     SOLVER_ERROR_EVENT_TRIGGER_FIRED = 20001,
-    SOLVER_ERROR_CVODE_MALLOC_FAILED = 20002
+    SOLVER_ERROR_CVODE_MALLOC_FAILED = 20002,
+
+    /* 3XXXX - Memory Exhaustion */
+    SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
+
+    /* 4XXXX - assorted API errors */
+    SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000
 } errorCode_t;
 
 
@@ -42,6 +48,11 @@ typedef enum errorType
 
 #define RETURN_ON_FATALS_WITH(x) \
 {if (SolverError_getNum(FATAL_ERROR_TYPE)) return (x); }
+
+#define ASSIGN_NEW_MEMORY_BLOCK(_ref, _num, _type, _return) \
+{ (_ref) = (_type *)SolverError_calloc(_num, sizeof(_type)); RETURN_ON_FATALS_WITH(_return) }
+
+#define ASSIGN_NEW_MEMORY(_ref, _type, _return) ASSIGN_NEW_MEMORY_BLOCK(_ref, 1, _type, _return)
 
 /* get number of stored errors  of given type */
 SBML_ODESOLVER_API int
@@ -75,9 +86,22 @@ SolverError_haltOnErrors();
 SBML_ODESOLVER_API void
 SolverError_dump();
 
+/* write all errors and warnings to a string (owned by caller unless SolverError_isMemoryExhausted()) */
+SBML_ODESOLVER_API char *
+SolverError_dumpToString();
+
+/* free string returned by SolverError_dumpToString */
+SBML_ODESOLVER_API void SolverError_freeDumpString(char *);
+
 /* write all errors and warnings to standard error and then empty error store*/
 SBML_ODESOLVER_API void
 SolverError_dumpAndClearErrors();
+
+/* allocated memory and sets error if it fails */
+SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size);
+
+/* returns 1 if memory has been exhausted 0 otherwise */
+SBML_ODESOLVER_API int SolverError_isMemoryExhausted();
 
 #endif 
 /* _SOLVERERROR_H_ */

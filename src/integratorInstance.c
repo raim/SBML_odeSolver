@@ -46,6 +46,8 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 {
     CvodeData data = CvodeData_createFromODEModel(om, 0 /* use stdout for results */);
 
+    RETURN_ON_FATALS_WITH(NULL)
+
     if (options->Indefinitely)
     {
         data->tout = -1; /* delibrate trap for bugs - there is no defined end time */
@@ -72,6 +74,7 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
     /* allow setting of Jacobian,
        only if its construction was succesfull */
     data->UseJacobian = om->simplified && options->UseJacobian;
+    data->EnableVariableChanges = options->EnableVariableChanges ;
 
     return IntegratorInstance_createFromCvodeData(data);
 }
@@ -232,7 +235,7 @@ void IntegratorInstance_freeODESolverStructures(integratorInstance_t *engine)
 /* frees the integrator */
 void IntegratorInstance_free(integratorInstance_t *engine)
 {
-    if (engine->data->model->neq)
+    if (engine->data->model->neq && !engine->data->EnableVariableChanges)
         IntegratorInstance_freeODESolverStructures(engine);
 
     CvodeData_freeExcludingModel(engine->data);
@@ -241,7 +244,7 @@ void IntegratorInstance_free(integratorInstance_t *engine)
 
 void IntegratorInstance_freeExcludingCvodeData(integratorInstance_t *engine)
 {
-    if (engine->data->model->neq)
+    if (engine->data->model->neq && !engine->data->EnableVariableChanges)
         IntegratorInstance_freeODESolverStructures(engine);
 
     free(engine);
@@ -252,8 +255,10 @@ void IntegratorInstance_freeExcludingCvodeData(integratorInstance_t *engine)
 integratorInstance_t *IntegratorInstance_createFromCvodeData(CvodeData data)
 {
   int i ;
-  integratorInstance_t *engine = malloc(sizeof(integratorInstance_t));
-
+  integratorInstance_t *engine;
+  
+  ASSIGN_NEW_MEMORY(engine, integratorInstance_t, NULL);
+ 
   /* CVODE settings: set Problem Constants */
   /* set first output time, output intervals and number of outputs
      from the values in CvodeData data */
@@ -268,7 +273,7 @@ integratorInstance_t *IntegratorInstance_createFromCvodeData(CvodeData data)
   data->cnt = data->nout;   /* used counting actual output steps */
   engine->t = 0;
 
-  if (data->model->neq)
+  if (data->model->neq && !data->EnableVariableChanges)
   {
       IntegratorInstance_createODESolverStructures(engine);
       RETURN_ON_ERRORS_WITH(NULL);
@@ -290,6 +295,7 @@ integratorInstance_t *IntegratorInstance_createFromCvodeData(CvodeData data)
   */
   if ( data->results == NULL ) {
     engine->results = CvodeResults_create(data);
+    RETURN_ON_FATALS_WITH(NULL);
     data->results = engine->results;
   }
   else {
@@ -362,9 +368,15 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 
     if (engine->data->model->neq)
     {
+        if (engine->data->EnableVariableChanges)
+        {
+            IntegratorInstance_createODESolverStructures(engine);
+            RETURN_ON_ERRORS_WITH(0);
+        }
+
         /* !! calling Cvode !! */
         flag = CVode(engine->cvode_mem, engine->tout,
-		     engine->y, &engine->t, NORMAL);
+                     engine->y, &engine->t, NORMAL);
     
         if ( flag != SUCCESS )
         {
@@ -433,6 +445,12 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     for ( i=0; i<engine->data->model->neq; i++ )
       engine->data->value[i] = N_VIth(engine->y,i);
 
+    if (engine->data->model->neq && engine->data->EnableVariableChanges)
+    {
+        IntegratorInstance_freeODESolverStructures(engine);
+        engine->t0 = engine->t;
+    }
+
     for ( i=0; i<engine->data->model->nass; i++ )
       engine->data->avalue[i] =
 	evaluateAST(engine->data->model->assignment[i], engine->data);
@@ -448,7 +466,7 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
         if (engine->data->HaltOnEvent)
             return 0; /* stop integration */
 
-        if (engine->data->model->neq)
+        if (engine->data->model->neq && !engine->data->EnableVariableChanges)
         {
             /* reset CVODE */
             IntegratorInstance_freeODESolverStructures(engine);

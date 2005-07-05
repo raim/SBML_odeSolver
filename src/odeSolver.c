@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:21:23 raim>
-  $Id: odeSolver.c,v 1.9 2005/06/28 14:59:36 raimc Exp $
+  $Id: odeSolver.c,v 1.10 2005/07/05 15:30:27 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -249,6 +249,8 @@ odeSolver (int argc, char *argv[])
     data->HaltOnEvent = Opt.HaltOnEvent;
     data->SteadyState = Opt.SteadyState;
     data->storeResults = 1;
+    data->EnableVariableChanges = 0;
+
     /* allow setting of Jacobian,
        only if its construction was succesfull */
     if ( data->UseJacobian == 1 ) {
@@ -410,6 +412,7 @@ Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
   data->HaltOnEvent = set.HaltOnEvent;
   data->SteadyState = set.SteadyState;
   data->storeResults = 1;
+  data->EnableVariableChanges = 0;
 
   /* allow setting of Jacobian,
      only if its construction was succesfull */

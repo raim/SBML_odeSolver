@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 15:37:04 raim>
-  $Id: cvodedata.h,v 1.3 2005/06/28 13:52:20 raimc Exp $
+  $Id: cvodedata.h,v 1.4 2005/07/05 15:32:23 afinney Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -145,6 +145,9 @@ struct _CvodeData {
      should be allocated and populated */
   int storeResults;
   
+  /* flag 'EnableVariableChanges' allows variables to be changed between timesteps
+        set this to 0 for better performance from the solver */
+  int EnableVariableChanges;
 };
 
 CvodeData

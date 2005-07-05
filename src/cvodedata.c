@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:27:15 raim>
-  $Id: cvodedata.c,v 1.6 2005/06/28 14:59:31 raimc Exp $
+  $Id: cvodedata.c,v 1.7 2005/07/05 15:30:27 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,20 +33,11 @@ CvodeData_create(int neq, int nconst, int nass,
 
   CvodeData data;
 
-  if(!(data = (CvodeData) calloc(1, sizeof(*data))))
-    fprintf(stderr, "failed!\n");
-  
-  if(!(data->trigger = (int *) calloc(nevents, sizeof(int))))
-    fprintf(stderr, "failed!\n");
-
-  if(!(data->value =  (double *)calloc(neq, sizeof(double))))
-    fprintf(stderr, "failed!\n");
-
-  if(!(data->pvalue =  (double *)calloc(nconst, sizeof(double))))
-    fprintf(stderr, "failed!\n");
-
-  if(!(data->avalue =  (double *)calloc(nass, sizeof(double))))
-    fprintf(stderr, "failed!\n");
+  ASSIGN_NEW_MEMORY(data, struct _CvodeData, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(data->trigger, nevents, int, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(data->value, neq, double, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(data->pvalue, nconst, double, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(data->avalue, nass, double, NULL);
 
   data->filename = resultsFilename ;
 
@@ -128,60 +119,37 @@ CvodeResults_create(CvodeData data){
   if (!data->storeResults)
     return 0 ;
 
-  if(!(results = (CvodeResults) calloc(1, sizeof(*results)))){
-    fprintf(stderr, "failed!\n");
-  }
-  
-  /* The `time' array of contains all timepoints  */
-  if(!(results->time = (double *)calloc(data->nout+1, sizeof(double)))){
-    fprintf(stderr, "failed!\n");
-  }
+  ASSIGN_NEW_MEMORY(results, struct _CvodeResults, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(results->time, data->nout+1, double, NULL)
   
   /* The 2-D array `value' contains the time courses, that are
      calculated by ODEs (SBML species, or compartments and parameters
      defined by rate rules.
   */
-  if(!(results->value = (double **)calloc(data->model->neq, sizeof(double*)))){
-    fprintf(stderr, "failed!\n");
-  }
-  for(i=0;i<data->model->neq;++i){
-    if(!(results->value[i] =
-	 (double *)calloc(data->nout+1, sizeof(double)))){
-      fprintf(stderr, "failed!\n");
-    }
-  }
+  ASSIGN_NEW_MEMORY_BLOCK(results->value, data->model->neq, double *, NULL)
+
+  for(i=0;i<data->model->neq;++i)
+    ASSIGN_NEW_MEMORY_BLOCK(results->value[i], data->nout+1, double, NULL)
   
   /* The 2-D array `pvalue' contains time courses for all
      constant SBML species. These data are not needed for
      integration, but is convenient to have for output of
      results.
   */
-  if(!(results->pvalue =
-       (double **)calloc(data->model->nconst, sizeof(double*)))){
-    fprintf(stderr, "failed!\n");
-  }
-  for(i=0;i<data->model->nconst;++i){
-    if(!(results->pvalue[i] =
-	 (double *)calloc(data->nout+1, sizeof(double)))){
-      fprintf(stderr, "failed!\n");
-    }
-  }
+  ASSIGN_NEW_MEMORY_BLOCK(results->pvalue, data->model->nconst, double *, NULL)
+
+  for(i=0;i<data->model->nconst;++i)
+    ASSIGN_NEW_MEMORY_BLOCK(results->pvalue[i], data->nout+1, double, NULL)
   
   /* The 2-D array `avalue' contains time courses for all
      SBML species, compartments and parameters that are defined
      by SBML assignment rules. Again, this is not needed for
      integration, but convenient to have for output of results.
    */
-  if(!(results->avalue =
-       (double **)calloc(data->model->nass, sizeof(double*)))){
-    fprintf(stderr, "failed!\n");
-  }
-  for(i=0;i<data->model->nass;++i){
-    if(!(results->avalue[i] =
-	 (double *)calloc(data->nout+1, sizeof(double)))){
-      fprintf(stderr, "failed!\n");
-    }
-  }
+  ASSIGN_NEW_MEMORY_BLOCK(results->avalue, data->model->nass, double *, NULL)
+
+  for(i=0;i<data->model->nass;++i)
+    ASSIGN_NEW_MEMORY_BLOCK(results->avalue[i], data->nout+1, double, NULL)
   
   return results;  
 }
@@ -191,6 +159,7 @@ constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
 			    int simplify, int determinant,
 			    const char *parameterNotToBeReplaced)
 {     
+    CvodeData result;
     odeModel_t *om =
       ODEModel_createFromModelAndOptions(m, simplify,
 					 determinant,
@@ -200,7 +169,11 @@ constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
     RETURN_ON_ERRORS_WITH(NULL);
     SolverError_clear(); /* get rid of any lingering warnings */
 
-    return CvodeData_createFromODEModel(om, resultsFilename);
+    result = CvodeData_createFromODEModel(om, resultsFilename);
+    SolverError_dump();
+    RETURN_ON_FATALS_WITH(NULL);
+
+    return result ;
 }
 
 /**
@@ -241,6 +214,9 @@ CvodeData_createFromODEModel(odeModel_t *m,
   nevents = Model_getNumEvents(m->m);
 
   data = CvodeData_create(neq, nconst, nass, nevents, resultsFilename);
+
+  RETURN_ON_FATALS_WITH(NULL);
+
   data->model = m ;
   data->UseJacobian = m->simplified ;
 

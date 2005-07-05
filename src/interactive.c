@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:54:31 raim>
-  $Id: interactive.c,v 1.4 2005/06/28 14:59:35 raimc Exp $
+  $Id: interactive.c,v 1.5 2005/07/05 15:30:27 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -428,6 +428,8 @@ callIntegrator(Model_t *m){
     data->Mxstep = Opt.Mxstep;
     data->HaltOnEvent = Opt.HaltOnEvent;
     data->SteadyState = Opt.SteadyState;
+    data->EnableVariableChanges = 0;
+
     /* allow setting of Jacobian, only if construction was succesfull */
     if ( data->UseJacobian == 1 ) {
       data->UseJacobian = Opt.Jacobian;

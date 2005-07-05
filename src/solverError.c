@@ -19,20 +19,27 @@ typedef struct solverErrorMessage
 
 static List_t *solverErrors[NUMBER_OF_ERROR_TYPES] = { NULL, NULL, NULL };
 
+static int memoryExhaustion = 0;
+static solverErrorMessage_t memoryExhaustionFixedMessage =
+{
+    "No more memory avaliable",
+    SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE
+};
+
 /* get number of stored errors  of given type */
 int SolverError_getNum(errorType_t type)
 {
     List_t *errors = solverErrors[type];
 
-    if (!errors)
-        return 0;
-
-    return List_size(errors);
+    return (errors ? List_size(errors) : 0) + (type == FATAL_ERROR_TYPE ? memoryExhaustion : 0) ;
 }
 
 solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
 {
     List_t *errors = solverErrors[type];
+
+    if (type == FATAL_ERROR_TYPE && memoryExhaustion && errorNum == (errors ? List_size(errors) : 0))
+        return &memoryExhaustionFixedMessage ;
 
     if (!errors)
         return NULL;
@@ -79,6 +86,8 @@ void SolverError_clear()
             }
         }
     }
+
+    memoryExhaustion = 0;
 }
 
 void SolverError_dumpAndClearErrors()
@@ -96,18 +105,29 @@ void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
     va_list args;
     solverErrorMessage_t *message = (solverErrorMessage_t *)malloc(sizeof(solverErrorMessage_t));
 
-    va_start(args, fmt);
-    vsnprintf(buffer, 2000, fmt, args);
-    va_end(args);
+    if (message == NULL)
+        memoryExhaustion = 1;
+    else
+    {
+        va_start(args, fmt);
+        vsnprintf(buffer, 2000, fmt, args);
+        va_end(args);
 
-    variableLengthBuffer = (char *)malloc(strlen(buffer) + 1);
-    message->errorCode = errorCode;
-    message->message = strcpy(variableLengthBuffer, buffer);
+        variableLengthBuffer = (char *)malloc(strlen(buffer) + 1);
+        message->errorCode = errorCode;
 
-    if (!errors)
-        errors = solverErrors[type] = List_create();
+        if (variableLengthBuffer == NULL)
+            memoryExhaustion = 1;
+        else
+        {
+            message->message = strcpy(variableLengthBuffer, buffer);
 
-    List_add(errors, message);
+            if (!errors)
+                errors = solverErrors[type] = List_create();
+
+            List_add(errors, message);
+        }
+    }
 }
 
 /* exit the program if errors or fatals have been created. */
@@ -117,9 +137,10 @@ void SolverError_haltOnErrors()
         exit(EXIT_FAILURE);
 }
 
-/* write all errors and warnings to standard error */
-void SolverError_dump()
+int SolverError_dumpHelper(char *s)
 {
+    int result = 1;
+
     static char *solverErrorTypeString[] =
         { "Fatal Error",
           "      Error",
@@ -135,9 +156,87 @@ void SolverError_dump()
         {
             for (j=0; j != List_size(errors); j++)
             {
+                char errorCodeString[35] ;
                 solverErrorMessage_t *error = List_get(errors, j);
-                fprintf(stderr, "%s\t%d\t%s\n", solverErrorTypeString[i], error->errorCode, error->message);
+
+                itoa(error->errorCode, errorCodeString, 10);
+                    
+                if (s)
+                {
+                    result = sprintf(s, "%s\t%s\t%s\n", solverErrorTypeString[i], errorCodeString, error->message);
+                    s += result ;
+                }
+                else
+                    result +=
+                        3 +
+                        strlen(solverErrorTypeString[i]) +
+                        strlen(error->message) +
+                        strlen(errorCodeString);
             }
         }
     }
+
+    if (s)
+        *s = '\0';
+
+    return result ;
+}
+
+/* write all errors and warnings to a string (owned by caller unless memoryExhaustion) */
+SBML_ODESOLVER_API char *SolverError_dumpToString()
+{
+    char *result;
+    
+    if (!memoryExhaustion)
+    {
+        int bufferSize = SolverError_dumpHelper(NULL);
+        result = SolverError_calloc(bufferSize, sizeof(char *));
+    }
+
+    if (memoryExhaustion)
+        result = "Fatal Error\t30000\tNo more memory avaliable\n";
+    else
+        SolverError_dumpHelper(result);
+
+    return result;
+}
+
+/* free string returned by SolverError_dumpToString */
+SBML_ODESOLVER_API void SolverError_freeDumpString(char *message)
+{
+    if (!memoryExhaustion)
+        free(message);
+}
+
+/* write all errors and warnings to standard error */
+SBML_ODESOLVER_API void SolverError_dump()
+{
+    char *message = SolverError_dumpToString();
+
+    fprintf(stderr, message);
+    SolverError_freeDumpString(message);
+}
+
+/* returns 1 if memory has been exhausted 0 otherwise */
+SBML_ODESOLVER_API int SolverError_isMemoryExhausted()
+{
+    return memoryExhaustion;
+}
+
+SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
+{
+    /* static int noOfCalls = 0; for testing */
+    void *result;
+
+    /*noOfCalls++;
+
+    if (noOfCalls > 1)
+        result = NULL ;
+    else */
+    
+    result = calloc(num, size);
+
+    memoryExhaustion = memoryExhaustion || !result ;
+    
+    return result ;
 }

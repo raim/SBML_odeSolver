@@ -1,7 +1,7 @@
 #include "sbmlsolver/odeModel.h"
 
-#include <malloc.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
@@ -16,32 +16,18 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   int i;
   odeModel_t *data;
 
-  if(!(data = (odeModel_t *) malloc(sizeof(odeModel_t))))
-    fprintf(stderr, "failed!\n");
-  
-  if(!(data->species = (char **)calloc(neq, sizeof(char *))))
-    fprintf(stderr, "failed!\n");
-  if(!(data->speciesname = (char **)calloc(neq, sizeof(char *))))
-    fprintf(stderr, "failed!\n");
-  if(!(data->ode = (ASTNode_t **)calloc(neq, sizeof(ASTNode_t *))))    
-    fprintf(stderr, "failed!\n");
-  
-  if(!(data->jacob =
-       (ASTNode_t ***)calloc(neq, sizeof(ASTNode_t **))))
-    fprintf(stderr, "failed!\n");
-  for ( i=0; i<neq; i++ ) {
-    if(!(data->jacob[i] = (ASTNode_t **)calloc(neq, sizeof(ASTNode_t *))))
-      fprintf(stderr, "failed!\n");     
-  }
+  ASSIGN_NEW_MEMORY(data, odeModel_t, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->species, neq, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->speciesname, neq, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->jacob, neq, ASTNode_t **, NULL)
 
-  if(!(data->parameter = (char **)calloc(nconst, sizeof(char *))))
-    fprintf(stderr, "failed!\n");
-  
-  if(!(data->ass_parameter = (char **)calloc(nass, sizeof(char *))))
-    fprintf(stderr, "failed!\n");
-  if(!(data->assignment =
-       (ASTNode_t **)calloc(nass, sizeof(ASTNode_t *))))    
-    fprintf(stderr, "failed!\n");  
+  for ( i=0; i<neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(data->jacob[i], neq, ASTNode_t *, NULL)
+
+  ASSIGN_NEW_MEMORY_BLOCK(data->parameter, nconst, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->ass_parameter, nass, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
 
   return data ;
 }
@@ -109,6 +95,7 @@ ODEModel_createFromModelAndOptions(Model_t *m,
   nevents = Model_getNumEvents(ode);
   
   data = ODEModel_allocate(neq, nconst, nass, nevents);
+  RETURN_ON_FATALS_WITH(NULL);
   data->neq = neq;
   data->nconst = nconst;
   data->nass = nass;
@@ -121,8 +108,8 @@ ODEModel_createFromModelAndOptions(Model_t *m,
   for ( i=0; i<Model_getNumParameters(ode); i++ ) {
     p = Model_getParameter(ode, i);
     if ( Parameter_getConstant(p) ) {     
-      data->parameter[nconst] =
-	(char *) calloc(strlen(Parameter_getId(p))+1, sizeof(char));
+      ASSIGN_NEW_MEMORY_BLOCK(
+          data->parameter[nconst], strlen(Parameter_getId(p))+1, char, NULL);
       sprintf(data->parameter[nconst], Parameter_getId(p));
       nconst++;
     }
@@ -141,19 +128,18 @@ ODEModel_createFromModelAndOptions(Model_t *m,
       math = copyAST(Rule_getMath(rl));
       data->ode[neq] = math;
       s = Model_getSpeciesById(ode, RateRule_getVariable(rr));
-
-      data->species[neq] =
-	(char *) calloc(strlen(RateRule_getVariable(rr))+1, sizeof(char));
+      ASSIGN_NEW_MEMORY_BLOCK(
+          data->species[neq], strlen(RateRule_getVariable(rr))+1, char, NULL)
       sprintf(data->species[neq],RateRule_getVariable(rr));
 
       if ( Species_isSetName(s) ) {
-	data->speciesname[neq] =
-	  (char *) calloc(strlen(Species_getName(s))+1, sizeof(char));
+          ASSIGN_NEW_MEMORY_BLOCK(
+              data->speciesname[neq], strlen(Species_getName(s))+1, char, NULL);
 	sprintf(data->speciesname[neq],Species_getName(s));
       }
       else {
-	data->speciesname[neq] =
-	  (char *) calloc(strlen(RateRule_getVariable(rr))+1, sizeof(char));
+          ASSIGN_NEW_MEMORY_BLOCK(
+              data->speciesname[neq], strlen(RateRule_getVariable(rr))+1, char, NULL);
 	sprintf(data->speciesname[neq], RateRule_getVariable(rr));
       }
       neq++;      
@@ -164,9 +150,8 @@ ODEModel_createFromModelAndOptions(Model_t *m,
       math = copyAST(Rule_getMath(rl));
       data->assignment[nass] = math;
 
-      data->ass_parameter[nass] =
-	(char *) calloc(strlen(AssignmentRule_getVariable(ar))+1,
-			sizeof(char));
+      ASSIGN_NEW_MEMORY_BLOCK(
+          data->ass_parameter[nass], strlen(AssignmentRule_getVariable(ar))+1, char, NULL);
       sprintf(data->ass_parameter[nass], AssignmentRule_getVariable(ar));
       nass++;      
     }
@@ -174,17 +159,14 @@ ODEModel_createFromModelAndOptions(Model_t *m,
 
   /* setting model name and id and pointing to sbml model */    
   if ( Model_isSetName(m) ) {
-    data->modelName = (char *)calloc(strlen(Model_getName(m))+1,
-				     sizeof(char));
+    ASSIGN_NEW_MEMORY_BLOCK(data->modelName, strlen(Model_getName(m))+1, char, NULL);
     sprintf(data->modelName, Model_getName(m));    
   }
   else {
-    data->modelName = (char *)calloc(strlen(Model_getId(m))+1,
-				     sizeof(char));
+    ASSIGN_NEW_MEMORY_BLOCK(data->modelName, strlen(Model_getId(m))+1, char, NULL);
     sprintf(data->modelName, Model_getId(m));
   }
-  data->modelId = (char *)calloc(strlen(Model_getId(m))+1,
-				 sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(data->modelId, strlen(Model_getId(m))+1, char, NULL);
   sprintf(data->modelId, Model_getId(m));
 
   data->m = m;
@@ -313,10 +295,9 @@ SBML_ODESOLVER_API variableIndex_t *
 ODEModel_getVariableIndex(odeModel_t *data, char *symbol)
 {
     int i;
-    variableIndex_t *vi = malloc(sizeof(variableIndex_t));
-    
-    if (!vi)
-        return 0;
+    variableIndex_t *vi;
+
+    ASSIGN_NEW_MEMORY(vi, variableIndex_t, NULL);
 
     for ( i=0; i<data->neq && strcmp(symbol, data->speciesname[i]); i++ );
     
@@ -346,6 +327,11 @@ ODEModel_getVariableIndex(odeModel_t *data, char *symbol)
     }
 
     VariableIndex_free(vi);
+    SolverError_error(
+        ERROR_ERROR_TYPE,
+        SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
+        "symbol %s is not in the model",
+        symbol);
 
     return 0;
 }
