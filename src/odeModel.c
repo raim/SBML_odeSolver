@@ -2,6 +2,9 @@
 
 #include <string.h>
 #include <malloc.h>
+#include <string.h>
+#include <stdlib.h>
+
 
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
