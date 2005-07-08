@@ -2,6 +2,7 @@
 #define _SOLVERERROR_H_
 
 #include <stdarg.h>
+#include <stddef.h>
 #include "sbmlsolver/exportdefs.h"
 
 /* error codes */
