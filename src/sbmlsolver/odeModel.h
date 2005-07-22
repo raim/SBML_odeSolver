@@ -6,14 +6,25 @@
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/odemodeldatatype.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct variableIndex variableIndex_t;
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_create(char *sbmlFileName);
+SBML_ODESOLVER_API odeModel_t *ODEModel_createWithSelectiveReplacement(char *sbmlFileName, const char **parametersNotToBeReplaced);
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModel(Model_t *model);
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModelAndOptions(Model_t *model, int simplify, int determinant, const char *parameterNotToBeReplaced);
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModelWithSelectiveReplacement(Model_t *model, const char **parametersNotToBeReplaced);
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromModelAndOptions(Model_t *model, int simplify, int determinant, const char **parametersNotToBeReplaced);
 SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, char *symbol);
+SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *symbol);
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *symbol);
 SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
