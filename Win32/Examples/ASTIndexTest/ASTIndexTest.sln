@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASTIndexTest", "ASTIndexTest.vcproj", "{FE015A25-A902-4E2A-A6AB-5E888ADFA786}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{FE015A25-A902-4E2A-A6AB-5E888ADFA786}.Debug.ActiveCfg = Debug|Win32
+		{FE015A25-A902-4E2A-A6AB-5E888ADFA786}.Debug.Build.0 = Debug|Win32
+		{FE015A25-A902-4E2A-A6AB-5E888ADFA786}.Release.ActiveCfg = Release|Win32
+		{FE015A25-A902-4E2A-A6AB-5E888ADFA786}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

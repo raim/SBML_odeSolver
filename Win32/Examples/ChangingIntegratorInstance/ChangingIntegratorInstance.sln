@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChangingIntegratorInstance", "ChangingIntegratorInstance.vcproj", "{5D4FE4DA-B72F-4DC2-A58C-1089E19B50FD}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{5D4FE4DA-B72F-4DC2-A58C-1089E19B50FD}.Debug.ActiveCfg = Debug|Win32
+		{5D4FE4DA-B72F-4DC2-A58C-1089E19B50FD}.Debug.Build.0 = Debug|Win32
+		{5D4FE4DA-B72F-4DC2-A58C-1089E19B50FD}.Release.ActiveCfg = Release|Win32
+		{5D4FE4DA-B72F-4DC2-A58C-1089E19B50FD}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
