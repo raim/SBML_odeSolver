@@ -79,6 +79,31 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
     return IntegratorInstance_createFromCvodeData(data);
 }
 
+SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
+{
+    int i;
+    CvodeData targetData = target->data;
+    CvodeData sourceData = source->data;
+    odeModel_t *model = targetData->model;
+
+    if (model == sourceData->model)
+    {
+        for ( i=0; i<model->neq; i++ )
+            targetData->value[i] = sourceData->value[i];
+
+        for ( i=0; i<model->nass; i++ )
+            targetData->avalue[i] = sourceData->avalue[i];
+
+        for ( i=0; i<model->nconst; i++ )
+            targetData->pvalue[i] = sourceData->pvalue[i];
+    }
+    else
+        SolverError_error(
+            ERROR_ERROR_TYPE,
+            SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS,
+            "Attempting to copy variable state between instances of different models");
+}
+
 SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *ii, variableIndex_t *vi)
 {
     CvodeData data = ii->data ;
