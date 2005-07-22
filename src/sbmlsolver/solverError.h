@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include "sbmlsolver/exportdefs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* error codes */
 
 typedef enum errorCode
@@ -32,7 +36,9 @@ typedef enum errorCode
     SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
 
     /* 4XXXX - assorted API errors */
-    SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000
+    SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000,
+    SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 40001
+
 } errorCode_t;
 
 
@@ -103,6 +109,10 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size);
 
 /* returns 1 if memory has been exhausted 0 otherwise */
 SBML_ODESOLVER_API int SolverError_isMemoryExhausted();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 
 /* _SOLVERERROR_H_ */
