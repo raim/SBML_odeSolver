@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"
@@ -29,6 +30,10 @@ int doit(void)
     odeModel_t *model = ODEModel_create("c:\\models\\events-2-events-1-assignment-l2.xml");
     RETURN_ON_ERRORS_WITH(1);
 
+    assert(ODEModel_hasVariable(model, "S1"));
+    assert(ODEModel_hasVariable(model, "S1"));
+    assert(!ODEModel_hasVariable(model, "foobar"));
+
     s1 = ODEModel_getVariableIndex(model, "S1");
     s2 = ODEModel_getVariableIndex(model, "S2");
     
@@ -43,6 +48,8 @@ int doit(void)
     settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
     settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
     settings.StoreResults = 0;     /* don't Store time course history */
+    settings.EnableVariableChanges = 0; /* optimize excution without allowing modification of variables
+                                            between integration steps. */
 
     integratorInstanceA = IntegratorInstance_create(model, &settings);
     RETURN_ON_ERRORS_WITH(1);
