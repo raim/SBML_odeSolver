@@ -36,6 +36,8 @@ int doIt(void)
     settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
     settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
     settings.StoreResults = 0;     /* don't Store time course history */
+    settings.EnableVariableChanges = 1; /* optimize excution without allowing modification of variables
+                                            between integration steps. */
 
     integratorInstance = IntegratorInstance_create(model, &settings);
     RETURN_ON_ERRORS_WITH(1);
