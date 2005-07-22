@@ -1,6 +1,10 @@
 #ifndef _CVODESETTINGS_H_
 #define _CVODESETTINGS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Settings for CVODE Integration */
 typedef struct _CvodeSettings {
   double Time;          /* Time to which model is integrated or if 'Indefinitely' its the step size */
@@ -18,6 +22,10 @@ typedef struct _CvodeSettings {
   int EnableVariableChanges; /* enable modification of variables between timesteps
                                 set this to 0 for better performance from the solver */
 } CvodeSettings;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _CVODESETTINGS_H_ */
 
