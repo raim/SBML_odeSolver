@@ -10,6 +10,7 @@ CvodeData
 constructODEs(Model_t *m)
 {
     char *resultsFilename;
+    char **parametersNotToBeReplaced[2];
         
     if (Opt.Write || Opt.Xmgrace)
     {
@@ -26,8 +27,12 @@ constructODEs(Model_t *m)
         Opt.PrintJacobian = 0;
         Opt.DrawJacobian = 0;
     }
- 
+    
+    parametersNotToBeReplaced[0] = Opt.Parameter;
+    parametersNotToBeReplaced[1] = NULL ;
+
     return constructODEsPassingOptions(m, resultsFilename,
 				       Opt.Simplify,
-				       Opt.Determinant, Opt.Parameter);
+				       Opt.Determinant,
+                       parametersNotToBeReplaced);
 }
