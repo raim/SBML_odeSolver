@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:46:01 raim>
-  $Id: odeConstruct.c,v 1.5 2005/07/05 15:30:27 afinney Exp $
+  $Id: odeConstruct.c,v 1.6 2005/07/22 16:11:35 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +18,7 @@
 
 static void
 ODEs_replaceConstants(Model_t *m, Model_t *ode,
-		      const char *parameterNotToBeReplaced);
+		      const char **parameterNotToBeReplaced);
 static void
 ODEs_copyConstants(Model_t *m, Model_t *ode);
 
@@ -30,7 +30,7 @@ ODEs_copyConstants(Model_t *m, Model_t *ode);
 
 Model_t*
 Model_reduceToOdes(Model_t *m, int simplify,
-		   const char *parameterNotToBeReplaced) {
+		   const char **parametersNotToBeReplaced) {
 
   Model_t *ode;
   Parameter_t *p;
@@ -143,7 +143,7 @@ Model_reduceToOdes(Model_t *m, int simplify,
       SolverError_error(
           ERROR_ERROR_TYPE,
           SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
-          "ODE could not be constructed for species %s!",
+          "ODE could not be constructed for species %s",
 	      Species_getId(s));
 	}
 	else {
@@ -351,7 +351,7 @@ Model_reduceToOdes(Model_t *m, int simplify,
       replacing all constants
   */
   if ( simplify ) {
-    ODEs_replaceConstants(m, ode, parameterNotToBeReplaced);
+    ODEs_replaceConstants(m, ode, parametersNotToBeReplaced);
   }
   else {
     ODEs_copyConstants(m, ode);
@@ -407,12 +407,10 @@ Model_getValueById(Model_t *m, const char *id) {
 /** Step C: GLOBAL CONSTANT REPLACMENT
     start simplification, ie. replacement of the constant
     expressions and global parameters.
-    void 
-    ODEs_replaceConstants(Model_t *m, Model_t *ode) {}
 */
 static void
 ODEs_replaceConstants(Model_t *m, Model_t *ode,
-		      const char *parameterNotToBeReplaced) {
+		      const char **parametersNotToBeReplaced) {
 
 
   int i, j, k;
@@ -538,50 +536,56 @@ ODEs_replaceConstants(Model_t *m, Model_t *ode,
       integration with parameter variations.
   */
   for ( i=0; i<Model_getNumParameters(m); i++) {
-    p = Model_getParameter(m, i);
-    if ( Parameter_getConstant(p) ) {
+      p = Model_getParameter(m, i);
+      if ( Parameter_getConstant(p) ) {
 
-      if ( strcmp(Parameter_getId(p), parameterNotToBeReplaced) == 0 ) {
-	p_var = Parameter_create();
-	Parameter_setId(p_var, Parameter_getId(p));
-	Parameter_setValue(p_var, Parameter_getValue(p));
-	if ( Parameter_isSetName(p) ) {
-	  Parameter_setName(p_var, Parameter_getName(p));
-	}
-	Model_addParameter(ode, p_var);	
+          char **parameterNotToBeReplaced = parametersNotToBeReplaced;
+
+          while (*parameterNotToBeReplaced != NULL &&
+                    strcmp(Parameter_getId(p), *parameterNotToBeReplaced) != 0)
+              parameterNotToBeReplaced++;
+
+          if (*parameterNotToBeReplaced != NULL) {
+              p_var = Parameter_create();
+              Parameter_setId(p_var, Parameter_getId(p));
+              Parameter_setValue(p_var, Parameter_getValue(p));
+              if ( Parameter_isSetName(p) ) {
+                  Parameter_setName(p_var, Parameter_getName(p));
+              }
+              Model_addParameter(ode, p_var);	
+          }
+          else {
+
+              for ( j=0; j<Model_getNumRules(ode); j++ ) {
+                  rl_new = Model_getRule(ode, j);
+                  math = copyAST(Rule_getMath(rl_new));
+                  AST_replaceNameByValue(math,
+                      Parameter_getId(p),
+                      Parameter_getValue(p));
+                  Rule_setMath(rl_new, math);
+              }
+
+              for ( j=0; j<Model_getNumEvents(ode); j++ ) {
+                  e = Model_getEvent(ode, j);
+                  for ( k=0; k<Event_getNumEventAssignments(e); k++ ) {
+                      ea = Event_getEventAssignment(e, k);
+                      math = copyAST(EventAssignment_getMath(ea));
+                      AST_replaceNameByValue(math,
+                          Parameter_getId(p),
+                          Parameter_getValue(p));
+                      EventAssignment_setMath(ea, math);
+                  }
+
+                  math = copyAST(Event_getTrigger(e));
+                  AST_replaceNameByValue(math,
+                      Parameter_getId(p),
+                      Parameter_getValue(p));
+                  Event_setTrigger(e, math);
+              }
+          }
       }
-      else {
-
-	for ( j=0; j<Model_getNumRules(ode); j++ ) {
-	  rl_new = Model_getRule(ode, j);
-	  math = copyAST(Rule_getMath(rl_new));
-	  AST_replaceNameByValue(math,
-				 Parameter_getId(p),
-				 Parameter_getValue(p));
-	  Rule_setMath(rl_new, math);
-	}
-
-	for ( j=0; j<Model_getNumEvents(ode); j++ ) {
-	  e = Model_getEvent(ode, j);
-	  for ( k=0; k<Event_getNumEventAssignments(e); k++ ) {
-	    ea = Event_getEventAssignment(e, k);
-	    math = copyAST(EventAssignment_getMath(ea));
-	    AST_replaceNameByValue(math,
-				   Parameter_getId(p),
-				   Parameter_getValue(p));
-	    EventAssignment_setMath(ea, math);
-	  }
-      
-	  math = copyAST(Event_getTrigger(e));
-	  AST_replaceNameByValue(math,
-				 Parameter_getId(p),
-				 Parameter_getValue(p));
-	  Event_setTrigger(e, math);
-	}
-      }
-    }
   }
-  
+
   /** Steps C.4: replacing all constant compartments
       in rate rules, algebraic rules and events
       by their size
@@ -821,7 +825,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
                   SolverError_error(
                       ERROR_ERROR_TYPE,
                       SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
-                      "The model has no kinetic law for reaction %s!",
+                      "The model has no kinetic law for reaction %s",
                       Reaction_getId(r));
                   ++errors;
               }
@@ -870,7 +874,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
                   SolverError_error(
                       ERROR_ERROR_TYPE,
                       SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
-                      "The model has no kinetic law for reaction %s!",
+                      "The model has no kinetic law for reaction %s",
                       Reaction_getId(r));
                   ++errors;
               }
