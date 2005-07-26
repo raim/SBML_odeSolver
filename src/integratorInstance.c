@@ -106,21 +106,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 
 SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *ii, variableIndex_t *vi)
 {
-    CvodeData data = ii->data ;
-
-    switch (vi->type)
-    {
-        case SPECIES : 
-            return data->value[vi->index];
-
-        case ASSIGNMENT_PARAMETER :
-            return data->avalue[vi->index];
-
-        case PARAMETER :
-            return data->pvalue[vi->index];
-    }
-
-    return 0.0;
+    return ii->data->value[vi->index];
 }
 
 SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engine)
@@ -135,22 +121,7 @@ SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *ii, variableIndex_t *vi, double value)
 {
-    CvodeData data = ii->data ;
-
-    switch (vi->type)
-    {
-        case SPECIES : 
-            data->value[vi->index] = value;
-            return;
-
-        case ASSIGNMENT_PARAMETER :
-            data->avalue[vi->index] = value;
-            return;
-
-        case PARAMETER :
-            data->pvalue[vi->index] = value;
-            return;
-    }
+    ii->data->value[vi->index] = value;
 }
 
 /* create structures in the integration engine for CVODE 
