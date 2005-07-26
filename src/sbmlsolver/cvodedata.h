@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 15:37:04 raim>
-  $Id: cvodedata.h,v 1.5 2005/07/22 16:19:53 afinney Exp $
+  $Id: cvodedata.h,v 1.6 2005/07/26 15:43:35 afinney Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -159,8 +159,7 @@ CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFileName);
 
 CvodeData 
 constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
-			    int simplify, int determinant,
-			    const char **parameterNotToBeReplaced);
+			    int simplify, int determinant);
 
 void
 CvodeData_free(CvodeData data);

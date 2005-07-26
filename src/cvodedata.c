@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:27:15 raim>
-  $Id: cvodedata.c,v 1.8 2005/07/22 16:03:44 afinney Exp $
+  $Id: cvodedata.c,v 1.9 2005/07/26 15:41:01 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -156,14 +156,11 @@ CvodeResults_create(CvodeData data){
 
 CvodeData 
 constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
-			    int simplify, int determinant,
-			    const char **parameterNotToBeReplaced)
+			    int simplify, int determinant)
 {     
     CvodeData result;
     odeModel_t *om =
-      ODEModel_createFromModelAndOptions(m, simplify,
-					 determinant,
-					 parameterNotToBeReplaced);
+      ODEModel_createFromModelAndOptions(m, simplify, determinant);
 
     SolverError_dump(); /* write out all everything including warnings */
     RETURN_ON_ERRORS_WITH(NULL);

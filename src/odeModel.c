@@ -38,31 +38,16 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 SBML_ODESOLVER_API odeModel_t *
 ODEModel_createFromModel(Model_t *model)
 {
-    char *empty = { NULL } ;
-
     return ODEModel_createFromModelAndOptions(
                 model,
                 1 /* simplify */,
-                0 /* no determinant */,
-                empty /* all parameters to be replaced during simplification */);
-}
-
-SBML_ODESOLVER_API odeModel_t *
-ODEModel_createFromModelWithSelectiveReplacement(
-    Model_t *model, const char **parametersNotToBeReplaced)
-{
-    return ODEModel_createFromModelAndOptions(
-                model,
-                1 /* simplify */,
-                0 /* no determinant */,
-                parametersNotToBeReplaced);
+                0 /* no determinant */);
 }
 
 SBML_ODESOLVER_API odeModel_t *
 ODEModel_createFromModelAndOptions(Model_t *m,
 				   int simplify,
-				   int determinant,
-				   const char **parametersNotToBeReplaced)
+				   int determinant)
 {
   int i, j, found, neq, nconst, nass, nevents;
   Model_t *ode;
@@ -76,7 +61,7 @@ ODEModel_createFromModelAndOptions(Model_t *m,
   odeModel_t *data;
 
   /* C: construct ODE model */
-  ode = Model_reduceToOdes(m, simplify, parametersNotToBeReplaced);
+  ode = Model_reduceToOdes(m, simplify);
 
   RETURN_ON_ERRORS_WITH(NULL);
 
@@ -210,14 +195,6 @@ ODEModel_createFromModelAndOptions(Model_t *m,
 SBML_ODESOLVER_API odeModel_t *
 ODEModel_create(char *sbmlFileName)
 {
-    char *parametersNotToBeReplaced[] = { NULL };
-
-    return ODEModel_createWithSelectiveReplacement(sbmlFileName, parametersNotToBeReplaced);
-}
-
-SBML_ODESOLVER_API odeModel_t *
-ODEModel_createWithSelectiveReplacement(char *sbmlFileName, const char **parametersNotToBeReplaced)
-{
     SBMLDocument_t *d;
     Model_t *m;
     odeModel_t *om;
@@ -243,7 +220,7 @@ ODEModel_createWithSelectiveReplacement(char *sbmlFileName, const char **paramet
     Then the initial values and ODEs of the remaining species
     will be written to the structure odeModel.
     */
-    om = ODEModel_createFromModelWithSelectiveReplacement(m, parametersNotToBeReplaced);
+    om = ODEModel_createFromModel(m);
 
     /** Errors will cause the program to stop,
     e.g. when some mathematical expressions are missing.
@@ -316,33 +293,14 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
 }       
 
 int
-ODEModel_getVariableIndexFields(odeModel_t *data, const char *symbol, variableType_t *varType)
+ODEModel_getVariableIndexFields(odeModel_t *data, const char *symbol)
 {
     int i;
     
     for ( i=0; i<data->neq && strcmp(symbol, data->speciesname[i]); i++ );
     
     if (i<data->neq)
-    {
-        *varType = SPECIES ;
         return i;
-    }
-
-    for ( i=0; i<data->nass && strcmp(symbol, data->ass_parameter[i]); i++ );
-    
-    if (i<data->nass)
-    {
-        *varType = ASSIGNMENT_PARAMETER ;
-        return i;
-   }
-
-    for ( i=0; i<data->nconst && strcmp(symbol, data->parameter[i]); i++ );
-    
-    if (i<data->nconst)
-    {
-        *varType = PARAMETER ;
-        return i;
-    }
 
     return -1;
 }
@@ -350,9 +308,7 @@ ODEModel_getVariableIndexFields(odeModel_t *data, const char *symbol, variableTy
 SBML_ODESOLVER_API int
 ODEModel_hasVariable(odeModel_t *model, const char *symbol)
 {
-    variableType_t varType;
-
-    return ODEModel_getVariableIndexFields(model, symbol, &varType) != -1;
+    return ODEModel_getVariableIndexFields(model, symbol) != -1;
 }
 
 SBML_ODESOLVER_API variableIndex_t *
@@ -361,7 +317,7 @@ ODEModel_getVariableIndex(odeModel_t *data, const char *symbol)
     variableIndex_t *vi;
 
     ASSIGN_NEW_MEMORY(vi, variableIndex_t, NULL);
-    vi->index = ODEModel_getVariableIndexFields(data, symbol, &(vi->type));
+    vi->index = ODEModel_getVariableIndexFields(data, symbol);
 
     if (vi->index == -1)
     {

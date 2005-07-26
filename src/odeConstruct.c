@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-06-28 16:46:01 raim>
-  $Id: odeConstruct.c,v 1.6 2005/07/22 16:11:35 afinney Exp $
+  $Id: odeConstruct.c,v 1.7 2005/07/26 15:41:01 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,8 +17,7 @@
 #include "sbmlsolver/solverError.h"
 
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode,
-		      const char **parameterNotToBeReplaced);
+ODEs_replaceConstants(Model_t *m, Model_t *ode);
 static void
 ODEs_copyConstants(Model_t *m, Model_t *ode);
 
@@ -29,8 +28,7 @@ ODEs_copyConstants(Model_t *m, Model_t *ode);
 */
 
 Model_t*
-Model_reduceToOdes(Model_t *m, int simplify,
-		   const char **parametersNotToBeReplaced) {
+Model_reduceToOdes(Model_t *m, int simplify) {
 
   Model_t *ode;
   Parameter_t *p;
@@ -351,7 +349,7 @@ Model_reduceToOdes(Model_t *m, int simplify,
       replacing all constants
   */
   if ( simplify ) {
-    ODEs_replaceConstants(m, ode, parametersNotToBeReplaced);
+    ODEs_replaceConstants(m, ode);
   }
   else {
     ODEs_copyConstants(m, ode);
@@ -409,8 +407,7 @@ Model_getValueById(Model_t *m, const char *id) {
     expressions and global parameters.
 */
 static void
-ODEs_replaceConstants(Model_t *m, Model_t *ode,
-		      const char **parametersNotToBeReplaced) {
+ODEs_replaceConstants(Model_t *m, Model_t *ode) {
 
 
   int i, j, k;
@@ -539,49 +536,31 @@ ODEs_replaceConstants(Model_t *m, Model_t *ode,
       p = Model_getParameter(m, i);
       if ( Parameter_getConstant(p) ) {
 
-          char **parameterNotToBeReplaced = parametersNotToBeReplaced;
-
-          while (*parameterNotToBeReplaced != NULL &&
-                    strcmp(Parameter_getId(p), *parameterNotToBeReplaced) != 0)
-              parameterNotToBeReplaced++;
-
-          if (*parameterNotToBeReplaced != NULL) {
-              p_var = Parameter_create();
-              Parameter_setId(p_var, Parameter_getId(p));
-              Parameter_setValue(p_var, Parameter_getValue(p));
-              if ( Parameter_isSetName(p) ) {
-                  Parameter_setName(p_var, Parameter_getName(p));
-              }
-              Model_addParameter(ode, p_var);	
+          for ( j=0; j<Model_getNumRules(ode); j++ ) {
+              rl_new = Model_getRule(ode, j);
+              math = copyAST(Rule_getMath(rl_new));
+              AST_replaceNameByValue(math,
+                  Parameter_getId(p),
+                  Parameter_getValue(p));
+              Rule_setMath(rl_new, math);
           }
-          else {
 
-              for ( j=0; j<Model_getNumRules(ode); j++ ) {
-                  rl_new = Model_getRule(ode, j);
-                  math = copyAST(Rule_getMath(rl_new));
+          for ( j=0; j<Model_getNumEvents(ode); j++ ) {
+              e = Model_getEvent(ode, j);
+              for ( k=0; k<Event_getNumEventAssignments(e); k++ ) {
+                  ea = Event_getEventAssignment(e, k);
+                  math = copyAST(EventAssignment_getMath(ea));
                   AST_replaceNameByValue(math,
                       Parameter_getId(p),
                       Parameter_getValue(p));
-                  Rule_setMath(rl_new, math);
+                  EventAssignment_setMath(ea, math);
               }
 
-              for ( j=0; j<Model_getNumEvents(ode); j++ ) {
-                  e = Model_getEvent(ode, j);
-                  for ( k=0; k<Event_getNumEventAssignments(e); k++ ) {
-                      ea = Event_getEventAssignment(e, k);
-                      math = copyAST(EventAssignment_getMath(ea));
-                      AST_replaceNameByValue(math,
-                          Parameter_getId(p),
-                          Parameter_getValue(p));
-                      EventAssignment_setMath(ea, math);
-                  }
-
-                  math = copyAST(Event_getTrigger(e));
-                  AST_replaceNameByValue(math,
-                      Parameter_getId(p),
-                      Parameter_getValue(p));
-                  Event_setTrigger(e, math);
-              }
+              math = copyAST(Event_getTrigger(e));
+              AST_replaceNameByValue(math,
+                  Parameter_getId(p),
+                  Parameter_getValue(p));
+              Event_setTrigger(e, math);
           }
       }
   }
