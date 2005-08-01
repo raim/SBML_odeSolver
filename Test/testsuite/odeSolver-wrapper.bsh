@@ -1,21 +1,20 @@
 #!/bin/bash
-# $Id: odeSolver-wrapper.bsh,v 1.1 2005/05/30 19:49:14 raimc Exp $
 
-../odeSolver-wrapper-once.pl 1e-21 $@
+odeSolver-wrapper-once.pl 1e-21 $@
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-20
-    ../odeSolver-wrapper-once.pl 1e-20 $@
+    odeSolver-wrapper-once.pl 1e-20 $@
 fi
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-19
-   ../odeSolver-wrapper-once.pl 1e-19 $@
+    odeSolver-wrapper-once.pl 1e-19 $@
 fi
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-18
-   ../odeSolver-wrapper-once.pl 1e-18 $@
+    odeSolver-wrapper-once.pl 1e-18 $@
 fi
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-17
-    ../odeSolver-wrapper-once.pl 1e-17 $@
+    odeSolver-wrapper-once.pl 1e-17 $@
 fi
 

@@ -1,5 +1,7 @@
 #!/usr/local/bin/perl -w
-# $Id: odeSolver-wrapper-once.pl,v 1.1 2005/05/30 19:49:14 raimc Exp $
+
+#use lib "$ENV{HOME}/perl/L";
+#use LibSBML;
 
 my $steps = 0;
 my $flag6 = 0;
@@ -12,10 +14,9 @@ open(LOGFILE, ">>testlog.txt");
 print LOGFILE "\nTEST $test\n";
 
 open(TESTRUN,
-     "odeSolver $ARGV[1] --t $ARGV[2] --printstep $ARGV[3] --error $ARGV[0] 2>> testlog.txt |");
+     "/home/fremdling/raim/programs/SBML_odeSolver/src/odeSolver $ARGV[1] --t $ARGV[2] --printstep $ARGV[3] --error $ARGV[0] --rerror 1e-10 2>> testlog.txt |");
 while(<TESTRUN>) {
 
-    next if m/^##/; # ignore comment line of results
     @values = split(/ /, $_);
     
     if ( $#values > 1 && $values[0] eq "#t" ) {
@@ -32,7 +33,8 @@ while(<TESTRUN>) {
 	$steps++;
     }
 
-    if ($_=~/CVode failed/) {
+
+    if ($_=~/CVode\ failed/) {
 	$flag6 =1;
 	$error = $_;
     }
