@@ -13,7 +13,7 @@ my $test = "";
 open(LOGFILE, ">>testlog.txt");
 print LOGFILE "\nTEST $test\n";
 
-print(LOGFILE "odeSolver $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10\n");
+print(LOGFILE "odeSolver $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-5\n");
 open(TESTRUN,
      "/home/fremdling/raim/programs/SBML_odeSolver/src/odeSolver $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10 2>> testlog.txt |");
 while(<TESTRUN>) {
