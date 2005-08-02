@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 21:15:37 raim>
-  $Id: interactive.c,v 1.6 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 17:31:50 raim>
+  $Id: interactive.c,v 1.7 2005/08/02 15:47:59 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,6 @@
 /* own header files */
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/options.h"
-#include "sbmlsolver/sbmlUsingOptions.h"
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/processAST.h"
@@ -22,7 +21,7 @@
 #include "sbmlsolver/drawGraph.h"
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/solverError.h"
-
+#include "sbmlsolver/commandLine.h"
 
 static void
 printMenu(void);

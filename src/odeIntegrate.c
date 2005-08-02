@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 18:41:32 raim>
-  $Id: odeIntegrate.c,v 1.8 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 17:27:37 raim>
+  $Id: odeIntegrate.c,v 1.9 2005/08/02 15:47:59 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,40 +9,23 @@
 
 #include <sbml/SBMLTypes.h>
 
-/* Header Files for CVODE */
-#include "cvode.h"    
-#include "cvdense.h"  
-#include "dense.h"
-
 /* own header files */
-#include "sbmlsolver/util.h"
-#include "sbmlsolver/options.h"
 #include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/odeIntegrate.h"
-#include "sbmlsolver/printModel.h"
-#include "sbmlsolver/processAST.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/odeIntegrate.h"
 
 /* static void */
 /* checkData(cvodeData_t *data); */
 /* static int */
 /* calculateResults(cvodeData_t *data); */
-static int
-updateModel(cvodeData_t *data, int nout);
-static
-int handleError(integratorInstance_t *engine,
-		int PrintMessage, int PrintOnTheFly, FILE *f);
+
 
 /************************ Integrator Program *************************/
 /**
   The function "static int integrator(cvodeData_t *data)" gets a filled
-  structure "CvodeData" and calls CVODE to integrate the ODEs,
-  represented as libsbml Abstract Syntax Trees.  The CvodeData also
-  contains the number of equations neq, the nout to which CVODE should
-  integrate (starting from time 0), an array of neq species names for
-  which ODEs are defined and an array of neq, intial values for the
-  species.  
+  structure "CvodeData" and calls CVODE via the integratorInstance group
+  of functions, to integrate the ODEs.
 */
 
 int
@@ -124,7 +107,6 @@ integrator(cvodeData_t *data, int PrintMessage, int PrintOnTheFly,
 
 } 
 /* standard handler for when the integrate function fails */
-static
 int handleError(integratorInstance_t *engine,
 		int PrintMessage, int PrintOnTheFly, FILE *outfile) {
     cvodeData_t *data = engine->data;
@@ -163,34 +145,7 @@ int handleError(integratorInstance_t *engine,
     return errorCode ;
 }
 
-/** writes current simulation data to
-    original model */
-static int
-updateModel(cvodeData_t *data, int nout) {
 
-  int i;
-  Species_t *s;
-  Compartment_t *c;
-  Parameter_t *p;  
-  
-  for ( i=0; i<data->nvalues; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m, data->model->names[i]))
-	 != NULL ) {
-      Species_setInitialConcentration(s, data->results->value[i][nout]);
-    }
-    else if ( (c = Model_getCompartmentById(data->model->m,
-					    data->model->names[i])) != NULL ) {
-      Compartment_setSize(c, data->results->value[i][nout]);
-    }
-    else if ( (p = Model_getParameterById(data->model->m,
-					  data->model->names[i])) !=  NULL ) {
-      Parameter_setValue(p, data->results->value[i][nout]);
-    }
-  }
-
-  return 1;
-
-}
 
   
 

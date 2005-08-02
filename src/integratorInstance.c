@@ -471,13 +471,7 @@ int IntegratorInstance_handleError(integratorInstance_t *engine)
         try again, but now with/without generated Jacobian matrix  */
         if ( errorCode == CONV_FAILURE && engine->data->run == 0 &&
 	     engine->data->opt->StoreResults) {
-            fprintf(
-                stderr,
-                "Trying again; now with %s Jacobian matrix\n",
-                engine->data->opt->UseJacobian ?
-                    "CVODE's internal approximation of the" :
-                    "automatically generated");
-            engine->data->opt->UseJacobian = !engine->data->opt->UseJacobian;
+             engine->data->opt->UseJacobian = !engine->data->opt->UseJacobian;
             engine->data->run++;
             for ( i=0; i<engine->data->nvalues; i++ ) {
                 engine->data->value[i] = engine->results->value[i][0];

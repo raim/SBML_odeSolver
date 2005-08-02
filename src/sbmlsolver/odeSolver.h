@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 22:20:24 raim>
-  $Id: odeSolver.h,v 1.6 2005/08/02 13:20:32 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 17:29:02 raim>
+  $Id: odeSolver.h,v 1.7 2005/08/02 15:47:59 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -11,8 +11,6 @@
 /* own header files */
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/util.h"
-#include "sbmlsolver/options.h"
-#include "sbmlsolver/sbmlUsingOptions.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/batchIntegrator.h"
@@ -38,8 +36,7 @@ typedef struct _VarySettings {
 
 VarySettings vary;
 
-SBML_ODESOLVER_API int
-odeSolver (int argc, char *argv[]);
+
 SBMLResults_t *
 Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set);
 SBMLResults_t **
@@ -52,7 +49,7 @@ SBMLResults_t *
 Results_fromCvode(cvodeData_t *data);
 int
 Model_setValue(Model_t *m, const char *id, const char *rid, double value);
-
+int updateModel(cvodeData_t *data, int nout);
 #endif
 
 /* End of file */
