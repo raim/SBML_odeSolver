@@ -4,9 +4,11 @@ released on Tue, 19 Oct 2004.
 
 To reproduce the result files, download and unpack the SBML Semantic Test Suite 
 from http://www.cds.caltech.edu/~afinney/semantic-test-suite.tar.gz
-unpack to this folder, change to the directory semantic-test-suite and run 
-`runtests.bsh -vwrapper=../odeSolver-wrapper.bsh >> testlog.txt'
-in a bash.
+unpack, and copy odeSolver-wrapper.bsh and odeSolver-wrapper-once.pl
+to the folder semantic-test-suite/AUTOMATION/wrappers, change to the directory 
+semantic-test-suite and run 
+`runtests.bsh -vwrapper=AUTOMATION/wrappers/odeSolver-wrapper.bsh >> testlog.txt'
+in a bash or shell.
 
 odeSolver-wrapper.bsh:
 	A bash script to call odeSolver-wrapper-once.pl several times, 
