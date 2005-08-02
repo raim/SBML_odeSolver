@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-30 14:33:53 raim>
-  $Id: processAST.c,v 1.6 2005/07/01 12:53:37 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 16:40:56 raim>
+  $Id: processAST.c,v 1.7 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +17,7 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
+#include "sbmlsolver/ASTIndexNameNode.h"
 
 #ifdef WIN32
 double acosh(double x)
@@ -99,6 +100,58 @@ copyAST(const ASTNode_t *f) {
 
 /* ------------------------------------------------------------------------ */
 
+/* takes an AST and a string array and converts AST_NAME to
+   AST_IndexName, which holds the name and the index in the array */
+ASTNode_t *
+indexAST(const ASTNode_t *f, int nvalues, char **names) {
+
+  int i, found;
+  ASTNode_t *index;
+
+  index = ASTNode_create();
+
+  /* DISTINCTION OF CASES */
+
+  /* integers, reals */
+  if ( ASTNode_isInteger(f) ) {
+    ASTNode_setInteger(index, ASTNode_getInteger(f));
+  }
+  else if ( ASTNode_isReal(f) ) {
+    ASTNode_setReal(index, ASTNode_getReal(f));
+  }  
+  /* writing indexed name nodes */
+  else if ( ASTNode_isName(f) ) {
+    found = 0;
+    for ( i=0; i<nvalues; i++ ) {
+      if ( strcmp(ASTNode_getName(f), names[i]) == 0 ) {
+        ASTNode_free(index);
+	index = ASTNode_createIndexName();
+	ASTNode_setIndex(index, i);
+	ASTNode_setName(index, ASTNode_getName(f));
+	found++;
+      }
+    }
+    if ( !found )
+      ASTNode_setName(index, ASTNode_getName(f));
+  }
+  /* constants */
+  /* functions, operators */
+  else {
+    ASTNode_setType(index, ASTNode_getType(f));
+    /* user-defined functions: name must be set */
+    if ( ASTNode_getType(f) == AST_FUNCTION ) {
+      ASTNode_setName(index, ASTNode_getName(f));
+    }
+    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) {
+      ASTNode_addChild(index, indexAST(ASTNode_getChild(f,i), nvalues, names));
+    }
+  }
+
+  return index;
+}
+
+/* ------------------------------------------------------------------------ */
+
 /*
   The function "static double evaluateAST(ASTNode_t *n, N_Vector y,
   char **species, int neq)" evaluates the formula of an Abstract
@@ -123,7 +176,7 @@ copyAST(const ASTNode_t *f) {
 */
 
 double
-evaluateAST(ASTNode_t *n, CvodeData data)
+evaluateAST(ASTNode_t *n, cvodeData_t *data)
 {
   int i, j, childnum;
   int found;
@@ -146,12 +199,9 @@ evaluateAST(ASTNode_t *n, CvodeData data)
   result = 0;
 
   childnum = ASTNode_getNumChildren(n);
-/*   child = (ASTNode_t **)calloc(childnum, sizeof(ASTNode_t *)); */
-  
-/*   for(i=0;i<childnum;i++) */
-/* 	child[i] = ASTNode_getChild(n,i); */
-  type = ASTNode_getType(n); 
-  
+  type = ASTNode_getType(n);
+
+ 
   switch(type)
     {
     case AST_INTEGER:
@@ -178,7 +228,7 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	
 	If the variable is found in neither places, the user is asked
 	to enter a value and the variable and value are added to the
-	CvodeData 'parameter'/'constants' array.
+	cvodeData_t 'parameter'/'constants' array.
 	
 	NOTE:
 	This procedure should be implemented with a search algorithm.
@@ -188,22 +238,20 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	
       */
       found = 0;
-      if ( strcmp(ASTNode_getName(n),"time") == 0 ||
-	   strcmp(ASTNode_getName(n),"TIME") == 0 ) {
-	result = (double) data->currenttime;
+      if ( ASTNode_isSetIndex(n) ) {
+	result = data->value[ASTNode_getIndex(n)];
 	found++;
       }
       if ( found == 0 ) {
-	for ( j=0; j<data->model->nconst; j++ ) {
-	  if ( (strcmp(ASTNode_getName(n),data->model->parameter[j]) == 0) ) {
-	    result = data->pvalue[j];
-	    found++;
-	  }
+	if ( strcmp(ASTNode_getName(n),"time") == 0 ||
+	     strcmp(ASTNode_getName(n),"TIME") == 0 ) {
+	  result = (double) data->currenttime;
+	  found++;
 	}
       }
       if ( found == 0 ) {
-	for ( j=0; j<data->model->neq; j++ ) {
-	  if ( (strcmp(ASTNode_getName(n),data->model->species[j]) == 0) ) {
+	for ( j=0; j<data->nvalues; j++ ) {
+	  if ( (strcmp(ASTNode_getName(n),data->model->names[j]) == 0) ) {
 	    result = data->value[j];
 	    found++;
 	  }
@@ -217,20 +265,19 @@ evaluateAST(ASTNode_t *n, CvodeData data)
 	result = (double) atof(unknown);
 	free(unknown);
 	/* reallocate constants array and set value */
+	data->nvalues++;
 	data->model->nconst++;
-	if(!(data->pvalue =
-	     (double *)realloc(data->pvalue,
-			       data->model->nconst*sizeof(double))))
+	if(!(data->value = (double *)realloc(data->value,
+					     data->nvalues*sizeof(double))))
 	  fprintf(stderr, "failed!\n");
-	if(!(data->model->parameter =
-	     (char **) realloc(data->model->parameter,
-			       data->model->nconst*sizeof(char *))))
+	if(!(data->model->names =
+	     (char **) realloc(data->model->names,
+			       data->nvalues*sizeof(char *))))
 	  fprintf(stderr, "failed!\n");
-	data->model->parameter[data->model->nconst - 1] =
+	data->model->names[data->nvalues - 1] =
 	  (char *) calloc(strlen(ASTNode_getName(n))+1, sizeof(char));
-	sprintf(data->model->parameter[data->model->nconst - 1],
-		ASTNode_getName(n));
-	data->pvalue[data->model->nconst - 1] = result;
+	sprintf(data->model->names[data->nvalues - 1], ASTNode_getName(n));
+	data->value[data->nvalues - 1] = result;
       }
       break;
     case AST_FUNCTION_DELAY:

@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-typedef struct _CvodeData *CvodeData ;
-
+typedef struct _CvodeData cvodeData_t ;
+typedef struct _CvodeResults cvodeResults_t ;
+  
 #ifdef __cplusplus
 }
 #endif

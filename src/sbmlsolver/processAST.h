@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-30 14:07:03 raim>
-  $Id: processAST.h,v 1.2 2005/07/01 12:53:40 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 16:50:56 raim>
+  $Id: processAST.h,v 1.3 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _PROCESSAST_H_
 #define _PROCESSAST_H_
@@ -21,8 +21,10 @@
 
 ASTNode_t *
 copyAST(const ASTNode_t *f);
+ASTNode_t *
+indexAST(const ASTNode_t *f, int nvalues, char ** names);
 double
-evaluateAST(ASTNode_t *n, CvodeData data);
+evaluateAST(ASTNode_t *n, cvodeData_t *data);
 ASTNode_t *
 differentiateAST(ASTNode_t *f, char*x);
 ASTNode_t *

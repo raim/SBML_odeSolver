@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-26 11:16:44 raim>
-  $Id: options.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 21:10:05 raim>
+  $Id: options.h,v 1.2 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -41,9 +41,6 @@ typedef struct _Options {
   int Wheel;            /* Print progress wheel */
   int PrintRates;       /* Print time course of the ODE values */
   int PrintMessage;     /* Print messages of integration procedure */
-  int Simplify;         /* Do not replace assignemnts, functions,
-			   constant parameters, species and compartments 
-			   in ODE model */
   int SteadyState;      /* Check for steady states during integration */
   int Validate;         /* Validate SBML model before doing anything else */
   int Write;            /* Print results to file instead of stdout */

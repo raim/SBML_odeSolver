@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2004-11-15 15:22:24 raim>
-  $Id: printModel.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 16:50:42 raim>
+  $Id: printModel.h,v 1.2 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _PRINTMODEL_H_
 #define _PRINTMODEL_H_
@@ -13,25 +13,25 @@ printSpecies(Model_t *m);
 void
 printReactions(Model_t *m);
 void
-printODEs(CvodeData data);
+printODEs(cvodeData_t *data);
 void
-printODEsToSBML(CvodeData data);
+printODEsToSBML(cvodeData_t *data);
 void
-printJacobian(CvodeData data);
+printJacobian(cvodeData_t *data);
 /* print results of simulation to stdout */
 void
-printConcentrationTimeCourse(CvodeData data);
+printConcentrationTimeCourse(cvodeData_t *data, FILE *f);
 void
-printOdeTimeCourse(CvodeData data);
+printOdeTimeCourse(cvodeData_t *data, FILE *f);
 void
-printReactionTimeCourse(CvodeData data);
+printReactionTimeCourse(cvodeData_t *data, FILE *f);
 void
-printJacobianTimeCourse(CvodeData data);
+printJacobianTimeCourse(cvodeData_t *data, FILE *f);
 void
-printDeterminantTimeCourse(CvodeData data);
+printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t* det, FILE *f);
 
 void
-printPhase(CvodeData data);
+printPhase(cvodeData_t *data);
 
 #endif
 /* End of file */

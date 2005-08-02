@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:21:23 raim>
-  $Id: odeSolver.c,v 1.10 2005/07/05 15:30:27 afinney Exp $
+  Last changed Time-stamp: <2005-08-02 02:30:44 raim>
+  $Id: odeSolver.c,v 1.11 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +39,11 @@ odeSolver (int argc, char *argv[])
 {
   SBMLDocument_t *d  = NULL;
   Model_t        *m  = NULL;
-  CvodeData data;
+  char *filename;
+  FILE *outfile;
+  ASTNode_t *det;
+  cvodeData_t *data;
+  cvodeSettings_t *set;
   clock_t startTime, endTime ;
 
   /* read command-line arguments */
@@ -96,7 +100,7 @@ odeSolver (int argc, char *argv[])
     else {
       m = SBMLDocument_getModel(d);
     }
-
+    
     /** -g: Draw a Graph of the Reaction Network
 	See file drawModel.c.
 	On option -g the program will call the graph drawing
@@ -117,6 +121,17 @@ odeSolver (int argc, char *argv[])
       return(EXIT_SUCCESS);  
     }
 
+    /* setting the file to write output data */
+    if ( Opt.Write && !Opt.Xmgrace ) {
+      filename = (char *) calloc(strlen(Opt.ModelPath)+
+				 strlen(Opt.ModelFile)+5, sizeof(char));
+      sprintf(filename, "%s%s.dat", Opt.ModelPath, Opt.ModelFile);
+      outfile = fopen(filename, "w");
+    }
+    else {
+      filename = "";
+      outfile = stdout;
+    }
     /** -d + -e, -de: Print Determinant of the Jacobian Matrix
 	See file odeConstruct.c.
 	First the differential equations will be constructed
@@ -129,15 +144,17 @@ odeSolver (int argc, char *argv[])
 	options. 
     */
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 ) {
-      data = constructODEs(m); 
+      data = constructODEs(m, Opt.Jacobian);
+      det = determinantNAST(data->model->jacob, data->model->neq)
+;
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
       SolverError_haltOnErrors();
-      printf("det(J) = %s\n",
-	     SBML_formulaToString(data->model->det));
+      fprintf(outfile, "det(J) = %s\n", SBML_formulaToString(det));
       CvodeData_free(data);   
       xfree(model);
-      SBMLDocument_free(d);       
+      SBMLDocument_free(d);
+      ASTNode_free(det);
       return(EXIT_SUCCESS);    
     }
 
@@ -154,7 +171,7 @@ odeSolver (int argc, char *argv[])
       printSpecies(m);
       printReactions(m);
 
-      data = constructODEs(m);
+      data = constructODEs(m, Opt.Jacobian);
       /* slight change in behavour - halt now rather than continue
 	 with null model
          used to continue with empty model */
@@ -171,15 +188,13 @@ odeSolver (int argc, char *argv[])
     /** -o: Print ODE Model 
 	See files odeConstruct.c and printModel.c.
 	When option '-o' is given, the model will be simplified
-	just like done for integration with CVODE, but without
-	replacement of constant parameters, compartments, species,
-	assignment rules and function definitions. Then this
+	just like done for integration with CVODE. This
 	simplified model will be printed to the given outfile or
 	to stdout. Exit afterwards.
     */
     if ( Opt.PrintODEsToSBML == 1 ) {
 
-      data = constructODEs(m);
+      data = constructODEs(m, Opt.Jacobian);
       /* slight change in behavour - halt now rather than
 	 continue with null model
          used to continue with empty model */
@@ -199,12 +214,6 @@ odeSolver (int argc, char *argv[])
 	odeIntegrate.c and printModel.c.
     */
 
-    if ( strcmp(Opt.Parameter, "") != 0  ) {
-      batchIntegrator(m);
-      xfree(model);
-      SBMLDocument_free(d);             
-      return(EXIT_SUCCESS);  
-    }
     
     /** At first, the function constructODEs(m)
 	will attempt to construct a simplified SBML model,
@@ -215,9 +224,9 @@ odeSolver (int argc, char *argv[])
 	in all remaining formulas (ie. rate and algebraic rules and
 	events).
 	Then the initial values and ODEs of the remaining species
-	will be written to the structure CvodeData data.
+	will be written to the structure cvodeData_t *data.
     */
-    data = constructODEs(m);
+    data = constructODEs(m, Opt.Jacobian);
     /** Errors will cause the program to stop,
 	e.g. when some mathematical expressions are missing.
     */
@@ -241,21 +250,24 @@ odeSolver (int argc, char *argv[])
     data->tmult = data->tout / data->nout;
     data->currenttime = 0.0;
     data->t0 = 0.0;
-    data->Error = Opt.Error;
-    data->RError = Opt.RError;
-    data->Mxstep = Opt.Mxstep;
-    data->PrintOnTheFly = Opt.PrintOnTheFly;
-    data->PrintMessage = Opt.PrintMessage;
-    data->HaltOnEvent = Opt.HaltOnEvent;
-    data->SteadyState = Opt.SteadyState;
-    data->storeResults = 1;
-    data->EnableVariableChanges = 0;
 
+    set = (cvodeSettings_t *)calloc(1, sizeof(cvodeSettings_t));
+
+    set->StoreResults = 1;
+    set->Error = Opt.Error;
+    set->RError = Opt.RError;
+    set->Mxstep = Opt.Mxstep;
+    set->HaltOnEvent = Opt.HaltOnEvent;
+    set->SteadyState = Opt.SteadyState;
+    set->EnableVariableChanges = 0;
+
+    data->opt = set;
+
+    
     /* allow setting of Jacobian,
        only if its construction was succesfull */
-    if ( data->UseJacobian == 1 ) {
-      data->UseJacobian = Opt.Jacobian;
-    }
+    set->UseJacobian = data->model->jacobian && set->UseJacobian;
+
 
     /** .... we can call the integrator function,
 	that invokeds CVODE and stores results.
@@ -265,14 +277,15 @@ odeSolver (int argc, char *argv[])
     
     startTime = clock();
 
-    integrator(data);
+    integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, outfile);
     SolverError_dump();
     RETURN_ON_FATALS_WITH(EXIT_FAILURE);
     SolverError_clear();
 
     endTime = clock();
 
-    printf("#execution time %f\n", ((double)(endTime-startTime))/ CLOCKS_PER_SEC);
+    printf("#execution time %f\n",
+	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC);
 
     /** Finally, print out the results
 	in the format specified by commanline option,
@@ -287,43 +300,45 @@ odeSolver (int argc, char *argv[])
 	  expressions
       */	  
       if ( Opt.PrintJacobian == 1 ) {
-	printJacobianTimeCourse(data);
+	printJacobianTimeCourse(data, outfile);
       }
 
       /** -k: print time course of the reactions, i.e.
 	  kinetic law expressions
       */      
       else if ( Opt.PrintReactions == 1 ) {
-	printReactionTimeCourse(data);
+	printReactionTimeCourse(data, outfile);
       }
 
       /** -r: print time coures of ODE values
       */
       else if ( Opt.PrintRates == 1 ) {
-	printOdeTimeCourse(data);
+	printOdeTimeCourse(data, outfile);
       }
       
       /** -d: print time course of the determinant
 	  of the jacobian matrix
       */
       else if ( Opt.Determinant == 1 ) {
-	printDeterminantTimeCourse(data);
+	det = determinantNAST(data->model->jacob, data->model->neq);
+	printDeterminantTimeCourse(data, det, outfile);
+	ASTNode_free(det);
       }
       
       /** Default (no printing options):
 	  print species concentrations
        */
       else {
-	printConcentrationTimeCourse(data);
+	printConcentrationTimeCourse(data, outfile);
       }      
     }
     /** -a, --all: print all results
     */
     else if ( !Opt.PrintOnTheFly && Opt.PrintAll ) {
-      printJacobianTimeCourse(data);
-      printReactionTimeCourse(data);
-      printOdeTimeCourse(data);
-      printConcentrationTimeCourse(data);
+      printJacobianTimeCourse(data, outfile);
+      printReactionTimeCourse(data, outfile);
+      printOdeTimeCourse(data, outfile);
+      printConcentrationTimeCourse(data, outfile);
     }
 
     /** -m: Draw the jacobian interaction graph
@@ -342,6 +357,12 @@ odeSolver (int argc, char *argv[])
 
     
     /* thx and good bye. */
+    /* save and close results file */
+    if ( Opt.Write && !Opt.Xmgrace ) {
+      fclose(outfile);
+      fprintf(stderr, "Saved results to file %s.\n\n", filename);
+      free(filename);
+    }
     CvodeData_free(data); 
     xfree(model);   
     SBMLDocument_free(d);
@@ -350,12 +371,12 @@ odeSolver (int argc, char *argv[])
   return(EXIT_SUCCESS);
 }
 
-SBMLResults
-Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
+SBMLResults_t *
+Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   
   SBMLDocument_t *d2 = NULL;
-  CvodeData data;
-  SBMLResults results;
+  cvodeData_t *data;
+  SBMLResults_t *results;
   Model_t *m;
 
  
@@ -379,10 +400,10 @@ Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
       in all remaining formulas (ie. rate and algebraic rules and
       events).
       Then the initial values and ODEs of the remaining species
-      will be written to the structure CvodeData data.
+      will be written to the structure cvodeData_t *data.
   */
   
-  data = constructODEs(m);
+  data = constructODEs(m, set->UseJacobian);
   /** Errors, found during odeConstruct, will cause the program to exit,
       e.g. when some mathematical expressions are missing.
   */
@@ -398,27 +419,19 @@ Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
       event handling, steady state detection, and
       runtime printing of results.
       And then ..
-  */    
-  data->tout  = set.Time;
-  data->nout  = set.PrintStep;
-  data->tmult = set.Time / set.PrintStep;
+  */
+  data->tout  = set->Time;
+  data->nout  = set->PrintStep;
+  data->tmult = set->Time / set->PrintStep;
   data->currenttime = 0.0;
   data->t0 = 0.0;
-  data->Error  = set.Error;
-  data->RError = set.RError;
-  data->Mxstep = set.Mxstep;
-  data->PrintOnTheFly = set.PrintOnTheFly;
-  data->PrintMessage = set.PrintMessage;
-  data->HaltOnEvent = set.HaltOnEvent;
-  data->SteadyState = set.SteadyState;
-  data->storeResults = 1;
-  data->EnableVariableChanges = 0;
+  data->opt = set;
 
   /* allow setting of Jacobian,
      only if its construction was succesfull */
-  if ( data->UseJacobian == 1 ) {
-    data->UseJacobian = set.UseJacobian;
-  }  
+   if ( data->opt->UseJacobian == 1 ) { 
+     data->opt->UseJacobian = set->UseJacobian && data->model->jacobian; 
+   } 
   
   /** .... we can call the integrator function,
       that invokeds CVODE and stores results.
@@ -426,10 +439,10 @@ Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
       check for steady states.
   */    
 
-    integrator(data);
-    SolverError_dump();
-    RETURN_ON_FATALS_WITH(NULL);
-    SolverError_clear();
+  integrator(data, 0, 0, stdout);
+  SolverError_dump();
+  RETURN_ON_FATALS_WITH(NULL);
+  SolverError_clear();
 
   /* Write simulation results into result structure */
   results = Results_fromCvode(data); 
@@ -441,13 +454,13 @@ Model_odeSolver(SBMLDocument_t *d, CvodeSettings set) {
   return(results);
 }
 
-SBMLResults *
+SBMLResults_t **
 Model_odeSolverBatch (SBMLDocument_t *d,
-		      CvodeSettings settings, VarySettings vary) {
+		      cvodeSettings_t *settings, VarySettings vary) {
 
   int i;
   double value, increment;
-  SBMLResults *results;
+  SBMLResults_t **results;
   SBMLDocument_t *d2 = NULL;
   Model_t *m;
 
@@ -460,7 +473,7 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   }
   m = SBMLDocument_getModel(d);
     
-  if(!(results = (SBMLResults *)calloc(vary.steps+1, sizeof(*results)))){
+  if(!(results = (SBMLResults_t **)calloc(vary.steps+1, sizeof(*results)))){
     fprintf(stderr, "failed!\n");
   }
 
@@ -487,13 +500,13 @@ Model_odeSolverBatch (SBMLDocument_t *d,
 
 }
 
-SBMLResults **
-Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
+SBMLResults_t ***
+Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *settings,
 		      VarySettings vary1, VarySettings vary2) {
 
   int i, j;
   double value1, increment1, value2, increment2;
-  SBMLResults **results;
+  SBMLResults_t ***results;
   SBMLDocument_t *d2 = NULL;
   Model_t *m;
 
@@ -506,11 +519,11 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
   }
   m = SBMLDocument_getModel(d);
     
-  if(!(results = (SBMLResults **)calloc(vary1.steps+1, sizeof(**results)))){
+  if(!(results = (SBMLResults_t ***)calloc(vary1.steps+1, sizeof(**results)))){
     fprintf(stderr, "failed!\n");
   }
   for ( i=0; i<=vary1.steps; i++ ) {
-    if(!(results[i] = (SBMLResults *)calloc(vary2.steps+1, sizeof(*results)))){
+    if(!(results[i] = (SBMLResults_t **)calloc(vary2.steps+1, sizeof(*results)))){
       fprintf(stderr, "failed!\n");
     }    
   }
@@ -590,34 +603,34 @@ Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
   return 0;  
 }
 
-/* The function Results_fromCvode(CvodeData data)
+/* The function Results_fromCvode(cvodeData_t *data)
    maps the integration results of CVODE
    back to SBML structures.
 */
 
-SBMLResults
-Results_fromCvode(CvodeData data) {
+SBMLResults_t *
+Results_fromCvode(cvodeData_t *data) {
 
-  int i, j, k, found;
-  SBMLResults sbml_results;
+  int i, j, k;
+  SBMLResults_t *sbml_results;
   Model_t *m;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;
   
-  CvodeResults cvode_results;
-  TimeCourse tc;
+  cvodeResults_t *cvode_results;
+  timeCourse_t *tc;
   
   if ( data == NULL ) {
     fatal(stderr, "No data, please construct ODE system first.\n");
     return NULL;
   }
-  else if ( data->results == NULL ) {
+  else if ( data->results == NULL ) {    
     fatal(stderr, "No results, please integrate first.\n");
     return NULL;
   }
 
-  sbml_results = SBMLResults_create(data->model->m, data->results->nout+1);      
+  sbml_results = SBMLResults_create(data->model->m, data->results->nout+1);    
   cvode_results = data->results;
   m = data->model->m;
 
@@ -644,95 +657,42 @@ Results_fromCvode(CvodeData data) {
     
     /* writing time steps */
     sbml_results->time[i] = cvode_results->time[i];
-    /* updating time and values in CvodeData for calculations */
+    /* updating time and values in cvodeData_t *for calculations */
     data->currenttime = cvode_results->time[i]; 
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->nvalues; j++ ) {
       data->value[j] = cvode_results->value[j][i]; 
     }
- 
     /* filling time courses for SBML species  */
     tc = sbml_results->species;  
     for ( j=0; j<tc->num_val; j++ ) {
-      /* search in CvodeData for values */
-      found = 0;
-      for ( k=0; k<data->model->neq; k++ ) {
-	if ( (strcmp(tc->names[j],data->model->species[k]) == 0) ) {
-	  tc->values[i][j] = cvode_results->value[k][i];
-	  found++;
+      /* search in cvodeData_t for values */
+       for ( k=0; k<data->nvalues; k++ ) {
+	if ( (strcmp(tc->names[j], data->model->names[k]) == 0) ) {
+	  tc->values[i][j] = cvode_results->value[k][i];	
 	}
-      }
-      if ( ! found ) {
-	for ( k=0; k<data->model->nass; k++ ) {
-	  if ( (strcmp(tc->names[j],data->model->ass_parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->avalue[k][i];
-	    found++;
-	  }
-	}	
-      }
-      if ( ! found ) {
-	for ( k=0; k<data->model->nconst; k++ ) {
-	  if ( (strcmp(tc->names[j], data->model->parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->pvalue[k][i];
-	  }
-	}	
       }      
     }
     
     /* filling variable compartment time courses */
     tc = sbml_results->compartments;  
     for ( j=0; j<tc->num_val; j++ ) {
-      /* search in CvodeData for values */
-      found = 0;
-      for ( k=0; k<data->model->neq; k++ ) {
-	if ( (strcmp(tc->names[j], data->model->species[k]) == 0) ) {
+      /* search in cvodeData_t for values */
+      for ( k=0; k<data->nvalues; k++ ) {
+	if ( (strcmp(tc->names[j], data->model->names[k]) == 0) ) {
 	  tc->values[i][j] = cvode_results->value[k][i];
-	  found++;
 	}
-      }
-      if ( ! found ) {
-	for ( k=0; k<data->model->nass; k++ ) {
-	  if ( (strcmp(tc->names[j], data->model->ass_parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->avalue[k][i];
-	    found++;
-	  }
-	}	
-      }
-      if ( ! found ) {
-	for ( k=0; k<data->model->nconst; k++ ) {
-	  if ( (strcmp(tc->names[j], data->model->parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->pvalue[k][i];
-	  }
-	}	
-      }      
+      }  
     }         
 
     /* filling variable parameter time courses */
     tc = sbml_results->parameters;  
     for ( j=0; j<tc->num_val; j++ ) {
-      /* search in CvodeData for values */
-      found = 0;
-      fflush(stderr);
-      for ( k=0; k<data->model->neq; k++ ) {
-	if ( (strcmp(tc->names[j], data->model->species[k]) == 0) ) {
+      /* search in cvodeData_t for values */
+      for ( k=0; k<data->nvalues; k++ ) {
+	if ( (strcmp(tc->names[j], data->model->names[k]) == 0) ) {
 	  tc->values[i][j] = cvode_results->value[k][i];
-	  found++;
 	}
-      }
-      if ( ! found ) {
-	for ( k=0; k<data->model->nass; k++ ) {
-	  if ( (strcmp(tc->names[j], data->model->ass_parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->avalue[k][i];
-	    found++;
-	  }
-	}	
-      } 
-      if ( ! found ) {
-	for ( k=0; k<data->model->nconst; k++ ) {
-	  if ( (strcmp(tc->names[j], data->model->parameter[k]) == 0) ) {
-	    tc->values[i][j] = cvode_results->pvalue[k][i];
-	  }
-	}	
-      }      
+      }        
     }
 
     /* filling reaction flux time courses */
@@ -751,6 +711,7 @@ Results_fromCvode(CvodeData data) {
   
   return(sbml_results);
 }
+
 
 
 /* End of file */

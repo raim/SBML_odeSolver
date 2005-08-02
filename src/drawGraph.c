@@ -1,11 +1,6 @@
 /*
-<<<<<<< drawGraph.c
-  Last changed Time-stamp: <2005-06-22 14:46:48 raim>
-  $Id: drawGraph.c,v 1.4 2005/06/28 13:50:19 raimc Exp $
-=======
-  Last changed Time-stamp: <2004-10-04 14:31:24 raim>
-  $Id: drawGraph.c,v 1.4 2005/06/28 13:50:19 raimc Exp $
->>>>>>> 1.6
+  Last changed Time-stamp: <2005-08-01 17:17:26 raim>
+  $Id: drawGraph.c,v 1.5 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +26,7 @@
 #include <gvrender.h>
 #else
 static int
-drawJacobyTxt(CvodeData data);
+drawJacobyTxt(cvodeData_t *data);
 static int
 drawModelTxt(Model_t *m);
 #endif
@@ -51,7 +46,7 @@ drawModelTxt(Model_t *m);
 */
 
 int
-drawJacoby(CvodeData data) {
+drawJacoby(cvodeData_t *data) {
 
 #if !USE_GRAPHVIZ
 
@@ -112,7 +107,15 @@ drawJacoby(CvodeData data) {
   agxset(g, a->index, "scale");
 
   /* set graph label */
-  sprintf(label, "%s at time %g", data->model->modelName, data->tout);
+  if ( Model_isSetName(data->model->m) )
+    sprintf(label, "%s at time %g",  Model_getName(data->model->m),
+	    data->tout);
+  else if ( Model_isSetId(data->model->m) )
+    sprintf(label, "%s at time %g",  Model_getId(data->model->m),
+	    data->tout);
+  else
+    sprintf(label, "label=\"at time %g\";\n", data->tout);
+
   a = agraphattr(g, "label", "");
   agxset(g, a->index, label);
   
@@ -127,19 +130,19 @@ drawJacoby(CvodeData data) {
     for ( j=0; j<data->model->neq; j++ ) {
       if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
 	
-	sprintf(name, "%s", data->model->species[j]);
+	sprintf(name, "%s", data->model->names[j]);
 	r = agnode(g,name);
-	agset(r, "label", data->model->speciesname[j]);
+	agset(r, "label", data->model->names[j]);
 
-	sprintf(label, "%s.htm", data->model->species[j]);
+	sprintf(label, "%s.htm", data->model->names[j]);
 	a = agnodeattr(g, "URL", "");
 	agxset(r, a->index, label);
 	
-	sprintf(name,"%s", data->model->species[i]);
+	sprintf(name,"%s", data->model->names[i]);
 	s = agnode(g,name);
-	agset(s, "label", data->model->speciesname[i]);
+	agset(s, "label", data->model->names[i]);
 
-	sprintf(label, "%s.htm", data->model->species[i]);	
+	sprintf(label, "%s.htm", data->model->names[i]);	
 	a = agnodeattr(g, "URL", "");
 	agxset(s, a->index, label);
 	
@@ -183,13 +186,20 @@ drawJacoby(CvodeData data) {
 #if !USE_GRAPHVIZ
 
 static int
-drawJacobyTxt(CvodeData data) {
+drawJacobyTxt(cvodeData_t *data) {
 
   int i, j;
 
   printf("digraph jacoby {\n");
   printf("overlap=scale;\n");
-  printf("label=\"%s at time %g\";\n", data->model->modelName, data->tout);
+  if ( Model_isSetName(data->model->m) )
+    printf("label=\"%s at time %g\";\n", Model_getName(data->model->m),
+	   data->tout);
+  else if ( Model_isSetId(data->model->m) )
+    printf("label=\"%s at time %g\";\n", Model_getId(data->model->m),
+	   data->tout);
+  else
+    printf("label=\"at time %g\";\n", data->tout);
 
 
   /*
@@ -204,8 +214,8 @@ drawJacobyTxt(CvodeData data) {
     for ( j=0; j<data->model->neq; j++ ) {
       if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
 	printf("%s->%s [label=\"%g\" ",
-	       data->model->species[j],
-	       data->model->species[i],
+	       data->model->names[j],
+	       data->model->names[i],
 	       evaluateAST(data->model->jacob[i][j],
 			   data));
 	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
@@ -218,7 +228,8 @@ drawJacobyTxt(CvodeData data) {
     }
   }
   for ( i=0; i<data->model->neq; i++ ) {
-    printf("%s [label=\"%s\"];", data->model->species[i], data->model->speciesname[i]);
+    printf("%s [label=\"%s\"];", data->model->names[i],
+	   data->model->names[i]);
   }   
   printf("}\n");
   return 0;
@@ -465,7 +476,7 @@ drawModelTxt(Model_t *m) {
   printf("digraph reactionnetwork {\n");
   printf("label=\"%s\";\n",
 	 Model_isSetName(m) ?
-	 Model_getName(m) : Model_getId(m));
+	 Model_getName(m) : (Model_isSetId(m) ? Model_getId(m) : "noId") );
   printf("overlap=scale;\n");
  
   for ( i=0; i<Model_getNumReactions(m); i++ ) {

@@ -20,17 +20,13 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   odeModel_t *data;
 
   ASSIGN_NEW_MEMORY(data, odeModel_t, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(data->species, neq, char *, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(data->speciesname, neq, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->names, neq+nass+nconst, char *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
+    
   ASSIGN_NEW_MEMORY_BLOCK(data->jacob, neq, ASTNode_t **, NULL)
-
   for ( i=0; i<neq; i++ )
     ASSIGN_NEW_MEMORY_BLOCK(data->jacob[i], neq, ASTNode_t *, NULL)
-
-  ASSIGN_NEW_MEMORY_BLOCK(data->parameter, nconst, char *, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(data->ass_parameter, nass, char *, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
 
   return data ;
 }
@@ -38,19 +34,15 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 SBML_ODESOLVER_API odeModel_t *
 ODEModel_createFromModel(Model_t *model)
 {
-    return ODEModel_createFromModelAndOptions(
-                model,
-                1 /* simplify */,
-                0 /* no determinant */);
+  return ODEModel_createFromModelAndOptions(model, 1 /*jacobian*/);
 }
 
 SBML_ODESOLVER_API odeModel_t *
-ODEModel_createFromModelAndOptions(Model_t *m,
-				   int simplify,
-				   int determinant)
+ODEModel_createFromModelAndOptions(Model_t *m, int jacobian)
 {
-  int i, j, found, neq, nconst, nass, nevents;
+  int i, j, found, neq, nconst, nass, nevents, nvalues;
   Model_t *ode;
+  Compartment_t *c;
   Parameter_t *p;
   Species_t *s;
   Rule_t *rl;
@@ -58,25 +50,26 @@ ODEModel_createFromModelAndOptions(Model_t *m,
   RateRule_t *rr;
   SBMLTypeCode_t type;  
   ASTNode_t *math;  
-  odeModel_t *data;
+  odeModel_t *model;
 
   /* C: construct ODE model */
-  ode = Model_reduceToOdes(m, simplify);
+  ode = Model_reduceToOdes(m);
 
   RETURN_ON_ERRORS_WITH(NULL);
 
-  neq    = 0;
-  nconst = 0;
-  nass   = 0;
-  found  = 0;
+  neq     = 0;
+  nconst  = 0;
+  nass    = 0;
+  nvalues = 0;
+  found   = 0;
 
   /*
-    counting number of equations (ODEs/rateRules) and Parameters
-    to initialize CvodeData structure
+    counting number of equations (ODEs/rateRules and assignment Rules)
+    to initialize CvodeData structure. Any other occuring values are
+    stored as parameters.
   */
 
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
-
     rl = Model_getRule(ode,j);
     type = SBase_getTypeCode((SBase_t *)rl);    
     if ( type == SBML_RATE_RULE ) {
@@ -86,35 +79,26 @@ ODEModel_createFromModelAndOptions(Model_t *m,
       nass++;
     }    
   }
-  for ( j=0; j<Model_getNumParameters(ode); j++ ) {
-    p = Model_getParameter(ode,j);
-    if ( Parameter_getConstant(p) ) {
-      nconst++;
-    }
-  }
-  
+
+  nvalues = Model_getNumCompartments(ode) + Model_getNumSpecies(ode) +
+    Model_getNumParameters(ode);
+
+  nconst = nvalues - nass - neq;
+
   nevents = Model_getNumEvents(ode);
   
-  data = ODEModel_allocate(neq, nconst, nass, nevents);
-  RETURN_ON_FATALS_WITH(NULL);
-  data->neq = neq;
-  data->nconst = nconst;
-  data->nass = nass;
+  model = ODEModel_allocate(neq, nconst, nass, nevents);
 
-  /*
-    filling structure with data from
+  RETURN_ON_FATALS_WITH(NULL);
+  
+  model->neq = neq;
+  model->nconst = nconst;
+  model->nass = nass;
+
+  /* 
+    filling the Ids of all rate rules (ODEs) and assignment rules
     the ODE model
   */
-  nconst = 0;  
-  for ( i=0; i<Model_getNumParameters(ode); i++ ) {
-    p = Model_getParameter(ode, i);
-    if ( Parameter_getConstant(p) ) {     
-      ASSIGN_NEW_MEMORY_BLOCK(
-          data->parameter[nconst], strlen(Parameter_getId(p))+1, char, NULL);
-      sprintf(data->parameter[nconst], Parameter_getId(p));
-      nconst++;
-    }
-  }
 
   neq  = 0;
   nass = 0;
@@ -126,70 +110,122 @@ ODEModel_createFromModelAndOptions(Model_t *m,
     if ( type == SBML_RATE_RULE ) {
 
       rr = (RateRule_t *)rl;
-      math = copyAST(Rule_getMath(rl));
-      data->ode[neq] = math;
-      s = Model_getSpeciesById(ode, RateRule_getVariable(rr));
-      ASSIGN_NEW_MEMORY_BLOCK(
-          data->species[neq], strlen(RateRule_getVariable(rr))+1, char, NULL)
-      sprintf(data->species[neq],RateRule_getVariable(rr));
-
-      if ( Species_isSetName(s) ) {
-          ASSIGN_NEW_MEMORY_BLOCK(
-              data->speciesname[neq], strlen(Species_getName(s))+1, char, NULL);
-	sprintf(data->speciesname[neq],Species_getName(s));
-      }
-      else {
-          ASSIGN_NEW_MEMORY_BLOCK(
-              data->speciesname[neq], strlen(RateRule_getVariable(rr))+1, char, NULL);
-	sprintf(data->speciesname[neq], RateRule_getVariable(rr));
-      }
+      ASSIGN_NEW_MEMORY_BLOCK(model->names[neq],
+			      strlen(RateRule_getVariable(rr))+1, char, NULL)
+      sprintf(model->names[neq],RateRule_getVariable(rr));
       neq++;      
     }
     else if ( type == SBML_ASSIGNMENT_RULE ) {
       
       ar = (AssignmentRule_t *)rl;
-      math = copyAST(Rule_getMath(rl));
-      data->assignment[nass] = math;
-
-      ASSIGN_NEW_MEMORY_BLOCK(
-          data->ass_parameter[nass], strlen(AssignmentRule_getVariable(ar))+1, char, NULL);
-      sprintf(data->ass_parameter[nass], AssignmentRule_getVariable(ar));
+      ASSIGN_NEW_MEMORY_BLOCK(model->names[model->neq+nass],
+			      strlen(AssignmentRule_getVariable(ar))+1,
+			      char, NULL);
+      sprintf(model->names[model->neq+nass], AssignmentRule_getVariable(ar));
       nass++;      
     }
   }
 
-  /* setting model name and id and pointing to sbml model */    
-  if ( Model_isSetName(m) ) {
-    ASSIGN_NEW_MEMORY_BLOCK(data->modelName, strlen(Model_getName(m))+1, char, NULL);
-    sprintf(data->modelName, Model_getName(m));    
+  /* filling constants, i.e. all values in the model, that are not
+     defined by and assignment or rate rule */
+  
+  nconst = 0;
+  for ( i=0; i<Model_getNumCompartments(ode); i++ ) {
+    found = 0;
+    c = Model_getCompartment(ode, i);
+    for ( j=0; j<neq+nass; j++ ) {
+      if ( strcmp(Compartment_getId(c), model->names[j]) == 0 ) {
+	found ++;
+      }
+    }
+    if ( !found ) {
+      ASSIGN_NEW_MEMORY_BLOCK(model->names[neq+nass+nconst],
+			      strlen(Compartment_getId(c))+1, char, NULL);
+      sprintf(model->names[neq+nass+nconst], Compartment_getId(c));
+      nconst++;      
+    }
+  }  
+  for ( i=0; i<Model_getNumSpecies(ode); i++ ) {
+    found = 0;
+    s = Model_getSpecies(ode, i);
+    for ( j=0; j<neq+nass; j++ ) {
+      if ( strcmp(Species_getId(s), model->names[j]) == 0 ) {
+	found ++;
+      }
+    }
+    if ( !found ) {
+      ASSIGN_NEW_MEMORY_BLOCK(model->names[neq+nass+nconst],
+			      strlen(Species_getId(s))+1, char, NULL);
+      sprintf(model->names[neq+nass+nconst], Species_getId(s));
+      nconst++;      
+    }
   }
-  else {
-    ASSIGN_NEW_MEMORY_BLOCK(data->modelName, strlen(Model_getId(m))+1, char, NULL);
-    sprintf(data->modelName, Model_getId(m));
+  for ( i=0; i<Model_getNumParameters(ode); i++ ) {
+    found = 0;
+    p = Model_getParameter(ode, i);
+    for ( j=0; j<neq+nass; j++ ) {
+      if ( strcmp(Parameter_getId(p), model->names[j]) == 0 ) {
+	found ++;
+      }
+    }
+    if ( !found ) {
+      ASSIGN_NEW_MEMORY_BLOCK(model->names[neq+nass+nconst],
+			      strlen(Parameter_getId(p))+1, char, NULL);
+      sprintf(model->names[neq+nass+nconst], Parameter_getId(p));
+      nconst++;      
+    }
   }
-  ASSIGN_NEW_MEMORY_BLOCK(data->modelId, strlen(Model_getId(m))+1, char, NULL);
-  sprintf(data->modelId, Model_getId(m));
 
-  data->m = m;
-  data->simple = ode; 
-  data->simplified = simplify ;
+  /** Writing Formulas:
+      Indexing rate rules and assignment rules, using the string array
+      created above and writing the indexed formulas to the CvodeData
+      structure. These AST are used for evaluation during
+      the integration routines!!
+  */
+  neq = 0;
+  nass = 0;
+  
+  for ( j=0; j<Model_getNumRules(ode); j++ ) {
+    rl = Model_getRule(ode, j);
+    type = SBase_getTypeCode((SBase_t *)rl);
+  
+    if ( type == SBML_RATE_RULE ) {
+      rr = (RateRule_t *)rl;
+/*       math = copyAST(Rule_getMath(rl)); */
+      math = indexAST(Rule_getMath(rl), nvalues, model->names);
+      model->ode[neq] = math; 
+      neq++;      
+    }
+    else if ( type == SBML_ASSIGNMENT_RULE ) {
+      ar = (AssignmentRule_t *)rl;
+/*       math = copyAST(Rule_getMath(rl)); */
+      math = indexAST(Rule_getMath(rl), nvalues, model->names); 
+      model->assignment[nass] = math;
+      nass++;      
+    }
+  }  
+  
 
-  if ( simplify ) {
-    ODEs_constructJacobian(data, determinant);
+  model->m = m;
+  model->simple = ode; 
+  model->jacobian = jacobian;
+
+  if ( jacobian ) {
+    ODEs_constructJacobian(model);
   }
   else {
     SolverError_error(
         WARNING_ERROR_TYPE,
         SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
         "Model not simplified; Jacobian matrix construction skipped");
-    for ( i=0; i<data->neq; i++ ) {
-      free(data->jacob[i]);
+    for ( i=0; i<model->neq; i++ ) {
+      free(model->jacob[i]);
     }
-    free(data->jacob);
-    data->jacob = NULL;
+    free(model->jacob);
+    model->jacob = NULL;
   }
 
-  return data;
+  return model;
 }
 
 SBML_ODESOLVER_API odeModel_t *
@@ -239,20 +275,24 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
     return;
   }
 
-  /* free model name and id */
-  free(data->modelName);
-  free(data->modelId);
+
+  for ( i=0; i<data->neq+data->nass+data->nconst; i++ ) {
+    free(data->names[i]);
+  }
+  free(data->names);
 
   /* free ODEs */
   for ( i=0; i<data->neq; i++ ) {
-    free(data->species[i]);
-    free(data->speciesname[i]);
     ASTNode_free(data->ode[i]);
   }
-  free(data->species);
-  free(data->speciesname);
   free(data->ode);
-
+  
+  /* free assignments */
+  for ( i=0; i<data->nass; i++ ) {
+    ASTNode_free(data->assignment[i]);
+  }  
+  free(data->assignment);
+  
   /* free Jacobian matrix */
   if ( data->jacob != NULL ) {
     for ( i=0; i<data->neq; i++ ) {
@@ -263,25 +303,6 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
     }
     free(data->jacob);
   }
-
-  /* free determinant of Jacobian matrix */
-  if ( data->det != NULL ) {
-    ASTNode_free(data->det);
-  }
-
-  /* free assignments */
-  for ( i=0; i<data->nass; i++ ) {
-    free(data->ass_parameter[i]);
-    ASTNode_free(data->assignment[i]);
-  }  
-  free(data->ass_parameter);
-   free(data->assignment);
-
-  /* free constants */
-  for ( i=0; i<data->nconst; i++ ) {
-    free(data->parameter[i]);
-  }  
-  free(data->parameter);
 
   /* free simplified ODE model */
   if ( data->simple != NULL ) {
@@ -295,11 +316,13 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *data)
 int
 ODEModel_getVariableIndexFields(odeModel_t *data, const char *symbol)
 {
-    int i;
+    int i, nvalues;
+
+    nvalues = data->neq + data->nass + data->nconst;
     
-    for ( i=0; i<data->neq && strcmp(symbol, data->speciesname[i]); i++ );
+    for ( i=0; i<nvalues && strcmp(symbol, data->names[i]); i++ );
     
-    if (i<data->neq)
+    if (i<nvalues)
         return i;
 
     return -1;

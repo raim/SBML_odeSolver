@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-05-31 12:31:47 raim>
-  $Id: options.c,v 1.5 2005/06/27 15:12:20 afinney Exp $
+  Last changed Time-stamp: <2005-08-01 21:11:10 raim>
+  $Id: options.c,v 1.6 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,6 @@ static struct option const long_options[] =
   {"all",           no_argument,       0, 'a'},
   {"rates",         no_argument,       0, 'r'},
   {"reactions",     no_argument,       0, 'k'},
-  {"simplify",      no_argument,       0, 't'},
   {"event",         no_argument,       0, 'n'},
   {"steadyState",   no_argument,       0, 's'},
   {"validate",      no_argument,       0, 'v'},
@@ -94,7 +93,6 @@ initializeOptions (void)
   Opt.PrintOnTheFly   = 0;
   Opt.PrintMessage    = 0;
   Opt.Wheel           = 1;
-  Opt.Simplify        = 1;
   Opt.SteadyState     = 0;
   Opt.Validate        = 0;
   Opt.Write           = 0;
@@ -284,9 +282,6 @@ processOptions (int argc, char *argv[])
       break;
     case 's':
       Opt.SteadyState = 1;
-      break;
-    case 't':
-      Opt.Simplify = 0;
       break;
     case 'v':
       Opt.Validate = 1;

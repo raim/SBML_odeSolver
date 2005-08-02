@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:54:31 raim>
-  $Id: interactive.c,v 1.5 2005/07/05 15:30:27 afinney Exp $
+  Last changed Time-stamp: <2005-08-01 21:15:37 raim>
+  $Id: interactive.c,v 1.6 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,6 @@
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/sbmlUsingOptions.h"
 #include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/odeConstructUsingOptions.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/printModel.h"
@@ -33,7 +32,7 @@ static void
 setFormat(void);
 static SBMLDocument_t * 
 loadFile(SBMLReader_t *sr);
-static CvodeData
+static cvodeData_t *
 callIntegrator(Model_t *m);
 
 /**
@@ -63,7 +62,8 @@ interactive() {
   SBMLDocument_t *d = NULL;
   SBMLReader_t   *sr = NULL;
   Model_t        *m  = NULL;
-  CvodeData data     = NULL;
+  cvodeData_t * data     = NULL;
+  ASTNode_t *det;
 
   sr = newSBMLReader(Opt.SchemaPath, Opt.Schema11, Opt.Schema12, Opt.Schema21);
   
@@ -73,8 +73,7 @@ interactive() {
   printf("Have fun!\n\n");
 
   initializeOptions();
-  /* reset steady state and determinant options */
-  Opt.Determinant = 0;
+  /* reset steady state */
   Opt.SteadyState = 0;
   /* activate printing of results to XMGrace */
   Opt.Xmgrace = 1;
@@ -134,7 +133,7 @@ interactive() {
     }
     
     if(strcmp(select,"o")==0){      
-      data = constructODEs(m);
+      data = constructODEs(m, Opt.Jacobian);
       SolverError_dumpAndClearErrors();
       if (data)
           printODEs(data);
@@ -155,21 +154,22 @@ interactive() {
       }
     }      
     if(strcmp(select,"st")==0){
-      printConcentrationTimeCourse(data);
+      printConcentrationTimeCourse(data, stdout);
     }
     
     if(strcmp(select,"jt")==0){
-      printJacobianTimeCourse(data);
+      printJacobianTimeCourse(data, stdout);
     }
     
     if(strcmp(select,"rt")==0){
-      printOdeTimeCourse(data);
+      printOdeTimeCourse(data, stdout);
     }
 
     if(strcmp(select,"dt")==0){
       if ( data != NULL && data->model->jacob != NULL ) {
-	data->model->det = determinantNAST(data->model->jacob, data->model->neq);
-	printDeterminantTimeCourse(data);
+	det = determinantNAST(data->model->jacob, data->model->neq);
+	printDeterminantTimeCourse(data, det, stdout);
+	ASTNode_free(det);
       }
       else {
 	printf("Please integrate first!\n");
@@ -216,7 +216,7 @@ interactive() {
     if(strcmp(select,"jg")==0){
       if ( data == NULL ) {
 	Opt.Jacobian = 1;
-	data = constructODEs(m);
+	data = constructODEs(m, Opt.Jacobian);
     SolverError_dumpAndClearErrors();
     
 	Opt.Jacobian = 0;	
@@ -225,7 +225,7 @@ interactive() {
         drawJacoby(data);
     }
     if(strcmp(select,"j")==0){
-      data = constructODEs(m);
+      data = constructODEs(m, Opt.Jacobian);
       SolverError_dumpAndClearErrors();
       if (data)
           printJacobian(data);
@@ -386,15 +386,15 @@ loadFile(SBMLReader_t *sr){
     return NULL;
 }
 
-static CvodeData
+static cvodeData_t *
 callIntegrator(Model_t *m){
 
   char *tout;
   char *nout;
 
-  CvodeData data = NULL;
+  cvodeData_t * data = NULL;
 
-  data = constructODEs(m);
+  data = constructODEs(m, Opt.Jacobian);
   
   /* chnage of behaviour by AMF no intergation if errors in ODE construction - 23rd June 2005 */
   if (!data)
@@ -423,23 +423,23 @@ callIntegrator(Model_t *m){
     data->currenttime = 0.0;
     data->t0 = 0.0;
 
-    data->Error = Opt.Error;
-    data->RError = Opt.RError;
-    data->Mxstep = Opt.Mxstep;
-    data->HaltOnEvent = Opt.HaltOnEvent;
-    data->SteadyState = Opt.SteadyState;
-    data->EnableVariableChanges = 0;
+    data->opt->Error = Opt.Error;
+    data->opt->RError = Opt.RError;
+    data->opt->Mxstep = Opt.Mxstep;
+    data->opt->HaltOnEvent = Opt.HaltOnEvent;
+    data->opt->SteadyState = Opt.SteadyState;
+    data->opt->EnableVariableChanges = 0;
 
     /* allow setting of Jacobian, only if construction was succesfull */
-    if ( data->UseJacobian == 1 ) {
-      data->UseJacobian = Opt.Jacobian;
+    if ( data->opt->UseJacobian == 1 ) {
+      data->opt->UseJacobian = Opt.Jacobian;
     }
     
     printf("Numerical integration from\n t0 = %f  to \n tout"
 	   " = %f s\n output interval: %f s\n\n",
 	   data->t0, data->tout, data->tout/data->nout);
     
-    integrator(data);
+    integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, stdout);
     SolverError_dumpAndClearErrors();
   }
     

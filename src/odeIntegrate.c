@@ -1,13 +1,6 @@
 /*
-<<<<<<< odeIntegrate.c
-  Last changed Time-stamp: <2005-06-28 16:49:31 raim>
-  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
-=======
-  Last changed Time-stamp: <2005-05-31 12:26:59 raim>
-  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
->>>>>>> 1.3
-  Last changed Time-stamp: <2004-12-23 16:16:19 xtof>
-  $Id: odeIntegrate.c,v 1.7 2005/06/28 14:59:36 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 18:41:32 raim>
+  $Id: odeIntegrate.c,v 1.8 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,15 +25,18 @@
 #include "sbmlsolver/solverError.h"
 
 /* static void */
-/* checkData(CvodeData data); */
+/* checkData(cvodeData_t *data); */
 /* static int */
-/* calculateResults(CvodeData data); */
+/* calculateResults(cvodeData_t *data); */
 static int
-updateModel(CvodeData data, int nout);
+updateModel(cvodeData_t *data, int nout);
+static
+int handleError(integratorInstance_t *engine,
+		int PrintMessage, int PrintOnTheFly, FILE *f);
 
 /************************ Integrator Program *************************/
 /**
-  The function "static int integrator(CvodeData data)" gets a filled
+  The function "static int integrator(cvodeData_t *data)" gets a filled
   structure "CvodeData" and calls CVODE to integrate the ODEs,
   represented as libsbml Abstract Syntax Trees.  The CvodeData also
   contains the number of equations neq, the nout to which CVODE should
@@ -50,24 +46,38 @@ updateModel(CvodeData data, int nout);
 */
 
 int
-integrator(CvodeData data)
+integrator(cvodeData_t *data, int PrintMessage, int PrintOnTheFly,
+	   FILE *outfile)
 {
+  int i;
   integratorInstance_t *engine;
   
-  /*
-       This now handled simply by not performing the cvode integration calls in the
-       integrateOneStep function
-  /* models can only be defined by assignments, or constants.
-     Such models don't need integration!     
-  
-  if ( data->neq == 0 ) {
-    return calculateResults(data);
-  }
-  */
-
   engine = IntegratorInstance_createFromCvodeData(data);
-
   RETURN_ON_ERRORS_WITH(1);
+  
+ /** Command-line option -f/--onthefly:
+      print initial values, if on-the-fly printint is set
+  */
+  if ( PrintOnTheFly && data->run == 0 ) {
+	if ( data->t0 == 0.0 )
+	{
+	  fprintf(stderr, "\nPrinting results on the fly !\n");
+      fprintf(stderr, "Overruling all other print options!!\n\n");      
+      fprintf(outfile, "#t ");
+      for ( i=0; i<data->nvalues; i++ )
+        fprintf(outfile, "%s ", data->model->names[i]);
+      fprintf(outfile, "\n");
+	}
+
+    fprintf(outfile, "%g ", data->t0);
+    for ( i=0; i<data->nvalues; i++ )
+      fprintf(outfile, "%g ", data->value[i]);
+    fprintf(outfile, "\n");
+  }
+  else {
+    if ( PrintMessage )
+      fprintf(stderr,"Integrating        ");
+  }
 
   /*
     In loop over output points, call CVode, test for error
@@ -77,116 +87,111 @@ integrator(CvodeData data)
     stdout).
   */
   
-  while (!IntegratorInstance_timeCourseCompleted(engine))
-  {
-      if (!IntegratorInstance_integrateOneStep(engine))
-          return IntegratorInstance_handleError(engine);
+  while (!IntegratorInstance_timeCourseCompleted(engine)) {
+    if (!IntegratorInstance_integrateOneStep(engine))
+      return handleError(engine, PrintMessage, PrintOnTheFly, outfile);
+          
+    /* print immediately if PrintOnTheFly was set
+       with '-d' or '--onthefly'
+    */
+    if ( PrintOnTheFly ) {
+      fprintf(outfile, "%g ", engine->t + engine->data->t0);
+      /* fprintf(stdout, "%g ", t + data->t0); */
+      for ( i=0; i<engine->data->nvalues; i++ )
+	fprintf(outfile, "%g ", engine->data->value[i]);
+      fprintf(outfile, "\n");
+    }
+    else if ( PrintMessage ) {
+      const  char chars[5] = "|/-\\";
+      fprintf(stderr, "\b\b\b\b\b\b");
+      fprintf(stderr, "%.2f %c",
+	      (float)(engine->iout-1)/(float)engine->nout,
+	      chars[(engine->iout-1) % 4]);
+    }
   }
-
-  if ( !data->PrintOnTheFly && data->PrintMessage ) {
+  if ( !PrintOnTheFly && PrintMessage ) {
     fprintf(stderr,
 	    "finished. Results stored.\n");
   }
 
-  if ( data->PrintMessage )
-    IntegratorInstance_printStatistics(engine);        /* Print some final statistics   */
+  /* Print some final statistics   */
+  if ( PrintMessage )
+    IntegratorInstance_printStatistics(engine); 
 
   IntegratorInstance_freeExcludingCvodeData(engine);
 
   return 0;
+
 } 
+/* standard handler for when the integrate function fails */
+static
+int handleError(integratorInstance_t *engine,
+		int PrintMessage, int PrintOnTheFly, FILE *outfile) {
+    cvodeData_t *data = engine->data;
+    int i;
+    int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE) ;
+
+    if ( errorCode ) {
+      fprintf(outfile, "# CVode failed, with flag=%d, at time %g\n",
+	      errorCode, data->currenttime);        
+        /* on flag -6/CONV_FAILURE
+        try again, but now with/without generated Jacobian matrix  */
+        if ( errorCode == CONV_FAILURE && engine->data->run == 0 &&
+	     engine->data->opt->StoreResults) {
+            fprintf(
+                stderr,
+                "Trying again; now with %s Jacobian matrix\n",
+                engine->data->opt->UseJacobian ?
+                    "CVODE's internal approximation of the" :
+                    "automatically generated");
+            engine->data->opt->UseJacobian = !engine->data->opt->UseJacobian;
+            engine->data->run++;
+            for ( i=0; i<engine->data->nvalues; i++ ) {
+                engine->data->value[i] = engine->results->value[i][0];
+            }
+
+            engine->data->currenttime = engine->data->t0;
+            IntegratorInstance_freeExcludingCvodeData(engine);
+            SolverError_clear();
+
+            return integrator(data, PrintMessage, PrintOnTheFly, outfile);
+        }
+        else
+            SolverError_dumpAndClearErrors();
+    }
+
+    return errorCode ;
+}
 
 /** writes current simulation data to
     original model */
 static int
-updateModel(CvodeData data, int nout) {
+updateModel(cvodeData_t *data, int nout) {
 
   int i;
   Species_t *s;
   Compartment_t *c;
   Parameter_t *p;  
   
-  for ( i=0; i<data->model->neq; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m,
-				   data->model->species[i])) != NULL ) {
-      Species_setInitialConcentration(s,
-				      data->results->value[i][nout]);
+  for ( i=0; i<data->nvalues; i++ ) {
+    if ( (s = Model_getSpeciesById(data->model->m, data->model->names[i]))
+	 != NULL ) {
+      Species_setInitialConcentration(s, data->results->value[i][nout]);
     }
     else if ( (c = Model_getCompartmentById(data->model->m,
-					    data->model->species[i])) !=
-	      NULL ) {
+					    data->model->names[i])) != NULL ) {
       Compartment_setSize(c, data->results->value[i][nout]);
     }
     else if ( (p = Model_getParameterById(data->model->m,
-					  data->model->species[i])) !=
-	      NULL ) {
+					  data->model->names[i])) !=  NULL ) {
       Parameter_setValue(p, data->results->value[i][nout]);
     }
   }
-  for ( i=0; i<data->model->nass; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m,
-				   data->model->ass_parameter[i]))
-	 != NULL ) {
-      Species_setInitialConcentration(s,
-				      data->results->avalue[i][nout]);
-    }
-    else if ( (c = Model_getCompartmentById(data->model->m,
-					    data->model->ass_parameter[i]))
-	      != NULL ) {
-      Compartment_setSize(c, data->results->avalue[i][nout]);
-    }
-    else if ( (p = Model_getParameterById(data->model->m,
-					  data->model->ass_parameter[i]))
-	      != NULL ) {
-      Parameter_setValue(p, data->results->avalue[i][nout]);
-    }
-  }
-  for ( i=0; i<data->model->nconst; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m, data->model->parameter[i]))
-	 != NULL ) {
-      Species_setInitialConcentration(s,
-				      data->results->pvalue[i][nout]);
-    }
-    else if ( (c = Model_getCompartmentById(data->model->m,
-					    data->model->parameter[i]))
-	      != NULL ) {
-      Compartment_setSize(c, data->results->pvalue[i][nout]);
-    }
-    else if ( (p = Model_getParameterById(data->model->m,
-					  data->model->parameter[i]))
-	      != NULL ) {
-      Parameter_setValue(p, data->results->pvalue[i][nout]);
-    }
-  }
+
   return 1;
 
 }
-/* static void */
-/* checkData(CvodeData data) { */
 
-/*   int i, j; */
-/*   double result; */
-  
-/*   for ( i=0; i<data->neq; i++ ) { */
-/*     result = evaluateAST(data->ode[i], data); */
-/*     if ( isnan(result) ) { */
-/*       fprintf(stderr,
-	 "ODE for species %s is not a number.\n", data->species[i]); */
-/*     } */
-/*   } */
-/*   if ( data->jacob != NULL ){ */
-/*     for ( i=0; i<data->neq; i++ ) { */
-/*       for ( j=0; j<data->neq; j++ ) { */
-/* 	result = evaluateAST(data->jacob[i][j], data); */
-/* 	if ( isnan(result) ) { */
-/* 	  fprintf(stderr, "Jacobian (d[%s]/dt) / d[%s] is not a number.\n", */
-/* 		  data->species[i], */
-/* 		  data->species[j]); */
-/* 	} */
-/*       } */
-/*     } */
-/*   } */
-/* } */
   
 
 

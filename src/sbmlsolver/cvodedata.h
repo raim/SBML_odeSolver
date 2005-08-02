@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 15:37:04 raim>
-  $Id: cvodedata.h,v 1.6 2005/07/26 15:43:35 afinney Exp $
+  Last changed Time-stamp: <2005-08-02 01:51:40 raim>
+  $Id: cvodedata.h,v 1.7 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -10,66 +10,56 @@
 
 #include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odemodeldatatype.h"
-#include "sbmlsolver/cvodeSettings.h"
+#include "sbmlsolver/integratorSettings.h"
 
 struct odeModel
 {
   Model_t *m;
   Model_t *simple;
-  char *modelName;
-  char *modelId;
 
-  /* was the model simplified and the jacobian constructed */
-  int simplified ;
-  
-  /* Constants: stores constant species, and species,
-     compartments or parameters, that can be changed by an event */
-  int nconst;
-  char **parameter; 
+  /* All names, i.e. ODE variables, assigned parameters, and constant
+     parameters */
+  char **names; 
+
+  /* number of ODEs (neq), assigned parameters (nass), and constant
+     parameters (nconst) */
+  int neq;
+  int nass;
+  int nconst;  
 
   /* Assigned variables: stores species, compartments and parameters,
      that are set by an assignment rule */
-  int nass;
-  char **ass_parameter;
   ASTNode_t **assignment;
 
   /* The main data: number, names, and equation ASTs
      of the ODEs. The value array is used to write and read the
      current value of the ODE variables during simulation. */
-  int neq;  
   ASTNode_t **ode; 
-  char **species;
-  char **speciesname;
 
-    /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
+   /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
   ASTNode_t ***jacob;
-  /* The determinant of the jacobian */
-  ASTNode_t *det;
+  /* was the model the jacobian constructed ? */
+  int jacobian;
+
 };
 
-CvodeSettings Set;
+/* CvodeSettings Set; */
 
 /* Stores CVODE specific integration results, and is part of
    the CvodeData structure (see below) */
 
-typedef struct _CvodeResults {
+struct _CvodeResults {
   int nout;        /* counter for calculated time steps
 		      (without initial conditions), this number
 		      can be lower then the same variable in CvodeData,
 		      in case the integration is prematurely stopped. */
   double *time;    /* time steps */
   
-  /* the following arrays represent the time series of the variables with
-     the same names in CvodeData */
-  double **value;  /* values defined by ODEs, and calculated by
-		      the CVODE integrator */
-  double **avalue; /* values defined by assignment equations, calculated during
-		      integration, calculated only for printing and higher
-		      level interfaces */
-  double **pvalue; /* constant parameter values, constant during integration,
-		      stored only for printing of constant species and higher
-		      level interfaces */
-} *CvodeResults;
+  /* the following arrays represent the time series of all variables
+     and parameters of the model */
+  double **value;  
+
+} ;
 
 /* Contains all data needed for CVODE integration, i.e.
    the ODEs, initial values, variable and parameter IDs and
@@ -81,34 +71,18 @@ typedef struct _CvodeResults {
 
 struct _CvodeData {
 
-  odeModel_t *model ;
+  odeModel_t *model;
+  
 
-  /* results file */
-  const char *filename;
-  FILE *outfile; 
-
-  /* Constants: stores constant species, and species,
-     compartments or parameters, that can be changed by an event */
-  double *pvalue;
-
-  /* Assigned variables: stores species, compartments and parameters,
-     that are set by an assignment rule */
-  double *avalue;
- 
   /* The value array is used to write and read the
-     current value of the ODE variables during simulation. */
+     current values of all variables and parameters of the
+     system (of which there are `nvalues') */
+  int nvalues;
   double *value;
 
   /* stores the current time of the integration */
   float currenttime;
 
-  /* Mean and variance, and standard deviation of ODE rates, used
-     for an internal check of steady states. If a steady state was
-     is detected the flag steadystate is set to 1. */
-  double dy_mean;
-  double dy_var;
-  double dy_std;
-  int steadystate; 
   
   /* cvode settings: start- and end times, timesteps, number of timesteps,
      and a counter, that is used to recalculate the settings upon a restart
@@ -117,23 +91,17 @@ struct _CvodeData {
   float tmult;
   float nout;
   float tout;
-  float cnt;
-  double Error;         /* absolute tolerance in Cvode integration */
-  double RError;        /* relative tolerance in Cvode integration */
-  double Mxstep;        /* maximum step number for CVode integration */
-  int PrintMessage;     /* Print messages */
-  int PrintOnTheFly;    /* Print species concentration during integration */
-  int HaltOnEvent;      /* Stops integration upon an event */
-  int SteadyState;      /* Stops integration upon a steady state */
-  int UseJacobian;      /* Toggle use of Jacobian ASTs or approximation */
+
+  cvodeSettings_t *opt;
   
   /* trigger flags: check if triggers were active or not
      at the previous time step */
   int *trigger;  
+  int steadystate; 
 
   /* Results: time series of integration are stored in this
      structure (see above) */
-  CvodeResults results;
+  cvodeResults_t *results;
 
   /* The flag `run' remembers if already tried with or without use
      of generated Jacobian matrix or internal approximation,
@@ -141,32 +109,23 @@ struct _CvodeData {
      with changed settings upon failure. */
   int run;
 
-  /* flag 'storeResults' indicates whether the results field
-     should be allocated and populated */
-  int storeResults;
-  
-  /* flag 'EnableVariableChanges' allows variables to be changed between timesteps
-        set this to 0 for better performance from the solver */
-  int EnableVariableChanges;
-};
+} ;
 
-CvodeData
-CvodeData_create(int neq, int nconst, int nass,
-		 int nevents, const char *resultsFileName);
+cvodeData_t *
+CvodeData_create(int nvalues, int nevents);
 
-CvodeData
-CvodeData_createFromODEModel(odeModel_t *m, const char *resultsFileName);
+cvodeData_t *
+CvodeData_createFromODEModel(odeModel_t *m);
 
-CvodeData 
-constructODEsPassingOptions(Model_t *m, const char *resultsFilename,
-			    int simplify, int determinant);
+cvodeData_t * 
+constructODEs(Model_t *m, int simplify);
 
 void
-CvodeData_free(CvodeData data);
+CvodeData_free(cvodeData_t *data);
 void
-CvodeData_freeExcludingModel(CvodeData data);
-CvodeResults
-CvodeResults_create(CvodeData data);
+CvodeData_freeExcludingModel(cvodeData_t *data);
+cvodeResults_t *
+CvodeResults_create(cvodeData_t *data);
 
 #endif
 

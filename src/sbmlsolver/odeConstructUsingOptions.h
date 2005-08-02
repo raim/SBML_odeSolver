@@ -3,7 +3,7 @@
 
 #include "cvodedata.h"
 
-CvodeData 
+cvodeData_t *
 constructODEs(Model_t *m);
 
 #endif

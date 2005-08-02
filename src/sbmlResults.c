@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:49:38 raim>
-  $Id: sbmlResults.c,v 1.4 2005/06/28 14:59:37 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 23:58:41 raim>
+  $Id: sbmlResults.c,v 1.5 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,10 +12,10 @@
 /* own header files */
 #include "sbmlsolver/sbmlResults.h"
 
-static TimeCourse
+static timeCourse_t *
 TimeCourse_create(int names, int timepoints);
 static void
-TimeCourse_free(TimeCourse tc);
+TimeCourse_free(timeCourse_t *tc);
 
 /* The function
    SBMLResults SBMLResults_create(Model_t *m, int timepoints)
@@ -25,7 +25,7 @@ TimeCourse_free(TimeCourse tc);
    contain CVODE integraton results.
 */
 
-SBMLResults
+SBMLResults_t *
 SBMLResults_create(Model_t *m, int timepoints){
 
   int i, num_reactions, num_species, num_compartments, num_parameters;
@@ -33,9 +33,9 @@ SBMLResults_create(Model_t *m, int timepoints){
   Compartment_t *c;
   Parameter_t *p;
   Reaction_t *r;
-  SBMLResults results;
+  SBMLResults_t *results;
 
-  if(!(results = (SBMLResults) calloc(1, sizeof(*results)))){
+  if(!(results = (SBMLResults_t *) calloc(1, sizeof(SBMLResults_t)))){
     fprintf(stderr, "failed!\n");
   }
   
@@ -110,7 +110,7 @@ SBMLResults_create(Model_t *m, int timepoints){
 }
 
 void
-SBMLResults_free(SBMLResults results) {
+SBMLResults_free(SBMLResults_t *results) {
 
   if ( results != NULL ) {
     if ( results->time != NULL ) {
@@ -126,14 +126,14 @@ SBMLResults_free(SBMLResults results) {
   }
 }
 
-static TimeCourse
+static timeCourse_t *
 TimeCourse_create(int num_val, int timepoints){
 
   int i;
-  TimeCourse tc;
+  timeCourse_t *tc;
 
   /* timecourse variables */  
-  if(!(tc = (TimeCourse)calloc(1, sizeof(struct _TimeCourse)))){
+  if(!(tc = (timeCourse_t *)calloc(1, sizeof(timeCourse_t)))){
     fprintf(stderr, "failed!\n");
   }
   tc->num_val = num_val;
@@ -154,7 +154,7 @@ TimeCourse_create(int num_val, int timepoints){
 }
 
 static void
-TimeCourse_free(TimeCourse tc) {
+TimeCourse_free(timeCourse_t *tc) {
 
   int i;
 

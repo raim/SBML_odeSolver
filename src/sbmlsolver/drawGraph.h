@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2004-06-29 17:48:46 raim>
-  $Id: drawGraph.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 16:48:18 raim>
+  $Id: drawGraph.h,v 1.2 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _DRAWGRAPH_H_
 #define _DRAWGRAPH_H_
@@ -10,7 +10,7 @@
 int
 drawModel(Model_t *m);
 int
-drawJacoby(CvodeData data);
+drawJacoby(cvodeData_t *data);
 
 #endif
 

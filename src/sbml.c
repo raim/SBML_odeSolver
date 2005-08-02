@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-07-01 17:49:49 raim>
-  $Id: sbml.c,v 1.6 2005/07/04 12:48:11 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 02:26:05 raim>
+  $Id: sbml.c,v 1.7 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 void storeSBMLError(errorType_t type, const ParseMessage_t *pm)
 {
     SolverError_error(type, ParseMessage_getId(pm),
-		      ParseMessage_getMessage(pm)); 
+		      (char*) ParseMessage_getMessage(pm)); 
 }
 
 /** C.1 Load, validate and parse SBML file,
@@ -71,7 +71,7 @@ parseModelPassingOptions(
     }
 
     if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
-        SBMLDocument_checkConsistency(d);
+        /* SBMLDocument_checkConsistency(d) */;
 
     /* check for warnings and errors */
     for (i =0 ; i != SBMLDocument_getNumWarnings(d); i++)

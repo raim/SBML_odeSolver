@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-08 11:09:04 raim>
-  $Id: odeSolver.h,v 1.5 2005/06/27 15:17:57 afinney Exp $
+  Last changed Time-stamp: <2005-08-01 22:20:24 raim>
+  $Id: odeSolver.h,v 1.6 2005/08/02 13:20:32 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -13,11 +13,11 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/sbmlUsingOptions.h"
-#include "sbmlsolver/odeConstructUsingOptions.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/batchIntegrator.h"
 #include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/printModel.h"
 #include "sbmlsolver/drawGraph.h"
 #include "sbmlsolver/interactive.h"
@@ -40,16 +40,16 @@ VarySettings vary;
 
 SBML_ODESOLVER_API int
 odeSolver (int argc, char *argv[]);
-SBMLResults
-Model_odeSolver(SBMLDocument_t *d, CvodeSettings set);
-SBMLResults *
-Model_odeSolverBatch(SBMLDocument_t *d, CvodeSettings settings,
+SBMLResults_t *
+Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set);
+SBMLResults_t **
+Model_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
 		     VarySettings vary);
-SBMLResults **
-Model_odeSolverBatch2 (SBMLDocument_t *d, CvodeSettings settings,
+SBMLResults_t ***
+Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *set,
 		      VarySettings vary1, VarySettings vary2);
-SBMLResults
-Results_fromCvode(CvodeData data);
+SBMLResults_t *
+Results_fromCvode(cvodeData_t *data);
 int
 Model_setValue(Model_t *m, const char *id, const char *rid, double value);
 

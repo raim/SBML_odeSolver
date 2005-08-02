@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-28 16:54:25 raim>
-  $Id: printModel.c,v 1.5 2005/06/28 14:59:36 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 01:33:22 raim>
+  $Id: printModel.c,v 1.6 2005/08/02 13:20:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,17 +35,17 @@
 static void
 grace_error(const char *msg);
 static int
-printXMGConcentrationTimeCourse(CvodeData data);
+printXMGConcentrationTimeCourse(cvodeData_t *data);
 static int
-printXMGOdeTimeCourse(CvodeData data);
+printXMGOdeTimeCourse(cvodeData_t *data);
 static int
-printXMGJacobianTimeCourse(CvodeData data);
+printXMGJacobianTimeCourse(cvodeData_t *data);
 static int
-printXMGLegend(CvodeData data);
+printXMGLegend(cvodeData_t *data);
 static int
-openXMGrace(CvodeData data);
+openXMGrace(cvodeData_t *data);
 static int
-closeXMGrace(CvodeData data, char *name);
+closeXMGrace(cvodeData_t *data, char *name);
 #endif
 
 void
@@ -322,7 +322,7 @@ printReactions(Model_t *m)
 
 
 void
-printODEsToSBML(CvodeData data){
+printODEsToSBML(cvodeData_t *data){
       
   SBMLDocument_t *d;
   char *model;
@@ -335,29 +335,31 @@ printODEsToSBML(CvodeData data){
 
 
 void
-printODEs(CvodeData x){
+printODEs(cvodeData_t *x){
   
   int i;
   char *f;
-  odeModel_t *data = x->model;
+  odeModel_t *model = x->model;
 
   printf("\n");
   printf("# Derived system of Ordinary Differential Equations (ODEs):\n");
 
   printf("# Parameters:\n");
-  for ( i=0; i<data->nconst; i++ ) {
-    printf("%s = %g\n", data->parameter[i], x->pvalue[i]);
+  for ( i=model->neq+model->nass; i<x->nvalues; i++ ) {
+    printf("%s = %g\n", model->names[i], x->value[i]);
   }
-  
-  for ( i=0; i<data->neq; i++ ) {
+  printf("# Assigned Parameters:\n");
+  for ( i=0; i<model->nass; i++ ) {
+    f = SBML_formulaToString(model->assignment[i]);
+    printf("%d: %s =  %s;\n", i+1, model->names[model->neq+i], f);
+    free(f);
+  }  
+  for ( i=0; i<model->neq; i++ ) {
     if ( i == 0 ) {
       printf("# ODEs:\n");
     }
-    f = SBML_formulaToString(data->ode[i]);
-    printf("%d: d%s/dt =  %s;\n",
-	   i+1,
-	   data->speciesname[i],
-	   f);
+    f = SBML_formulaToString(model->ode[i]);
+    printf("%d: d%s/dt =  %s;\n", i+1, model->names[i], f);
     free(f);
   }
   printf("\n");
@@ -372,16 +374,16 @@ printODEs(CvodeData x){
 }
 
 void 
-printJacobian(CvodeData x){
+printJacobian(cvodeData_t *x){
   
-  odeModel_t *data = x->model;
+  odeModel_t *model = x->model;
   int i, j;
-  if ( data == NULL ) {
+  if ( x == NULL ) {
     fprintf(stderr, "No data available.\n");
     return;
   }
 
-  if ( data->jacob == NULL ) {
+  if ( model->jacob == NULL ) {
     fprintf(stderr, "Jacobian Matrix has not been constructed.\n");
     return;
   }
@@ -396,12 +398,12 @@ printJacobian(CvodeData x){
   
   printf("\n");
   printf("# Jacobian Matrix:\n");
-  for ( i=0; i<data->neq; i++ ) {
-    printf("# %s: \n", data->speciesname[i]);
-    for ( j=0; j<data->neq; j++ ) {
+  for ( i=0; i<model->neq; i++ ) {
+    printf("# %s: \n", model->names[i]);
+    for ( j=0; j<model->neq; j++ ) {
       printf("  (d[%s]/dt)/d[%s] = %s;\n", 
-	     data->speciesname[i], data->speciesname[j], 
-	     SBML_formulaToString(data->jacob[i][j]));
+	     model->names[i], model->names[j], 
+	     SBML_formulaToString(model->jacob[i][j]));
     }
   }
   printf("\n");
@@ -413,17 +415,15 @@ printJacobian(CvodeData x){
 /* The following functions print results of integration */
 
 void
-printDeterminantTimeCourse(CvodeData data) {
+printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f) {
   int i,j;
-  FILE *f;
-  CvodeResults results;
+  cvodeResults_t *results;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
   
-  f = data->outfile;
   if ( Opt.PrintMessage )
     fprintf(stderr, "\nPrinting time course of det(j).\n\n");
   
@@ -436,7 +436,7 @@ printDeterminantTimeCourse(CvodeData data) {
     for ( j=0; j<data->model->neq; j++ ) {
       data->value[j] = results->value[j][i];
     }
-    fprintf(f, "%g\n", evaluateAST(data->model->det, data));
+    fprintf(f, "%g\n", evaluateAST(det, data));
   }
   fprintf(f, "##DETERMINANT OF THE JACOBIAN MATRIX\n");
   fprintf(f, "#t det(j)\n");
@@ -445,11 +445,10 @@ printDeterminantTimeCourse(CvodeData data) {
 
 
 void 
-printJacobianTimeCourse(CvodeData data){
+printJacobianTimeCourse(cvodeData_t *data, FILE *f){
 
   int i, j, k;
-  FILE *f;
-  CvodeResults results;
+  cvodeResults_t *results;
 
 
   if ( data == NULL || data->results == NULL ) {
@@ -466,14 +465,13 @@ printJacobianTimeCourse(CvodeData data){
 #endif  
   
   results = data->results;
-  f = data->outfile;
   if ( Opt.PrintMessage )
     fprintf(stderr, "Printing time course of the jacobian matrix.\n\n");
   
   fprintf(f, "#t ");
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
-      fprintf(f, "%s ", data->model->species[j]);
+      fprintf(f, "%s ", data->model->names[j]);
     }
   }
   fprintf(f, "\n");
@@ -495,7 +493,7 @@ printJacobianTimeCourse(CvodeData data){
   fprintf(f, "#t ");				      
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
-      fprintf(f, "%s ", data->model->species[j]);
+      fprintf(f, "%s ", data->model->names[j]);
     }
   }
   fprintf(f, "\n");
@@ -509,11 +507,10 @@ printJacobianTimeCourse(CvodeData data){
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
     for(i=0;i<data->model->neq;i++) 
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
+	      data->model->names[i],
+	      fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
-    fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
-	    data->dy_mean, data->dy_std);
-    fprintf(stderr, "\n");     
+
   }
 
 #if !USE_GRACE
@@ -530,11 +527,10 @@ printJacobianTimeCourse(CvodeData data){
 }
 
 void
-printOdeTimeCourse(CvodeData data){
+printOdeTimeCourse(cvodeData_t *data, FILE *f){
   
   int i,j;
-  FILE *f;
-  CvodeResults results;
+  cvodeResults_t *results;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
@@ -548,14 +544,13 @@ printOdeTimeCourse(CvodeData data){
   }
 #endif
   
-  f = data->outfile;
   results = data->results;
   if ( Opt.PrintMessage )
     fprintf(stderr, "\nPrinting time course of the ODEs.\n\n");
     
   fprintf(f, "#t ");
   for (i=0; i<data->model->neq; i++ ) {
-    fprintf(f, "%s ", data->model->species[i]);
+    fprintf(f, "%s ", data->model->names[i]);
   }
   fprintf(f, "\n");
   fprintf(f, "##ODE VALUES\n");
@@ -571,7 +566,7 @@ printOdeTimeCourse(CvodeData data){
   fprintf(f, "##ODE VALUES\n");
   fprintf(f, "#t ");
   for ( i=0; i<data->model->neq; i++ ) {
-    fprintf(f, "%s ", data->model->species[i]);
+    fprintf(f, "%s ", data->model->names[i]);
   }
   fprintf(f, "\n");
   fflush(f);
@@ -584,10 +579,8 @@ printOdeTimeCourse(CvodeData data){
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
     for(i=0;i<data->model->neq;i++)
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
-	    data->dy_mean, data->dy_std);
+	      data->model->names[i],
+	      fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
   }
   
@@ -605,15 +598,14 @@ printOdeTimeCourse(CvodeData data){
 }
 
 void
-printReactionTimeCourse(CvodeData data) {
+printReactionTimeCourse(cvodeData_t *data, FILE *f) {
 
   int i, j;
-  CvodeResults results;
+  cvodeResults_t *results;
   Model_t *m;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;
-  FILE *f;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
@@ -628,7 +620,6 @@ printReactionTimeCourse(CvodeData data) {
 #endif
   
   m = data->model->m;
-  f = data->outfile;
   results = data->results;
   if ( Opt.PrintMessage )
     fprintf(stderr,
@@ -682,20 +673,17 @@ printReactionTimeCourse(CvodeData data) {
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
     for(i=0;i<data->model->neq;i++)
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
-	    data->dy_mean, data->dy_std);
+	      data->model->names[i],
+	      fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
   }
 }
 
 void
-printConcentrationTimeCourse(CvodeData data){
+printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   
   int i,j;
-  FILE *f;
-  CvodeResults results;
+  cvodeResults_t *results;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
@@ -709,17 +697,14 @@ printConcentrationTimeCourse(CvodeData data){
   }
 #endif  
   
-  f = data->outfile;
-
   if ( Opt.PrintMessage )
     fprintf(stderr,
 	    "\nPrinting time course of the species concentrations.\n\n");
   
   results = data->results;
   fprintf(f, "#t ");
-  for(i=0;i<data->model->neq;i++) fprintf(f, "%s ", data->model->species[i]);
-  for(i=0;i<data->model->nass;i++) fprintf(f, "%s ", data->model->ass_parameter[i]);
-  for(i=0;i<data->model->nconst;i++) fprintf(f, "%s ", data->model->parameter[i]);
+  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", data->model->names[i]);
+
   fprintf(f, "\n");
   fprintf(f, "##CONCENTRATIONS\n");
   for ( i=0; i<=results->nout; ++i ) {
@@ -728,18 +713,17 @@ printConcentrationTimeCourse(CvodeData data){
       fprintf(f, "%g ", results->value[j][i]);
     }
     for ( j=0; j<data->model->nass; j++ ) {
-      fprintf(f, "%g ", results->avalue[j][i]);
+      fprintf(f, "%g ", results->value[data->model->neq+j][i]);
     }
     for ( j=0; j<data->model->nconst; j++ ) {
-      fprintf(f, "%g ", results->pvalue[j][i]);
+      fprintf(f, "%g ",
+	      results->value[data->model->neq+data->model->nass+j][i]);
     }
     fprintf(f, "\n");
   }
   fprintf(f, "##CONCENTRATIONS\n");
   fprintf(f, "#t ");
-  for(i=0;i<data->model->neq;i++) fprintf(f, "%s ", data->model->species[i]);
-  for(i=0;i<data->model->nass;i++) fprintf(f, "%s ", data->model->ass_parameter[i]);
-  for(i=0;i<data->model->nconst;i++) fprintf(f, "%s ", data->model->parameter[i]);
+  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", data->model->names[i]);
   fprintf(f, "\n\n");
   
   /* Print if simulation was aborted at steady state */
@@ -750,11 +734,9 @@ printConcentrationTimeCourse(CvodeData data){
     fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
     for(i=0;i<data->model->neq;i++) 
       fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->species[i], fabs(evaluateAST(data->model->ode[i],data)));
+	      data->model->names[i],
+	      fabs(evaluateAST(data->model->ode[i],data)));
     fprintf(stderr, "\n");
-    fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
-	    data->dy_mean, data->dy_std);
-    fprintf(stderr, "\n");     
   }
   fprintf(f, "\n");
   fflush(f);
@@ -784,7 +766,7 @@ printConcentrationTimeCourse(CvodeData data){
 */
 
 void
-printPhase(CvodeData data) {
+printPhase(cvodeData_t *data) {
 
 #if !USE_GRACE
 
@@ -804,7 +786,7 @@ printPhase(CvodeData data) {
   char *y;
   double yvalue;
 
-  CvodeResults results;
+  cvodeResults_t *results;
 
   maxY = 1.0;
   maxX = 1.0;
@@ -830,7 +812,16 @@ printPhase(CvodeData data) {
   GracePrintf("xaxis tick major %g", (1.25*maxX)/12.5);
   /*     GracePrintf("xaxis tick minor %d", (int) data->tout/100); */
   GracePrintf("yaxis tick major %g", (1.25*maxY)/12.5 );
-  GracePrintf("subtitle \"%s, %s\"", data->model->modelName, "phase diagram");
+
+  if ( Model_isSetName(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getName(data->model->m),
+		"phase diagram");
+  else if  ( Model_isSetId(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getId(data->model->m),
+		"phase diagram");
+  else
+    GracePrintf("subtitle \"model has no name, %s/id\"", "phase diagram");
+      
   GracePrintf("xaxis label \"species 1\"");
   GracePrintf("yaxis label \"species 2\"");
 
@@ -852,13 +843,13 @@ printPhase(CvodeData data) {
   xvalue = 1;
   yvalue = 1;
   for ( j=0; j<data->model->neq; j++ ) {
-    if ( !strcmp(x, data->model->species[j]) ) {
+    if ( !strcmp(x, data->model->names[j]) ) {
       xvalue = 0;
-      GracePrintf("xaxis label \"%s\"", data->model->speciesname[j]);
+      GracePrintf("xaxis label \"%s\"", data->model->names[j]);
     }
-    if ( !strcmp(y, data->model->species[j]) ) {
+    if ( !strcmp(y, data->model->names[j]) ) {
       yvalue = 0;
-      GracePrintf("yaxis label \"%s\"", data->model->speciesname[j]);
+      GracePrintf("yaxis label \"%s\"", data->model->names[j]);
     }
   }
   if ( xvalue || yvalue ) {
@@ -874,10 +865,10 @@ printPhase(CvodeData data) {
 
   for ( i=0; i<=results->nout; ++i ) {     
     for ( j=0; j<data->model->neq; j++ ){
-      if ( !strcmp(x, data->model->species[j]) ) {
+      if ( !strcmp(x, data->model->names[j]) ) {
 	xvalue = results->value[j][i];
       }
-      if ( !strcmp(y, data->model->species[j]) ) {
+      if ( !strcmp(y, data->model->names[j]) ) {
 	yvalue = results->value[j][i];
       }
     }
@@ -924,7 +915,7 @@ printPhase(CvodeData data) {
 */
 
 static int
-printXMGJacobianTimeCourse ( CvodeData data ) {
+printXMGJacobianTimeCourse ( cvodeData_t *data ) {
 
 
   int i, j, k, n;
@@ -932,7 +923,7 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
   double minY; 
   double result;
 
-  CvodeResults results;
+  cvodeResults_t *results;
 
   maxY = 0.0;
   minY = 0.0;
@@ -950,8 +941,15 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
   }
   
   GracePrintf("yaxis label \"%s\"", "jacobian matrix value");
-  GracePrintf("subtitle \"%s, %s\"",
-		  data->model->modelName, "jacobian matrix time course");
+  if ( Model_isSetName(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getName(data->model->m),
+		"jacobian matrix time course");
+  else if  ( Model_isSetId(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getId(data->model->m),
+		"jacobian matrix time course");
+  else 
+    GracePrintf("subtitle \"model has no name, %s/id\"",
+		"jacobian matrix time course");
 
 
   /* print legend */  
@@ -959,7 +957,7 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
       GracePrintf("g0.s%d legend  \"%s / %s\"\n",
-		  n, data->model->speciesname[i], data->model->speciesname[j]);
+		  n, data->model->names[i], data->model->names[j]);
       n++;
     }
   }  
@@ -1018,7 +1016,7 @@ printXMGJacobianTimeCourse ( CvodeData data ) {
 */
 
 static int
-printXMGOdeTimeCourse(CvodeData data){
+printXMGOdeTimeCourse(cvodeData_t *data){
   
   
   int i, j, n;
@@ -1026,7 +1024,7 @@ printXMGOdeTimeCourse(CvodeData data){
   double minY; 
   double result;
 
-  CvodeResults results;
+  cvodeResults_t *results;
 
   maxY = 0.01;
   minY = 0.0;
@@ -1044,14 +1042,21 @@ printXMGOdeTimeCourse(CvodeData data){
   }
 
   GracePrintf("yaxis label \"%s\"", "ODE values");
-  GracePrintf("subtitle \"%s, %s\"", data->model->modelName,
+  if ( Model_isSetName(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getName(data->model->m),
+		  "ODEs time course");
+  else if  ( Model_isSetId(data->model->m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getId(data->model->m),
+		  "ODEs time course");
+  else 
+    GracePrintf("subtitle \"model has no name/id, %s\"",
 		  "ODEs time course");
 
   /* print legend */  
   n = 1;  
   for ( i=0; i<data->model->neq; i++ ) {
       GracePrintf("g0.s%d legend  \"%s\"\n",
-		  n, data->model->speciesname[i]);
+		  n, data->model->names[i]);
       n++;
   }  
   GracePrintf("legend 1.155, 0.85");
@@ -1103,13 +1108,13 @@ printXMGOdeTimeCourse(CvodeData data){
 */
 
 static int
-printXMGConcentrationTimeCourse(CvodeData data){
+printXMGConcentrationTimeCourse(cvodeData_t *data){
 
   int i,j,n;
   double maxY;
   double minY;
 
-  CvodeResults results;
+  cvodeResults_t *results;
 
   maxY = 1.0;
   minY = 0.0;
@@ -1128,12 +1133,10 @@ printXMGConcentrationTimeCourse(CvodeData data){
 	    "Warning: Couldn't print legend\n");
     return 1;
   }
-    
-
   
   for ( i=0; i<=results->nout; ++i ) {
     n=1; 
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->nvalues-data->model->nconst; j++ ) {
       if ( results->value[j][i] > maxY ) {
 	maxY = results->value[j][i];
 	GracePrintf("world ymax %g", 1.25*maxY);	
@@ -1146,19 +1149,7 @@ printXMGConcentrationTimeCourse(CvodeData data){
 		  n, results->time[i], results->value[j][i]);
       n++;
     }
-    for ( j=0; j<data->model->nass; j++ ) {
-      if ( results->avalue[j][i] > maxY ) {
-	maxY = results->avalue[j][i];
-	GracePrintf("world ymax %g", 1.25*maxY);	
-      }
-      if ( results->avalue[j][i] < minY ) {
-	minY = results->avalue[j][i];
-	GracePrintf("world ymin %g", 1.25*minY);
-      }
-      GracePrintf("g0.s%d point %g, %g", 
-		  n, results->time[i], results->avalue[j][i]);
-      n++;
-    }
+  
     /*  if ( i%10 == 0 ) {
       GracePrintf("yaxis tick major %g", 1.25*(fabs(maxY)+fabs(minY))/10);
       GracePrintf("redraw");
@@ -1174,20 +1165,14 @@ printXMGConcentrationTimeCourse(CvodeData data){
 
 
 static int
-printXMGLegend(CvodeData data){
+printXMGLegend(cvodeData_t *data){
 
   int i;
-  int n;
-  n=1;
   
-  for ( i=0; i<data->model->neq; i++ ) {
-    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->model->speciesname[i]);    
-    n++;
+  for ( i=0; i<data->nvalues-data->model->nconst; i++ ) {
+    GracePrintf("g0.s%d legend  \"%s\"\n", i+1, data->model->names[i]);
   }
-  for ( i=0; i<data->model->nass; i++ ) {
-    GracePrintf("g0.s%d legend  \"%s\"\n", n, data->model->ass_parameter[i]);    
-    n++;
-  }
+
 
   GracePrintf("legend 1.155, 0.85");
   GracePrintf("legend font 8");
@@ -1200,7 +1185,7 @@ printXMGLegend(CvodeData data){
 /* Opens XMGrace */
 
 static int
-openXMGrace(CvodeData data){
+openXMGrace(cvodeData_t *data){
 
   double maxY;
 
@@ -1232,7 +1217,12 @@ openXMGrace(CvodeData data){
       GracePrintf("yaxis label \"concentration\"");    
       GracePrintf("yaxis ticklabel font 4");
       GracePrintf("yaxis ticklabel char size 0.7");
-      GracePrintf("subtitle \"%s\"", data->model->modelName);
+      if ( Model_isSetName(data->model->m) )
+	GracePrintf("subtitle \"%s\"", Model_getName(data->model->m));
+      else if  ( Model_isSetId(data->model->m) )
+	GracePrintf("subtitle \"%s\"", Model_getId(data->model->m));
+      else 
+	GracePrintf("subtitle \"model has no name/id\"");
       GracePrintf("subtitle font 8");   
     }
   }
@@ -1249,7 +1239,7 @@ openXMGrace(CvodeData data){
     was given */
 
 static int
-closeXMGrace(CvodeData data, char *safename) {
+closeXMGrace(cvodeData_t *data, char *safename) {
 
   if ( Opt.Write ) {
     fprintf(stderr, "Saving XMGrace file as \"%s_%s_t%g.agr\"\n",
