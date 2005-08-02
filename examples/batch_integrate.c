@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-08 11:29:08 raim>
-  $Id: batch_integrate.c,v 1.4 2005/06/14 11:13:37 raimc Exp $
+  Last changed Time-stamp: <2005-08-02 00:02:02 raim>
+  $Id: batch_integrate.c,v 1.5 2005/08/02 13:16:52 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 #include <sbmlsolver/odeSolver.h>
 
 static void
-printResults(SBMLResults results);
+printResults(SBMLResults_t *results);
 
 int
 main (int argc, char *argv[]){
@@ -22,8 +22,8 @@ main (int argc, char *argv[]){
   double printstep = 1.0;
   SBMLDocument_t *d;
   SBMLReader_t *sr;
-  SBMLResults *results;
-  CvodeSettings set;
+  SBMLResults_t **results;
+  cvodeSettings_t *set;
   VarySettings vary;
   
   /** initializing options, that are set via commandline
@@ -57,20 +57,18 @@ main (int argc, char *argv[]){
   d = SBMLReader_readSBML(sr, model);
   SBMLReader_free(sr);  
 
+
   /* Setting SBML ODE Solver integration parameters */
-  set.Time = time;
-  set.PrintStep = printstep;
+   /* Setting SBML ODE Solver integration parameters with default values */
+  set = CvodeSettings_createDefaults();
+  /* resetting the values we need */
+  set->Time = time;
+  set->PrintStep = printstep;  
+  set->Error = 1e-18;
+  set->RError = 1e-14;
+  set->Mxstep = 10000;
+  set->SteadyState = 1;
   
-  set.Error = 1e-18;
-  set.RError = 1e-14;
-  set.Mxstep = 10000;
-
-  set.PrintOnTheFly = 0;  
-  set.PrintMessage = 1;
-  set.HaltOnEvent = 0;
-  set.SteadyState = 0;
-  set.UseJacobian = 1;
-
   /* Setting SBML Ode Solver batch integration parameters */
   vary.start = start;
   vary.end = end;
@@ -79,7 +77,8 @@ main (int argc, char *argv[]){
   vary.rid = reaction;
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */
-  results = Model_odeSolverBatch(d, set, vary);  
+  results = Model_odeSolverBatch(d, set, vary);
+  CvodeSettings_free(set);
   SBMLDocument_free(d);
 
   if ( results == NULL ) {
@@ -103,7 +102,7 @@ main (int argc, char *argv[]){
 }
 
 static void
-printResults(SBMLResults results) {
+printResults(SBMLResults_t *results) {
 
   int i, j;
   
@@ -164,13 +163,13 @@ printResults(SBMLResults results) {
   printf("### Printing Reaction Fluxes\n");
   printf("#time ");
   for ( j=0; j<results->fluxes->num_val; j++) {
-    printf("#%s ", results->fluxes->names[j]);
+    printf("%s ", results->fluxes->names[j]);
   }
   printf("\n");
   for ( i=0; i<results->timepoints; i++ ) {
-    printf("#%g ", results->time[i]);
+    printf("%g ", results->time[i]);
     for ( j=0; j<results->fluxes->num_val; j++) {
-      printf("#%g ", results->fluxes->values[i][j]);
+      printf("%g ", results->fluxes->values[i][j]);
     }
     printf("\n");
   }

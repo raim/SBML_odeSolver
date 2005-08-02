@@ -1,5 +1,5 @@
-# $Id: Makefile.am,v 1.5 2005/06/30 09:41:10 chfl Exp $
-INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@
+# $Id: Makefile.am,v 1.6 2005/08/02 13:16:52 raimc Exp $
+INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @CVODE_CFLAGS@
 AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = integrate batchIntegrate simpleIntInst shareIntInst ASTIndexTest

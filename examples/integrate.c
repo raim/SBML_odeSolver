@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-17 16:56:05 raim>
-  $Id: integrate.c,v 1.3 2005/06/28 14:02:01 raimc Exp $
+  Last changed Time-stamp: <2005-08-01 23:59:46 raim>
+  $Id: integrate.c,v 1.4 2005/08/02 13:16:52 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,17 +15,10 @@ main (int argc, char *argv[]){
   double printstep = 1.0;
   SBMLDocument_t *d;
   SBMLReader_t *sr;
-  SBMLResults results;
-  CvodeSettings set;
+  SBMLResults_t *results;
+  cvodeSettings_t *set;
   
-  /** initializing options, that are set via commandline
-      arguments in the stand-alone version of the odeSolver.
-      Please see file options.h for possible options.
-      Option handling will be reorganized soon, so that this
-      step will not be needed anymore!!
-  */
-  initializeOptions();  
-  
+   
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
   sscanf(argv[3], "%lf", &printstep);
@@ -35,23 +28,20 @@ main (int argc, char *argv[]){
   d = SBMLReader_readSBML(sr, model);
   SBMLReader_free(sr);  
 
-  /* Setting SBML ODE Solver integration parameters */
-  set.Time = time;
-  set.PrintStep = printstep;
-  
-  set.Error = 1e-18;
-  set.RError = 1e-14;
-  set.Mxstep = 10000;
-
-  set.PrintOnTheFly = 0;  
-  set.PrintMessage = 1;
-  set.HaltOnEvent = 0;
-  set.SteadyState = 1;
-  set.UseJacobian = 1;
+   
+  /* Setting SBML ODE Solver integration parameters with default values */
+  set = CvodeSettings_createDefaults();
+  /* resetting the values we need */
+  set->Time = time;
+  set->PrintStep = printstep;  
+  set->Error = 1e-18;
+  set->RError = 1e-14;
+  set->Mxstep = 10000;
+  set->SteadyState = 1;
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
   results = Model_odeSolver(d, set);
-  
+  CvodeSettings_free(set);
   SBMLDocument_free(d);
 
   /* print all species  */
@@ -121,8 +111,7 @@ main (int argc, char *argv[]){
     }
     printf("\n");
   }
-
-  
+  /* now we can also free the result structure */
   SBMLResults_free(results);
 
   return (EXIT_SUCCESS);  
