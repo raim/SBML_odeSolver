@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*-Perl-*-
-# Last changed Time-stamp: <2004-10-02 14:09:07 raim>
-# $Id: AddLegend.pl,v 1.1 2005/05/30 19:49:12 raimc Exp $
+# Last changed Time-stamp: <2005-08-30 18:15:01 xtof>
+# $Id: AddLegend.pl,v 1.2 2005/08/30 16:17:45 chfl Exp $
 
 use Getopt::Long;
 use File::Basename;
@@ -16,10 +16,15 @@ usage() unless GetOptions("loc=s" => sub{local $_ = $_[1]; @LOC = split},
 			  "h"     => \&usage);
 
 my $FILENAME = $ARGV[0] || "stdin";
-my $legend = <>;
+
+my $legend = search_legend();
 legend($legend);
 while (<>) {print}
 
+#---
+sub search_legend { local $_; while ((<>)) { last if m/^\#t/ } return $_ }
+
+#---
 sub legend {
   local $_ = shift;
   my @F = split;
