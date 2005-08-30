@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*-Perl-*-
-# Last changed Time-stamp: <2005-08-30 18:15:01 xtof>
-# $Id: AddLegend.pl,v 1.2 2005/08/30 16:17:45 chfl Exp $
+# Last changed Time-stamp: <2005-08-30 18:31:41 xtof>
+# $Id: AddLegend.pl,v 1.3 2005/08/30 16:33:56 chfl Exp $
 
 use Getopt::Long;
 use File::Basename;
@@ -10,28 +10,29 @@ use strict;
 # some globals
 my @LOC = (0.20, 0.90);
 my $FSIZE = .5;
+my $LEG = 'on'; 
 
 usage() unless GetOptions("loc=s" => sub{local $_ = $_[1]; @LOC = split},
 			  "lfs=f" => \$FSIZE,
+			  "noLeg" => sub{$LEG = 'off'},
 			  "h"     => \&usage);
 
 my $FILENAME = $ARGV[0] || "stdin";
 
-my $legend = search_legend();
-legend($legend);
+make_legend(search_legend());
 while (<>) {print}
 
 #---
 sub search_legend { local $_; while ((<>)) { last if m/^\#t/ } return $_ }
 
 #---
-sub legend {
+sub make_legend {
   local $_ = shift;
   my @F = split;
   shift @F;
   print << "EOL";
 @    title "$FILENAME"
-@    legend on
+@    legend $LEG
 @    legend loctype view
 @    legend $LOC[0], $LOC[1]
 @    legend box color 1

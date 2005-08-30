@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2005-08-30 17:58:37 xtof>
-# $Id: simple.sh,v 1.3 2005/08/30 16:02:22 chfl Exp $
+# Last changed Time-stamp: <2005-08-30 18:26:55 xtof>
+# $Id: simple.sh,v 1.4 2005/08/30 16:34:19 chfl Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] FOO.xml ..."
 XMGR=$(which xmgrace)
@@ -11,9 +11,10 @@ TIME=1e4
 ABSE=1e-7
 RELE=1e-3
 JAC=
+NOLEG=
 
 # process command-line arguments
-while getopts "e:hjr:t:" opt; do
+while getopts "e:hjr:t:x" opt; do
     case $opt in
 	e)
 	    ABSE=$OPTARG
@@ -25,6 +26,7 @@ while getopts "e:hjr:t:" opt; do
 	    echo "       -j    use jacobian matrix"
 	    echo "       -r N  set relative error to N"
 	    echo "       -t N  set integration time to N"
+	    echo "       -x    don't display legend in xmgrace"
 	    exit 1
 	    ;;
 	j)
@@ -35,6 +37,9 @@ while getopts "e:hjr:t:" opt; do
 	    ;;
 	t)
 	    TIME=$OPTARG
+	    ;;
+	x)
+	    NOLEG=-noLeg
 	    ;;
 	\?)
 	echo $USAGE
@@ -71,7 +76,7 @@ fi
 if test -x $PERL; then
   if test -x $XMGR; then
     # add a legend an display results with xmgrace
-    $PERL ../Perlen/AddLegend.pl $GR | $XMGR -nxy -&
+    $PERL ../Perlen/AddLegend.pl $NOLEG $GR | $XMGR -nxy -&
   else
     echo "!!! ERROR: Xmgrace not found !!!"
     exit 1
