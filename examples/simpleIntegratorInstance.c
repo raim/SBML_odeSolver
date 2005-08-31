@@ -15,7 +15,7 @@ void DumpState(integratorInstance_t *ii, variableIndex_t *v1, variableIndex_t *v
 int doIt(void)
 {
     int i ;
-    CvodeSettings settings ;
+    cvodeSettings_t settings;
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstance;
 
@@ -30,8 +30,7 @@ int doIt(void)
     settings.RError = 1e-20;        /* relative tolerance in Cvode integration */
     settings.Mxstep = 500;        /* maximum step number for CVode integration */
     settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
-    settings.PrintMessage = 0;     /* don't Print messages */
-    settings.PrintOnTheFly = 0;    /* don't Print species concentration during integration */
+
     settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
     settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
     settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
