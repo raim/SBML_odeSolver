@@ -19,8 +19,7 @@ typedef struct integratorInstance integratorInstance_t ;
 /* integrator state information */
 struct integratorInstance
 {
-  real ropt[OPT_SIZE], reltol, t, tout, atol1, rtol1, t0, t1, tmult;
-  long int iopt[OPT_SIZE];
+  realtype reltol, t, tout, atol1, rtol1, t0, t1, tmult;
   N_Vector y, abstol;
   void *cvode_mem;
   int iout, nout;
@@ -42,7 +41,7 @@ int IntegratorInstance_handleError(integratorInstance_t *engine);
 integratorInstance_t *IntegratorInstance_createFromCvodeData(cvodeData_t *data);
 void IntegratorInstance_freeExcludingCvodeData(integratorInstance_t *engine);
 void IntegratorInstance_printStatistics(integratorInstance_t *engine);
-
+  
 #ifdef __cplusplus
 }
 #endif

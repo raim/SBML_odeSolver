@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 17:27:37 raim>
-  $Id: odeIntegrate.c,v 1.9 2005/08/02 15:47:59 raimc Exp $
+  Last changed Time-stamp: <2005-08-26 16:39:17 xtof>
+  $Id: odeIntegrate.c,v 1.10 2005/09/01 15:31:04 chfl Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,9 +116,9 @@ int handleError(integratorInstance_t *engine,
     if ( errorCode ) {
       fprintf(outfile, "# CVode failed, with flag=%d, at time %g\n",
 	      errorCode, data->currenttime);        
-        /* on flag -6/CONV_FAILURE
+        /* on flag -7/CV_CONV_FAILURE
         try again, but now with/without generated Jacobian matrix  */
-        if ( errorCode == CONV_FAILURE && engine->data->run == 0 &&
+        if ( errorCode == CV_CONV_FAILURE && engine->data->run == 0 &&
 	     engine->data->opt->StoreResults) {
             fprintf(
                 stderr,
