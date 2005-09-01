@@ -1,0 +1,123 @@
+.\" .ER
+.TH "SBMLodeSolver" "l" "1.6.0" "Christoph Flamm" "libODES"
+
+.SH "NAME"
+SBML_odeSolver \- construct and integrate ODEs from SBML models
+
+.SH "SYNOPSIS"
+\fBSBML_odeSolver\fP MODEL.xml [[\-a] [\-e] [\-f] [\-g] [-h] [\-i] [\-j] [\-k]
+[\-m] [\-n] [\-o] [\-r] [\-s] [\-v] [\-w] [\-x] [\-y]
+[--gvformate=\fIEPS|JPG\fP]
+[--model=\fImodelfile\fP]
+[--mpath=\fImodelpath\fP]]
+
+.SH "DESCRIPTION"
+.I SBML_odeSolver
+The SBML ODE Solver is a programming library, accessible also as a
+simple command-line tool, for (1) constructing a system of ordinary
+differential equations (ODE) from chemical reaction networks and (2)
+numerically integrating the ODEs to obtain the time course of
+concentrations of chemical species and (3) basic visualization of
+model structure and integration results. It is based on SBML, the
+recently developed standard for description of biological reaction
+networks, the SBML library libSBML for parsing SBML and constructing
+the ODE system, and on CVode for numerical integration of the derived
+system of ODEs. Optional data visualization modules allow printing of
+integration results directly to Grace and drawing graphs of the
+reaction network, and a Jacobian interaction graph of the ODE system
+via graphviz graph drawing library.
+
+.SH "VERSION"
+This man page documents version @VERSION@ libODES.
+
+.SH "OPTIONS"
+.TP
+.B \-a, \--all
+Print all available results
+.TP
+.B \-e, \--equations
+Print model and derived ODE system
+.TP
+.B \--error=\fIFLOAT\fP
+Set absolute error tolerance to \fIFLOAT\fP
+.TP
+.B \-f, \--onthefly
+Print results during integration
+.TP
+.B \-g, \--modelgraph
+Draw graph of reaction network
+.TP
+.B \--gvformate=\fIEPS|JPG\fP
+Set output formate to graphviz module
+.TP
+.B \-h, \--help
+Print usage information
+.TP
+.B \-i, \--interactive
+Start interactive mode
+.TP
+.B \-j, \--jacobian
+Toggle use of Jacobian matrix
+.TP
+.B \-k, \--reactions
+Print time course of the reactions
+.TP
+.B \--mxstep=\fIINT\fP
+Set maximum step number to \fIINT\fP
+.TP
+.B \--model=\fIFOO.xml\fP
+Process SBML model \fIFOO.xml\fP
+.TP
+.B \--modelgraph
+Draw a graph of the reaction network
+.TP
+.B \--mpath=\fIPATH\fP
+Set absolute path to SBML model file to \fIPATH\fP
+.TP
+.B \-n, \--event
+Detect and evaluate events
+.TP
+.B \-o, \--printsbml
+Construct the ODEs system and print as SBML
+.TP
+.B \--printstep=\fISTR\fP
+Set parameter for batch integration 0 to value in 50 steps to \fISTR\fP
+.TP
+.B \--printstep=\fIINT\fP
+Set timsteps of output to \fIINT\fP
+.TP
+.B \-r, \--rates
+Print time course of the ODEs
+.TP
+.B \--rerror=\fIFLOAT\fP
+Set relative error tolerance to \fIFLOAT\fP
+.TP
+.B \-s, \--steadyState
+Abort integration at steady state.
+.TP
+.B \--spath=\fIPATH\fP
+Set absolute path to SBML schema files to \fIPATH\fP
+.TP
+.B \--time=\fIFLOAT\fP
+Set integration end time to \fIFLOAT\fP
+.TP
+.B \-v, \--validate
+Validate SBML input file
+.TP
+.B \-w, \--write
+Write results to file or save XMGrace file
+.TP
+.B \-y, \--jacobianTime
+Print time courde of Jacobian matrix
+.TP
+.B \-x, \--xmgrace
+Print results to XMGrace
+
+
+.SH "AUTHORS"
+Rainer Machne and Christoph Flamm.
+
+.SH "BUGS"
+If in doubt our program is right, nature is at fault.
+Comments should be sent to <odes@tbi.univie.ac.at>.
+

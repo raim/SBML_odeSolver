@@ -1,0 +1,100 @@
+\input texinfo
+@c -*-texinfo-*-
+@c Last changed Time-stamp: <2005-08-29 16:23:53 xtof>
+@set revision $Id: libODES.texinfo,v 1.1 2005/09/01 14:08:35 chfl Exp $
+@setfilename libODES.info
+@settitle libODES
+@ifclear Version
+@set Version 1.6.0
+@end ifclear
+@iftex
+@afourpaper
+@end iftex
+@ifinfo
+@setchapternewpage odd
+@end ifinfo
+@titlepage
+@sp 10
+@title{libODES}
+@sp
+@subtitle{A Library for numerically solving ODEs}
+
+@vskip 0pt plus 1filll
+Copyright @copyright{2005} @author{Rainer Machne and Christoph Flamm}
+@c @smallexample
+Revision @value{revision}
+@c @end smallexample
+@end titlepage
+
+@node Top, Introduction, (dir), (dir)
+@comment node-name, next,          previous, up
+
+@ifinfo
+This file documents the libODES Version @value{Version}
+
+Copyright @copyright{2005} Rainer Machne and Christoph Flamm
+@end ifinfo
+
+@menu
+* Introduction::
+* API Reference::
+* Function Index::
+* Variable Index::
+@end menu
+
+@node Introduction, API Reference, Top, Top
+@chapter Introduction
+
+The core of the libODES is formed by a collection of routines for
+basic algebraic and numerical treatment of systems of ordinary
+differential equations (ODEs). These routines can be accessed through
+stand-alone programs, such as @code{SBML_odeSolver} which should be
+sufficient for most users. For those who wish to develop their own
+programs we provide a library which can be linked to your own code.
+
+This document only describes the library and will be primarily useful
+to programmers. The stand-alone programs are described in separate man
+pages. The latest version of the package including source code and
+html versions of the documentation can be found at
+@ifclear texi2html
+@url{http://www.tbi.univie.ac.at/software/odeSolver/}.
+@end ifclear
+@ifset texi2html
+@ifhtml
+the <a href="http://www.tbi.univie.ac.at/software/odeSolver/">
+libODES page</a>.
+@end ifhtml
+@end ifset
+This manual documents version @value{Version}.
+
+Please send comments and bug reports to
+@ifclear texi2html
+@email{odes@@tbi.univie.ac.at}.
+@end ifclear
+@ifset texi2html
+@ifhtml
+<a href="mailto:raim@tbi.univie.ac.at">
+&lt;Rainer.Machne@tbi.univie.ac.at&gt;</a>.
+<a href="mailto:xtof@tbi.univie.ac.at">
+&lt;Christoph.Flamm@tbi.univie.ac.at&gt;</a>.
+@end ifhtml
+@end ifset
+
+@node API Reference, Function Index, Introduction, Top
+@comment  node-name,  next,  previous,  up
+@chapter API Reference
+
+@node Function Index, Variable Index, API Reference, Top
+
+@unnumbered Function Index
+@printindex fn
+
+@node Variable Index,  , Function Index, Top
+
+@unnumbered Variable Index
+@printindex vr
+
+@contents
+@bye
+
+@c End of file
