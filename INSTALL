@@ -21,12 +21,14 @@ SHORT INSTALLATION INFORMATION:
  Required libraries (SBML and numerical integration):
 	libSBML:        http://sbml.org/software/libsbml/
 			Version 2.3.2 or higher required!
-	CVODE:          http://robotics.stanford.edu/people/scohen/
-			Please see CVODE specific instructions below!
+	SUNDIALS Suite: http://robotics.stanford.edu/people/scohen/
+                        Version 2.1.1 or higher required!
 	        
  Optional libraries (data visualization):
 	GRAPHVIZ:       http://www.graphviz.org
+                        Version: 2.4 or higher
 	GRACE:          http://plasma-gate.weizmann.ac.il/Grace/
+                        Version: 5.1.18 or higher
 		      
 
 2) COMPILE AND INSTALL SBML_odeSolver
@@ -56,7 +58,7 @@ Non-standard locations of required and optional packages:
  With 
 
 	./configure --with-libsbml=LIBSBMLPATH
-	./configure --with-libcvode=CVODEPATH
+	./configure --with-sundialscvode=SUNDIALSPATH
 	./configure --with-grace=GRACEPATH
 	./configure --with-graphviz=GRAPHVIZPATH
 
