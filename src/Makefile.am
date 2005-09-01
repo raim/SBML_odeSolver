@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.8 2005/08/02 15:47:59 raimc Exp $
+# $Id: Makefile.am,v 1.9 2005/09/01 14:11:45 chfl Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -17,30 +17,52 @@ LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
 lib_LIBRARIES = libODES.a
-libODES_a_SOURCES = commandLine.c \
-		    odeSolver.c util.c \
-                    options.c  sbml.c  \
-                    modelSimplify.c  \
-                    odeConstruct.c processAST.c \
-                    odeIntegrate.c printModel.c \
-                    drawGraph.c interactive.c \
-                    cvodedata.c integratorSettings.c \
-		    sbmlResults.c integratorInstance.c \
-		    odeModel.c solverError.c \
-                    ASTIndexNameNode.cpp
-pkginclude_HEADERS = sbmlsolver/commandLine.h\
-		     sbmlsolver/odeSolver.h sbmlsolver/util.h \
-                     sbmlsolver/options.h sbmlsolver/sbml.h \
-                     sbmlsolver/modelSimplify.h \
-                     sbmlsolver/odeConstruct.h sbmlsolver/processAST.h \
-                     sbmlsolver/odeIntegrate.h  sbmlsolver/printModel.h \
-                     sbmlsolver/drawGraph.h  sbmlsolver/interactive.h \
-                     sbmlsolver/cvodedata.h \
-		     sbmlsolver/sbmlResults.h sbmlsolver/exportdefs.h \
-		     sbmlsolver/integratorInstance.h sbmlsolver/odeModel.h \
-		     sbmlsolver/odemodeldatatype.h sbmlsolver/solverError.h \
-                     sbmlsolver/integratorSettings.h \
-                     sbmlsolver/ASTIndexNameNode.h
+
+libODES_a_SOURCES = ASTIndexNameNode.cpp \
+		    commandLine.c \
+		    cvodedata.c \
+		    drawGraph.c \
+		    integratorInstance.c \
+		    integratorSettings.c \
+		    interactive.c \
+		    modelSimplify.c \
+		    odeConstruct.c \
+		    odeIntegrate.c \
+		    odeModel.c \
+		    odeSolver.c \
+		    options.c \
+		    printModel.c \
+		    processAST.c \
+		    sbml.c \
+		    sbmlResults.c \
+		    solverError.c \
+		    util.c
+pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
+		     sbmlsolver/batchIntegrator.h \
+		     sbmlsolver/commandLine.h \
+		     sbmlsolver/config.h \
+		     sbmlsolver/cvodedata.h \
+		     sbmlsolver/cvodedatatype.h \
+		     sbmlsolver/drawGraph.h \
+		     sbmlsolver/exportdefs.h \
+		     sbmlsolver/integratorInstance.h \
+		     sbmlsolver/integratorSettings.h \
+		     sbmlsolver/interactive.h \
+		     sbmlsolver/modelSimplify.h \
+		     sbmlsolver/odeConstruct.h \
+		     sbmlsolver/odeConstructUsingOptions.h \
+		     sbmlsolver/odeIntegrate.h \
+		     sbmlsolver/odemodeldatatype.h \
+		     sbmlsolver/odeModel.h \
+		     sbmlsolver/odeSolver.h \
+		     sbmlsolver/options.h \
+		     sbmlsolver/printModel.h \
+		     sbmlsolver/processAST.h \
+		     sbmlsolver/sbml.h \
+		     sbmlsolver/sbmlResults.h \
+		     sbmlsolver/solverError.h \
+		     sbmlsolver/util.h \
+		     sbmlsolver/variableIndex.h
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c
 odeSolver_LDADD   = -L. -lODES \
