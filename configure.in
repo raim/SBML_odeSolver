@@ -66,7 +66,7 @@ AC_PATH_PROG([SWIG],[swig],[swig])
 AC_PATH_PROG([PERL],[perl],[perl])
 
 CONFIG_LIB_SBML
-CONFIG_LIB_CVODE
+CONFIG_LIB_SUNDIALS_CVODE
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
 dnl configure options
@@ -123,6 +123,8 @@ dnl Output
 dnl ---------------------------------------------------------------------------
 
 AC_CONFIG_FILES([./Makefile])
+AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([doc/SBML_odeSolver.1])
 AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 dnl AC_CONFIG_FILES([src/inverse/Makefile])
@@ -141,6 +143,12 @@ if test $sbml_functional != no; then
   yes_libsbml="yes"
 else
   yes_libsbml="no"
+fi
+
+if test $sundials_cvode_functional != no; then
+  yes_libsundialscvode="yes"
+else
+  yes_libsundialscvode="no"
 fi
 
 if test $cvode_functional != no; then
@@ -179,8 +187,8 @@ if test $yes_libsbml = yes; then
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
-echo "  CVODE Library        = $yes_libcvode"
-if test $yes_libcvode = yes; then
+echo "SUNDIALS CVODE Library = $yes_libsundialscvode"
+if test $yes_libsundialscvode = yes; then
   echo "       CFLAGS          = $CVODE_CFLAGS"
   echo "       LDFLAGS         = $CVODE_LDFLAGS"
   echo "       LIBS            = $CVODE_LIBS"
@@ -197,7 +205,7 @@ echo "  GRAPHVIZ             = $yes_graphviz"
 if test $yes_graphviz = yes; then
   echo "       CFLAGS          = $GRAPHVIZ_CFLAGS"
   echo "       LDFLAGS         = $GRAPHVIZ_LDFLAGS"
-  echo "       LIBS            =  $GRAPHVIZ_LIBS"
+  echo "       LIBS            = $GRAPHVIZ_LIBS"
 else
    echo "GRAPHVIZ functionality will NOT be installed!"	
 fi
