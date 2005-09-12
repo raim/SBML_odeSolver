@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.6 2005/09/01 18:55:45 chfl Exp $
+# $Id: Makefile.am,v 1.7 2005/09/12 14:14:56 chfl Exp $
 if MAKE_BINDINGS
    SUBDIRS = src bindings
 else
@@ -14,13 +14,11 @@ EXTRA_DIST = Perlen/AddLegend.pl \
              doc/SBML_odeSolver.1.in \
              examples/ASTIndexTest.c \
              examples/batch_integrate.c \
-             examples/ChangingParameterIntegrator.c \
+             examples/ChangingIntegratorInstance.c \
 	     examples/integrate.c \
              examples/Makefile.am \
-	     examples/Makefile.in \
              examples/Makefile.batch \
+	     examples/Makefile.in \
              examples/Makefile.integrate \
-             examples/ParameterScanner.c \
              examples/README \
-	     examples/SharingIntegratorInstance.c \
 	     examples/simpleIntegratorInstance.c
