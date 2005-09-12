@@ -27,8 +27,8 @@ void DumpErrors()
 
 int doit(int argc, char *argv[])
 {
-    int i ;
-    CvodeSettings settings ;
+    int i;
+    cvodeSettings_t settings;
     variableIndex_t *speciesVI, *parameterVI;
     integratorInstance_t *integratorInstance;
     char *modelStr, *parameterStr, *speciesStr;
@@ -87,8 +87,6 @@ int doit(int argc, char *argv[])
     settings.RError = relativeErrorTolerance;        /* relative tolerance in Cvode integration */
     settings.Mxstep = maximumIntegrationSteps;        /* maximum step number for CVode integration */
     settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
-    settings.PrintMessage = 0;     /* don't Print messages */
-    settings.PrintOnTheFly = 0;    /* don't Print species concentration during integration */
     settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
     settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
     settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
