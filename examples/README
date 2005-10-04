@@ -19,7 +19,7 @@ will integrate the SBML model ../Test/MAPK.xml from time 0 to time
 1000, and will print out the time course of species concentrations (and
 other variable parameters or compartments, if a model includes such), and
 reaction fluxes in 100 time steps (producing 101 time points, including 
-the initial conditions.
+the initial conditions).
 
 ./batchIntegrate ../Test/MAPK.xml 1000 2 10 1000 30 MKKK
 
