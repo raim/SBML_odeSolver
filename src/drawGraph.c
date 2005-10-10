@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 17:17:26 raim>
-  $Id: drawGraph.c,v 1.5 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-11 01:22:19 xtof>
+  $Id: drawGraph.c,v 1.6 2005/10/10 23:32:14 chfl Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,8 +22,12 @@
 
 /* Header Files for Graphviz */
 #if USE_GRAPHVIZ
+#if (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 4) || GRAPHVIZ_MAJOR_VERSION >= 3
+#include <gvc.h>
+#else
 #include <dotneato.h>
 #include <gvrender.h>
+#endif
 #else
 static int
 drawJacobyTxt(cvodeData_t *data);
@@ -31,11 +35,7 @@ static int
 drawModelTxt(Model_t *m);
 #endif
 
-
-
 #define WORDSIZE 10000
-
-
 
 /*
   Experimental functions !!
@@ -68,7 +68,7 @@ drawJacoby(cvodeData_t *data) {
   char name[WORDSIZE];
   char label[WORDSIZE];  
   char *output[3];
-  char *command = "command";
+  char *command = "dot";
   char *format;
   char *outfile;
   
@@ -84,21 +84,30 @@ drawJacoby(cvodeData_t *data) {
   /* setting name of outfile */
   outfile = (char *) calloc(strlen(Opt.ModelPath)+
 			    strlen(Opt.ModelFile)+
-			    strlen(Opt.GvFormat)+8,
+			    strlen(Opt.GvFormat)+9,
 			    sizeof(char));
   sprintf(outfile, "-o%s/%s_jm.%s",
 	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+  
   /* setting output format */
   format =  (char *) calloc(strlen(Opt.GvFormat)+3, sizeof(char));
   sprintf(format, "-T%s", Opt.GvFormat); 
 
+  /* construct command-line */
   output[0] = command;
   output[1] = format;
   output[2] = outfile;
+  output[3] = NULL;
     
   /* set up renderer context */
   gvc = (GVC_t *) gvContext();
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION < 4
   dotneato_initialize(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  parse_args(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvParseArgs(gvc, 3, output);
+#endif
 
   g = agopen("G", AGDIGRAPH);
 
@@ -164,17 +173,50 @@ drawJacoby(cvodeData_t *data) {
     }
   }
   
-  /* bind graph to GV context - currently must be done before layout */
+  /* Compute a layout */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvBindContext(gvc, g);
   dot_layout(g);
-  /* neato_layout(g); */
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_layout(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvLayoutJobs(gvc, g);
+#endif
+  
+  /* Write the graph according to -T and -o options */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   dotneato_write(gvc);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  emit_jobs(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvRenderJobs(gvc, g);
+#endif
+  
+  /* Clean out layout data */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  dot_cleanup(g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_cleanup(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeLayout(gvc, g);
+#endif
   
   /* Free graph structures */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   dot_cleanup(g);
+#endif
   agclose(g);
+
+  /* Clean up output file and errors */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvFREEcontext(gvc);
   dotneato_eof(gvc);
+#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  dotneato_terminate(gvc);
+#elsif (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6) || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeContext(gvc);
+#endif
+  
   xfree(format);
   xfree(outfile);
 
@@ -250,7 +292,6 @@ drawModel(Model_t *m) {
   
 #else
 
-  
   GVC_t *gvc;
   Agraph_t *g;
   Agnode_t *r;
@@ -262,8 +303,8 @@ drawModel(Model_t *m) {
   const ASTNode_t *math;  
   SpeciesReference_t *sref;
   ModifierSpeciesReference_t *mref;
-  char *output[3];
-  char *command = "command";
+  char *output[4];
+  char *command = "dot";
   char *format;
   char *outfile;
   int i,j;
@@ -285,20 +326,29 @@ drawModel(Model_t *m) {
 			    sizeof(char));
   sprintf(outfile, "-o%s/%s_rn.%s",
 	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+
   /* setting output format */
   format =  (char *) calloc(strlen(Opt.GvFormat)+3, sizeof(char));
   sprintf(format, "-T%s", Opt.GvFormat);
 
+  /* construct command-line */
   output[0] = command;
   output[1] = format;
   output[2] = outfile;
+  output[3] = NULL;
 
   /* set up renderer context */
   gvc = (GVC_t *) gvContext();
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION < 4
   dotneato_initialize(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  parse_args(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvParseArgs(gvc, 3, output);  
+#endif  
 
   g = agopen("G", AGDIGRAPH);
-
+  
   /* avoid overlapping nodes, for graph embedding by neato */ 
   a = agraphattr(g, "overlap", "");
   agxset(g, a->index, "scale");
@@ -441,19 +491,54 @@ drawModel(Model_t *m) {
     }   
   }
 
-  /* bind graph to GV context - currently must be done before layout */
+  /* Compute a layout */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvBindContext(gvc, g);
   dot_layout(g);
-  /* neato_layout(g); */
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_layout(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvLayoutJobs(gvc, g);
+#endif
+
+  /* Write the graph according to -T and -o options */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   dotneato_write(gvc);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  emit_jobs(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvRenderJobs(gvc, g);
+#endif
+  
+  /* Clean out layout data */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  dot_cleanup(g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_cleanup(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeLayout(gvc, g);
+#endif
   
   /* Free graph structures */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   dot_cleanup(g);
+#else
   agclose(g);
+#endif
+
+  /* Clean up output file and errors */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvFREEcontext(gvc);
   dotneato_eof(gvc);
+#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  dotneato_terminate(gvc);
+#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeContext(gvc); 
+#endif  
+
   xfree(format);
   xfree(outfile);
+  
 #endif
   
   return 0;
