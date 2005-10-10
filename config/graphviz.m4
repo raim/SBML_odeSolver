@@ -1,42 +1,4 @@
-dnl $Id: graphviz.m4,v 1.2 2005/10/10 16:38:01 chfl Exp $
-
-dnl
-dnl look for GRAPHVIZ Library headers in some standard set of directories
-dnl
-# AC_DEFUN([AC_GRAPHVIZ_PATH],
-# [ AC_MSG_CHECKING([for GRAPHVIZ Library headers])
-#   for ac_dir_prefix in /usr /usr/local /opt /sw;
-#   do
-#     if test -r "$ac_dir_prefix/graphviz/agraph.h"; then
-#       ac_GRAPHVIZ_includes="$ac_dir"
-#       GRAPHVIZ_CFLAGS="-I$ac_GRAPHVIZ_includes"
-#       AC_MSG_RESULT([yes])
-#       break
-#     fi
-#   done
-
-#   AC_MSG_CHECKING([for GRAPHVIZ Library])
-#   for ac_dir in               \
-#     `echo "$ac_GRAPHVIZ_includes" \
-#     | sed s/include/lib/`     \
-#     /usr/local/lib            \
-#     ;                         \
-#   do
-#     for ac_extension in a so sl dylib; do
-#       if test -r $ac_dir/libdotneato.$ac_extension; then
-#         GRAPHVIZ_LDFLAGS="-L$ac_dir"
-#         if test $HOST_TYPE = darwin; then
-#           GRAPHVIZ_RPATH=
-#         else
-#           GRAPHVIZ_RPATH="-Wl,-rpath,$ac_dir"
-#         fi
-#         GRAPHVIZ_LIBS="-ldotneato"
-#         AC_MSG_RESULT([yes])
-#         break
-#       fi
-#     done
-#   done
-# ])
+dnl $Id: graphviz.m4,v 1.3 2005/10/10 23:31:19 chfl Exp $
 
 dnl
 dnl Check --with-graphviz[=PREFIX] is specified and graphviz is installed.
@@ -79,52 +41,65 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
 
   AC_MSG_RESULT([Found graphviz version $dot_version])
 
-  if test $dot_major_version -ge 2 &&
-     test $dot_minor_version -ge 6;
+  if test $dot_major_version -ge 2;
   then
-    graphviz_old=0
-    GRAPHVIZ_LIBS="-lgvc"
+    if test $dot_minor_version -ge 6;
+    then
+      graphviz_old=0
+      graphviz_headers="#include <gvc.h>"
+      graphviz_testprg="GVC_t *gvc;gvc=(GVC_t*)gvContext();gvFreeContext(gvc);"
+      GRAPHVIZ_LIBS="-lgvc"
+    elif test $dot_minor_version -eq 4;
+    then
+      graphviz_old=1
+      graphviz_headers="#include <gvc.h>"
+      graphviz_testprg="GVC_t *gvc;gvc=(GVC_t*)gvContext();gvCleanup(gvc);"
+      GRAPHVIZ_LIBS="-lgvc"
+    elif test $dot_minor_version -lt 4;
+    then
+      graphviz_old=2
+      graphviz_headers="#include <dotneato.h> #include <gvrender.h>"
+      graphviz_testprg="GVC_t *gvc;gvc=gvNEWcontext(NULL,NULL);gvFREEcontext(gvc);"
+      GRAPHVIZ_LIBS="-ldotneato"
+    fi
   else
-    graphviz_old=1
-    GRAPHVIZ_LIBS="-ldotneato"
+    AC_MSG_RESULT([installed version of graphviz is too old!])
+    AC_MSG_RESULT([disabling graphviz functionality!!!!!!!!!])
   fi
 
-  GRAPHVIZ_CFLAGS="-I$graphviz_include_path"
-  GRAPHVIZ_LDFLAGS="-L$graphviz_lib_path"
+  if test $dot_major_version -ge 2;
+  then
+    GRAPHVIZ_CFLAGS="-I$graphviz_include_path"
+    GRAPHVIZ_LDFLAGS="-L$graphviz_lib_path"
   
-  if test $HOST_TYPE = darwin; then
-    GRAPHVIZ_RPATH=
+    if test $HOST_TYPE = darwin; then
+      GRAPHVIZ_RPATH=
+    else
+      GRAPHVIZ_RPATH="-Wl,-rpath,$graphviz_lib_path"
+    fi
+
+    dnl check if GRAPHVIZ Library is functional
+    AC_MSG_CHECKING([correct functioning of GRAPHVIZ])
+    AC_LANG_PUSH(C)
+
+    dnl cach values of some global variables
+    graphviz_save_CFLAGS="$CFLAGS"
+    graphviz_save_LDFLAGS="$LDFLAGS"
+    graphviz_save_LIBS="$LIBS"
+
+    dnl add GRAPHVIZ specific stuff to global variables
+    CFLAGS="$CFLAGS -Wno-unknown-pragmas $GRAPHVIZ_CFLAGS"
+    LDFLAGS="$LDFLAGS $GRAPHVIZ_LDFLAGS"
+    LIBS="$LIBS $GRAPHVIZ_LIBS"
+
+    dnl can we link a mini program with graphviz?
+    AC_TRY_LINK([$graphviz_headers],
+      [$graphviz_testprg],
+      [graphviz_functional=yes],
+      [graphviz_functional=no])
   else
-    GRAPHVIZ_RPATH="-Wl,-rpath,$graphviz_lib_path"
+    $graphviz_functional=no
   fi
-
-  dnl check if GRAPHVIZ Library is functional
-  AC_MSG_CHECKING([correct functioning of GRAPHVIZ])
-  AC_LANG_PUSH(C)
-
-  dnl cach values of some global variables
-  graphviz_save_CFLAGS="$CFLAGS"
-  graphviz_save_LDFLAGS="$LDFLAGS"
-  graphviz_save_LIBS="$LIBS"
-
-  dnl add GRAPHVIZ specific stuff to global variables
-  CFLAGS="$CFLAGS -Wno-unknown-pragmas $GRAPHVIZ_CFLAGS"
-  LDFLAGS="$LDFLAGS $GRAPHVIZ_LDFLAGS"
-  LIBS="$LIBS $GRAPHVIZ_LIBS"
-
-  dnl can we link a mini program with graphviz?
-  if test $graphviz_old -eq 1;
-  then
-    AC_TRY_LINK([#include <dotneato.h> #include <gvrender.h>],
-      [GVC_t *gvc; gvc = gvNEWcontext(NULL, NULL); gvFREEcontext(gvc);],
-      [graphviz_functional=yes],
-      [graphviz_functional=no])
-  else
-     AC_TRY_LINK([#include <gvc.h>],
-      [GVC_t *gvc; gvc = (GVC_t *) gvContext(); gvFreeContext(gvc);],
-      [graphviz_functional=yes],
-      [graphviz_functional=no])
-  fi   
 
   if test $graphviz_functional = yes; then
     AC_MSG_RESULT([$graphviz_functional])
@@ -146,8 +121,12 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
   if test $graphviz_functional = yes; then
     AC_DEFINE([USE_GRAPHVIZ], 1, [Define to 1 to use the GRAPHVIZ Library])
     AC_SUBST(USE_GRAPHVIZ, 1)
-    AC_DEFINE(GRAPHVIZ_VERSION, $dot_version, [Version of GRAPHVIZ Library])
-    AC_SUBST(GRAPHVIZ_VERSION, $dot_version)
+    AC_DEFINE_UNQUOTED(GRAPHVIZ_MAJOR_VERSION, $dot_major_version,
+              [Major Version of GRAPHVIZ Library])
+dnl    AC_SUBST(GRAPHVIZ_MAJOR_VERSION,  $dot_major_version)
+    AC_DEFINE_UNQUOTED(GRAPHVIZ_MINOR_VERSION, $dot_minor_version,
+              [Minor Version of GRAPHVIZ Library])
+dnl    AC_SUBST(GRAPHVIZ_MINOR_VERSION, $dot_minor_version)
     AC_SUBST(GRAPHVIZ_CFLAGS)
     AC_SUBST(GRAPHVIZ_LDFLAGS)
     AC_SUBST(GRAPHVIZ_RPATH)
@@ -160,5 +139,4 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
     AC_SUBST(GRAPHVIZ_RPATH, "")
     AC_SUBST(GRAPHVIZ_LIBS, "")    
   fi
-
 ])
