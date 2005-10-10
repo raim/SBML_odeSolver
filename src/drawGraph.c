@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-11 01:22:19 xtof>
-  $Id: drawGraph.c,v 1.6 2005/10/10 23:32:14 chfl Exp $
+  Last changed Time-stamp: <2005-10-11 01:52:44 xtof>
+  $Id: drawGraph.c,v 1.7 2005/10/10 23:54:47 chfl Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,9 +211,9 @@ drawJacoby(cvodeData_t *data) {
 #if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvFREEcontext(gvc);
   dotneato_eof(gvc);
-#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
   dotneato_terminate(gvc);
-#elsif (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6) || GRAPHVIZ_MAJOR_VERSION >= 3
+#elif (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6) || GRAPHVIZ_MAJOR_VERSION >= 3
   gvFreeContext(gvc);
 #endif
   
@@ -530,9 +530,9 @@ drawModel(Model_t *m) {
 #if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
   gvFREEcontext(gvc);
   dotneato_eof(gvc);
-#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
   dotneato_terminate(gvc);
-#elsif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
   gvFreeContext(gvc); 
 #endif  
 
