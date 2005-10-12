@@ -1,16 +1,14 @@
 /*
-  Last changed Time-stamp: <2005-08-01 16:48:18 raim>
-  $Id: drawGraph.h,v 1.2 2005/08/02 13:20:32 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 20:43:00 raim>
+  $Id: drawGraph.h,v 1.3 2005/10/12 18:55:01 raimc Exp $
 */
 #ifndef _DRAWGRAPH_H_
 #define _DRAWGRAPH_H_
 
 
 /* Drawing the model with GraphViz */
-int
-drawModel(Model_t *m);
-int
-drawJacoby(cvodeData_t *data);
+SBML_ODESOLVER_API int drawModel(Model_t *m);
+SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data);
 
 #endif
 

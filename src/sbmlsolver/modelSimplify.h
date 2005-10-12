@@ -1,22 +1,15 @@
 /*
-  Last changed Time-stamp: <2004-11-14 15:36:36 raim>
-  $Id: modelSimplify.h,v 1.1 2005/05/31 13:54:01 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 20:45:07 raim>
+  $Id: modelSimplify.h,v 1.2 2005/10/12 18:55:01 raimc Exp $
 */
 #ifndef _MODEL_H_
 #define _MODEL_H_
 
-void
-AST_replaceNameByFormula(ASTNode_t *math, const char *name,
-			 const ASTNode_t *formula);
-void
-AST_replaceNameByValue(ASTNode_t *math, const char *name, double x);
-void
-AST_replaceNameByParameters(ASTNode_t *math, ListOf_t* lp);
-void
-AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
-			 const ASTNode_t *formula);
-void
-AST_replaceConstants(Model_t *m, ASTNode_t *math);
+SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula);
+SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x);
+SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t* lp);
+SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const char *name, const ASTNode_t *formula);
+SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math);
 
 #endif
 
