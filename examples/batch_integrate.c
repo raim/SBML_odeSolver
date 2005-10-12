@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 14:24:40 raim>
-  $Id: batch_integrate.c,v 1.6 2005/10/12 12:52:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 18:31:28 raim>
+  $Id: batch_integrate.c,v 1.7 2005/10/12 17:31:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,27 +14,21 @@ printResults(SBMLResults_t *results);
 
 int
 main (int argc, char *argv[]){
-  int i;
+  int i, j;
   char model[256];
   char parameter[256];
-  char reaction[256];
+  char *reaction;
   double start, end, steps, value;
   double time = 0.0;
   double printstep = 1.0;
   SBMLDocument_t *d;
   SBMLReader_t *sr;
-  SBMLResults_t **results;
+
+  /* required SOSlib structures, that will be created
+     during and must be freed at the end of this program  */
   cvodeSettings_t *set;
-  VarySettings vary;
-  
-  /** initializing options, that are set via commandline
-      arguments in the stand-alone version of the odeSolver.
-      Please see file options.h for possible options.
-      Option handling will be reorganized soon, so that this
-      step will not be needed anymore!!
-  */
-  initializeOptions();
-  Opt.PrintMessage = 1; 
+  varySettings_t *vs;
+  SBMLResults_t ***results;
   
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
@@ -44,10 +38,11 @@ main (int argc, char *argv[]){
   sscanf(argv[6], "%lf", &steps);
   strcpy(parameter, argv[7]);
   if ( argc > 8 ) {
+    ASSIGN_NEW_MEMORY_BLOCK(reaction, strlen(argv[8])+1, char, 0);
     strcpy(reaction, argv[8]);
   }
   else{
-    strcpy(reaction,"");
+    reaction = NULL;
   }
   
   printf("### Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
@@ -64,19 +59,19 @@ main (int argc, char *argv[]){
   set = CvodeSettings_createDefaults();
   /* resetting the values we need */
   CvodeSettings_setTime(set, time, printstep);
-  CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000);
+  /* CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000); */
   CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1); 
   
   /* Setting SBML Ode Solver batch integration parameters */
-  vary.start = start;
-  vary.end = end;
-  vary.steps = steps;
-  vary.id = parameter;
-  vary.rid = reaction;
+  vs = VarySettings_create(1, steps+1);
+  VarySettings_addParameter(vs, parameter, reaction, start, end);
+  VarySettings_dump(vs);
   
-  /* calling the SBML ODE Solver, and retrieving SBMLResults */
-  results = Model_odeSolverBatch(d, set, vary);
-  CvodeSettings_free(set);
+  /* calling the SBML ODE Solver Batch function,
+     and retrieving SBMLResults */
+  results = Model_odeSolverBatch(d, set, vs);
+  
+  CvodeSettings_free(set);  
   SBMLDocument_free(d);
 
   if ( results == NULL ) {
@@ -85,16 +80,18 @@ main (int argc, char *argv[]){
   }
   
 
-  value = start;
-  for ( i=0; i<(steps+1); i++ ) {
-    printf("### RESULTS FOR RUN # %d, with (reaction: %s) %s = %f:\n",
-	   i+1, reaction, parameter, value);
-    printResults(results[i]);
-    SBMLResults_free(results[i]);
-    value = value + ((end-start)/steps);
-  }
-  free (results);
-	  
+  for ( i=0; i<1; i++ ) {
+    for ( j=0; j<vs->nrdesignpoints; j++ ) {
+      printf("### RESULTS Parameter %d, Step %d # Parameter %s = %f:\n",
+	     i+1, j+1, vs->id[i], vs->params[i][j]);
+      
+      printResults(results[i][j]);
+      SBMLResults_free(results[i][j]);
+    }
+    free(results[i]);
+  }  
+  free(results);
+  VarySettings_free(vs);
 
   return (EXIT_SUCCESS);  
 }
@@ -157,21 +154,6 @@ printResults(SBMLResults_t *results) {
       printf("\n");
     }
   }
-  /* print fluxes */
-  printf("### Printing Reaction Fluxes\n");
-  printf("#time ");
-  for ( j=0; j<results->fluxes->num_val; j++) {
-    printf("%s ", results->fluxes->names[j]);
-  }
-  printf("\n");
-  for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
-    for ( j=0; j<results->fluxes->num_val; j++) {
-      printf("%g ", results->fluxes->values[i][j]);
-    }
-    printf("\n");
-  }
-
   printf("\n");
 }
 
