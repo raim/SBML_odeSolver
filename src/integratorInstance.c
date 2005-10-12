@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 14:36:01 raim>
-  $Id: integratorInstance.c,v 1.9 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 18:23:38 raim>
+  $Id: integratorInstance.c,v 1.10 2005/10/12 17:30:51 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -195,7 +195,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   */
   if ( opt->StoreResults ) {
 
-    if ( !data->results )
+    if ( data->results != NULL )
       CvodeResults_free(data->results, data->nvalues);
     
     data->results = CvodeResults_create(data);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 14:49:26 raim>
-  $Id: odeSolver.h,v 1.8 2005/10/12 12:52:09 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 19:11:34 raim>
+  $Id: odeSolver.h,v 1.9 2005/10/12 17:30:51 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -41,23 +41,19 @@ typedef struct _VarySettings {
 typedef struct varySettings varySettings_t;
 
 struct varySettings {
-  int nrdesingpoints; /*defines how many design points are set*/
+  int nrdesignpoints; /*defines how many design points are set*/
   int nrparams;
   char **id;          /* array of SBML ID of the species, compartment
 			 or parameter to be varied */
-  char **rid;         /* SBML Reaction ID, if a local parameter is to
-			 be varied */
   double **params;    /* two dimensional array with the parmaters */
-  int charsize;       /* maximal length of character string*/
-  
 };
 
 
 SBMLResults_t *
 Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set);
-SBMLResults_t **
+SBMLResults_t ***
 Model_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
-		     VarySettings vary);
+		     varySettings_t *vary);
 SBMLResults_t ***
 Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *set,
 		      VarySettings vary1, VarySettings vary2);
@@ -65,11 +61,15 @@ SBMLResults_t *
 SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii);
 
 /* settings for parameter variation batch runs */
-varySettings_t *varySettings_create();
-int varySettings_addParameter(char *id, char *rid, int steps,
+varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints);
+int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
+				    double *designpoints);
+int VarySettings_addParameter(varySettings_t *, char *id, char *rid,
 			      double start, double end);
-int varySettings_addParameterDesign(char *id, char *rid, double *);
-void varySettings_free();
+int VarySettings_setParameterName(varySettings_t *vs, int i,
+				  char *id, char *rid);
+void VarySettings_dump(varySettings_t *);
+void VarySettings_free();
 
 
 int

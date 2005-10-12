@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 14:45:04 raim>
-  $Id: odeSolver.c,v 1.14 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 19:15:08 raim>
+  $Id: odeSolver.c,v 1.15 2005/10/12 17:30:51 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +14,8 @@
 
 #include "sbmlsolver/odeSolver.h"
 
+
+/***/
 
 SBMLResults_t *
 Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
@@ -92,15 +94,16 @@ Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   return(results);
 }
 
+
 /** 
 
 */
 
-SBMLResults_t **
+SBMLResults_t ***
 Model_odeSolverBatch (SBMLDocument_t *d,
-		      cvodeSettings_t *set, VarySettings vary) {
+		      cvodeSettings_t *set, varySettings_t *vs) {
 
-  int i;
+  int i, j;
   double value, increment;
   SBMLDocument_t *d2 = NULL;
   Model_t *m;
@@ -108,7 +111,7 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   odeModel_t *om;
   integratorInstance_t *ii;
   variableIndex_t *vi;
-  SBMLResults_t **results;
+  SBMLResults_t ***results;
 
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
@@ -120,59 +123,68 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   else {
     m = SBMLDocument_getModel(d);
   }
-
-  ASSIGN_NEW_MEMORY_BLOCK(results, vary.steps+1, SBMLResults_t *, NULL);
+  
+  ASSIGN_NEW_MEMORY_BLOCK(results, vs->nrparams, SBMLResults_t **, NULL);
+  for ( i=0; i<vs->nrparams; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(results[i],
+			    vs->nrdesignpoints, SBMLResults_t *, NULL);
+  
+  
+  RETURN_ON_FATALS_WITH(NULL);
   
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs.
      See comments in Model_odeSolver for details.
   */
+
+  /* here: if vary->rid !+ "": globalize parameter */
   
   om = ODEModel_create(m, set->UseJacobian);      
   RETURN_ON_FATALS_WITH(NULL);
-  vi = ODEModel_getVariableIndex(om, vary.id);
-  if ( vi == NULL )
-    return NULL;
   
-  /**
-     Second, an integratorInstance is created from the odeModel
-     and the passed cvodeSettings. If that worked out ...
-  */
-  
+  /* an integratorInstance is created from the odeModel and the passed
+     cvodeSettings. If that worked out ...  */  
   ii = IntegratorInstance_create(om, set);
   RETURN_ON_FATALS_WITH(NULL);
+      
+  /* now, work through the passed parameters in varySettings */
+  for ( i=0; i<vs->nrparams; i++ ) {
 
-  /** .... the integrator loop can be started,
-      that invoking CVODE to move one time step and store.
-      The function will also handle events and
-      check for steady states.
-  */
+    /* get the index for parameter i */
+    vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    if ( vi == NULL )
+      return NULL;
+  
+    /* then, work through all values for this parameter */
+    for ( j=0; j<vs->nrdesignpoints; j++ ) {
+      for ( j=0; j<vs->nrdesignpoints; j++ ) {
 
-  value = vary.start;
-  increment = (vary.end - vary.start) / vary.steps;
+	/* Set the value!*/
+	IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
 
-  for ( i=0; i<=vary.steps; i++ ) {
 
-    IntegratorInstance_setVariableValue(ii, vi, value);
-    printf("set %s to %f\n", ODEModel_getVariableName(om, vi),
-	   IntegratorInstance_getVariableValue(ii, vi) );
+      /** .... the integrator loop can be started,
+	  that invoking CVODE to move one time step and store.
+	  The function will also handle events and
+	  check for steady states.     */      
+
+	while (!IntegratorInstance_timeCourseCompleted(ii)) {
+	  if (!IntegratorInstance_integrateOneStep(ii))
+	    IntegratorInstance_handleError(ii);
+	}
     
-    while (!IntegratorInstance_timeCourseCompleted(ii)) {
-      if (!IntegratorInstance_integrateOneStep(ii))
-	IntegratorInstance_handleError(ii);
+	RETURN_ON_FATALS_WITH(NULL);
+    
+	/* map cvode results to SBML compartments,
+	   species and parameters  */
+	results[i][j] = SBMLResults_fromIntegrator(m, ii);
+	IntegratorInstance_reset(ii);
+      }
     }
-    RETURN_ON_FATALS_WITH(NULL);
-    
-    printf("now %s is %f\n", ODEModel_getVariableName(om, vi),
-	   IntegratorInstance_getVariableValue(ii, vi) );
-    
-    /* map cvode results to SBML compartments,
-       species and parameters  */
-    results[i] = SBMLResults_fromIntegrator(m, ii);
-    IntegratorInstance_reset(ii);
-    value = value + increment;
   }
 
+  /* free variableIndex, used for setting values */
+  VariableIndex_free(vi);
   /* free integration data */
   IntegratorInstance_free(ii);
   /* free odeModel */
@@ -187,69 +199,163 @@ Model_odeSolverBatch (SBMLDocument_t *d,
 
 }
 
+
+
+/** Create settings for parameter variation batch runs,
+    nrparams is the number of parameters to be varied,
+    and nrdesignpoints is the number of values to be tested for
+    each parameter.
+*/
+
+varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints)
+{
+  int i;
+  varySettings_t *vs;
+  ASSIGN_NEW_MEMORY(vs, struct varySettings, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(vs->id, nrparams, char *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(vs->params, nrparams, double *, NULL);
+  for ( i=0; i<nrparams; i++ ) {
+    ASSIGN_NEW_MEMORY_BLOCK(vs->params[i], nrdesignpoints, double, NULL);
+  } 
+  vs->nrparams = 0; /* set to 0, will be used as counter in addParameters */
+  vs->nrdesignpoints = nrdesignpoints;
+  return vs;
+}
+
+
 /** 
 
 */
 
-SBMLResults_t ***
-Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *settings,
-		      VarySettings vary1, VarySettings vary2) {
+int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
+			      double start, double end)
+{
+  int j;
+  double *designpoints;
+  
+  ASSIGN_NEW_MEMORY_BLOCK(designpoints, vs->nrdesignpoints, double, 0);
 
-  int i, j;
-  double value1, increment1, value2, increment2;
-  SBMLResults_t ***results;
-  SBMLDocument_t *d2 = NULL;
-  Model_t *m;
+  /* calculating internal parameter array */  
+  for ( j=0; j<vs->nrdesignpoints; j++ )
+    designpoints[j] =  start + j*((end-start)/(vs->nrdesignpoints-1));
 
-  /** Convert SBML Document level 1 to level 2, and
-      get the contained model
-  */
-  if ( SBMLDocument_getLevel(d) == 1 ) {
-    d2 = convertModel(d);
-    m = SBMLDocument_getModel(d2);
+  j = VarySettings_addParameterSeries(vs, id, rid, designpoints);
+  free(designpoints);
+  return j;  
+}
+
+
+/** 
+
+*/
+
+int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
+				    double *designpoints)
+{
+  int j;  
+  
+  /* filling internal parameter array */
+  for ( j=0; j<vs->nrdesignpoints; j++ )
+    vs->params[vs->nrparams][j] = designpoints[j];
+  
+  vs->nrparams++;  /* counts already filled parametervalues */
+  
+  return VarySettings_setParameterName(vs, vs->nrparams-1, id, rid);
+  
+}
+
+
+/** 
+
+*/
+
+int VarySettings_setParameterName(varySettings_t *vs, int i,
+				  char *id, char *rid)
+{
+
+  if ( vs->id[i] != NULL )
+    free(vs->id[i]);
+  
+  /* concatenating parameter reaction id: will be `globalized' from
+     input model, the same way. For global parameters to be changed
+     rid must be passed as "" */
+  if ( rid != NULL ) {
+    ASSIGN_NEW_MEMORY_BLOCK(vs->id[i],
+			    strlen(id)+strlen(rid)+13, char, 0);
+    sprintf(vs->id[i], "%s_inReaction_%s", id, rid);
   }
   else {
-    m = SBMLDocument_getModel(d);
+    ASSIGN_NEW_MEMORY_BLOCK(vs->id[i], strlen(id)+1, char, 0);
+    sprintf(vs->id[i], "%s", id);
   }
-      
-  ASSIGN_NEW_MEMORY_BLOCK(results, vary1.steps+1, SBMLResults_t **, NULL)
-  for ( i=0; i<=vary1.steps; i++ ) 
-    ASSIGN_NEW_MEMORY_BLOCK(results[i], vary2.steps+1, SBMLResults_t *, NULL);
-
-  value1 = vary1.start;
-  increment1 = (vary1.end - vary1.start) / vary1.steps;
-  
-  value2 = vary2.start;
-  increment2 = (vary2.end - vary2.start) / vary2.steps;
-  
-  for ( i=0; i<=vary1.steps; i++ ) {
-    if ( ! Model_setValue(m, vary1.id, vary1.rid, value1) ) {
-      Warn(stderr, "Parameter for variation not found in the model.",
-	   vary1.id);
-      return(NULL);
-    }
-    value2 = vary2.start; 
-    for ( j=0; j<=vary2.steps; j++ ) {      
-      if ( ! Model_setValue(m, vary2.id, vary2.rid, value2) ) {
-	Warn(stderr, "Parameter for variation not found in the model.",
-	     vary2.id);
-      return(NULL);
-      }
-      
-      results[i][j] = Model_odeSolver(d, settings);
-      value2 = value2 + increment2;
-    }
-    value1 = value1 + increment1;
-  }
-
-  /* free temporary level 2 version of the document */
-  if ( d2 != NULL ) {
-    SBMLDocument_free(d2);
-  }
-
-  return(results);
-
+  return 1;
 }
+
+
+/** 
+
+*/
+
+int
+VarySettings_addParameterSet(varySettings_t *vs,
+			     double **designpoints, char **id, char **rid)
+{
+  int i, j;
+  for ( i=0; i<vs->nrparams; i++ )
+    j += VarySettings_addParameterSeries(vs, id[i], rid[i], designpoints[i]);
+  return j;      
+}
+
+
+/** Set the jth value for the ith parameter
+*/
+
+void
+VarySettings_setValue(varySettings_t *vs, double value, int i, int j)
+{
+  vs->params[i][j] = value;
+}
+
+
+/** Print all parameters and their values in varySettings
+*/
+
+void VarySettings_dump(varySettings_t *vs)
+{
+  int i, j;
+  printf("Design Series for %d Parameter(s) and %d values:",
+	 vs->nrparams, vs->nrdesignpoints);fflush(stdout);
+  for ( i=0; i<vs->nrparams; i++ ) {
+    printf("\n%d. %s: ", i, vs->id[i]);
+    for ( j=0; j<vs->nrdesignpoints; j++ ) {
+      printf("%.3f ", vs->params[i][j]);
+    }    
+  }
+}
+
+
+/** 
+
+*/
+
+void VarySettings_free(varySettings_t *vs)
+{
+  int i, j;
+  
+  for ( i=0; i<vs->nrparams; i++ ) {
+    free(vs->id[i]);
+    free(vs->params[i]);
+  }
+  free(vs->id);
+  free(vs->params);
+  free(vs);    
+}
+
+
+
+/** 
+
+*/
 
 int
 Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
@@ -291,9 +397,9 @@ Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
   return 0;  
 }
 
-/** The function Results_fromCvode(cvodeData_t *data)
-   maps the integration results of CVODE
-   back to SBML structures.
+
+/** Maps the integration results from internal back
+    to SBML structures in  model `m' 
 */
 
 SBMLResults_t *
@@ -399,7 +505,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   return(sbml_results);
 }
 
-/** writes current simulation data to
+/** Writes current simulation data to
     original model */
 int
 updateModel(cvodeData_t *data, int nout) {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-10 18:57:23 raim>
-  $Id: integratorSettings.c,v 1.2 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 18:02:17 raim>
+  $Id: integratorSettings.c,v 1.3 2005/10/12 17:30:51 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ CvodeSettings_createDefaultsFromTime(double Time, int PrintStep,
 				     double *TimePoints)
 {
   return CvodeSettings_create(Time, PrintStep, TimePoints,
-			      1e-10, 1e-10, 500, 1, 0, 0, 0, 1);
+			      1e-18, 1e-10, 10000, 1, 0, 0, 0, 1);
 }
 
 void
