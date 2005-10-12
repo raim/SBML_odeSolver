@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:02:18 raim>
-  $Id: odeConstruct.c,v 1.10 2005/10/12 19:49:22 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 23:08:45 raim>
+  $Id: odeConstruct.c,v 1.11 2005/10/12 21:22:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,52 +24,6 @@ static void Model_copyEvents(Model_t *m, Model_t*ode);
 static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode);
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode);
 
-/** 
-
-*/
-
-int
-Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
-
-  int i;
-  Compartment_t *c;
-  Species_t *s;
-  Parameter_t *p;
-  Reaction_t *r;
-  KineticLaw_t *kl;
-
-  if ( (r = Model_getReactionById(m, rid)) != NULL ) {
-    kl = Reaction_getKineticLaw(r);
-    for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
-      p = KineticLaw_getParameter(kl, i);
-      if ( strcmp(id, Parameter_getId(p)) == 0 ) {
-	Parameter_setValue(p, value);
-	return 1;
-      }
-    }
-  }
-  if ( (c = Model_getCompartmentById(m, id)) != NULL ) {
-    Compartment_setSize(c, value);
-    return 1;
-  }
-  if ( (s = Model_getSpeciesById(m, id)) != NULL ) {
-    if ( Species_isSetInitialAmount(s) ) {
-      Species_setInitialAmount(s, value);
-    }
-    else {
-      Species_setInitialConcentration(s, value);
-    }
-    return 1;
-  }
-  if ( (p = Model_getParameterById(m, id)) != NULL ) {
-    Parameter_setValue(p, value);
-    return 1;
-  }
-  return 0;  
-}
-
-
-
 
 /** C: Construct an ODE system from a Reaction Network
     constructs an ODE systems of the reaction network
@@ -79,7 +33,7 @@ Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
     See comments at steps C.1-C.5 for details
 */
 
-Model_t*
+SBML_ODESOLVER_API Model_t*
 Model_reduceToOdes(Model_t *m) {
 
   int errors;
@@ -347,7 +301,7 @@ Model_createOdes(Model_t *m, Model_t*ode ) {
     or modifier. It directly constructs an Abstract Syntax Tree (AST)
     and returns a pointer to it.
 */
-ASTNode_t *
+SBML_ODESOLVER_API ASTNode_t *
 Species_odeFromReactions(Species_t *s, Model_t *m){
 
   int j, k, errors;
@@ -744,7 +698,7 @@ ODE_replaceFunctionDefinitions(Model_t *m) {
 /** Returns the value from a compartment, species or parameter
     with the passed ID */
 
-double
+SBML_ODESOLVER_API double
 Model_getValueById(Model_t *m, const char *id) {
 
   Species_t *s;
@@ -776,5 +730,49 @@ Model_getValueById(Model_t *m, const char *id) {
   return (0.0);
 }
 
+
+/** 
+
+*/
+
+SBML_ODESOLVER_API int
+Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
+
+  int i;
+  Compartment_t *c;
+  Species_t *s;
+  Parameter_t *p;
+  Reaction_t *r;
+  KineticLaw_t *kl;
+
+  if ( (r = Model_getReactionById(m, rid)) != NULL ) {
+    kl = Reaction_getKineticLaw(r);
+    for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
+      p = KineticLaw_getParameter(kl, i);
+      if ( strcmp(id, Parameter_getId(p)) == 0 ) {
+	Parameter_setValue(p, value);
+	return 1;
+      }
+    }
+  }
+  if ( (c = Model_getCompartmentById(m, id)) != NULL ) {
+    Compartment_setSize(c, value);
+    return 1;
+  }
+  if ( (s = Model_getSpeciesById(m, id)) != NULL ) {
+    if ( Species_isSetInitialAmount(s) ) {
+      Species_setInitialAmount(s, value);
+    }
+    else {
+      Species_setInitialConcentration(s, value);
+    }
+    return 1;
+  }
+  if ( (p = Model_getParameterById(m, id)) != NULL ) {
+    Parameter_setValue(p, value);
+    return 1;
+  }
+  return 0;  
+}
 
 /* End of file */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-06-07 19:23:43 raim>
-  $Id: modelSimplify.c,v 1.6 2005/06/27 15:12:19 afinney Exp $
+  Last changed Time-stamp: <2005-10-12 22:51:50 raim>
+  $Id: modelSimplify.c,v 1.7 2005/10/12 21:22:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +18,7 @@
     'math' by the value 'x'.
 */
 
-void
+SBML_ODESOLVER_API void
 AST_replaceNameByValue(ASTNode_t *math, const char *name, double x) {
 
   int i;
@@ -41,7 +41,7 @@ AST_replaceNameByValue(ASTNode_t *math, const char *name, double x) {
     list 'lp'.
 */
 
-void
+SBML_ODESOLVER_API void
 AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp) {
 
   int i,j;
@@ -69,7 +69,7 @@ AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp) {
     math.
 */
 
-void
+SBML_ODESOLVER_API void
 AST_replaceNameByFormula(ASTNode_t *math, const char *name,
 			 const ASTNode_t *formula) {
 
@@ -125,7 +125,7 @@ AST_replaceNameByFormula(ASTNode_t *math, const char *name,
     dangerous. See comments in function.
 */
 
-void
+SBML_ODESOLVER_API void
 AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 	 const ASTNode_t *function) {
   
@@ -183,7 +183,7 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 
 /** Replace all constants of a model in an AST math */
 
-void
+SBML_ODESOLVER_API void
 AST_replaceConstants(Model_t *m, ASTNode_t *math) {
 
 

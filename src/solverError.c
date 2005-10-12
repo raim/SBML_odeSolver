@@ -28,7 +28,7 @@ static solverErrorMessage_t memoryExhaustionFixedMessage =
 };
 
 /* get number of stored errors  of given type */
-int SolverError_getNum(errorType_t type)
+SBML_ODESOLVER_API int SolverError_getNum(errorType_t type)
 {
     List_t *errors = solverErrors[type];
 
@@ -36,6 +36,7 @@ int SolverError_getNum(errorType_t type)
       (type == FATAL_ERROR_TYPE ? memoryExhaustion : 0) ;
 }
 
+SBML_ODESOLVER_API
 solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
 {
     List_t *errors = solverErrors[type];
@@ -69,6 +70,7 @@ errorCode_t SolverError_getLastCode(errorType_t type)
 }
 
 /** empty error store */
+SBML_ODESOLVER_API
 void SolverError_clear()
 {
     int i ;
@@ -93,6 +95,7 @@ void SolverError_clear()
     memoryExhaustion = 0;
 }
 
+SBML_ODESOLVER_API 
 void SolverError_dumpAndClearErrors()
 {
     SolverError_dump();
@@ -101,6 +104,7 @@ void SolverError_dumpAndClearErrors()
 
 
 /** create an error */
+SBML_ODESOLVER_API 
 void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
 {
     List_t *errors = solverErrors[type];
@@ -135,7 +139,7 @@ void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
 }
 
 /** exit the program if errors or fatals have been created. */
-void SolverError_haltOnErrors()
+SBML_ODESOLVER_API void SolverError_haltOnErrors()
 {
     if (SolverError_getNum(ERROR_ERROR_TYPE) ||
 	SolverError_getNum(FATAL_ERROR_TYPE))

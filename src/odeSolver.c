@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:05:56 raim>
-  $Id: odeSolver.c,v 1.16 2005/10/12 19:49:22 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 23:13:48 raim>
+  $Id: odeSolver.c,v 1.17 2005/10/12 21:22:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 
 /***/
 
-SBMLResults_t *
+SBML_ODESOLVER_API SBMLResults_t *
 Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   
   SBMLDocument_t *d2 = NULL;
@@ -99,7 +99,7 @@ Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
 
 */
 
-SBMLResults_t ***
+SBML_ODESOLVER_API SBMLResults_t ***
 Model_odeSolverBatch (SBMLDocument_t *d,
 		      cvodeSettings_t *set, varySettings_t *vs) {
 
@@ -207,6 +207,7 @@ Model_odeSolverBatch (SBMLDocument_t *d,
     each parameter.
 */
 
+SBML_ODESOLVER_API 
 varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints)
 {
   int i;
@@ -227,6 +228,7 @@ varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints)
 
 */
 
+SBML_ODESOLVER_API 
 int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
 			      double start, double end)
 {
@@ -249,6 +251,7 @@ int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
 
 */
 
+SBML_ODESOLVER_API 
 int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
 				    double *designpoints)
 {
@@ -269,6 +272,7 @@ int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
 
 */
 
+SBML_ODESOLVER_API 
 int VarySettings_setParameterName(varySettings_t *vs, int i,
 				  char *id, char *rid)
 {
@@ -296,7 +300,7 @@ int VarySettings_setParameterName(varySettings_t *vs, int i,
 
 */
 
-int
+SBML_ODESOLVER_API int
 VarySettings_addParameterSet(varySettings_t *vs,
 			     double **designpoints, char **id, char **rid)
 {
@@ -310,8 +314,8 @@ VarySettings_addParameterSet(varySettings_t *vs,
 /** Set the jth value for the ith parameter
 */
 
-void
-VarySettings_setValue(varySettings_t *vs, double value, int i, int j)
+SBML_ODESOLVER_API
+void VarySettings_setValue(varySettings_t *vs, double value, int i, int j)
 {
   vs->params[i][j] = value;
 }
@@ -320,6 +324,7 @@ VarySettings_setValue(varySettings_t *vs, double value, int i, int j)
 /** Print all parameters and their values in varySettings
 */
 
+SBML_ODESOLVER_API 
 void VarySettings_dump(varySettings_t *vs)
 {
   int i, j;
@@ -338,6 +343,7 @@ void VarySettings_dump(varySettings_t *vs)
 
 */
 
+SBML_ODESOLVER_API 
 void VarySettings_free(varySettings_t *vs)
 {
   int i, j;
@@ -355,7 +361,7 @@ void VarySettings_free(varySettings_t *vs)
     to SBML structures in  model `m' 
 */
 
-SBMLResults_t *
+SBML_ODESOLVER_API SBMLResults_t *
 SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
 
   int i, j, k;

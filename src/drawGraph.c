@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-11 01:52:44 xtof>
-  $Id: drawGraph.c,v 1.7 2005/10/10 23:54:47 chfl Exp $
+  Last changed Time-stamp: <2005-10-12 22:54:34 raim>
+  $Id: drawGraph.c,v 1.8 2005/10/12 21:22:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +45,7 @@ drawModelTxt(Model_t *m);
   Help is appreciated.
 */
 
-int
+SBML_ODESOLVER_API int
 drawJacoby(cvodeData_t *data) {
 
 #if !USE_GRAPHVIZ
@@ -279,7 +279,7 @@ drawJacobyTxt(cvodeData_t *data) {
 
 #endif
 
-int
+SBML_ODESOLVER_API int
 drawModel(Model_t *m) {
   
 #if !USE_GRAPHVIZ

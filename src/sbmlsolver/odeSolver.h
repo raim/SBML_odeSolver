@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:03:18 raim>
-  $Id: odeSolver.h,v 1.11 2005/10/12 19:49:23 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 23:13:03 raim>
+  $Id: odeSolver.h,v 1.12 2005/10/12 21:22:45 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -57,6 +57,7 @@ SBML_ODESOLVER_API int VarySettings_addParameterSeries(varySettings_t *, char *i
 SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *id, char *rid, double start, double end);
 
 SBML_ODESOLVER_API int VarySettings_setParameterName(varySettings_t *vs, int i, char *id, char *rid);
+SBML_ODESOLVER_API void VarySettings_setValue(varySettings_t *vs, double value, int i, int j);
 
 SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
 SBML_ODESOLVER_API void VarySettings_free();

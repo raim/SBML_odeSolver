@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:27:23 raim>
-  $Id: processAST.c,v 1.9 2005/10/12 19:49:22 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 23:03:35 raim>
+  $Id: processAST.c,v 1.10 2005/10/12 21:22:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ static double
 /**
  * sets function pointer for  user defined function to udf
  */
-void
+SBML_ODESOLVER_API void
 setUserDefinedFunction(double(*udf)(char*, int, double*))
 {
   UsrDefFunc = udf;
@@ -174,8 +174,7 @@ indexAST(const ASTNode_t *f, int nvalues, char **names) {
   function) or 0 if the node has no children.
 */
 
-double
-evaluateAST(ASTNode_t *n, cvodeData_t *data)
+SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 {
   int i, j, childnum;
   int found;
@@ -580,8 +579,7 @@ int user_defined(ASTNode_t *node) {
    with respect to the passed variable x,
    using basic differentiation rules. */
 
-ASTNode_t *
-differentiateAST(ASTNode_t *f, char *x) {
+SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 
   int i, j, childnum;
   int found;
@@ -1716,8 +1714,8 @@ ASTNode_cutRoot(ASTNode_t *old) {
    calls itself recursively for childnodes,
    and returns a simplified copy of f. */
 
-ASTNode_t *
-simplifyAST(ASTNode_t *f) {
+SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
+  
   int i;
   int simplify;
   ASTNode_t *simple, *left, *right, *helper;

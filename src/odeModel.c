@@ -676,7 +676,7 @@ ODEModel_getConstantIndex(odeModel_t *om, int i)
 
 
 /**
-   Frees a variableIndex structure
+  Frees a variableIndex structure
 */
 
 SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
