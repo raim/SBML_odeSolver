@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.1 2005/08/18 12:56:44 chfl Exp $
+dnl $Id: sundials.m4,v 1.2 2005/10/12 18:08:59 raimc Exp $
 
 dnl
 dnl look for SUNDAILS CVODE Library headers in some standard set of directories
@@ -6,6 +6,7 @@ dnl
 AC_DEFUN([AC_SUNDIALS_PATH],
 [ AC_MSG_CHECKING([for SUNDIALS Library headers])
   for ac_dir in                 \
+    /usr/local                  \
     /usr/local/sundials         \
     /usr/local/include/sundials \
     /usr/include/sundails       \
