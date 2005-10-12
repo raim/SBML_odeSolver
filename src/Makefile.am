@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.10 2005/10/12 12:52:07 raimc Exp $
+# $Id: Makefile.am,v 1.11 2005/10/12 19:43:36 raimc Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -37,7 +37,6 @@ libODES_a_SOURCES = ASTIndexNameNode.cpp \
 		    solverError.c \
 		    util.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
-		     sbmlsolver/batchIntegrator.h \
 		     sbmlsolver/commandLine.h \
 		     sbmlsolver/config.h \
 		     sbmlsolver/cvodedata.h \
@@ -49,7 +48,6 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/interactive.h \
 		     sbmlsolver/modelSimplify.h \
 		     sbmlsolver/odeConstruct.h \
-		     sbmlsolver/odeConstructUsingOptions.h \
 		     sbmlsolver/odemodeldatatype.h \
 		     sbmlsolver/odeModel.h \
 		     sbmlsolver/odeSolver.h \
