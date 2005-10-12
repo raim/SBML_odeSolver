@@ -15,47 +15,84 @@ void DumpState(integratorInstance_t *ii, variableIndex_t *v1, variableIndex_t *v
 int doIt(void)
 {
     int i ;
-    cvodeSettings_t settings;
+    cvodeSettings_t *settings, *set2;
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstance;
 
-    odeModel_t *model = ODEModel_create("c:\\models\\basic-model1-forward-l2.xml");
+    odeModel_t *model = ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
     RETURN_ON_ERRORS_WITH(1)
 
     s1 = ODEModel_getVariableIndex(model, "S1");
     s2 = ODEModel_getVariableIndex(model, "S2");
 
-    settings.Time = 0.1;          /*  the step size - Indefinitely == 1 */
-    settings.Error = 1e-20;         /* absolute tolerance in Cvode integration */
-    settings.RError = 1e-20;        /* relative tolerance in Cvode integration */
-    settings.Mxstep = 500;        /* maximum step number for CVode integration */
-    settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
+    /* Creating settings with default values */
+    settings = CvodeSettings_createDefaults();
+    
+    /* Setting end time to .1, number of time steps to 1 and NULL
+       instead of an optional predefined time series (double *); due
+       to Indefinitely == 1, Printstep 5 will be ignored and Time =
+       0.1 will be used as timestep for infinite integration */
+    CvodeSettings_setTime(settings, .1, 5);
 
-    settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
-    settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
-    settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
-    settings.StoreResults = 0;     /* don't Store time course history */
-    settings.EnableVariableChanges = 1; /* optimize excution without allowing modification of variables
-                                            between integration steps. */
+    /* Setting Cvode Parameters: absolute tolerance, relative
+       tolerance and maximal internal step */
+    CvodeSettings_setErrors(settings, 1e-18, 1e-14, 500);
+    
+    /* Setting Integration Switches:
+       
+    settings->UseJacobian = 1;  toggle use of Jacobian ASTs (1) or
+                                internal approximation  (0)
+    settings->Indefinitely = 1; run without a defined end time, Time
+			        field contains step duration, ignore
+			        PrintStep field
+    settings->HaltOnEvent = 0;  doesn't stops integration upon an event
+    settings->SteadyState = 0;  don't stop integration upon a steady state 
+    settings->StoreResults = 0; don't Store time course history
+    */
 
-    integratorInstance = IntegratorInstance_create(model, &settings);
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0);
+
+
+    integratorInstance = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
 
     DumpState(integratorInstance, s1, s2);
     
-    for (i=0; i != 50; i++)
+    for (i=0; i != 12; i++)
     {
+
         IntegratorInstance_integrateOneStep(integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
 
         DumpState(integratorInstance, s1, s2);
     }
 
+    /* now, let's try again, with different settings */
+    printf("now, let's try again, with different settings:\n");
+    set2 = CvodeSettings_createDefaults();
+    CvodeSettings_setTime(set2, .1, 5);
+    CvodeSettings_setErrors(set2, 1e-18, 1e-14, 500);
+    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
+
+    IntegratorInstance_set(integratorInstance, set2);
+    
+
+    while( !IntegratorInstance_timeCourseCompleted(integratorInstance) ) {
+
+        IntegratorInstance_integrateOneStep(integratorInstance);
+        RETURN_ON_ERRORS_WITH(1);
+
+        DumpState(integratorInstance, s1, s2);
+    }
+    
+
     IntegratorInstance_free(integratorInstance);
+    ODEModel_free(model);
     VariableIndex_free(s1);
     VariableIndex_free(s2);
-    ODEModel_free(model);
-
+    CvodeSettings_free(settings);
+    CvodeSettings_free(set2);
+    
     return 0;
 }
 

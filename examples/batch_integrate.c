@@ -1,12 +1,13 @@
 /*
-  Last changed Time-stamp: <2005-08-02 00:02:02 raim>
-  $Id: batch_integrate.c,v 1.5 2005/08/02 13:16:52 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 14:24:40 raim>
+  $Id: batch_integrate.c,v 1.6 2005/10/12 12:52:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <sbmlsolver/odeSolver.h>
+#include "../src/sbmlsolver/odeSolver.h"
+#include "../src/sbmlsolver/options.h"
 
 static void
 printResults(SBMLResults_t *results);
@@ -62,12 +63,9 @@ main (int argc, char *argv[]){
    /* Setting SBML ODE Solver integration parameters with default values */
   set = CvodeSettings_createDefaults();
   /* resetting the values we need */
-  set->Time = time;
-  set->PrintStep = printstep;  
-  set->Error = 1e-18;
-  set->RError = 1e-14;
-  set->Mxstep = 10000;
-  set->SteadyState = 1;
+  CvodeSettings_setTime(set, time, printstep);
+  CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000);
+  CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1); 
   
   /* Setting SBML Ode Solver batch integration parameters */
   vary.start = start;

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 02:26:05 raim>
-  $Id: sbml.c,v 1.7 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 12:37:02 raim>
+  $Id: sbml.c,v 1.8 2005/10/12 12:52:08 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,18 +20,16 @@ void storeSBMLError(errorType_t type, const ParseMessage_t *pm)
 		      (char*) ParseMessage_getMessage(pm)); 
 }
 
-/** C.1 Load, validate and parse SBML file,
-    also converts SBML level 1 to level 2 files
+/** C.0: Loads, validates and parses an SBML file,
+    also converts SBML level 1 to level 2 files,
+    return NULL if errors were encountered during libSBML
+    validation and consistency check, stores libSBML warngings
 */
 SBMLDocument_t *
-parseModelPassingOptions(
-    char *file,
-    int printMessage,
-    int validate,
-    char *schemaPath,
-    char *schema11FileName,
-    char *schema12FileName,
-    char *schema21FileName)
+parseModel(char *file, int printMessage, int validate, char *schemaPath,
+	   char *schema11FileName,
+	   char *schema12FileName,
+	   char *schema21FileName)
 {
     unsigned int i, errors ;
     SBMLDocument_t *d;
@@ -60,18 +58,8 @@ parseModelPassingOptions(
       errors = SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d);
     }
     
-    /* convert level 1 models to level 2 */
-    if ( (errors == 0) && SBMLDocument_getLevel(d) == 1 ) {
-      
-        d2 = convertModel(d);
-        SBMLDocument_free(d);
-        if ( printMessage )
-            fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
-        return (d2);
-    }
-
     if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
-        /* SBMLDocument_checkConsistency(d) */;
+      /*  SBMLDocument_checkConsistency(d);  */ /* causes memory losses */
 
     /* check for warnings and errors */
     for (i =0 ; i != SBMLDocument_getNumWarnings(d); i++)
@@ -84,7 +72,15 @@ parseModelPassingOptions(
         storeSBMLError(FATAL_ERROR_TYPE, SBMLDocument_getFatal(d, i)); 
 
     RETURN_ON_ERRORS_WITH(NULL);
-
+    
+    /* convert level 1 models to level 2 */
+    if ( SBMLDocument_getLevel(d) == 1 ) {      
+        d2 = convertModel(d);
+        SBMLDocument_free(d);
+        if ( printMessage )
+            fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
+        return (d2);
+    }
     return (d);
 }
 

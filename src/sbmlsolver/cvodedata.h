@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 01:51:40 raim>
-  $Id: cvodedata.h,v 1.7 2005/08/02 13:20:32 raimc Exp $
+  Last changed Time-stamp: <2005-10-11 18:54:45 raim>
+  $Id: cvodedata.h,v 1.8 2005/10/12 12:52:09 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -11,6 +11,9 @@
 #include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odemodeldatatype.h"
 #include "sbmlsolver/integratorSettings.h"
+#include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/odeModel.h"
+
 
 struct odeModel
 {
@@ -48,13 +51,14 @@ struct odeModel
 /* Stores CVODE specific integration results, and is part of
    the CvodeData structure (see below) */
 
-struct _CvodeResults {
+struct cvodeResults {
   int nout;        /* counter for calculated time steps
 		      (without initial conditions), this number
 		      can be lower then the same variable in CvodeData,
 		      in case the integration is prematurely stopped. */
   double *time;    /* time steps */
-  
+
+  int nvalues;     /* number of variables for which results exist */
   /* the following arrays represent the time series of all variables
      and parameters of the model */
   double **value;  
@@ -69,7 +73,7 @@ struct _CvodeResults {
    and the SBML version of the ODE model.
  */
 
-struct _CvodeData {
+struct cvodeData {
 
   odeModel_t *model;
   
@@ -89,7 +93,7 @@ struct _CvodeData {
      of integration upon detection of an event. */
   float t0;
   float tmult;
-  float nout;
+  int nout;
   float tout;
 
   cvodeSettings_t *opt;
@@ -111,22 +115,26 @@ struct _CvodeData {
 
 } ;
 
-cvodeData_t *
-CvodeData_create(int nvalues, int nevents);
+/** get values from cvodeResults */
+SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
+						variableIndex_t *vi, int n);
+SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);
+SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *);
 
-cvodeData_t *
-CvodeData_createFromODEModel(odeModel_t *m);
 
-cvodeData_t * 
-constructODEs(Model_t *m, int simplify);
 
-void
-CvodeData_free(cvodeData_t *data);
-void
-CvodeData_freeExcludingModel(cvodeData_t *data);
-cvodeResults_t *
-CvodeResults_create(cvodeData_t *data);
 
+/* internal functions of integratorInstance.c */
+
+cvodeData_t *CvodeData_create(odeModel_t *m);
+
+int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
+
+void CvodeData_free(cvodeData_t *data);
+
+cvodeResults_t *CvodeResults_create(cvodeData_t *data);
+
+void CvodeResults_free(cvodeResults_t *, int);
 #endif
 
 /* End of file */

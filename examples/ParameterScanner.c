@@ -27,8 +27,9 @@ void DumpErrors()
 
 int doit(int argc, char *argv[])
 {
-    int i;
-    cvodeSettings_t settings;
+    int i ;
+    cvodeSettings_t *settings ;
+
     variableIndex_t *speciesVI, *parameterVI;
     integratorInstance_t *integratorInstance;
     char *modelStr, *parameterStr, *speciesStr;

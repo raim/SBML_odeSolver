@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-31 23:00:05 xtof>
-  $Id: integratorInstance.c,v 1.8 2005/09/01 15:31:04 chfl Exp $
+  Last changed Time-stamp: <2005-10-12 14:36:01 raim>
+  $Id: integratorInstance.c,v 1.9 2005/10/12 12:52:08 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -18,7 +18,6 @@
 
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/odeIntegrate.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
@@ -36,57 +35,191 @@ f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
 
 /**
  * CVode solver: function computing the dense Jacobian J of the ODE system
- * (or an approximation to it).
  */
 static void
 JacODE(long int N, DenseMat J, realtype t,
        N_Vector y, N_Vector fy, void *jac_data,
        N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
 static int checkTrigger(integratorInstance_t *);
-static int checkSteadyState(cvodeData_t *data);
+static int checkSteadyState(integratorInstance_t *);
+static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
+							 cvodeSettings_t *opt,
+							 odeModel_t *om);
+
+
+
+/** Creates an new integratorInstance:
+    reads initial values from odeModel and integration settings from
+    cvodeSettings to create integration data cvodeData and
+    cvodeResults and initializes cvodeSolver structures.
+*/
 
 SBML_ODESOLVER_API integratorInstance_t *
-IntegratorInstance_create(odeModel_t *om, cvodeSettings_t *options)
+IntegratorInstance_create(odeModel_t *om, cvodeSettings_t *opt)
 {
-    cvodeData_t *data =  CvodeData_createFromODEModel(om);
+  cvodeData_t *data;
+  integratorInstance_t *engine;
     
-    RETURN_ON_FATALS_WITH(NULL)
+  data = CvodeData_create(om);
+  RETURN_ON_FATALS_WITH(NULL);
 
-    data->opt = options;
-     
-    if (options->Indefinitely)
-    {
-        data->tout = -1; /* delibrate trap for bugs - there is no
-			    defined end time */
-        data->nout = -1; /* delibrate trap for bugs - this is no
-			    defined number of steps */
-        data->tmult = options->Time;
-    }
-    else
-    {
-        data->tout  = options->Time;
-        data->nout  = options->PrintStep;
-        data->tmult = data->tout / data->nout;
-    }
-
-
-    options->StoreResults = !options->Indefinitely && options->StoreResults;
-    /* allow setting of Jacobian,
-       only if its construction was succesfull */
-    options->UseJacobian = om->jacobian && options->UseJacobian;
-    
-
-    return IntegratorInstance_createFromCvodeData(data);
+  CvodeData_initialize(data, opt, om);
+  RETURN_ON_FATALS_WITH(NULL);
+  
+  engine = IntegratorInstance_allocate(data, opt, om);
+  
+  return engine;
 }
 
-SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
+
+/* allocate memory for a new integrator, initialize cvodeSolver
+   structures from cvodeData, cvodeSettings and the odeModel */
+static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
+							 cvodeSettings_t *opt,
+							 odeModel_t *om)
+{
+  integratorInstance_t *engine;
+    
+  ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
+  ASSIGN_NEW_MEMORY(engine->cv, struct cvodeSolver, 0);
+
+  data->run = 0;
+
+  if (IntegratorInstance_initializeSolver(engine, data, opt, om))
+    return engine;
+  else
+    return NULL;
+}
+
+
+/** Resets and existing integratorInstance with new settings.
+    The instance can the be used for further integration runs
+    with these new settings.
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_set(integratorInstance_t *engine, cvodeSettings_t *opt)
+{
+  CvodeData_initialize(engine->data, opt, engine->om);
+  RETURN_ON_FATALS_WITH(0);
+  return IntegratorInstance_initializeSolver(engine,
+					     engine->data, opt, engine->om);
+}
+
+
+/** Resets and integratorInstance to its initial values from the
+    integratorInstance's cvodeSettings. After that, a new integration
+    can be run.
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_reset(integratorInstance_t *engine)
+{
+  return IntegratorInstance_set(engine, engine->opt);
+}
+
+
+/* initialize cvodeData from cvodeSettings and odeModel (could be
+   separated in to functions to further support modularity and
+   independence of data structures */
+int
+CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
+{
+
+  int i;
+  Parameter_t *p;
+  Species_t *s;
+  Compartment_t *c;
+
+  Model_t *ode = om->simple;
+
+  /* data now also depends on cvodeSettings */
+  data->opt = opt;
+     
+  if (opt->Indefinitely)
+    {
+      data->tout = -1; /* delibrate trap for bugs - there is no
+			  defined end time */
+      data->nout = -1; /* delibrate trap for bugs - this is no
+			  defined number of steps */
+      data->tmult = opt->Time;
+    }
+  else
+    {
+      data->tout  = opt->TimePoints[opt->PrintStep];
+      data->nout  = opt->PrintStep;
+      data->tmult = data->tout / data->nout;
+    } 
+
+
+  /* allow storage of results only for finite integrations */
+  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
+  
+  /* allow setting of Jacobian,
+     only if its construction was succesfull */
+  opt->UseJacobian = om->jacobian && opt->UseJacobian;
+    
+
+  /*
+    First, fill cvodeData_t  structure with data from
+    the ODE model
+  */
+
+  for ( i=0; i<data->nvalues; i++ ) {
+    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
+      data->value[i] = Species_getInitialConcentration(s);
+    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
+      data->value[i] = Compartment_getSize(c);
+    else if ((p = Model_getParameterById(ode, om->names[i])) )
+      data->value[i] = Parameter_getValue(p);
+  }
+  
+  /*
+    Then, check if formulas can be evaluated, and cvodeData_t *
+    contains all necessary variables:
+    evaluateAST(ASTNode_t *f, ,data) will
+    ask the user for a value, if a a variable is unknown
+  */
+  for ( i=0; i<om->neq; i++ ) {
+    evaluateAST(om->ode[i], data);
+  }
+  /* initialize assigned parameters */
+  for ( i=0; i<om->nass; i++ ) {
+    data->value[om->neq+i] =
+      evaluateAST(om->assignment[i],data);
+  }
+  
+  /*
+    Now we should have all variables, and can allocate the
+    results structure, where the time series will be stored ...
+  */
+  if ( opt->StoreResults ) {
+
+    if ( !data->results )
+      CvodeResults_free(data->results, data->nvalues);
+    
+    data->results = CvodeResults_create(data);
+    RETURN_ON_FATALS_WITH(0);
+  }
+  
+  return 1;
+}
+
+
+/** Copies variable and parameter values between two integratorInstances
+    that have been created from the same odeModel
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_copyVariableState(integratorInstance_t *target,
+				     integratorInstance_t *source)
 {
     int i;
     cvodeData_t *targetData = target->data;
     cvodeData_t *sourceData = source->data;
-    odeModel_t *model = targetData->model;
+    odeModel_t *model = target->om;
 
-    if (model == sourceData->model)
+    if (model == source->om)
     {
         for ( i=0; i<sourceData->nvalues; i++ )
             targetData->value[i] = sourceData->value[i];
@@ -99,50 +232,100 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 	    "different models");
 }
 
-SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *ii, variableIndex_t *vi)
-{
-    return ii->data->value[vi->index];
-}
 
-SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engine)
-{
-    return engine->t + engine->data->t0 ;
-}
-
-SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
-{
-    return engine->iout > engine->nout;
-}
-
-SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *ii, variableIndex_t *vi, double value)
-{
-    ii->data->value[vi->index] = value;
-}
-
-/* create structures in the integration engine for CVODE 
-    return 1 => success
-    return 0 => failure
+/** Returns the current time of an integration
 */
-int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
+
+SBML_ODESOLVER_API double
+IntegratorInstance_getTime(integratorInstance_t *engine)
+{
+    return engine->cv->t + engine->data->t0 ;
+}
+
+/* not yet working, but would be nice for infinite integration runs */
+void IntegratorInstance_setNextTimeStep(integratorInstance_t *engine,
+					double nexttime)
+{
+    engine->cv->tout = nexttime;
+}
+
+/** Returns TRUE if the requested timecourse has been completed
+    for the passed integratorInstance
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
+{
+    return engine->cv->iout > engine->cv->nout;
+}
+
+/** Gets the value of a variable or parameter during an integration
+    via its variableIndex. The variableIndex can be retrieved from the
+    odeModel with ODEModel_getVariable via the variable's or the
+    parameter's ID symbol in the input SBML model (can be SBML
+    compartments, species and parameters).
+*/
+
+SBML_ODESOLVER_API double
+IntegratorInstance_getVariableValue(integratorInstance_t *engine,
+				    variableIndex_t *vi)
+{
+    return engine->data->value[vi->index];
+}
+
+
+/**
+   Sets the value of a variable or parameter during an integration via
+   its variableIndex.This function also takes care of creating and
+   freeing solver structures and ODE variables are changed!
+   The variableIndex can be retrieved from the odeModel with
+   ODEModel_getVariable via the variable's or the parameter's ID
+   symbol in the input SBML model (can be SBML compartments, species
+   and parameters).
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_setVariableValue(integratorInstance_t *engine,
+				    variableIndex_t *vi, double value)
+{
+  engine->data->value[vi->index] = value;
+
+  if ( vi->index < engine->om->neq ) {
+    IntegratorInstance_freeODESolverStructures(engine->cv);
+    engine->cv->t0 = engine->cv->t;
+    IntegratorInstance_createODESolverStructures(engine);  
+  }
+}
+
+
+/* creates CVODE structures and fills cvodeSolver 
+   return 1 => success
+   return 0 => failure
+*/
+int
+IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
 {
     int i, flag, neq;
     realtype *ydata, *abstoldata;
+
     cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = data->opt;
-    neq = data->model->neq; /* number of equations */
+    cvodeSolver_t *cv = engine->cv;
+    cvodeSettings_t *opt = engine->opt;
+
+    neq = engine->om->neq; /* number of equations */
 
     /**
      * Allocate y, abstol vectors
      */
-    engine->y = N_VNew_Serial(neq);
-    if (check_flag((void *)engine->y, "N_VNew_Serial", 0)) {
+    cv->y = N_VNew_Serial(neq);
+    if (check_flag((void *)cv->y, "N_VNew_Serial", 0)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
-    engine->abstol = N_VNew_Serial(neq);
-    if (check_flag((void *)engine->abstol, "N_VNew_Serial", 0)) {
+    cv->abstol = N_VNew_Serial(neq);
+    if (check_flag((void *)cv->abstol, "N_VNew_Serial", 0)) {
       /* Memory allocation of vector abstol failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"N_VNew_Serial for vector abstol failed");
@@ -152,17 +335,17 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
     /**
      * Initialize y, abstol vectors
      */
-    ydata      = NV_DATA_S(engine->y);
-    abstoldata = NV_DATA_S(engine->abstol);
+    ydata      = NV_DATA_S(cv->y);
+    abstoldata = NV_DATA_S(cv->abstol);
     for ( i=0; i<neq; i++ ) {
       /* Set initial value vector components of y and y' */
       ydata[i] = data->value[i];
       /* Set absolute tolerance vector components */ 
-      abstoldata[i] = engine->atol1;       
+      abstoldata[i] = cv->atol1;       
     }
 
     /* Set the scalar relative tolerance */
-    engine->reltol = engine->rtol1;                  
+    cv->reltol = cv->rtol1;                  
 
     /**
      * Call CVodeCreate to create the solver memory:
@@ -170,8 +353,8 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * CV_BDF     specifies the Backward Differentiation Formula
      * CV_NEWTON  specifies a Newton iteration
      */
-    engine->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
-    if (check_flag((void *)(engine->cvode_mem), "CVodeCreate", 0)) {
+    cv->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+    if (check_flag((void *)(cv->cvode_mem), "CVodeCreate", 0)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeCreate failed");
     }
@@ -187,8 +370,8 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * reltol     the scalar relative tolerance
      * abstol     pointer to the absolute tolerance vector
      */
-    flag = CVodeMalloc(engine->cvode_mem, f, engine->t0, engine->y,
-                       CV_SV, engine->reltol, engine->abstol);
+    flag = CVodeMalloc(cv->cvode_mem, f, cv->t0, cv->y,
+                       CV_SV, cv->reltol, cv->abstol);
     if (check_flag(&flag, "CVodeMalloc", 1)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeMalloc failed");
@@ -198,7 +381,7 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
     /**
      * Link the main integrator with data for right-hand side function
      */ 
-    flag = CVodeSetFdata(engine->cvode_mem, engine->data);
+    flag = CVodeSetFdata(cv->cvode_mem, engine->data);
     if (check_flag(&flag, "CVodeSetFdata", 1)) {
       /* ERROR HANDLING CODE if CVodeSetFdata failes */
     }
@@ -206,7 +389,7 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
     /**
      * Link the main integrator with the CVDENSE linear solver
      */
-    flag = CVDense(engine->cvode_mem, neq);
+    flag = CVDense(cv->cvode_mem, neq);
     if (check_flag(&flag, "CVDense", 1)) {
       /* ERROR HANDLING CODE if CVDense failes */
     }
@@ -217,11 +400,11 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      */
     if ( opt->UseJacobian == 1 ) {
       /* ... user-supplied routine Jac */
-      flag = CVDenseSetJacFn(engine->cvode_mem, JacODE, engine->data);
+      flag = CVDenseSetJacFn(cv->cvode_mem, JacODE, engine->data);
     }
     else {
       /* ... the internal default difference quotient routine CVDenseDQJac */
-      flag = CVDenseSetJacFn(engine->cvode_mem, NULL, NULL);
+      flag = CVDenseSetJacFn(cv->cvode_mem, NULL, NULL);
     }
     
     if ( check_flag(&flag, "CVDenseSetJacFn", 1) ) {
@@ -232,120 +415,104 @@ int IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * Set maximum number of internal steps to be taken
      * by the solver in its attempt to reach tout
      */
-    CVodeSetMaxNumSteps(engine->cvode_mem, opt->Mxstep);
+    CVodeSetMaxNumSteps(cv->cvode_mem, opt->Mxstep);
 
-    return 1 ; /* OK */
+    return 1; /* OK */
 }
 
-/* frees stuff allocated for cvode */
-void IntegratorInstance_freeODESolverStructures(integratorInstance_t *engine)
+/* frees N_V vector structures, and the cvode_mem solver */
+void IntegratorInstance_freeODESolverStructures(cvodeSolver_t *cv)
 {
     /* Free the y, abstol vectors */ 
-    N_VDestroy_Serial(engine->y);
-    N_VDestroy_Serial(engine->abstol);
+    N_VDestroy_Serial(cv->y);
+    N_VDestroy_Serial(cv->abstol);
 
     /* Free the integrator memory */
-    CVodeFree(engine->cvode_mem);
+    CVodeFree(cv->cvode_mem);
 }
 
-/* frees the integrator */
-void IntegratorInstance_free(integratorInstance_t *engine)
-{
-    if (engine->data->model->neq && !engine->data->opt->EnableVariableChanges)
-        IntegratorInstance_freeODESolverStructures(engine);
 
-    CvodeData_freeExcludingModel(engine->data);
+/** Frees an integratorInstance, including cvodeData
+    but not the originating odeModel!
+*/
+
+SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
+{
+    if (engine->om->neq)
+        IntegratorInstance_freeODESolverStructures(engine->cv);
+
+    CvodeData_free(engine->data);
+    free(engine->cv);
     free(engine);
 }
 
-void IntegratorInstance_freeExcludingCvodeData(integratorInstance_t *engine)
+
+
+/* initializes a cvodeSolver structure */
+int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
+					cvodeData_t *data,
+					cvodeSettings_t *opt, odeModel_t *om)
 {
-    if (engine->data->model->neq && !engine->data->opt->EnableVariableChanges)
-        IntegratorInstance_freeODESolverStructures(engine);
-
-    free(engine);
-}
-
-/* does all the stuff currently before the main loop in integrate()
-   a NULL result indicates an error */
-integratorInstance_t *IntegratorInstance_createFromCvodeData(cvodeData_t *data)
-{
-  int i;
-  integratorInstance_t *engine;
-  cvodeSettings_t *opt;
   
-  ASSIGN_NEW_MEMORY(engine, integratorInstance_t, NULL);
+  cvodeSolver_t *cv = engine->cv;
 
-  
- 
+  /* irreversible linking the engine to its input model */
+  engine->om = om;
+
+  /* joining option, data and result structures */
+  engine->opt = opt;
+  engine->data = data;
+  engine->results = data->results;
+
+
   /* CVODE settings: set Problem Constants */
   /* set first output time, output intervals and number of outputs
      from the values in cvodeData_t *data */
 
-  opt = data->opt;
-  engine->data = data;
-
-  engine->atol1 = opt->Error;  /* vector absolute tolerance components */ 
-  engine->rtol1 = opt->RError; /* scalar relative tolerance */
-  engine->t0 = 0.0;                 /* initial time           */
-  engine->t1 = data->tmult;         /* first output time      */
-  engine->tmult = engine->t1;       /* output time factor     */
-  engine->nout = data->nout;        /* number of output steps */
-  engine->t = 0;
-
+  cv->atol1 = opt->Error;      /* vector absolute tolerance components */ 
+  cv->rtol1 = opt->RError;     /* scalar relative tolerance */
+  cv->t0 = 0.0;                /* initial time           */
   
-  if (data->model->neq && !data->opt->EnableVariableChanges)
-  {
-      IntegratorInstance_createODESolverStructures(engine);
-      RETURN_ON_ERRORS_WITH(NULL);
-  }
-
-  /*
-    first, check if formulas can be evaluated, and cvodeData_t *
-    contains all necessary variables:
-    evaluateAST(ASTNode_t *f, ,data) will
-    ask the user for a value, if a a variable is unknown
-  */
-  for ( i=0; i<data->model->neq; i++ ) {
-    evaluateAST(data->model->ode[i], data);
-  }
-  /* initialize assigned parameters */
-  for ( i=0; i<data->model->nass; i++ ) {
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
-  }
-  /*
-    Now we should have all variables, and can allocate the
-    results structure, where the time series will be stored
-  */
-  if ( data->results == NULL ) {
-    engine->results = CvodeResults_create(data);
-    RETURN_ON_FATALS_WITH(NULL);
-    data->results = engine->results;
-  }
-  else {
-    engine->results = data->results;
-  }
+  if ( opt->Indefinitely ) 
+    cv->t1 = data->tmult;           /* first output time      */
+  else 
+    cv->t1 = opt->TimePoints[1];    /* first output time      */  
   
+  cv->tmult = cv->t1;           /* first output time factor */         
+  cv->nout = data->nout;        /* number of output steps */
+  cv->t = 0.0;                  /* CVODE current time, always 0, when
+				   starting from odeModel */
 
-  /* Writing initial conditions to results structure */
+  /* count integration run with this instance */
+  data->run++;
 
-  if (data->opt->StoreResults)
+  if (om->neq)
   {
-    engine->results->time[0] = data->t0;
-    for ( i=0; i<data->nvalues; i++ ) {
-      engine->results->value[i][0] = data->value[i];
-    }
+    /* SolverStructures from former runs must be freed */
+    if ( data->run > 1 )
+      IntegratorInstance_freeODESolverStructures(engine->cv);
+
+    IntegratorInstance_createODESolverStructures(engine);
+      RETURN_ON_ERRORS_WITH(0);
   }
- 
+
   /* set up loop variables */
-  engine->iout=1;
-  engine->tout=engine->t1;
-
-  return engine ;
+  cv->iout=1;         /* counts integration steps, start with 1 */
+  
+  /* first output time as passed to CVODE */
+  if ( opt->Indefinitely )
+    cv->tout = cv->t1;
+  else 
+    cv->tout = opt->TimePoints[1];
+  
+  return 1;
 }
 
-int
+
+/** Start the default integration loop with standard error handling
+*/
+
+SBML_ODESOLVER_API int
 IntegratorInstance_integrate(integratorInstance_t *engine) {
 
   while (!IntegratorInstance_timeCourseCompleted(engine)) {
@@ -355,24 +522,72 @@ IntegratorInstance_integrate(integratorInstance_t *engine) {
   return 0;
 }
 
-/* moves the current simulation one time step, returns 1 if
-   the intergation can continue, 0 otherwise */
-int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
+/** Creates and returns a cvodeResults structure containing
+    the results of one integration run and NULL if not successful
+*/
+
+SBML_ODESOLVER_API cvodeResults_t *
+IntegratorInstance_createResults(integratorInstance_t *engine) {
+
+  int i, j;
+  cvodeResults_t *results;
+
+  cvodeSettings_t *opt = engine->opt;
+  cvodeResults_t *iResults = engine->results;
+
+  if ( !opt->StoreResults || iResults == NULL )
+    return NULL;
+  
+  results = CvodeResults_create(engine->data);
+  RETURN_ON_FATALS_WITH(0);
+
+  results->nout = iResults->nout;
+
+  for ( i=0; i < iResults->nout; i++ ) {
+    results->time[i] = iResults->time[i];
+    for ( j=0; j < iResults->nvalues; j++ )
+      results->value[i][j] = iResults->value[i][j];
+  }
+
+  return results;  
+}
+
+
+/** The Hot Stuff!
+   Calls CVODE to move the current simulation one time step; produces
+   appropriate error messages on failures and returns 1 if the
+   integration can continue, 0 otherwise.  The function also checks
+   for events and steady states and stores results if requested by
+   cvodeSettings.  It also handles models without ODEs (only
+   assignment rules or constant parameters).
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 {
     int i, flag;
-    realtype *ydata;
-
-    if (engine->data->model->neq)
+    realtype *ydata = NULL;
+    
+    cvodeSolver_t *cv = engine->cv;
+    cvodeData_t *data = engine->data;
+    cvodeSettings_t *opt = engine->opt;
+    cvodeResults_t *results = engine->results;
+    odeModel_t *om = engine->om;
+    
+    /* At first integration step, write initial conditions to results
+       structure */
+    if ( cv->iout == 1 && opt->StoreResults ) {
+      data->results->time[0] = 0.0;
+      for ( i=0; i<data->nvalues; i++ ) 
+	data->results->value[i][0] = data->value[i];
+    }
+    
+    if (om->neq)
     {
-        if (engine->data->opt->EnableVariableChanges)
-        {
-            IntegratorInstance_createODESolverStructures(engine);
-            RETURN_ON_ERRORS_WITH(0);
-        }
 
         /* !! calling Cvode !! */
-        flag = CVode(engine->cvode_mem, engine->tout,
-                     engine->y, &(engine->t), CV_NORMAL);
+        flag = CVode(cv->cvode_mem, cv->tout,
+                     cv->y, &(cv->t), CV_NORMAL);
 
         if ( flag != CV_SUCCESS )
         {
@@ -442,13 +657,13 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 	      /* -17 CV_PDATA_NULL */
                 "???",
             };
-
+	    
             SolverError_error(
                 ERROR_ERROR_TYPE,
                 flag,
                 message[flag * -1],
-                engine->data->opt->Mxstep,
-                engine->tout);
+                opt->Mxstep,
+                cv->tout);
             SolverError_error(
                 WARNING_ERROR_TYPE,
                 SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
@@ -456,134 +671,136 @@ int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 
 	        return 0 ; /* Error - stop integration*/
         }
+	ydata = NV_DATA_S(cv->y);
     }
     else
     {
         /* faking a timestep when we don't have ODEs */
-        engine->t = engine->tout ;
+        cv->t = cv->tout ;
     }
 
     /* update cvodeData_t **/
-    engine->data->currenttime = engine->t;
+    data->currenttime = cv->t;
+   
+    for ( i=0; i<om->neq; i++ )
+      data->value[i] = ydata[i];
 
-    ydata = NV_DATA_S(engine->y);
-    for ( i=0; i<engine->data->model->neq; i++ )
-      engine->data->value[i] = ydata[i];
-    
-    /* should this be below the next for loop?? */
-    if (engine->data->model->neq && engine->data->opt->EnableVariableChanges)
-    {
-        IntegratorInstance_freeODESolverStructures(engine);
-        engine->t0 = engine->t;
-    }
+    for ( i=0; i<om->nass; i++ )
+      data->value[om->neq+i] =
+	evaluateAST(om->assignment[i], data);
 
-    for ( i=0; i<engine->data->model->nass; i++ )
-      engine->data->value[engine->data->model->neq+i] =
-	evaluateAST(engine->data->model->assignment[i], engine->data);
-
-    if (checkTrigger(engine))
+    /* check for event triggers and evaluate the triggered
+       events' assignments;
+       stop integration if requested by cvodeSettings */
+    if ( checkTrigger(engine) )
     {
         /* recalculate assignments - they may be dependent
 	   on event assignment results */
-        for ( i=0; i<engine->data->model->nass; i++ )
-            engine->data->value[engine->data->model->neq+i] =
-	      evaluateAST(engine->data->model->assignment[i], engine->data);
+        for ( i=0; i<om->nass; i++ )
+            data->value[om->neq+i] =
+	      evaluateAST(om->assignment[i], data);
 
-        if (engine->data->opt->HaltOnEvent) 
+        if (opt->HaltOnEvent) 
             return 0; /* stop integration */
-
-        if (engine->data->model->neq &&
-	    !engine->data->opt->EnableVariableChanges)
-        {
-            /* reset CVODE */
-            IntegratorInstance_freeODESolverStructures(engine);
-            engine->t0 = engine->t;
-            IntegratorInstance_createODESolverStructures(engine);
-            RETURN_ON_ERRORS_WITH(0);
-        }
     }
 
     /* store results */
-    if (engine->data->opt->StoreResults)
+    if (opt->StoreResults)
     {
-      engine->results->nout = engine->iout;
-      engine->results->time[engine->iout] = engine->t + engine->data->t0;
-      for ( i=0; i<engine->data->nvalues; i++ ) {
-        engine->results->value[i][engine->iout] = engine->data->value[i];
+      results->nout = cv->iout;
+      results->time[cv->iout] = cv->t + data->t0;
+      for ( i=0; i<data->nvalues; i++ ) {
+        results->value[i][cv->iout] = data->value[i];
       }
     }
           
-    /* check for steady state if set by commandline option -s */
-    if ( engine->data->opt->SteadyState == 1 ) {
-      if ( checkSteadyState(engine->data) ) {
-	engine->data->nout = engine->iout;
-	engine->iout = engine->nout+1;
+    /* check for steady state if requested by cvodeSettings */
+    if ( opt->SteadyState == 1 ) {
+      if ( checkSteadyState(engine) ) {
+	data->nout = cv->iout;
+	cv->iout = cv->nout+1;
       }
     }
 
-    engine->iout++;
-    engine->tout += engine->tmult;
-
+    /* increase integration step counter */
+    cv->iout++;
+    /* ... and set next output time */
+    if ( opt->Indefinitely )
+      cv->tout += cv->tmult;
+    else if ( cv->iout <= cv->nout )
+      cv->tout = opt->TimePoints[cv->iout];
+    
     return 1; /* continue integration */
 }
 
-/* standard handler for when the integrate function fails */
-int IntegratorInstance_handleError(integratorInstance_t *engine)
+
+/** Standard handler for when the integrate function fails.
+    WARNING: RERUN CURRENTLY DOESN't WORK 
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_handleError(integratorInstance_t *engine)
 {
-    int i;
-    int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE) ;
-
-    if ( errorCode ) {
+/*   int i; */
+  int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE) ;
+  cvodeData_t *data = engine->data;
+  cvodeSettings_t *opt = engine->opt;
+  
+  if ( errorCode ) {
         
-        /* on flag -6/CV_CONV_FAILURE
-        try again, but now with/without generated Jacobian matrix  */
-        if ( errorCode == CV_CONV_FAILURE && engine->data->run == 0 &&
-	     engine->data->opt->StoreResults) {
-             engine->data->opt->UseJacobian = !engine->data->opt->UseJacobian;
-            engine->data->run++;
-            for ( i=0; i<engine->data->nvalues; i++ ) {
-                engine->data->value[i] = engine->results->value[i][0];
-            }
+    /* on flag -6/CV_CONV_FAILURE
+       try again, but now with/without generated Jacobian matrix  */
+    if ( errorCode == CV_CONV_FAILURE && data->run == 1 &&
+	 opt->StoreResults) {
+      
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN,
+			"Rerun with %s Jacobian matrix.",
+			opt->UseJacobian ?
+			"CVODE's internal approximation of the" :
+			"automatically generated");
 
-            engine->data->currenttime = engine->data->t0;
-            IntegratorInstance_freeExcludingCvodeData(engine);
-            SolverError_clear();
-
-            return IntegratorInstance_integrate(engine);
-        }
-        else
-            SolverError_dumpAndClearErrors();
+      /* integrate again */
+      opt->UseJacobian = !opt->UseJacobian;
+      IntegratorInstance_reset(engine);
+      return IntegratorInstance_integrate(engine);
     }
+    else
+      SolverError_dumpAndClearErrors();
+  }
 
-    return errorCode ;
+  return errorCode ;
 }
 
-/**
-   Prints some final statistics of the calls to CVODE routines, that
-   are located in CVODE's iopt array.
+
+/** Prints some final statistics of the calls to CVODE routines, that
+    are located in CVODE's iopt array.
 */
-void IntegratorInstance_printStatistics(integratorInstance_t *engine)
+SBML_ODESOLVER_API void
+IntegratorInstance_printStatistics(integratorInstance_t *engine)
 {
     int flag;
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;
-    cvodeData_t *data = engine->data;
 
-    flag = CVodeGetNumSteps(engine->cvode_mem, &nst);
+    cvodeSettings_t *opt = engine->opt;
+    cvodeSolver_t *cv = engine->cv;
+
+    flag = CVodeGetNumSteps(cv->cvode_mem, &nst);
     check_flag(&flag, "CVodeGetNumSteps", 1);
-    CVodeGetNumRhsEvals(engine->cvode_mem, &nfe);
+    CVodeGetNumRhsEvals(cv->cvode_mem, &nfe);
     check_flag(&flag, "CVodeGetNumRhsEvals", 1);
-    flag = CVodeGetNumLinSolvSetups(engine->cvode_mem, &nsetups);
+    flag = CVodeGetNumLinSolvSetups(cv->cvode_mem, &nsetups);
     check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
-    flag = CVDenseGetNumJacEvals(engine->cvode_mem, &nje);
+    flag = CVDenseGetNumJacEvals(cv->cvode_mem, &nje);
     check_flag(&flag, "CVDenseGetNumJacEvals", 1);
-    flag = CVodeGetNonlinSolvStats(engine->cvode_mem, &nni, &ncfn);
+    flag = CVodeGetNonlinSolvStats(cv->cvode_mem, &nni, &ncfn);
     check_flag(&flag, "CVodeGetNonlinSolvStats", 1);
-    flag = CVodeGetNumErrTestFails(engine->cvode_mem, &netf);
+    flag = CVodeGetNumErrTestFails(cv->cvode_mem, &netf);
     check_flag(&flag, "CVodeGetNumErrTestFails", 1);
 
     fprintf(stderr, "\nIntegration Parameters:\n");
     fprintf(stderr, "mxstep   = %-6g rel.err. = %-6g abs.err. = %-6g \n",
-	    data->opt->Mxstep, data->opt->RError, data->opt->Error);
+	    opt->Mxstep, opt->RError, opt->Error);
     fprintf(stderr, "CVode Statistics:\n");
     fprintf(stderr, "nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
 	    nst, nfe, nsetups, nje); 
@@ -623,21 +840,22 @@ check_flag(void *flagvalue, char *funcname, int opt)
   return(0);
 }
 
+
 /***************** Functions Called by the CVODE Solver ******************/
 
 /**
    f routine. Compute f(t,y).
    This function is called by CVODE's integration routines every time
    needed.
-   It evaluates the ODEs with the current species values, as supplied
-   by CVODE's N_VIth(y,i) vector containing the values of all species.
+   It evaluates the ODEs with the current variable values, as supplied
+   by CVODE's N_VIth(y,i) vector containing the values of all variables.
    These values are first written back to CvodeData.
-   Then every ODE is passed to processAST, together with the cvodeData_t *, and
-   this function calculates the current value of the ODE.
+   Then every ODE is passed to processAST, together with the cvodeData_t *,
+   and this function calculates the current value of the ODE.
    The returned value is written back to CVODE's N_VIth(ydot,i) vector that
    contains the values of the ODEs.
    The the cvodeData_t * is updated again with CVODE's internal values for
-   species.
+   all variables.
 */
 
 static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
@@ -685,7 +903,7 @@ JacODE(long int N, DenseMat J, realtype t,
 {
   
   int i, j;
-  realtype *ydata, *dydata;
+  realtype *ydata;
   cvodeData_t *data;
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
@@ -711,31 +929,36 @@ JacODE(long int N, DenseMat J, realtype t,
   
 }
 
-/*
-  evaluates event trigger expressions and executes event assignments
-  for those triggers that are true.  results are stored appropriately 
-  in
-        engine->data->value
+/************* Internal Checks During Integration Step *******************/
+/**
+   evaluates event trigger expressions and executes event assignments
+   for those triggers that are true. Results are stored appropriately
+   in
+        engine->data->value.
 
-  returns the number of triggers that fired.
+   Returns the number of triggers that fired.
 */
 
 static int checkTrigger(integratorInstance_t *engine)
 {  
-    cvodeData_t *data = engine->data;
-    int i, j, k, fired;
+    int i, j, fired;
     ASTNode_t *trigger, *assignment;
     Event_t *e;
     EventAssignment_t *ea;
+    variableIndex_t *vi;
+
+    cvodeSettings_t *opt = engine->opt;
+    cvodeData_t *data = engine->data;
+    odeModel_t *om = engine->om;
 
     fired = 0;
 
-    for ( i=0; i<Model_getNumEvents(data->model->simple); i++ ) {
-      e = Model_getEvent(data->model->simple, i);
+    for ( i=0; i<Model_getNumEvents(om->simple); i++ ) {
+      e = Model_getEvent(om->simple, i);
       trigger = (ASTNode_t *) Event_getTrigger(e);
       if ( data->trigger[i] == 0 && evaluateAST(trigger, data) ) {
 
-	if (data->opt->HaltOnEvent)
+	if (opt->HaltOnEvent)
 	  SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_EVENT_TRIGGER_FIRED,
 			    "Event Trigger %d : %s fired at %g. "
 			    "Aborting simulation.",
@@ -747,12 +970,11 @@ static int checkTrigger(integratorInstance_t *engine)
 	for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
 	  ea = Event_getEventAssignment(e, j);
 	  assignment = (ASTNode_t *) EventAssignment_getMath(ea);
-	  for ( k=0; k<data->nvalues; k++ ) {
-	    if ( strcmp(EventAssignment_getVariable(ea),
-			data->model->names[k]) == 0 ) {
-	      data->value[k] = evaluateAST(assignment, data);
-	    }
-	  }
+	  vi = ODEModel_getVariableIndex(om,
+					 EventAssignment_getVariable(ea));
+	  IntegratorInstance_setVariableValue(engine, vi,
+					      evaluateAST(assignment, data));
+	  VariableIndex_free(vi);
 	}
       }
       else {
@@ -764,18 +986,19 @@ static int checkTrigger(integratorInstance_t *engine)
 
 }
 
-/**
-  provisional identification of a steady state,
-  evaluates mean and std of rates and returns 1 if a "steady state"
-  is reached to stop  the calling integrator.
-  This function is only called by the integrator function if specified
-  via commandline options!
+/** provisional identification of a steady state,
+    evaluates mean and std of rates and returns 1 if a "steady state"
+    is reached to stop  the calling integrator.
+    This function is only called by the integrator function if specified
+    via commandline options!
 */
-/* NOTE: provisional steady state finding! Don't rely on that! */
-static int checkSteadyState(cvodeData_t *data){
+/* NOTE: provisional steady state finding! */
+static int checkSteadyState(integratorInstance_t *engine) {
 
   int i;
   double dy_mean, dy_var, dy_std;
+  cvodeData_t *data = engine->data;
+  odeModel_t *om = engine->om;
   
   /* calculate the mean and standard deviation of rates of change and
      store in cvodeData_t * */
@@ -783,35 +1006,26 @@ static int checkSteadyState(cvodeData_t *data){
   dy_var = 0.0;
   dy_std = 0.0;
   
-  for ( i=0; i<data->model->neq; i++ ) {
-    dy_mean += fabs(evaluateAST(data->model->ode[i],data));
+  for ( i=0; i<om->neq; i++ ) {
+    dy_mean += fabs(evaluateAST(om->ode[i],data));
   }
-  dy_mean = dy_mean / data->model->neq;
-  for ( i=0; i<data->model->neq; i++ ) {
-    dy_var += SQR(evaluateAST(data->model->ode[i],data) - dy_mean);
+  dy_mean = dy_mean / om->neq;
+  for ( i=0; i<om->neq; i++ ) {
+    dy_var += SQR(evaluateAST(om->ode[i],data) - dy_mean);
   }
-  dy_var = dy_var / (data->model->neq -1);
+  dy_var = dy_var / (om->neq -1);
   dy_std = SQRT(dy_var);
 
   /* stop integrator if mean + std of rates of change are lower than
      1e-11 */
   if ( (dy_mean + dy_std) < 1e-11 ) {
     data->steadystate = 1;
-    fprintf(stderr, "\n\n");
-    fprintf(stderr,
-	    "Steady state found. Simulation aborted at %g seconds\n\n",
-	    data->currenttime);
-    fprintf(stderr, "Rates at abortion:  \n");
-    fprintf(stderr, "%g  ", data->currenttime);
-    for ( i=0; i<data->model->neq; i++ ) {
-      fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->names[i],
-	      fabs(evaluateAST(data->model->ode[i],data)));
-    }
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Mean of rates:\n %g, std %g\n\n",
-	    dy_mean, dy_std);
-    fprintf(stderr, "\n");    
+    SolverError_error(WARNING_ERROR_TYPE,
+		       SOLVER_MESSAGE_STEADYSTATE_FOUND,
+		       "Steady state found. "
+		       "Simulation aborted at %g seconds. "
+		       "Mean of rates: %g, std %g",
+		      data->currenttime, dy_mean, dy_std);
     return(1) ;
   }
   else {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 17:33:23 raim>
-  $Id: commandLine.c,v 1.1 2005/08/02 15:47:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-08 19:11:30 raim>
+  $Id: commandLine.c,v 1.2 2005/10/12 12:52:08 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,11 +14,11 @@
 
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/sbml.h"
-#include "sbmlsolver/solverError.h"
-#include "sbmlsolver/sbml.h"
 #include "sbmlsolver/commandLine.h"
 
+
+static int handleError(integratorInstance_t *engine,
+		       int PrintMessage, int PrintOnTheFly, FILE *f);
 /** odeSolver(): Starting the SBML_odeSolver from command-line !!
     Command-line options are interpreted
     mainly from here and the according
@@ -40,12 +40,15 @@
 SBML_ODESOLVER_API int
 odeSolver (int argc, char *argv[])
 {
-  SBMLDocument_t *d  = NULL;
-  Model_t        *m  = NULL;
+  SBMLDocument_t *d   = NULL;
+  Model_t        *m   = NULL;
+  Model_t        *ode = NULL;
   char *filename;
   FILE *outfile;
   ASTNode_t *det;
+  odeModel_t *om;
   cvodeData_t *data;
+  integratorInstance_t *ii;
   cvodeSettings_t *set;
   clock_t startTime, endTime ;
 
@@ -72,8 +75,8 @@ odeSolver (int argc, char *argv[])
       are ok, while absolute paths must be set by the option
       '--mpath'.
     */
-    char* model;
-    model = concat(Opt.ModelPath, Opt.ModelFile);
+    char* sbmlFilename;
+    sbmlFilename = concat(Opt.ModelPath, Opt.ModelFile);
 
     /** Parse the Model from File, -v: validation
 	See file sbml.c.
@@ -84,7 +87,7 @@ odeSolver (int argc, char *argv[])
 	Then the model will be retrieved from the document
 	and used for further processing.	
     */
-    if ( (d = parseModel(model)) == 0 ) {
+    if ( (d = parseModelWithArguments(sbmlFilename)) == 0 ) {
         if ( Opt.Validate )
             SolverError_error(
                 WARNING_ERROR_TYPE,
@@ -96,7 +99,7 @@ odeSolver (int argc, char *argv[])
         SolverError_error(
             ERROR_ERROR_TYPE,
             SOLVER_ERROR_CANNOT_PARSE_MODEL,
-            "Can't parse Model >%s<", model);
+            "Can't parse Model >%s<", sbmlFilename);
         SolverError_dump();
         SolverError_haltOnErrors();
     }
@@ -114,12 +117,12 @@ odeSolver (int argc, char *argv[])
     */
     if ( Opt.DrawReactions == 1 ) {
       if ( drawModel(m) > 0 ) {
-	xfree(model);
+	xfree(sbmlFilename);
 	SBMLDocument_free(d);
 	fatal(stderr, "%s:%d main(): Couldn't calculate graph for >%s<",
-	      __FILE__, __LINE__, model);
+	      __FILE__, __LINE__, sbmlFilename);
       }
-      xfree(model); 
+      xfree(sbmlFilename); 
       SBMLDocument_free(d);
       return(EXIT_SUCCESS);  
     }
@@ -147,15 +150,15 @@ odeSolver (int argc, char *argv[])
 	options. 
     */
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 ) {
-      data = constructODEs(m, Opt.Jacobian);
-      det = determinantNAST(data->model->jacob, data->model->neq)
-;
+      om = ODEModel_create(m, Opt.Jacobian);
+      det = determinantNAST(om->jacob, om->neq);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
       SolverError_haltOnErrors();
       fprintf(outfile, "det(J) = %s\n", SBML_formulaToString(det));
-      CvodeData_free(data);   
-      xfree(model);
+      ODEModel_free(om);
+      Model_free(ode);
+      xfree(sbmlFilename);
       SBMLDocument_free(d);
       ASTNode_free(det);
       return(EXIT_SUCCESS);    
@@ -170,20 +173,24 @@ odeSolver (int argc, char *argv[])
 	set. Exit afterwards.
     */
     if ( Opt.PrintModel == 1 ) {
-      printModel(m);
-      printSpecies(m);
-      printReactions(m);
-
-      data = constructODEs(m, Opt.Jacobian);
+      printModel(m, outfile);
+      printSpecies(m, outfile);
+      printReactions(m, outfile);
+      
+      om = ODEModel_create(m, Opt.Jacobian);
+      data = CvodeData_create(om);
       /* slight change in behavour - halt now rather than continue
 	 with null model
          used to continue with empty model */
-      SolverError_haltOnErrors();
-      printODEs(data);
-      printJacobian(data);
+      SolverError_dump(); /* write out all everything including warnings */
+      SolverError_haltOnErrors(); 
+      printODEs(data, outfile);
+      printJacobian(om, outfile);
 
-      CvodeData_free(data);   
-      xfree(model);
+      CvodeData_free(data);
+      ODEModel_free(om);
+      Model_free(ode);
+      xfree(sbmlFilename);
       SBMLDocument_free(d);       
       return(EXIT_SUCCESS);      
     }
@@ -197,15 +204,16 @@ odeSolver (int argc, char *argv[])
     */
     if ( Opt.PrintODEsToSBML == 1 ) {
 
-      data = constructODEs(m, Opt.Jacobian);
+      ode = Model_reduceToOdes(m);
       /* slight change in behavour - halt now rather than
 	 continue with null model
          used to continue with empty model */
+      SolverError_dump(); /* write out all everything including warnings */
       SolverError_haltOnErrors();
-      printODEsToSBML(data);
+      printODEsToSBML(ode, outfile);
 
-      CvodeData_free(data);   
-      xfree(model);
+      Model_free(ode);   
+      xfree(sbmlFilename);
       SBMLDocument_free(d);       
       
       return(EXIT_SUCCESS);      
@@ -218,7 +226,7 @@ odeSolver (int argc, char *argv[])
     */
 
     
-    /** At first, the function constructODEs(m)
+    /** At first, the function Model_reduceToOdes(m)
 	will attempt to construct a simplified SBML model,
 	that only consists of species and their ODEs, represented
 	as Rate Rules, and of Events. All constant species, parameters
@@ -229,12 +237,11 @@ odeSolver (int argc, char *argv[])
 	Then the initial values and ODEs of the remaining species
 	will be written to the structure cvodeData_t *data.
     */
-    data = constructODEs(m, Opt.Jacobian);
-    /** Errors will cause the program to stop,
-	e.g. when some mathematical expressions are missing.
-    */
+    om = ODEModel_create(m, Opt.Jacobian);
+   
+    SolverError_dump();
     SolverError_haltOnErrors();
-    
+
 
     /** Set integration parameters:
 	Now that we have arrived here, we can set the parameters
@@ -248,42 +255,28 @@ odeSolver (int argc, char *argv[])
 	And then ..
     */
 
-    data->tout  = Opt.Time;
-    data->nout  = Opt.PrintStep;
-    data->tmult = data->tout / data->nout;
-    data->currenttime = 0.0;
-    data->t0 = 0.0;
+    set = CvodeSettings_create(Opt.Time, Opt.PrintStep, NULL,
+                     Opt.Error, Opt.RError, Opt.Mxstep,
+                     Opt.Jacobian, 0 , Opt.HaltOnEvent, Opt.SteadyState, 1);
 
-    set = (cvodeSettings_t *)calloc(1, sizeof(cvodeSettings_t));
-
-    set->StoreResults = 1;
-    set->Error = Opt.Error;
-    set->RError = Opt.RError;
-    set->Mxstep = Opt.Mxstep;
-    set->HaltOnEvent = Opt.HaltOnEvent;
-    set->SteadyState = Opt.SteadyState;
-    set->EnableVariableChanges = 0;
-
-    data->opt = set;
-
+    /* ... we can create an integratorInstance */
+    ii = IntegratorInstance_create(om, set);
     
-    /* allow setting of Jacobian,
-       only if its construction was succesfull */
-    set->UseJacobian = data->model->jacobian && set->UseJacobian;
+    SolverError_dump();
+    SolverError_haltOnErrors();
 
-
-    /** .... we can call the integrator function,
-	that invokeds CVODE and stores results.
+    /** .... we can call the integrator functions,
+	that invoke CVODE and stores results.
 	The function will also handle events and
 	check for steady states.
     */    
     
     startTime = clock();
 
-    integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, outfile);
+    integrator(ii, Opt.PrintMessage, Opt.PrintOnTheFly, outfile);
+    
     SolverError_dump();
     RETURN_ON_FATALS_WITH(EXIT_FAILURE);
-    SolverError_clear();
 
     endTime = clock();
 
@@ -303,28 +296,28 @@ odeSolver (int argc, char *argv[])
 	  expressions
       */	  
       if ( Opt.PrintJacobian == 1 ) {
-	printJacobianTimeCourse(data, outfile);
+	printJacobianTimeCourse(ii->data, outfile);
       }
 
       /** -k: print time course of the reactions, i.e.
 	  kinetic law expressions
       */      
       else if ( Opt.PrintReactions == 1 ) {
-	printReactionTimeCourse(data, outfile);
+	printReactionTimeCourse(ii->data, m, outfile);
       }
 
       /** -r: print time coures of ODE values
       */
       else if ( Opt.PrintRates == 1 ) {
-	printOdeTimeCourse(data, outfile);
+	printOdeTimeCourse(ii->data, outfile);
       }
       
       /** -d: print time course of the determinant
 	  of the jacobian matrix
       */
       else if ( Opt.Determinant == 1 ) {
-	det = determinantNAST(data->model->jacob, data->model->neq);
-	printDeterminantTimeCourse(data, det, outfile);
+	det = determinantNAST(om->jacob, om->neq);
+	printDeterminantTimeCourse(ii->data, det, outfile);
 	ASTNode_free(det);
       }
       
@@ -332,16 +325,16 @@ odeSolver (int argc, char *argv[])
 	  print species concentrations
        */
       else {
-	printConcentrationTimeCourse(data, outfile);
+	printConcentrationTimeCourse(ii->data, outfile);
       }      
     }
     /** -a, --all: print all results
     */
     else if ( !Opt.PrintOnTheFly && Opt.PrintAll ) {
-      printJacobianTimeCourse(data, outfile);
-      printReactionTimeCourse(data, outfile);
-      printOdeTimeCourse(data, outfile);
-      printConcentrationTimeCourse(data, outfile);
+      printJacobianTimeCourse(ii->data, outfile);
+      printReactionTimeCourse(ii->data, m, outfile);
+      printOdeTimeCourse(ii->data, outfile);
+      printConcentrationTimeCourse(ii->data, outfile);
     }
 
     /** -m: Draw the jacobian interaction graph
@@ -351,10 +344,10 @@ odeSolver (int argc, char *argv[])
 	values.
     */
     if ( Opt.DrawJacobian == 1 ) {
-      if ( drawJacoby(data) > 0 ) {
+      if ( drawJacoby(ii->data) > 0 ) {
 	Warn(stderr,
 	     "%s:%d main(): Couldn't calculate jacobian graph for >%s<",
-	      __FILE__, __LINE__, model);
+	      __FILE__, __LINE__, sbmlFilename);
       }
     }
 
@@ -366,8 +359,15 @@ odeSolver (int argc, char *argv[])
       fprintf(stderr, "Saved results to file %s.\n\n", filename);
       free(filename);
     }
-    CvodeData_free(data); 
-    xfree(model);   
+
+    SolverError_dump();
+    SolverError_clear();
+
+    IntegratorInstance_free(ii);
+    ODEModel_free(om);
+    free(set);
+    
+    xfree(sbmlFilename);   
     SBMLDocument_free(d);
   }
 
@@ -375,13 +375,100 @@ odeSolver (int argc, char *argv[])
 }
 
 SBMLDocument_t*
-parseModel (char *file)
+parseModelWithArguments (char *file)
 {
-    return parseModelPassingOptions(
-        file, Opt.PrintMessage, Opt.Validate, Opt.SchemaPath,
+    return parseModel(file, Opt.PrintMessage, Opt.Validate, Opt.SchemaPath,
         Opt.Schema11, Opt.Schema12, Opt.Schema21);
 }
 
+/************************ Integrator Program *************************/
+/**
+  The function "static int integrator(cvodeData_t *data)" gets a filled
+  structure "CvodeData" and calls CVODE via the integratorInstance group
+  of functions, to integrate the ODEs.
+*/
 
+int
+integrator(integratorInstance_t *engine,
+	   int PrintMessage, int PrintOnTheFly, FILE *outfile)
+{
+  int i;
+  cvodeData_t *data = engine->data;
+  cvodeSolver_t *cv = engine->cv;
+
+  
+ /** Command-line option -f/--onthefly:
+      print initial values, if on-the-fly printint is set
+  */
+  if ( PrintOnTheFly && data->run == 0 ) {
+	if ( data->t0 == 0.0 )
+	{
+	  fprintf(stderr, "\nPrinting results on the fly !\n");
+      fprintf(stderr, "Overruling all other print options!!\n\n");      
+      fprintf(outfile, "#t ");
+      for ( i=0; i<data->nvalues; i++ )
+        fprintf(outfile, "%s ", data->model->names[i]);
+      fprintf(outfile, "\n");
+	}
+
+    fprintf(outfile, "%g ", data->t0);
+    for ( i=0; i<data->nvalues; i++ )
+      fprintf(outfile, "%g ", data->value[i]);
+    fprintf(outfile, "\n");
+  }
+  else {
+    if ( PrintMessage )
+      fprintf(stderr,"Integrating        ");
+  }
+
+  /*
+    In loop over output points, call CVode, test for error
+    and print results at specified intervals into results
+    structure. If option '-f' or '--onthefly' was set, then
+    print results immediately to the given outfile (default:
+    stdout).
+  */
+  
+  while (!IntegratorInstance_timeCourseCompleted(engine)) {
+
+    if (!IntegratorInstance_integrateOneStep(engine)) {
+      return IntegratorInstance_handleError(engine);
+      SolverError_dump();
+    }
+          
+    /* print immediately if PrintOnTheFly was set
+       with '-d' or '--onthefly'
+    */
+ 
+    if ( PrintOnTheFly ) {
+      fprintf(outfile, "%g ", cv->t + engine->data->t0);
+      for ( i=0; i<engine->data->nvalues; i++ )
+	fprintf(outfile, "%g ", engine->data->value[i]);
+      fprintf(outfile, "\n");
+    }
+    else if ( PrintMessage ) {
+      const  char chars[5] = "|/-\\";
+      fprintf(stderr, "\b\b\b\b\b\b");
+      fprintf(stderr, "%.2f %c",
+	      (float)(cv->iout-1)/(float)cv->nout,
+	      chars[(cv->iout-1) % 4]);
+    }
+  }
+  if ( !PrintOnTheFly && PrintMessage ) {
+    fprintf(stderr,
+	    "finished. Results stored.\n");
+  }
+  
+
+  /* Print some final statistics   */
+  if ( PrintMessage && data->model->neq )
+    IntegratorInstance_printStatistics(engine);   
+
+  return 0;
+
+} 
+
+
+  
 
 /* End of file */

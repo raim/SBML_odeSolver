@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2004-09-30 16:50:25 raim>
-  $Id: sbml.h,v 1.2 2005/06/27 15:17:57 afinney Exp $
+  Last changed Time-stamp: <2005-10-05 15:04:55 raim>
+  $Id: sbml.h,v 1.3 2005/10/12 12:52:09 raimc Exp $
 */
 #ifndef _SBML_H_
 #define _SBML_H_
@@ -15,7 +15,7 @@ SBMLReader_t*newSBMLReader(
     char *schema12FileName,
     char *schema21FileName);
 
-SBMLDocument_t*parseModelPassingOptions(
+SBMLDocument_t*parseModel(
     char *file,
     int printMessage,
     int validate,

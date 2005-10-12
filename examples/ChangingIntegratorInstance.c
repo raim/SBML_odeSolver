@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
+#include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"
 
@@ -22,51 +23,82 @@ void DumpState(
 int doit(void)
 {
     int i ;
-    cvodeSettings_t settings ;
+    double value;
+    cvodeSettings_t *settings ;
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstanceA;
     integratorInstance_t *integratorInstanceB;
 
-    odeModel_t *model = ODEModel_create("c:\\models\\basic-model1-forward-l2.xml");
+    odeModel_t *model = ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
     RETURN_ON_ERRORS_WITH(1);
 
     s1 = ODEModel_getVariableIndex(model, "S1");
     s2 = ODEModel_getVariableIndex(model, "S2");
     RETURN_ON_ERRORS_WITH(1);
-    
-    settings.Time = 0.1;          /*  the step size - Indefinitely == 1 */
-    settings.Error = 1e-20;         /* absolute tolerance in Cvode integration */
-    settings.RError = 1e-20;        /* relative tolerance in Cvode integration */
-    settings.Mxstep = 500;        /* maximum step number for CVode integration */
-    settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
-    settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
-    settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
-    settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
-    settings.StoreResults = 0;     /* don't Store time course history */
-    settings.EnableVariableChanges = 1; /* allow modification of variables between integration steps. */
 
-    integratorInstanceA = IntegratorInstance_create(model, &settings);
+    /* Creating settings with default values */
+    settings = CvodeSettings_createDefaults();
+
+    
+    /* Setting end time to .1, number of time steps to 1 and NULL
+       instead of an optional predefined time series (double *); due
+       to Indefinitely == 1, Printstep 1 will be ignored and Time =
+       0.1 will be used as timestep for infinite integration */
+    CvodeSettings_setTime(settings, .1, 1);
+
+    /* Setting Cvode Parameters: absolute and relative tolerances and
+       maximal internal step */
+    CvodeSettings_setErrors(settings, 1e-18, 1e-14, 500);
+
+    
+    /* Setting Integration Switches:       
+    settings->UseJacobian = 1;  toggle use of Jacobian ASTs (1) or
+                                internal approximation  (0)
+    settings->Indefinitely = 1; run without a defined end time, Time
+			        field contains step duration, ignore
+			        PrintStep field
+    settings->HaltOnEvent = 0;  doesn't stops integration upon an event
+    settings->SteadyState = 0;  don't stop integration upon a steady state 
+    settings->StoreResults = 0; don't Store time course history
+    */
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0);
+
+
+    /* Generate two independent integrator instances from the same
+       odeModel and cvodeSettings */
+    integratorInstanceA = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
 
-    integratorInstanceB = IntegratorInstance_create(model, &settings);
+    integratorInstanceB = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
 
     DumpState(integratorInstanceA, integratorInstanceB, s1, s2);
 
-    for (i=0; i != 50; i++)
+    for (i=0; i != 30; i++)
     {
+
+        /* run integrations A and B */
         IntegratorInstance_integrateOneStep(integratorInstanceA);
         RETURN_ON_ERRORS_WITH(1);
 
         IntegratorInstance_integrateOneStep(integratorInstanceB);
         RETURN_ON_ERRORS_WITH(1);
 
-        if (IntegratorInstance_getVariableValue(integratorInstanceA, s1) < 7.5e-16)
+	/* While variable s1 from integration A is between 1e-15 and
+	   1e-16, set variables s1 and s2 in integration B to some
+	   value.  This function also takes care of creating and
+	   freeing CVODE solver structures when ODE variables are
+	   changed!
+	*/
+	value = IntegratorInstance_getVariableValue(integratorInstanceA, s1);
+        if ( value < 1.e-15 && value >  1.e-16 )
         {
-            IntegratorInstance_setVariableValue(integratorInstanceB, s1, 1.5e-15);
-            IntegratorInstance_setVariableValue(integratorInstanceB, s2, 1.5e-15);
+            IntegratorInstance_setVariableValue(integratorInstanceB,
+						s1,1.5e-15);
+            IntegratorInstance_setVariableValue(integratorInstanceB,
+						s2,1.5e-15);
         }
-
+	
         DumpState(integratorInstanceA, integratorInstanceB, s1, s2);
 
     }
@@ -76,6 +108,7 @@ int doit(void)
     VariableIndex_free(s1);
     VariableIndex_free(s2);
     ODEModel_free(model);
+    CvodeSettings_free(settings);
 
     return 0;
 }

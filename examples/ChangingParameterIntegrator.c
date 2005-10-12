@@ -24,7 +24,7 @@ int doit(void)
     integratorInstance_t *integratorInstanceA;
     char *k1String[] = { "k_1", NULL } ;
 
-    odeModel_t *model = ODEModel_createWithSelectiveReplacement("c:\\models\\basic.xml", k1String);
+    odeModel_t *model = ODEModel_createWithSelectiveReplacement("basic.xml", k1String);
     RETURN_ON_ERRORS_WITH(1);
 
     s1 = ODEModel_getVariableIndex(model, "S1");

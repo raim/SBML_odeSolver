@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 17:31:50 raim>
-  $Id: interactive.c,v 1.7 2005/08/02 15:47:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-11 18:34:46 raim>
+  $Id: interactive.c,v 1.8 2005/10/12 12:52:08 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,15 +12,8 @@
 #include <sbml/util/util.h> /* only for util_trim */
 
 /* own header files */
-#include "sbmlsolver/util.h"
+#include "sbmlsolver/odeSolver.h"
 #include "sbmlsolver/options.h"
-#include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/odeIntegrate.h"
-#include "sbmlsolver/processAST.h"
-#include "sbmlsolver/printModel.h"
-#include "sbmlsolver/drawGraph.h"
-#include "sbmlsolver/sbml.h"
-#include "sbmlsolver/solverError.h"
 #include "sbmlsolver/commandLine.h"
 
 static void
@@ -55,13 +48,14 @@ callIntegrator(Model_t *m);
 void
 interactive() {
   
-  char *model;
+  char *sbmlFilename;
   char *select;
   int quit;
-  SBMLDocument_t *d = NULL;
+  SBMLDocument_t *d  = NULL;
   SBMLReader_t   *sr = NULL;
   Model_t        *m  = NULL;
-  cvodeData_t * data     = NULL;
+  odeModel_t *om     = NULL;
+  cvodeData_t * data = NULL;
   ASTNode_t *det;
 
   sr = newSBMLReader(Opt.SchemaPath, Opt.Schema11, Opt.Schema12, Opt.Schema21);
@@ -81,9 +75,9 @@ interactive() {
   /* deactivate on the fly printing of results */
   Opt.PrintOnTheFly = 0;
 
-  model = concat(Opt.ModelPath, Opt.ModelFile);
+  sbmlFilename = concat(Opt.ModelPath, Opt.ModelFile);
 
-  if ( (d = parseModel(model)) == 0 ) {
+  if ( (d = parseModelWithArguments(sbmlFilename)) == 0 ) {
     if ( Opt.Validate ) {
 	Warn(stderr, "Please make sure that path >%s< contains",
 	     Opt.SchemaPath);
@@ -91,7 +85,7 @@ interactive() {
 	Warn(stderr, "Or try running without validation.");
     }
     Warn(stderr, "%s:%d interactive(): Can't parse Model >%s<",
-	  __FILE__, __LINE__, model);
+	  __FILE__, __LINE__, sbmlFilename);
     d = loadFile(sr);
   }
 
@@ -120,22 +114,23 @@ interactive() {
     }
     
     if(strcmp(select,"s")==0){
-      printModel(m);
+      printModel(m, stdout);
     }
     
     if(strcmp(select,"c")==0){
-      printSpecies(m);
+      printSpecies(m, stdout);
     }
     
     if(strcmp(select,"r")==0){
-      printReactions(m);
+      printReactions(m, stdout);
     }
     
-    if(strcmp(select,"o")==0){      
-      data = constructODEs(m, Opt.Jacobian);
+    if(strcmp(select,"o")==0){
+      om = ODEModel_create(m, Opt.Jacobian);
+      data = CvodeData_create(om);
       SolverError_dumpAndClearErrors();
       if (data)
-          printODEs(data);
+          printODEs(data, stdout);
     }
 
     if(strcmp(select,"i")==0){
@@ -215,7 +210,8 @@ interactive() {
     if(strcmp(select,"jg")==0){
       if ( data == NULL ) {
 	Opt.Jacobian = 1;
-	data = constructODEs(m, Opt.Jacobian);
+	om = ODEModel_create(m, Opt.Jacobian);
+	data = CvodeData_create(om);
     SolverError_dumpAndClearErrors();
     
 	Opt.Jacobian = 0;	
@@ -224,10 +220,11 @@ interactive() {
         drawJacoby(data);
     }
     if(strcmp(select,"j")==0){
-      data = constructODEs(m, Opt.Jacobian);
+      om = ODEModel_create(m, Opt.Jacobian);
+      data = CvodeData_create(om);
       SolverError_dumpAndClearErrors();
       if (data)
-          printJacobian(data);
+          printJacobian(data->model, stdout);
     }
     if(strcmp(select,"q")==0){
       quit = 1;
@@ -235,7 +232,8 @@ interactive() {
   }
 
   if ( data != NULL ) {
-    CvodeData_free(data);
+    ODEModel_free(data->model);
+    CvodeData_free(data);    
   }
   SBMLDocument_free(d);
   xfree(sr);
@@ -360,7 +358,7 @@ loadFile(SBMLReader_t *sr){
             printf("No filename found.\n\n");
         }
         else {
-            if ( (d = parseModel(filename)) == 0 ) {
+            if ( (d = parseModelWithArguments(filename)) == 0 ) {
                 if ( Opt.Validate ) 
                     SolverError_error(
                         WARNING_ERROR_TYPE,
@@ -392,58 +390,59 @@ callIntegrator(Model_t *m){
   char *nout;
 
   cvodeData_t * data = NULL;
+  odeModel_t *om = NULL;
 
-  data = constructODEs(m, Opt.Jacobian);
+  om = ODEModel_create(m, Opt.Jacobian);
+  data = CvodeData_create(om);
   
   /* chnage of behaviour by AMF no intergation if errors in ODE construction - 23rd June 2005 */
-  if (!data)
-  {
-      SolverError_dumpAndClearErrors();
-      return NULL;
-  }
+/*   if (!data) */
+/*   { */
+/*       SolverError_dumpAndClearErrors(); */
+/*       return NULL; */
+/*   } */
      
-  printf("Please enter end time in seconds:           ");
-  tout =  get_line(stdin);
-  tout = util_trim(tout);
+/*   printf("Please enter end time in seconds:           "); */
+/*   tout =  get_line(stdin); */
+/*   tout = util_trim(tout); */
     
-  printf("... and the number of output times:         ");
-  nout = get_line(stdin);
-  nout = util_trim(nout);
+/*   printf("... and the number of output times:         "); */
+/*   nout = get_line(stdin); */
+/*   nout = util_trim(nout); */
 
   
-  if ( !(data->nout = (float) floor(atof(nout))) ||
-       !(data->tout = (float) atof(tout)) ) {
-    printf("\nEntered outtime %s or number of output times %s\n", tout, nout);
-    printf("could not be converted to a number. Try again, please!\n");    
-  }
-  else {
+/*   if ( !(data->nout = (float) floor(atof(nout))) || */
+/*        !(data->tout = (float) atof(tout)) ) { */
+/*     printf("\nEntered outtime %s or number of output times %s\n", tout, nout); */
+/*     printf("could not be converted to a number. Try again, please!\n");     */
+/*   } */
+/*   else { */
 
-    data->tmult = data->tout / data->nout;
-    data->currenttime = 0.0;
-    data->t0 = 0.0;
+/*     data->tmult = data->tout / data->nout; */
+/*     data->currenttime = 0.0; */
+/*     data->t0 = 0.0; */
 
-    data->opt->Error = Opt.Error;
-    data->opt->RError = Opt.RError;
-    data->opt->Mxstep = Opt.Mxstep;
-    data->opt->HaltOnEvent = Opt.HaltOnEvent;
-    data->opt->SteadyState = Opt.SteadyState;
-    data->opt->EnableVariableChanges = 0;
+/*     data->opt->Error = Opt.Error; */
+/*     data->opt->RError = Opt.RError; */
+/*     data->opt->Mxstep = Opt.Mxstep; */
+/*     data->opt->HaltOnEvent = Opt.HaltOnEvent; */
+/*     data->opt->SteadyState = Opt.SteadyState; */
 
-    /* allow setting of Jacobian, only if construction was succesfull */
-    if ( data->opt->UseJacobian == 1 ) {
-      data->opt->UseJacobian = Opt.Jacobian;
-    }
+/*     /\* allow setting of Jacobian, only if construction was succesfull *\/ */
+/*     if ( data->opt->UseJacobian == 1 ) { */
+/*       data->opt->UseJacobian = Opt.Jacobian; */
+/*     } */
     
-    printf("Numerical integration from\n t0 = %f  to \n tout"
-	   " = %f s\n output interval: %f s\n\n",
-	   data->t0, data->tout, data->tout/data->nout);
+/*     printf("Numerical integration from\n t0 = %f  to \n tout" */
+/* 	   " = %f s\n output interval: %f s\n\n", */
+/* 	   data->t0, data->tout, data->tout/data->nout); */
     
-    integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, stdout);
-    SolverError_dumpAndClearErrors();
-  }
+/*     integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, stdout); */
+/*     SolverError_dumpAndClearErrors(); */
+/*   } */
     
-  free(nout);
-  free(tout);
+/*   free(nout); */
+/*   free(tout); */
  
   return data;
 }

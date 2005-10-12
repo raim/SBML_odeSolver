@@ -27,7 +27,7 @@ int doit(void)
     integratorInstance_t *integratorInstanceA;
     integratorInstance_t *integratorInstanceB;
 
-    odeModel_t *model = ODEModel_create("c:\\models\\events-2-events-1-assignment-l2.xml");
+    odeModel_t *model = ODEModel_create("events-2-events-1-assignment-l2.xml");
     RETURN_ON_ERRORS_WITH(1);
 
     assert(ODEModel_hasVariable(model, "S1"));

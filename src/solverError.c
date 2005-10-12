@@ -32,14 +32,16 @@ int SolverError_getNum(errorType_t type)
 {
     List_t *errors = solverErrors[type];
 
-    return (errors ? List_size(errors) : 0) + (type == FATAL_ERROR_TYPE ? memoryExhaustion : 0) ;
+    return (errors ? List_size(errors) : 0) +
+      (type == FATAL_ERROR_TYPE ? memoryExhaustion : 0) ;
 }
 
 solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
 {
     List_t *errors = solverErrors[type];
 
-    if (type == FATAL_ERROR_TYPE && memoryExhaustion && errorNum == (errors ? List_size(errors) : 0))
+    if (type == FATAL_ERROR_TYPE && memoryExhaustion &&
+	errorNum == (errors ? List_size(errors) : 0))
         return &memoryExhaustionFixedMessage ;
 
     if (!errors)
@@ -48,25 +50,25 @@ solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
     return List_get(errors, errorNum);
 }
 
-/* get a stored error message */
+/** get a stored error message */
 char *SolverError_getMessage(errorType_t type, int errorNum)
 {
     return SolverError_getError(type, errorNum)->message ;
 }
 
-/* get error code */
+/** get error code */
 errorCode_t SolverError_getCode(errorType_t type, int errorNum)
 {
     return SolverError_getError(type, errorNum)->errorCode ; 
 }
 
-/* get error code of last error stored of given type */
+/** get error code of last error stored of given type */
 errorCode_t SolverError_getLastCode(errorType_t type)
 {
     return SolverError_getCode(type, SolverError_getNum(type) - 1);
 }
 
-/* empty error store */
+/** empty error store */
 void SolverError_clear()
 {
     int i ;
@@ -98,13 +100,14 @@ void SolverError_dumpAndClearErrors()
 }
 
 
-/* create an error */
+/** create an error */
 void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
 {
     List_t *errors = solverErrors[type];
     char buffer[2000], *variableLengthBuffer;
     va_list args;
-    solverErrorMessage_t *message = (solverErrorMessage_t *)malloc(sizeof(solverErrorMessage_t));
+    solverErrorMessage_t *message =
+      (solverErrorMessage_t *)malloc(sizeof(solverErrorMessage_t));
 
     if (message == NULL)
         memoryExhaustion = 1;
@@ -131,10 +134,11 @@ void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
     }
 }
 
-/* exit the program if errors or fatals have been created. */
+/** exit the program if errors or fatals have been created. */
 void SolverError_haltOnErrors()
 {
-    if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+    if (SolverError_getNum(ERROR_ERROR_TYPE) ||
+	SolverError_getNum(FATAL_ERROR_TYPE))
         exit(EXIT_FAILURE);
 }
 
@@ -200,7 +204,9 @@ int SolverError_dumpHelper(char *s)
                     
                 if (s)
                 {
-                    result = sprintf(s, "%s\t%s\t%s\n", solverErrorTypeString[i], errorCodeString, error->message);
+                    result = sprintf(s, "%s\t%s\t%s\n",
+				     solverErrorTypeString[i],
+				     errorCodeString, error->message);
                     s += result ;
                 }
                 else
@@ -219,7 +225,8 @@ int SolverError_dumpHelper(char *s)
     return result ;
 }
 
-/* write all errors and warnings to a string (owned by caller unless memoryExhaustion) */
+/* write all errors and warnings to a string (owned by caller
+   unless memoryExhaustion) */
 SBML_ODESOLVER_API char *SolverError_dumpToString()
 {
     char *result;

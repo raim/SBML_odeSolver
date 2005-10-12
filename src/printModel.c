@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 01:33:22 raim>
-  $Id: printModel.c,v 1.6 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-08 03:58:23 raim>
+  $Id: printModel.c,v 1.7 2005/10/12 12:52:08 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,85 +49,85 @@ closeXMGrace(cvodeData_t *data, char *name);
 #endif
 
 void
-printModel(Model_t *m)
+printModel(Model_t *m, FILE *f)
 {
-  printf("\n");
-  printf("Model Statistics:\n");
-  printf(" Model id:     %s\n",
+  fprintf(f, "\n");
+  fprintf(f, "Model Statistics:\n");
+  fprintf(f, " Model id:     %s\n",
 	 Model_isSetId(m) ? Model_getId(m) : "(not set)");
-  printf(" Model name:   %s\n",
+  fprintf(f, " Model name:   %s\n",
 	 Model_isSetName(m) ? Model_getName(m) : "(not set)"); 
-  printf("\n");
-  printf(" Compartments: %d\n",  Model_getNumCompartments(m)); 
-  printf(" Species:      %d\n",  Model_getNumSpecies(m));
-  printf(" Reactions:    %d\n",  Model_getNumReactions(m));
-  printf(" Rules:        %d\n",  Model_getNumRules(m));
-  printf(" Events:       %d\n",  Model_getNumEvents(m));
-  printf(" Functions:    %d\n",  Model_getNumFunctionDefinitions(m) ); 
-  printf("\n");
+  fprintf(f, "\n");
+  fprintf(f, " Compartments: %d\n",  Model_getNumCompartments(m)); 
+  fprintf(f, " Species:      %d\n",  Model_getNumSpecies(m));
+  fprintf(f, " Reactions:    %d\n",  Model_getNumReactions(m));
+  fprintf(f, " Rules:        %d\n",  Model_getNumRules(m));
+  fprintf(f, " Events:       %d\n",  Model_getNumEvents(m));
+  fprintf(f, " Functions:    %d\n",  Model_getNumFunctionDefinitions(m) ); 
+  fprintf(f, "\n");
 }
 
 
 void
-printSpecies(Model_t *m)
+printSpecies(Model_t *m, FILE *f)
 {
   int i, j;
   Species_t *s;  
   Compartment_t *c;
 
-  printf("\n");
-  printf("# Initial Conditions for Species and Compartments:\n");
+  fprintf(f, "\n");
+  fprintf(f, "# Initial Conditions for Species and Compartments:\n");
   for ( i=0; i<Model_getNumCompartments(m); i++ ) {
-    if ( i== 0 ) printf("# Compartments:\n");
+    if ( i== 0 ) fprintf(f, "# Compartments:\n");
     c = Model_getCompartment(m,i);
     if(Compartment_isSetId(c))
-      printf("%s ", Compartment_getId(c));
+      fprintf(f, "%s ", Compartment_getId(c));
     if(Compartment_isSetName(c))
-      printf("(%s) ", Compartment_getName(c));
+      fprintf(f, "(%s) ", Compartment_getName(c));
     if ( Compartment_isSetVolume(c) )
-     printf("= %g; ", Compartment_getSize(c));
-    printf("%s", Compartment_getConstant(c) ? "" : "variable; ");
+     fprintf(f, "= %g; ", Compartment_getSize(c));
+    fprintf(f, "%s", Compartment_getConstant(c) ? "" : "variable; ");
     if(Compartment_isSetOutside(c))
-      printf("outside %s; ", Compartment_getOutside(c));
-   /*  printf("\n"); */
-    printf("dimensions %d; ", Compartment_getSpatialDimensions(c));
+      fprintf(f, "outside %s; ", Compartment_getOutside(c));
+   /*  fprintf(f, "\n"); */
+    fprintf(f, "dimensions %d; ", Compartment_getSpatialDimensions(c));
 
     if(Compartment_isSetUnits(c))
-      printf("[%s]; ", Compartment_getUnits(c));
-    printf("\n");
+      fprintf(f, "[%s]; ", Compartment_getUnits(c));
+    fprintf(f, "\n");
     
-    printf("# Species concentrations in `compartment' %s\n",
+    fprintf(f, "# Species concentrations in `compartment' %s\n",
 	   Compartment_getId(c));
     for(j=0;j<Model_getNumSpecies(m);j++){
       s = Model_getSpecies(m,j);      
       if(strcmp(Species_getCompartment(s), Compartment_getId(c))==0){  
 
-	printf("%s ", Species_getId(s));
+	fprintf(f, "%s ", Species_getId(s));
 	if(Species_isSetName(s))
-	  printf("(%s) ", Species_getName(s));
+	  fprintf(f, "(%s) ", Species_getName(s));
 	
 	if ( Species_isSetInitialAmount(s) )
-	  printf("= %g/%g; ",
+	  fprintf(f, "= %g/%g; ",
 		 Species_getInitialAmount(s),
 		 Compartment_getSize(c));
 	else if ( Species_isSetInitialConcentration(s) )
-	  printf("= %g; ", Species_getInitialConcentration(s));
+	  fprintf(f, "= %g; ", Species_getInitialConcentration(s));
 	else
-	  printf("# no initial value;");	
-	printf("%s", Species_getBoundaryCondition(s) ? "boundary;" : "");
-	printf("%s", Species_getConstant(s) ? "constant;" : "");
+	  fprintf(f, "# no initial value;");	
+	fprintf(f, "%s", Species_getBoundaryCondition(s) ? "boundary;" : "");
+	fprintf(f, "%s", Species_getConstant(s) ? "constant;" : "");
 	if(Species_isSetCharge(s))
-	  printf("charge = %d; ", Species_getCharge(s));
+	  fprintf(f, "charge = %d; ", Species_getCharge(s));
 
-	printf("\n");
+	fprintf(f, "\n");
       }     
     }
-    printf("\n");  
+    fprintf(f, "\n");  
   }  
 }
 
 void
-printReactions(Model_t *m)
+printReactions(Model_t *m, FILE *f)
 {
   
   int i,j,k;
@@ -141,115 +141,115 @@ printReactions(Model_t *m)
   Event_t *e;
   EventAssignment_t *ea;
   Parameter_t *p;
-  FunctionDefinition_t *f;
+  FunctionDefinition_t *fd;
   SBMLTypeCode_t type;
   const ASTNode_t *math;
 
   math = NULL;
   
-  printf("\n");
+  fprintf(f, "\n");
   for(i=0;i<Model_getNumParameters(m);i++){
     if(i==0)
-      printf("# Global parameters:\n");
+      fprintf(f, "# Global parameters:\n");
     p = Model_getParameter(m,i);
     if(Parameter_isSetId(p))
-      printf("%s ",  Parameter_getId(p));
+      fprintf(f, "%s ",  Parameter_getId(p));
     if(Parameter_isSetName(p))
-      printf("(%s) ", Parameter_getName(p));
+      fprintf(f, "(%s) ", Parameter_getName(p));
     if(Parameter_isSetValue(p))
-      printf("= %g; ", Parameter_getValue(p));
+      fprintf(f, "= %g; ", Parameter_getValue(p));
     if(Parameter_isSetUnits(p))
-      printf("[%s]; ", Parameter_getUnits(p));
+      fprintf(f, "[%s]; ", Parameter_getUnits(p));
     if(!Parameter_getConstant(p))
-      printf("(variable);");
-    printf("\n");
+      fprintf(f, "(variable);");
+    fprintf(f, "\n");
     
     if ( i==Model_getNumParameters(m)-1 )
-      printf("\n");
+      fprintf(f, "\n");
   }
 
-  printf("# Reactions:\n");
+  fprintf(f, "# Reactions:\n");
   for ( i=0; i<Model_getNumReactions(m); i++ ) {    
     r = Model_getReaction(m,i);
   
-    printf("%s: %s",
+    fprintf(f, "%s: %s",
 	   Reaction_isSetName(r) ? Reaction_getName(r) : Reaction_getId(r),
 	   Reaction_getFast(r) ? "(fast)" : "");
     for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
       sref = Reaction_getReactant(r,k);
 
       if ( SpeciesReference_isSetStoichiometryMath(sref) )	
-	printf("%s ",
-	       SBML_formulaToString(\
-		   SpeciesReference_getStoichiometryMath(sref)));
+	fprintf(f, "%s ",
+		SBML_formulaToString(\
+		SpeciesReference_getStoichiometryMath(sref)));
       else 
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
-	  printf("%g ",  SpeciesReference_getStoichiometry(sref));
+	  fprintf(f, "%g ",  SpeciesReference_getStoichiometry(sref));
 	
-      printf("%s", SpeciesReference_getSpecies(sref));
+      fprintf(f, "%s", SpeciesReference_getSpecies(sref));
       if(k+1<Reaction_getNumReactants(r))
-	printf("%s", " + ");
+	fprintf(f, "%s", " + ");
     }
     
-    printf("%s", Reaction_getReversible(r) ? " <-> " : " -> ");
+    fprintf(f, "%s", Reaction_getReversible(r) ? " <-> " : " -> ");
     for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
       sref = Reaction_getProduct(r,k);
       if ( SpeciesReference_isSetStoichiometryMath(sref) )
-	printf("%s ",
+	fprintf(f, "%s ",
 	       SBML_formulaToString(\
 		   SpeciesReference_getStoichiometryMath(sref)));
       else
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
-	  printf("%g ", SpeciesReference_getStoichiometry(sref));
+	  fprintf(f, "%g ", SpeciesReference_getStoichiometry(sref));
       
-      printf("%s", SpeciesReference_getSpecies(sref));
+      fprintf(f, "%s", SpeciesReference_getSpecies(sref));
       if(k+1<Reaction_getNumProducts(r))
-	printf("%s", " + ");
+	fprintf(f, "%s", " + ");
     }
-    printf(";  ");
+    fprintf(f, ";  ");
     if(Reaction_isSetKineticLaw(r)){
       kl = Reaction_getKineticLaw(r);
       math = KineticLaw_getMath(kl);
-      printf("%s;", SBML_formulaToString(math));
+      fprintf(f, "%s;", SBML_formulaToString(math));
       for(k=0;k<KineticLaw_getNumParameters(kl);k++){
 	
 	p = KineticLaw_getParameter(kl,k);
-	printf(" %s",  Parameter_getId(p));
+	fprintf(f, " %s",  Parameter_getId(p));
 	if(Parameter_isSetName(p))
-	  printf(" (%s)", Parameter_getName(p));
+	  fprintf(f, " (%s)", Parameter_getName(p));
 	if(Parameter_isSetValue(p))
-	  printf(" = %g", Parameter_getValue(p));
+	  fprintf(f, " = %g", Parameter_getValue(p));
 	if(Parameter_isSetUnits(p))
-	  printf(" [%s]", Parameter_getUnits(p));
+	  fprintf(f, " [%s]", Parameter_getUnits(p));
 	if ( !Parameter_getConstant(p) )
-	  printf(" (variable)");
-	printf(";");
+	  fprintf(f, " (variable)");
+	fprintf(f, ";");
       }
-     /*  printf("\n"); */
+     /*  fprintf(f, "\n"); */
     }else
-      printf("#   no rate law is set for this reaction.");
-    printf("\n");
+      fprintf(f, "#   no rate law is set for this reaction.");
+    fprintf(f, "\n");
   }
     
   for(i=0;i<Model_getNumRules(m);i++){
     rl = Model_getRule(m,i);
     if ( i == 0 ) {
-      printf("# Rules:\n");
+      fprintf(f, "# Rules:\n");
     }
     type = SBase_getTypeCode((SBase_t *)rl);
      
      
     if ( type == SBML_RATE_RULE ) {
       rr =  (RateRule_t *) rl;
-      printf(" rateRule:       d%s/dt = ", RateRule_getVariable(rr));
+      fprintf(f, " rateRule:       d%s/dt = ", RateRule_getVariable(rr));
     }
     if ( type == SBML_ALGEBRAIC_RULE ) {
       alr = (AlgebraicRule_t *) rl;
-      printf(" algebraicRule:       0 = ");
+      fprintf(f, " algebraicRule:       0 = ");
     }
     if ( type == SBML_ASSIGNMENT_RULE ) {
       asr = (AssignmentRule_t *) rl;
-      printf(" assignmentRule (%s): %s = ",
+      fprintf(f, " assignmentRule (%s): %s = ",
 	     RuleType_toString(AssignmentRule_getType(asr)),
 	     AssignmentRule_getVariable(asr));
     }
@@ -260,31 +260,31 @@ printReactions(Model_t *m)
       }
     }
     if(Rule_isSetMath(rl))
-      printf("%s\n", SBML_formulaToString(Rule_getMath(rl)));
+      fprintf(f, "%s\n", SBML_formulaToString(Rule_getMath(rl)));
 	     
   }
-  printf("\n");
+  fprintf(f, "\n");
 
   for(i=0;i<Model_getNumEvents(m);i++){
     if(i==0)
-      printf("# Events:\n");
+      fprintf(f, "# Events:\n");
     e = Model_getEvent(m,i);
     if(Event_isSetId(e))
-      printf("%s: ", Event_getId(e));
+      fprintf(f, "%s: ", Event_getId(e));
     if(Event_isSetName(e))
-      printf("(%s) ", Event_getName(e));   
+      fprintf(f, "(%s) ", Event_getName(e));   
     if(Event_isSetTrigger(e)) {
       math = Event_getTrigger(e);
-      printf("trigger: %s\n", SBML_formulaToString(math));
+      fprintf(f, "trigger: %s\n", SBML_formulaToString(math));
     }
     if(Event_isSetDelay(e))
-      printf("delay: %s;\n", SBML_formulaToString(Event_getDelay(e)));
+      fprintf(f, "delay: %s;\n", SBML_formulaToString(Event_getDelay(e)));
     if(Event_isSetTimeUnits(e))
-      printf("time Units: %s;\n", Event_getTimeUnits(e));
+      fprintf(f, "time Units: %s;\n", Event_getTimeUnits(e));
     for(k=0;k<Event_getNumEventAssignments(e);k++){      
       ea = Event_getEventAssignment(e,k);
       if(EventAssignment_isSetVariable(ea))
-	printf("  event:  %s = %s;\n",
+	fprintf(f, "  event:  %s = %s;\n",
 	       EventAssignment_getVariable(ea),
 	       EventAssignment_isSetMath(ea) ?
 	       SBML_formulaToString(EventAssignment_getMath(ea)) :
@@ -292,81 +292,81 @@ printReactions(Model_t *m)
     }
 
     if(i==Model_getNumEvents(m)-1)
-       printf("\n"); 
+       fprintf(f, "\n"); 
   }  
 
 
   for ( i=0; i<Model_getNumFunctionDefinitions(m); i++ ) {
 
-    if ( i==0 ) printf("# Functions:\n");
+    if ( i==0 ) fprintf(f, "# Functions:\n");
 
-    f = Model_getFunctionDefinition(m,i);
-    if ( FunctionDefinition_isSetName(f) )
-      printf("%s: ", FunctionDefinition_getName(f));
-    if(FunctionDefinition_isSetId(f) && FunctionDefinition_isSetMath(f)){
-      printf("%s( ", FunctionDefinition_getId(f));
-      math = FunctionDefinition_getMath(f);
+    fd = Model_getFunctionDefinition(m,i);
+    if ( FunctionDefinition_isSetName(fd) )
+      fprintf(f, "%s: ", FunctionDefinition_getName(fd));
+    if(FunctionDefinition_isSetId(fd) && FunctionDefinition_isSetMath(fd)){
+      fprintf(f, "%s( ", FunctionDefinition_getId(fd));
+      math = FunctionDefinition_getMath(fd);
 	for(j=0;j<ASTNode_getNumChildren(math)-1;j++){
-	  printf("%s", SBML_formulaToString(ASTNode_getChild(math, j)));
+	  fprintf(f, "%s", SBML_formulaToString(ASTNode_getChild(math, j)));
 	  if(j<ASTNode_getNumChildren(math)-2)
-	    printf(", ");
+	    fprintf(f, ", ");
 	  if(j==ASTNode_getNumChildren(math)-2)
-	    printf(") = ");
+	    fprintf(f, ") = ");
 	}
-      printf("%s;", SBML_formulaToString(ASTNode_getRightChild(math)));
+      fprintf(f, "%s;", SBML_formulaToString(ASTNode_getRightChild(math)));
     }
-    printf("\n");
+    fprintf(f, "\n");
   } 
   
 }
 
 
 void
-printODEsToSBML(cvodeData_t *data){
+printODEsToSBML(Model_t *ode, FILE *f){
       
   SBMLDocument_t *d;
   char *model;
   d = SBMLDocument_create();
-  SBMLDocument_setModel(d, data->model->simple);
+  SBMLDocument_setModel(d, ode);
   model = writeSBMLToString(d);
-  printf("%s", model);
+  fprintf(f, "%s", model);
   free(model);
 }
 
 
 void
-printODEs(cvodeData_t *x){
+printODEs(cvodeData_t *x, FILE *f){
   
   int i;
-  char *f;
+  char *formel;
   odeModel_t *model = x->model;
 
-  printf("\n");
-  printf("# Derived system of Ordinary Differential Equations (ODEs):\n");
-
-  printf("# Parameters:\n");
+  fprintf(f, "\n");
+  fprintf(f, "# Derived system of Ordinary Differential Equations (ODEs):\n");
+  
+  fprintf(f, "# Parameters:\n");
   for ( i=model->neq+model->nass; i<x->nvalues; i++ ) {
-    printf("%s = %g\n", model->names[i], x->value[i]);
+    fprintf(f, "%s = %g\n", model->names[i], x->value[i]);
   }
-  printf("# Assigned Parameters:\n");
+  fprintf(f, "# Assigned Parameters:\n");
   for ( i=0; i<model->nass; i++ ) {
-    f = SBML_formulaToString(model->assignment[i]);
-    printf("%d: %s =  %s;\n", i+1, model->names[model->neq+i], f);
-    free(f);
+    formel = SBML_formulaToString(model->assignment[i]);
+    fprintf(f, "%d: %s =  %s;\n", i+1, model->names[model->neq+i], formel);
+    free(formel);
   }  
   for ( i=0; i<model->neq; i++ ) {
     if ( i == 0 ) {
-      printf("# ODEs:\n");
+      fprintf(f, "# ODEs:\n");
     }
-    f = SBML_formulaToString(model->ode[i]);
-    printf("%d: d%s/dt =  %s;\n", i+1, model->names[i], f);
-    free(f);
+    formel = SBML_formulaToString(model->ode[i]);
+    fprintf(f, "%d: d%s/dt =  %s;\n", i+1, model->names[i], formel);
+    free(formel);
   }
-  printf("\n");
+  fprintf(f, "\n");
 
   /* change in behaviour AMF 27th June 05 
   if ( data->errors>0 ) {
-    printf("# %d ODEs could not be constructed."
+    fprintf(f, "# %d ODEs could not be constructed."
 	   " Try to add or correct kinetic laws!\n",
 	   data->errors); 
   }*/
@@ -374,39 +374,30 @@ printODEs(cvodeData_t *x){
 }
 
 void 
-printJacobian(cvodeData_t *x){
-  
-  odeModel_t *model = x->model;
+printJacobian(odeModel_t *om, FILE *f){
+    
   int i, j;
-  if ( x == NULL ) {
-    fprintf(stderr, "No data available.\n");
+  if ( om == NULL ) {
+    fprintf(stderr, "No odeModel available.\n");
     return;
   }
 
-  if ( model->jacob == NULL ) {
+  if ( om->jacob == NULL ) {
     fprintf(stderr, "Jacobian Matrix has not been constructed.\n");
     return;
   }
-  if ( Opt.InterActive == 0 && Opt.Jacobian == 0 ) {
-    fprintf(stderr, "Don't use option -j to also print the"
-	    " jacobian matrix expressions.\n");
-    fprintf(stderr, "If one or more of the ODEs were not differentiable"
-	    " option -j was set\nand jacobian matrix construction"
-	    " deactivated automatically\n");
-    return;
-  }
-  
-  printf("\n");
-  printf("# Jacobian Matrix:\n");
-  for ( i=0; i<model->neq; i++ ) {
-    printf("# %s: \n", model->names[i]);
-    for ( j=0; j<model->neq; j++ ) {
-      printf("  (d[%s]/dt)/d[%s] = %s;\n", 
-	     model->names[i], model->names[j], 
-	     SBML_formulaToString(model->jacob[i][j]));
+
+  fprintf(f, "\n");
+  fprintf(f, "# Jacobian Matrix:\n");
+  for ( i=0; i<om->neq; i++ ) {
+    fprintf(f, "# %s: \n", om->names[i]);
+    for ( j=0; j<om->neq; j++ ) {
+      fprintf(f, "  (d[%s]/dt)/d[%s] = %s;\n", 
+	     om->names[i], om->names[j], 
+	     SBML_formulaToString(om->jacob[i][j]));
     }
   }
-  printf("\n");
+  fprintf(f, "\n");
   fprintf(stderr, "Use option -j to avoid printing the"
 	  " jacobian matrix expressions.\n");
   return;
@@ -498,20 +489,6 @@ printJacobianTimeCourse(cvodeData_t *data, FILE *f){
   }
   fprintf(f, "\n");
   fflush(f);
-  
-  /* Print if simulation was aborted at steady state */
-  if(data->steadystate==1){
-    fprintf(f, "# Found steady state; aborted at time %g!\n",
-	    data->currenttime);
-    fprintf(stderr, "Simulation aborted at steady state!\n");
-    fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->model->neq;i++) 
-      fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->names[i],
-	      fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-
-  }
 
 #if !USE_GRACE
 
@@ -571,18 +548,6 @@ printOdeTimeCourse(cvodeData_t *data, FILE *f){
   fprintf(f, "\n");
   fflush(f);
 
-  /* Print if simulation was aborted at steady state */
-  if ( data->steadystate==1 ) {
-    fprintf(f, "# Found steady state; aborted at time %g!\n",
-	    data->currenttime);
-    fprintf(stderr, "Simulation aborted at steady state!\n");
-    fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->model->neq;i++)
-      fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->names[i],
-	      fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-  }
   
 #if !USE_GRACE
 
@@ -598,11 +563,10 @@ printOdeTimeCourse(cvodeData_t *data, FILE *f){
 }
 
 void
-printReactionTimeCourse(cvodeData_t *data, FILE *f) {
+printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f) {
 
   int i, j;
   cvodeResults_t *results;
-  Model_t *m;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;
@@ -619,7 +583,6 @@ printReactionTimeCourse(cvodeData_t *data, FILE *f) {
   }
 #endif
   
-  m = data->model->m;
   results = data->results;
   if ( Opt.PrintMessage )
     fprintf(stderr,
@@ -665,18 +628,6 @@ printReactionTimeCourse(cvodeData_t *data, FILE *f) {
   fprintf(f, "\n");
   fflush(f);
 
-  /* Print if simulation was aborted at steady state */
-  if ( data->steadystate==1 ) {
-    fprintf(f, "# Found steady state; aborted at time %g!\n",
-	    data->currenttime);
-    fprintf(stderr, "Simulation aborted at steady state!\n");
-    fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->model->neq;i++)
-      fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->names[i],
-	      fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-  }
 }
 
 void
@@ -726,19 +677,6 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", data->model->names[i]);
   fprintf(f, "\n\n");
   
-  /* Print if simulation was aborted at steady state */
-  if ( data->steadystate == 1 ) {
-    fprintf(f, "# Found steady state; aborted at time %g!\n",
-	    data->currenttime);
-    fprintf(stderr, "Simulation aborted at steady state!\n");
-    fprintf(stderr, "Rates at abortion at time  %g: \n", data->currenttime);
-    for(i=0;i<data->model->neq;i++) 
-      fprintf(stderr, "d[%s]/dt=%g  ",
-	      data->model->names[i],
-	      fabs(evaluateAST(data->model->ode[i],data)));
-    fprintf(stderr, "\n");
-  }
-  fprintf(f, "\n");
   fflush(f);
 
 #if !USE_GRACE
@@ -1217,10 +1155,10 @@ openXMGrace(cvodeData_t *data){
       GracePrintf("yaxis label \"concentration\"");    
       GracePrintf("yaxis ticklabel font 4");
       GracePrintf("yaxis ticklabel char size 0.7");
-      if ( Model_isSetName(data->model->m) )
-	GracePrintf("subtitle \"%s\"", Model_getName(data->model->m));
-      else if  ( Model_isSetId(data->model->m) )
-	GracePrintf("subtitle \"%s\"", Model_getId(data->model->m));
+      if ( Model_isSetName(data->model->simple) )
+	GracePrintf("subtitle \"%s\"", Model_getName(data->model->simple));
+      else if  ( Model_isSetId(data->model->simple) )
+	GracePrintf("subtitle \"%s\"", Model_getId(data->model->simple));
       else 
 	GracePrintf("subtitle \"model has no name/id\"");
       GracePrintf("subtitle font 8");   

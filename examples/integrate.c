@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 23:59:46 raim>
-  $Id: integrate.c,v 1.4 2005/08/02 13:16:52 raimc Exp $
+  Last changed Time-stamp: <2005-10-10 15:34:05 raim>
+  $Id: integrate.c,v 1.5 2005/10/12 12:52:45 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,12 +12,13 @@ main (int argc, char *argv[]){
   int i, j;
   char model[256];
   double time = 0.0;
-  double printstep = 1.0;
+  double printstep;
+  
   SBMLDocument_t *d;
   SBMLReader_t *sr;
   SBMLResults_t *results;
   cvodeSettings_t *set;
-  
+
    
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
@@ -26,21 +27,23 @@ main (int argc, char *argv[]){
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
   d = SBMLReader_readSBML(sr, model);
-  SBMLReader_free(sr);  
+  SBMLReader_free(sr);
 
-   
-  /* Setting SBML ODE Solver integration parameters with default values */
+  
+
+  /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_createDefaults();
-  /* resetting the values we need */
-  set->Time = time;
-  set->PrintStep = printstep;  
-  set->Error = 1e-18;
-  set->RError = 1e-14;
-  set->Mxstep = 10000;
-  set->SteadyState = 1;
+  CvodeSettings_setTime(set, time, printstep);
+  CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
   results = Model_odeSolver(d, set);
+  if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
+    printf("Integration not sucessful!\n");
+    SolverError_dumpAndClearErrors();
+    return(EXIT_FAILURE);
+  }
+  
   CvodeSettings_free(set);
   SBMLDocument_free(d);
 

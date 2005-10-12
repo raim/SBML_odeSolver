@@ -26,11 +26,17 @@ typedef enum errorCode
     SOLVER_ERROR_MODEL_NOT_SIMPLIFIED = 10006,
     SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH = 10007,
     SOLVER_ERROR_CANNOT_PARSE_MODEL = 10008,
+    SOLVER_ERROR_DOCUMENTLEVEL_ONE = 10009,
     
     /* 2XXXX - Integration failures */
     SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL = 20000,
     SOLVER_ERROR_EVENT_TRIGGER_FIRED = 20001,
     SOLVER_ERROR_CVODE_MALLOC_FAILED = 20002,
+
+    /* 25XXX - Integration Messages */
+    SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN = 25000,
+    SOLVER_MESSAGE_STEADYSTATE_FOUND = 25011,
+    
 
     /* 3XXXX - Memory Exhaustion */
     SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
@@ -62,47 +68,37 @@ typedef enum errorType
 #define ASSIGN_NEW_MEMORY(_ref, _type, _return) ASSIGN_NEW_MEMORY_BLOCK(_ref, 1, _type, _return)
 
 /* get number of stored errors  of given type */
-SBML_ODESOLVER_API int
-SolverError_getNum(errorType_t); 
+SBML_ODESOLVER_API int SolverError_getNum(errorType_t); 
 
 /* get a stored error message */
-SBML_ODESOLVER_API char *
-SolverError_getMessage(errorType_t, int errorNum);
+SBML_ODESOLVER_API char * SolverError_getMessage(errorType_t, int errorNum);
 
 /* get error code */
-SBML_ODESOLVER_API errorCode_t
-SolverError_getCode(errorType_t, int errorNum);
+SBML_ODESOLVER_API errorCode_t SolverError_getCode(errorType_t, int errorNum);
 
 /* get error code of last error stored of given type */
-SBML_ODESOLVER_API errorCode_t
-SolverError_getLastCode(errorType_t);
+SBML_ODESOLVER_API errorCode_t SolverError_getLastCode(errorType_t);
 
 /* empty error store */
-SBML_ODESOLVER_API void
-SolverError_clear();
+SBML_ODESOLVER_API void SolverError_clear();
 
 /* create an error */
-SBML_ODESOLVER_API void
-SolverError_error(errorType_t, errorCode_t, char *format, ...);
+SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, char *format, ...);
 
 /* exit the program if errors or fatals have been created. */
-SBML_ODESOLVER_API void
-SolverError_haltOnErrors();
+SBML_ODESOLVER_API void SolverError_haltOnErrors();
 
 /* write all errors and warnings to standard error */
-SBML_ODESOLVER_API void
-SolverError_dump();
+SBML_ODESOLVER_API void SolverError_dump();
 
 /* write all errors and warnings to a string (owned by caller unless SolverError_isMemoryExhausted()) */
-SBML_ODESOLVER_API char *
-SolverError_dumpToString();
+SBML_ODESOLVER_API char *SolverError_dumpToString();
 
 /* free string returned by SolverError_dumpToString */
 SBML_ODESOLVER_API void SolverError_freeDumpString(char *);
 
 /* write all errors and warnings to standard error and then empty error store*/
-SBML_ODESOLVER_API void
-SolverError_dumpAndClearErrors();
+SBML_ODESOLVER_API void SolverError_dumpAndClearErrors();
 
 /* allocated memory and sets error if it fails */
 SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size);

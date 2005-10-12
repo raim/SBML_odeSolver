@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
   /* structures */
-  typedef struct _CvodeSettings cvodeSettings_t;
+  typedef struct cvodeSettings cvodeSettings_t;
   typedef struct timeSettings timeSettings_t;
 
   /* timeSettings: start- and end times, timesteps, number of timesteps */
@@ -18,39 +18,72 @@ extern "C" {
   } ;
 
   /* Settings for CVODE Integration */
-  struct _CvodeSettings {
+  struct cvodeSettings {
     double Time;          /* Time to which model is integrated or if
 			     'Indefinitely' its the step size */
-    double PrintStep;     /* Number of output steps from 0 to 'Time'
+    int PrintStep;        /* Number of output steps from 0 to 'Time'
 			     ignored if 'Indefinitely' */
-    double Error;         /* absolute tolerance in Cvode integration */
-    double RError;        /* relative tolerance in Cvode integration */
-    double Mxstep;        /* maximum step number for CVode integration */
+    double *TimePoints;   /* Optional array of designed time-course.
+			     If passed by the calling application,
+			     Time will be ignored and overruled by
+			     TimePoints[Printstep+1], otherwise TimePoints
+			     will be calculated from Time and PrintSteps */
     int Indefinitely;     /* run without a defined end time, Time field
 			     contains step duration, ignore PrintStep
 			     field*/
+    double Error;         /* absolute tolerance in Cvode integration */
+    double RError;        /* relative tolerance in Cvode integration */
+    double Mxstep;        /* maximum step number for CVode integration */
+    
     int HaltOnEvent;      /* Stops integration upon an event */
     int SteadyState;      /* Stops integration upon a steady state */
     int UseJacobian;      /* Toggle use of Jacobian ASTs or approximation */
     int StoreResults;     /* Store time course history */
-    int EnableVariableChanges; /* enable modification of variables
-				  between timesteps set this to 0 for
-				  better performance from the solver */
   } ;
 
   /* functions */
-  timeSettings_t * TimeSettings_createWith(double t0, double tend, int nout);
+  timeSettings_t *TimeSettings_create(double t0, double tend, int nout);
   void TimeSettings_free(timeSettings_t *time);
-  
-  cvodeSettings_t * CvodeSettings_createDefaults();  
-  cvodeSettings_t * CvodeSettings_createWith(double EndTime, int PrintStep,
-					     double Error, double RError,
-					     double Mxstep, int UseJacobian,
-					     int EnableVariableChanges,
-					     int Indefinitely, int HaltOnEvent,
-					     int SteadyState,
-					     int StoreResults);
+  cvodeSettings_t *CvodeSettings_createFromTimeSettings(timeSettings_t *time);
+  cvodeSettings_t *CvodeSettings_createFromTimeSeries(double *timeseries,
+						      int n);
+  cvodeSettings_t *CvodeSettings_createDefaults();
+  cvodeSettings_t *CvodeSettings_create(double EndTime, int PrintStep,
+					 double *TimePoints,
+					 double Error, double RError,
+					 double Mxstep, int UseJacobian,
+					 int Indefinitely, int HaltOnEvent,
+					 int SteadyState,
+					 int StoreResults);
   void CvodeSettings_free(cvodeSettings_t *set);
+  cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set);
+  int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
+				   double *TimePoints, int PrintStep);
+  int CvodeSettings_setTime(cvodeSettings_t *set,
+			     double EndTime, int PrintStep);
+  void CvodeSettings_setSwitches(cvodeSettings_t *set,
+				 int UseJacobian,
+				 int Indefinitely, int HaltOnEvent,
+				 int SteadyState, int StoreResults);
+  void CvodeSettings_setErrors(cvodeSettings_t *set,
+			       double Error, double RError, double Mxstep);
+  void CvodeSettings_setError(cvodeSettings_t *set, double Error);
+  void CvodeSettings_setRError(cvodeSettings_t *set, double RError);
+  void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep);
+  
+  double CvodeSettings_getEndTime(cvodeSettings_t *set);
+  int CvodeSettings_getPrintsteps(cvodeSettings_t *set);
+  double CvodeSettings_getTime(cvodeSettings_t *set, int printstep);
+  double CvodeSettings_getError(cvodeSettings_t *set);
+  double CvodeSettings_getRError(cvodeSettings_t *set);
+  int CvodeSettings_getMxstep(cvodeSettings_t *set);
+
+  int CvodeSettings_useJacobian(cvodeSettings_t *set);
+  int CvodeSettings_integratieIndefinitely(cvodeSettings_t *set);
+  int CvodeSettings_haltOnEvent(cvodeSettings_t *set);
+  int CvodeSettings_checkSteadyState(cvodeSettings_t *set);
+  int CvodeSettings_storeResults(cvodeSettings_t *set);
+
 #ifdef __cplusplus
 }
 #endif

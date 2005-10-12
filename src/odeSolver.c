@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-09-22 10:33:36 raim>
-  $Id: odeSolver.c,v 1.13 2005/09/22 08:35:10 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 14:45:04 raim>
+  $Id: odeSolver.c,v 1.14 2005/10/12 12:52:08 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,102 +13,102 @@
 #include <sbml/SBMLTypes.h>
 
 #include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/sbml.h"
-#include "sbmlsolver/solverError.h"
 
 
 SBMLResults_t *
 Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   
   SBMLDocument_t *d2 = NULL;
-  cvodeData_t *data;
-  SBMLResults_t *results;
   Model_t *m;
+  odeModel_t *om;
+  integratorInstance_t *ii; 
+  SBMLResults_t *results;
 
- 
+  
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
   */
-  if ( SBMLDocument_getLevel(d) == 1 ) {
+  if ( SBMLDocument_getLevel(d) != 2 ) {
     d2 = convertModel(d);
     m = SBMLDocument_getModel(d2);
+    
   }
   else {
     m = SBMLDocument_getModel(d);
   }
   
-  /** At first, the function constructODEs(m)
-      will attempt to construct a simplified SBML model,
-      that only consists of species and their ODEs, represented
-      as Rate Rules, and of Events. All constant species, parameters
-      compartments, assignment rules and function definitions
-      will be replaced by their values or expressions respectively
-      in all remaining formulas (ie. rate and algebraic rules and
-      events).
-      Then the initial values and ODEs of the remaining species
-      will be written to the structure cvodeData_t *data.
-  */
+  RETURN_ON_FATALS_WITH(NULL);
   
-  data = constructODEs(m, set->UseJacobian);
-  /** Errors, found during odeConstruct, will cause the program to exit,
-      e.g. when some mathematical expressions are missing.
+  /** At first, ODEModel_create, attempts to construct a simplified
+     SBML model with reactions replaced by ODEs. SBML RateRules,
+     AssignmentRules,AlgebraicRules and Events are copied to the
+     simplified model. AlgebraicRules or missing mathematical
+     expressions produce fatal errors and appropriate messages.  All
+     function definitions are replaced by their values or expressions
+     respectively in all remaining formulas (ie. rules and events). If
+     that conversion was successful, an internal model structure
+     (odeModel) is created, that contains indexed versions of all
+     formulae (AFM's AST_INDEX) where the index of a former AST_NAME
+     corresponds to its position in a value array (double *), that is
+     used to store current values and to evaluate AST formulae during
+     integration.
   */
-  SolverError_haltOnErrors();
-    
-  /** Set integration parameters:
-      Now that we have arrived here, we can set the parameters
-      for integration, like
-      the end time and the number of steps to be printed out,
-      absolute and relative error tolerances,
-      use of exact or approximated Jacobian matrix,
-      printing of messages during integration,
-      event handling, steady state detection, and
-      runtime printing of results.
-      And then ..
-  */
-  data->tout  = set->Time;
-  data->nout  = set->PrintStep;
-  data->tmult = set->Time / set->PrintStep;
-  data->currenttime = 0.0;
-  data->t0 = 0.0;
-  data->opt = set;
 
-  /* allow setting of Jacobian,
-     only if its construction was succesfull */
-   if ( data->opt->UseJacobian == 1 ) { 
-     data->opt->UseJacobian = set->UseJacobian && data->model->jacobian; 
-   } 
+  om = ODEModel_create(m, set->UseJacobian);      
+  RETURN_ON_FATALS_WITH(NULL);
+  /**
+     Second, an integratorInstance is created from the odeModel
+     and the passed cvodeSettings. If that worked out ...
+  */
   
-  /** .... we can call the integrator function,
-      that invokeds CVODE and stores results.
+  ii = IntegratorInstance_create(om, set);
+  RETURN_ON_FATALS_WITH(NULL);
+
+  /** .... the integrator loop can be started,
+      that invoking CVODE to move one time step and store.
       The function will also handle events and
       check for steady states.
-  */    
-
-  integrator(data, 0, 0, stdout);
-  SolverError_dump();
+  */
+  while (!IntegratorInstance_timeCourseCompleted(ii)) {
+    if (!IntegratorInstance_integrateOneStep(ii))
+      IntegratorInstance_handleError(ii);
+  }  
   RETURN_ON_FATALS_WITH(NULL);
-  SolverError_clear();
 
-  /* Write simulation results into result structure */
-  results = Results_fromCvode(data); 
-  CvodeData_free(data);
+  /* map cvode results to SBML compartments,
+     species and parameters  */
+  results = SBMLResults_fromIntegrator(m, ii);
+
+  /* free integration data */
+  IntegratorInstance_free(ii);
+  /* free odeModel */
+  ODEModel_free(om);
+  
   /* free temporary level 2 version of the document */
   if ( d2 != NULL ) {
     SBMLDocument_free(d2);
   }
+  /* ... well done. */
   return(results);
 }
+
+/** 
+
+*/
 
 SBMLResults_t **
 Model_odeSolverBatch (SBMLDocument_t *d,
-		      cvodeSettings_t *settings, VarySettings vary) {
+		      cvodeSettings_t *set, VarySettings vary) {
 
   int i;
   double value, increment;
-  SBMLResults_t **results;
   SBMLDocument_t *d2 = NULL;
   Model_t *m;
+
+  odeModel_t *om;
+  integratorInstance_t *ii;
+  variableIndex_t *vi;
+  SBMLResults_t **results;
 
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
@@ -120,24 +120,63 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   else {
     m = SBMLDocument_getModel(d);
   }
-    
-  if(!(results = (SBMLResults_t **)calloc(vary.steps+1, sizeof(*results)))){
-    fprintf(stderr, "failed!\n");
-  }
+
+  ASSIGN_NEW_MEMORY_BLOCK(results, vary.steps+1, SBMLResults_t *, NULL);
+  
+  /** At first, ODEModel_create, attempts to construct a simplified
+     SBML model with reactions replaced by ODEs.
+     See comments in Model_odeSolver for details.
+  */
+  
+  om = ODEModel_create(m, set->UseJacobian);      
+  RETURN_ON_FATALS_WITH(NULL);
+  vi = ODEModel_getVariableIndex(om, vary.id);
+  if ( vi == NULL )
+    return NULL;
+  
+  /**
+     Second, an integratorInstance is created from the odeModel
+     and the passed cvodeSettings. If that worked out ...
+  */
+  
+  ii = IntegratorInstance_create(om, set);
+  RETURN_ON_FATALS_WITH(NULL);
+
+  /** .... the integrator loop can be started,
+      that invoking CVODE to move one time step and store.
+      The function will also handle events and
+      check for steady states.
+  */
 
   value = vary.start;
   increment = (vary.end - vary.start) / vary.steps;
-  
+
   for ( i=0; i<=vary.steps; i++ ) {
+
+    IntegratorInstance_setVariableValue(ii, vi, value);
+    printf("set %s to %f\n", ODEModel_getVariableName(om, vi),
+	   IntegratorInstance_getVariableValue(ii, vi) );
     
-      
-    if ( ! Model_setValue(m, vary.id, vary.rid, value) ) {
-      Warn(stderr, "Parameter for variation not found in the model.", vary.id);
-      return(NULL);
+    while (!IntegratorInstance_timeCourseCompleted(ii)) {
+      if (!IntegratorInstance_integrateOneStep(ii))
+	IntegratorInstance_handleError(ii);
     }
-    results[i] = Model_odeSolver(d, settings);
+    RETURN_ON_FATALS_WITH(NULL);
+    
+    printf("now %s is %f\n", ODEModel_getVariableName(om, vi),
+	   IntegratorInstance_getVariableValue(ii, vi) );
+    
+    /* map cvode results to SBML compartments,
+       species and parameters  */
+    results[i] = SBMLResults_fromIntegrator(m, ii);
+    IntegratorInstance_reset(ii);
     value = value + increment;
   }
+
+  /* free integration data */
+  IntegratorInstance_free(ii);
+  /* free odeModel */
+  ODEModel_free(om);
 
   /* free temporary level 2 version of the document */
   if ( d2 != NULL ) {
@@ -147,6 +186,10 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   return(results);
 
 }
+
+/** 
+
+*/
 
 SBMLResults_t ***
 Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *settings,
@@ -169,14 +212,9 @@ Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *settings,
     m = SBMLDocument_getModel(d);
   }
       
-  if(!(results = (SBMLResults_t ***)calloc(vary1.steps+1, sizeof(**results)))){
-    fprintf(stderr, "failed!\n");
-  }
-  for ( i=0; i<=vary1.steps; i++ ) {
-    if(!(results[i] = (SBMLResults_t **)calloc(vary2.steps+1, sizeof(*results)))){
-      fprintf(stderr, "failed!\n");
-    }    
-  }
+  ASSIGN_NEW_MEMORY_BLOCK(results, vary1.steps+1, SBMLResults_t **, NULL)
+  for ( i=0; i<=vary1.steps; i++ ) 
+    ASSIGN_NEW_MEMORY_BLOCK(results[i], vary2.steps+1, SBMLResults_t *, NULL);
 
   value1 = vary1.start;
   increment1 = (vary1.end - vary1.start) / vary1.steps;
@@ -253,24 +291,25 @@ Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
   return 0;  
 }
 
-/* The function Results_fromCvode(cvodeData_t *data)
+/** The function Results_fromCvode(cvodeData_t *data)
    maps the integration results of CVODE
    back to SBML structures.
 */
 
 SBMLResults_t *
-Results_fromCvode(cvodeData_t *data) {
+SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
 
   int i, j, k;
-  SBMLResults_t *sbml_results;
-  Model_t *m;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;
-  
-  cvodeResults_t *cvode_results;
   timeCourse_t *tc;
-  
+  SBMLResults_t *sbml_results;
+
+  cvodeData_t *data = ii->data;
+  cvodeResults_t *cvode_results = data->results;
+
+  /* check if data is available */
   if ( data == NULL ) {
     fatal(stderr, "No data, please construct ODE system first.\n");
     return NULL;
@@ -280,9 +319,7 @@ Results_fromCvode(cvodeData_t *data) {
     return NULL;
   }
 
-  sbml_results = SBMLResults_create(data->model->m, data->results->nout+1);    
-  cvode_results = data->results;
-  m = data->model->m;
+  sbml_results = SBMLResults_create(m, data->results->nout+1);    
 
   /* Allocating temporary kinetic law ASTs, for evaluation of fluxes */
 
