@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
 # Last changed Time-stamp: <2005-08-30 18:26:55 xtof>
-# $Id: simple.sh,v 1.4 2005/08/30 16:34:19 chfl Exp $
+# $Id: simple.sh,v 1.5 2005/10/12 12:54:56 raimc Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] FOO.xml ..."
 XMGR=$(which xmgrace)
@@ -61,10 +61,10 @@ set -e
 if test -x $GR; then \rm $GR; fi
 
 # show command line
-echo "$SOLVER $XML $JAC --time=$TIME --error=$ABSE --rerror=$RELE -l > $GR"
+echo "$SOLVER $XML $JAC --time=$TIMEE --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
 
 # integrate
-OK=$($SOLVER $XML $JAC --time=$TIME --error=$ABSE --rerror=$RELE -l > $GR)
+OK=$($SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
 if [ $OK ]; then
   echo ""
   echo "!!! Error: something went wrong during integration !!!"
