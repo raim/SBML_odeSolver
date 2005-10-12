@@ -39,6 +39,8 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);
   
   void ODEModel_constructJacobian(odeModel_t *);
+  
+  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om);
  
 #ifdef __cplusplus
 }

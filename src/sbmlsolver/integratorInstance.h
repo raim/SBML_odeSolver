@@ -53,6 +53,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createODESolverStructures(integratorInstance_t *);

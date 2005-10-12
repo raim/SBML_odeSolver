@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 20:53:21 raim>
-  $Id: odeSolver.h,v 1.10 2005/10/12 18:55:01 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:03:18 raim>
+  $Id: odeSolver.h,v 1.11 2005/10/12 19:49:23 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -47,32 +47,21 @@ struct varySettings {
 };
 
 
-SBMLResults_t *
-Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set);
-SBMLResults_t ***
-Model_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
-		     varySettings_t *vary);
-SBMLResults_t ***
-Model_odeSolverBatch2 (SBMLDocument_t *d, cvodeSettings_t *set,
-		      VarySettings vary1, VarySettings vary2);
-SBMLResults_t *
-SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii);
+SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set);
+SBML_ODESOLVER_API SBMLResults_t ***Model_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set, varySettings_t *vary);
+SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii);
 
 /* settings for parameter variation batch runs */
-varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints);
-int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
-				    double *designpoints);
-int VarySettings_addParameter(varySettings_t *, char *id, char *rid,
-			      double start, double end);
-int VarySettings_setParameterName(varySettings_t *vs, int i,
-				  char *id, char *rid);
-void VarySettings_dump(varySettings_t *);
-void VarySettings_free();
+SBML_ODESOLVER_API varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints);
+SBML_ODESOLVER_API int VarySettings_addParameterSeries(varySettings_t *, char *id, char *rid, double *designpoints);
+SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *id, char *rid, double start, double end);
+
+SBML_ODESOLVER_API int VarySettings_setParameterName(varySettings_t *vs, int i, char *id, char *rid);
+
+SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
+SBML_ODESOLVER_API void VarySettings_free();
 
 
-int
-Model_setValue(Model_t *m, const char *id, const char *rid, double value);
-int updateModel(cvodeData_t *data, int nout);
 #endif
 
 /* End of file */

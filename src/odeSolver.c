@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 19:15:08 raim>
-  $Id: odeSolver.c,v 1.15 2005/10/12 17:30:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:05:56 raim>
+  $Id: odeSolver.c,v 1.16 2005/10/12 19:49:22 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -351,53 +351,6 @@ void VarySettings_free(varySettings_t *vs)
   free(vs);    
 }
 
-
-
-/** 
-
-*/
-
-int
-Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
-
-  int i;
-  Compartment_t *c;
-  Species_t *s;
-  Parameter_t *p;
-  Reaction_t *r;
-  KineticLaw_t *kl;
-
-  if ( (r = Model_getReactionById(m, rid)) != NULL ) {
-    kl = Reaction_getKineticLaw(r);
-    for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
-      p = KineticLaw_getParameter(kl, i);
-      if ( strcmp(id, Parameter_getId(p)) == 0 ) {
-	Parameter_setValue(p, value);
-	return 1;
-      }
-    }
-  }
-  if ( (c = Model_getCompartmentById(m, id)) != NULL ) {
-    Compartment_setSize(c, value);
-    return 1;
-  }
-  if ( (s = Model_getSpeciesById(m, id)) != NULL ) {
-    if ( Species_isSetInitialAmount(s) ) {
-      Species_setInitialAmount(s, value);
-    }
-    else {
-      Species_setInitialConcentration(s, value);
-    }
-    return 1;
-  }
-  if ( (p = Model_getParameterById(m, id)) != NULL ) {
-    Parameter_setValue(p, value);
-    return 1;
-  }
-  return 0;  
-}
-
-
 /** Maps the integration results from internal back
     to SBML structures in  model `m' 
 */
@@ -503,35 +456,6 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   free(kls);
   
   return(sbml_results);
-}
-
-/** Writes current simulation data to
-    original model */
-int
-updateModel(cvodeData_t *data, int nout) {
-
-  int i;
-  Species_t *s;
-  Compartment_t *c;
-  Parameter_t *p;  
-  
-  for ( i=0; i<data->nvalues; i++ ) {
-    if ( (s = Model_getSpeciesById(data->model->m, data->model->names[i]))
-	 != NULL ) {
-      Species_setInitialConcentration(s, data->results->value[i][nout]);
-    }
-    else if ( (c = Model_getCompartmentById(data->model->m,
-					    data->model->names[i])) != NULL ) {
-      Compartment_setSize(c, data->results->value[i][nout]);
-    }
-    else if ( (p = Model_getParameterById(data->model->m,
-					  data->model->names[i])) !=  NULL ) {
-      Parameter_setValue(p, data->results->value[i][nout]);
-    }
-  }
-
-  return 1;
-
 }
 
 

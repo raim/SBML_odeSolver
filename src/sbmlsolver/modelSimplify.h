@@ -1,9 +1,11 @@
 /*
-  Last changed Time-stamp: <2005-10-12 20:45:07 raim>
-  $Id: modelSimplify.h,v 1.2 2005/10/12 18:55:01 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:31:28 raim>
+  $Id: modelSimplify.h,v 1.3 2005/10/12 19:49:23 raimc Exp $
 */
 #ifndef _MODEL_H_
 #define _MODEL_H_
+
+#include "sbmlsolver/exportdefs.h"
 
 SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula);
 SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x);

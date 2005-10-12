@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 18:23:38 raim>
-  $Id: integratorInstance.c,v 1.10 2005/10/12 17:30:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:38:46 raim>
+  $Id: integratorInstance.c,v 1.11 2005/10/12 19:49:22 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -249,6 +249,7 @@ void IntegratorInstance_setNextTimeStep(integratorInstance_t *engine,
     engine->cv->tout = nexttime;
 }
 
+
 /** Returns TRUE if the requested timecourse has been completed
     for the passed integratorInstance
 */
@@ -258,6 +259,7 @@ IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
 {
     return engine->cv->iout > engine->cv->nout;
 }
+
 
 /** Gets the value of a variable or parameter during an integration
     via its variableIndex. The variableIndex can be retrieved from the
@@ -295,6 +297,47 @@ IntegratorInstance_setVariableValue(integratorInstance_t *engine,
     engine->cv->t0 = engine->cv->t;
     IntegratorInstance_createODESolverStructures(engine);  
   }
+}
+
+
+/** Writes current simulation data to original model
+
+*/
+
+SBML_ODESOLVER_API int
+IntegratorInstance_updateModel(integratorInstance_t *engine) {
+
+  int i;
+  Species_t *s;
+  Compartment_t *c;
+  Parameter_t *p;
+  
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  cvodeResults_t *results = engine->results;
+
+  int nout = results->nout;
+  int nvalues = data->nvalues;
+  Model_t *m = om->m;
+
+  
+  for ( i=0; i<nvalues; i++ ) {
+    if ( (s = Model_getSpeciesById(m, om->names[i]))
+	 != NULL ) {
+      Species_setInitialConcentration(s, results->value[i][nout]);
+    }
+    else if ( (c = Model_getCompartmentById(m, om->names[i])) != NULL ) {
+      Compartment_setSize(c, results->value[i][nout]);
+    }
+    else if ( (p = Model_getParameterById(m, om->names[i])) !=  NULL ) {
+      Parameter_setValue(p, results->value[i][nout]);
+    }
+    else
+      return 0;
+  }
+
+  return 1;
+
 }
 
 

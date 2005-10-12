@@ -1,3 +1,6 @@
+
+#include "sbmlsolver/exportdefs.h"
+
 #ifndef _CVODESETTINGS_H_
 #define _CVODESETTINGS_H_
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-08 19:11:30 raim>
-  $Id: commandLine.c,v 1.2 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:34:49 raim>
+  $Id: commandLine.c,v 1.3 2005/10/12 19:49:22 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,7 +151,7 @@ odeSolver (int argc, char *argv[])
     */
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 ) {
       om = ODEModel_create(m, Opt.Jacobian);
-      det = determinantNAST(om->jacob, om->neq);
+      det = ODEModel_constructDeterminant(om);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
       SolverError_haltOnErrors();

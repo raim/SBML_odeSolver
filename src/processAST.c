@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-02 17:33:51 raim>
-  $Id: processAST.c,v 1.8 2005/08/02 15:47:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:27:23 raim>
+  $Id: processAST.c,v 1.9 2005/10/12 19:49:22 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -459,8 +459,6 @@ evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	log10(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_PIECEWISE:
-/*  fprintf(stderr, "The piecewise function is not implemented yet.\n"); */
-/*  fprintf(stderr, "Defaults to 0.\n"); */
       if ( evaluateAST(child(n,0),data) ) {
 	result = evaluateAST(child(n,1),data);
       }
@@ -1537,7 +1535,7 @@ differentiateAST(ASTNode_t *f, char *x) {
 
 /* ------------------------------------------------------------------------ */
 
-/*
+/**
   !! experimental function determinantNAST !! NOT TESTED !!
   !! WILL RUN OUT OF MEMORY FOR BIG SYSTEMS !!
   calculates the determinant of the jacobian matrix, is not
@@ -1546,6 +1544,7 @@ differentiateAST(ASTNode_t *f, char *x) {
   Doesn't work if expressions get too big for yet unknown
   reasons!??
 */
+
 
 ASTNode_t *
 determinantNAST(ASTNode_t ***A, int N) {

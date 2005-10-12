@@ -377,6 +377,17 @@ ODEModel_constructJacobian(odeModel_t *model) {
 }
 
 
+SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
+{
+
+  ASTNode_t ***A;
+
+  if ( om->jacob != NULL && om->jacobian == 1 )
+    return determinantNAST(om->jacob, om->neq);
+  else
+    return NULL; 
+}
+
 /**
    Frees the odeModel structures
 */

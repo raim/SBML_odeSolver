@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-08 19:32:09 raim>
-  $Id: odeConstruct.c,v 1.9 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-12 21:02:18 raim>
+  $Id: odeConstruct.c,v 1.10 2005/10/12 19:49:22 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +23,53 @@ static void Model_copyOdes(Model_t *m, Model_t*ode);
 static void Model_copyEvents(Model_t *m, Model_t*ode);
 static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode);
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode);
+
+/** 
+
+*/
+
+int
+Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
+
+  int i;
+  Compartment_t *c;
+  Species_t *s;
+  Parameter_t *p;
+  Reaction_t *r;
+  KineticLaw_t *kl;
+
+  if ( (r = Model_getReactionById(m, rid)) != NULL ) {
+    kl = Reaction_getKineticLaw(r);
+    for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
+      p = KineticLaw_getParameter(kl, i);
+      if ( strcmp(id, Parameter_getId(p)) == 0 ) {
+	Parameter_setValue(p, value);
+	return 1;
+      }
+    }
+  }
+  if ( (c = Model_getCompartmentById(m, id)) != NULL ) {
+    Compartment_setSize(c, value);
+    return 1;
+  }
+  if ( (s = Model_getSpeciesById(m, id)) != NULL ) {
+    if ( Species_isSetInitialAmount(s) ) {
+      Species_setInitialAmount(s, value);
+    }
+    else {
+      Species_setInitialConcentration(s, value);
+    }
+    return 1;
+  }
+  if ( (p = Model_getParameterById(m, id)) != NULL ) {
+    Parameter_setValue(p, value);
+    return 1;
+  }
+  return 0;  
+}
+
+
+
 
 /** C: Construct an ODE system from a Reaction Network
     constructs an ODE systems of the reaction network
