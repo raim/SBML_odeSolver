@@ -16,7 +16,6 @@ extern "C" {
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian);
   SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *model, int jacobian);
   SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
-  SBML_ODESOLVER_API void ODEModel_freeAll(odeModel_t *);
   
   SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *symbol);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *, int);
