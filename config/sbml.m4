@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.2 2005/05/31 15:20:08 raimc Exp $
+dnl $Id: sbml.m4,v 1.3 2005/10/13 13:41:09 chfl Exp $
 
 dnl
 dnl look for SBML Library headers in some standard set of directories
@@ -35,6 +35,24 @@ AC_DEFUN([AC_SBML_PATH],
       break
     fi
   done
+
+  dnl get version of installed libsbml
+  changequote(<<, >>)
+  sbml_sharedlib=`echo $ac_dir/libsbml.?.?.?.so`
+  if test -z "$sbml_sharedlib"; then sbml_sharedlib='libsbml.2.3.3'; fi
+  sbml_version=`echo $sbml_sharedlib | sed 's/.*libsbml\.\([0-9]*\.[0-9]*\.[0-9]*\).so/\1/p; d'`
+  sbml_major_version=`expr $sbml_version : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
+  sbml_minor_version=`expr $sbml_version : '[0-9]*\.\([0-9]*\)\.[0-9]*'`
+  sbml_micro_version=`expr $sbml_version : '[0-9]*\.[0-9]*\.\([0-9]*\)' '|' 0`
+  changequote([, ])
+  if test $sbml_major_version -eq 2 &&
+     test $sbml_minor_version -eq 3 &&
+     test $sbml_micro_version -le 3;
+  then
+    AC_MSG_NOTICE([found SBML Library Version <= $sbml_version])
+  else
+    AC_MSG_NOTICE([found SBML Library Version $sbml_version])
+  fi 
 ])
 
 dnl
@@ -55,16 +73,38 @@ AC_DEFUN([CONFIG_LIB_SBML],
   if test $with_libsbml = yes; then
     AC_SBML_PATH
   else
+    dnl get version of installed libsbml
+    AC_MSG_CHECKING(for SBML Library Version)
+    changequote(<<, >>)
+    sbml_sharedlib=$with_libsbml/libsbml.?.?.?.so
+    if test -z "$sbml_sharedlib"; then sbml_sharedlib='libsbml.2.3.3'; fi
+    sbml_version=`echo $sbml_sharedlib | sed 's/.*libsbml\.\([0-9]*\.[0-9]*\.[0-9]*\).so/\1/p; d'`
+    sbml_major_version=`expr $sbml_version : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
+    sbml_minor_version=`expr $sbml_version : '[0-9]*\.\([0-9]*\)\.[0-9]*'`
+    sbml_micro_version=`expr $sbml_version : '[0-9]*\.[0-9]*\.\([0-9]*\)' '|' 0`
+    changequote([, ])
+    if test $sbml_major_version -eq 2 &&
+       test $sbml_minor_version -eq 3 &&
+       test $sbml_micro_version -le 3;
+    then
+      AC_MSG_NOTICE([found SBML Library Version <= $sbml_version])
+    else
+      AC_MSG_NOTICE([found SBML Library Version $sbml_version])
+    fi     
+
     SBML_CFLAGS="-I$with_libsbml/include"
     SBML_LDFLAGS="-L$with_libsbml/lib"
+    
     dnl ac_SBML_includes=$with_libsbml
     if test $HOST_TYPE = darwin; then
       SBML_RPATH=
     else
       SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
     fi   
-     SBML_LIBS="-lsbml"
+    
+    SBML_LIBS="-lsbml"
   fi
+
   dnl check if SBML Library is functional
   AC_MSG_CHECKING([correct functioning of SBML])
   AC_LANG_PUSH(C)
@@ -105,6 +145,14 @@ AC_DEFUN([CONFIG_LIB_SBML],
   dnl                   [Define to 1 to use SBML Library version < 2.2.0])])
   dnl AC_SUBST(OLD_SBML)
   dnl AC_MSG_RESULT([$LIBV])
+
+  dnl work around broken include-header-paths in libsbml-2.3.4
+  if test $sbml_major_version -eq 2 &&
+     test $sbml_minor_version -eq 3 &&
+     test $sbml_micro_version -eq 4;
+  then
+     SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
+  fi
 
   dnl reset global variables to cached values
   CFLAGS=$sbml_save_CFLAGS
