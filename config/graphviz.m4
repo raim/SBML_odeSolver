@@ -1,4 +1,4 @@
-dnl $Id: graphviz.m4,v 1.3 2005/10/10 23:31:19 chfl Exp $
+dnl $Id: graphviz.m4,v 1.4 2005/10/13 14:10:09 chfl Exp $
 
 dnl
 dnl Check --with-graphviz[=PREFIX] is specified and graphviz is installed.
@@ -15,7 +15,12 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
   GRAPHVIZ_LDFLAGS=
   GRAPHVIZ_RPATH=
   GRAPHVIZ_LIBS=
+  if test $with_graphviz = no
+  then
+    graphviz_functional=no
+  else
   if test $with_graphviz != yes; then
+    AC_MSG_NOTICE(checking for Graphviz Library)
     dnl Remove needless trailing slashes because it can confuse tests later.
     with_graphviz=`echo $with_graphviz | sed -e 's,\(.*\)/$,\1,g'`
     
@@ -39,7 +44,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
     changequote([, ])
   fi
 
-  AC_MSG_RESULT([Found graphviz version $dot_version])
+  AC_MSG_NOTICE([found Graphviz Library Version $dot_version])
 
   if test $dot_major_version -ge 2;
   then
@@ -117,6 +122,8 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
   LDFLAGS=$graphviz_save_LDFLAGS
   LIBS=$graphviz_save_LIBS
   AC_LANG_POP
+
+  fi
 
   if test $graphviz_functional = yes; then
     AC_DEFINE([USE_GRAPHVIZ], 1, [Define to 1 to use the GRAPHVIZ Library])
