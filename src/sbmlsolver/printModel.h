@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-07 16:47:18 raim>
-  $Id: printModel.h,v 1.3 2005/10/12 12:52:09 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 18:49:05 raim>
+  $Id: printModel.h,v 1.4 2005/10/17 16:53:59 raimc Exp $
 */
 #ifndef _PRINTMODEL_H_
 #define _PRINTMODEL_H_
@@ -13,7 +13,7 @@ printSpecies(Model_t *m, FILE *f);
 void
 printReactions(Model_t *m, FILE *f);
 void
-printODEs(cvodeData_t *data, FILE *f);
+printODEs(odeModel_t *om, FILE *f);
 void
 printODEsToSBML(Model_t *ode, FILE *f);
 void

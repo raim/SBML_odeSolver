@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-08 03:58:23 raim>
-  $Id: printModel.c,v 1.7 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 18:52:32 raim>
+  $Id: printModel.c,v 1.8 2005/10/17 16:53:59 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -335,19 +335,19 @@ printODEsToSBML(Model_t *ode, FILE *f){
 
 
 void
-printODEs(cvodeData_t *x, FILE *f){
+printODEs(odeModel_t *model, FILE *f){
   
-  int i;
+  int i, nvalues;
   char *formel;
-  odeModel_t *model = x->model;
 
+  nvalues = model->neq+model->nass + model->nconst;
   fprintf(f, "\n");
   fprintf(f, "# Derived system of Ordinary Differential Equations (ODEs):\n");
   
   fprintf(f, "# Parameters:\n");
-  for ( i=model->neq+model->nass; i<x->nvalues; i++ ) {
-    fprintf(f, "%s = %g\n", model->names[i], x->value[i]);
-  }
+  for ( i=model->neq+model->nass; i<nvalues; i++ ) 
+    fprintf(f, "%s, ", model->names[i]);
+  printf("\n");
   fprintf(f, "# Assigned Parameters:\n");
   for ( i=0; i<model->nass; i++ ) {
     formel = SBML_formulaToString(model->assignment[i]);

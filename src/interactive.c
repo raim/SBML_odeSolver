@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-13 14:31:46 raim>
-  $Id: interactive.c,v 1.9 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 18:50:36 raim>
+  $Id: interactive.c,v 1.10 2005/10/17 16:53:59 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,10 +127,9 @@ interactive() {
     
     if(strcmp(select,"o")==0){
       om = ODEModel_create(m, Opt.Jacobian);
-      data = CvodeData_create(om);
       SolverError_dumpAndClearErrors();
       if (data)
-          printODEs(data, stdout);
+          printODEs(om, stdout);
     }
 
     if(strcmp(select,"i")==0){

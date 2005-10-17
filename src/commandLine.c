@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-13 14:32:06 raim>
-  $Id: commandLine.c,v 1.4 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 18:49:57 raim>
+  $Id: commandLine.c,v 1.5 2005/10/17 16:53:59 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,16 +176,14 @@ odeSolver (int argc, char *argv[])
       printReactions(m, outfile);
       
       om = ODEModel_create(m, Opt.Jacobian);
-      data = CvodeData_create(om);
       /* slight change in behavour - halt now rather than continue
 	 with null model
          used to continue with empty model */
       SolverError_dump(); /* write out all everything including warnings */
       SolverError_haltOnErrors(); 
-      printODEs(data, outfile);
+      printODEs(om, outfile);
       printJacobian(om, outfile);
 
-      CvodeData_free(data);
       ODEModel_free(om);
       Model_free(ode);
       xfree(sbmlFilename);
