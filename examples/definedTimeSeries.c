@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-10 15:50:14 raim>
-  $Id: definedTimeSeries.c,v 1.1 2005/10/12 12:53:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 17:32:32 raim>
+  $Id: definedTimeSeries.c,v 1.2 2005/10/17 16:08:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,9 +38,11 @@ main (int argc, char *argv[]){
     timepoints[i] = i*i;
   }
   CvodeSettings_setTimeSeries(set, timepoints, printstep);
+  /* the array was copied and can now be freed */
+  free(timepoints);
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
-  results = Model_odeSolver(d, set);
+  results = SBML_odeSolver(d, set);
   
   CvodeSettings_free(set);
   SBMLDocument_free(d);

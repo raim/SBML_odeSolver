@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-10 15:34:05 raim>
-  $Id: integrate.c,v 1.5 2005/10/12 12:52:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-13 17:40:17 raim>
+  $Id: integrate.c,v 1.6 2005/10/17 16:08:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +16,8 @@ main (int argc, char *argv[]){
   
   SBMLDocument_t *d;
   SBMLReader_t *sr;
+  Model_t *m;
+  
   SBMLResults_t *results;
   cvodeSettings_t *set;
 
@@ -29,15 +31,15 @@ main (int argc, char *argv[]){
   d = SBMLReader_readSBML(sr, model);
   SBMLReader_free(sr);
 
-  
-
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_createDefaults();
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   
-  /* calling the SBML ODE Solver, and retrieving SBMLResults */  
-  results = Model_odeSolver(d, set);
+  /* calling the SBML ODE Solver,
+     and retrieving SBMLResults */  
+  results = SBML_odeSolver(d, set);
+  
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
     printf("Integration not sucessful!\n");
     SolverError_dumpAndClearErrors();

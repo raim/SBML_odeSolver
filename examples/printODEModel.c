@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-10 19:56:45 raim>
-  $Id: printODEModel.c,v 1.1 2005/10/12 12:53:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 17:36:40 raim>
+  $Id: printODEModel.c,v 1.2 2005/10/17 16:08:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +13,7 @@
 int main(void)
 {
     int i;
+    char *formula;
     variableIndex_t *vi = NULL;
 
     odeModel_t *model =
@@ -36,15 +37,17 @@ int main(void)
     printf("ODEs:\n");
     for ( i=0; i<ODEModel_getNeq(model); i++ ){
       vi = ODEModel_getOdeVariableIndex(model, i);
-      printf("d[%s]/dt = %s \n", ODEModel_getVariableName(model, vi),
-	     SBML_formulaToString(ODEModel_getOde(model, vi)));
+      formula = SBML_formulaToString(ODEModel_getOde(model, vi));
+      printf("d[%s]/dt = %s \n", ODEModel_getVariableName(model, vi), formula);
+      free(formula);
       VariableIndex_free(vi);
     }
     printf("Assigned Variables:\n");
     for ( i=0; i<ODEModel_getNumAssignments(model); i++ ){
       vi = ODEModel_getAssignedVariableIndex(model, i);
-      printf("%s = %s \n", ODEModel_getVariableName(model, vi),
-	     SBML_formulaToString(ODEModel_getAssignment(model, vi)));
+      formula = SBML_formulaToString(ODEModel_getOde(model, vi));
+      printf("%s = %s \n", ODEModel_getVariableName(model, vi), formula);
+      free(formula);
       VariableIndex_free(vi);
     }
     printf("Constants:\n");

@@ -9,6 +9,7 @@
 int main(void)
 {
     int i;
+    char *formula;
     ASTNode_t *top = SBML_parseFormula("A * B");
     ASTNode_t *temp = ASTNode_create();
 
@@ -37,7 +38,9 @@ int main(void)
         printf("index of %s is %d\n", ASTNode_getName(node), ASTNode_getIndex(node));
     }
 
-    printf("top : %s\n", SBML_formulaToString(top));
+    formula = SBML_formulaToString(top);
+    printf("top : %s\n", formula);
+    free(formula);
 
     ASTNode_free(top);
 

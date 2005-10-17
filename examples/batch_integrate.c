@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 18:31:28 raim>
-  $Id: batch_integrate.c,v 1.7 2005/10/12 17:31:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 16:45:51 raim>
+  $Id: batch_integrate.c,v 1.8 2005/10/17 16:08:37 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +28,8 @@ main (int argc, char *argv[]){
      during and must be freed at the end of this program  */
   cvodeSettings_t *set;
   varySettings_t *vs;
-  SBMLResults_t ***results;
+  SBMLResultsMatrix_t *resM;
+  SBMLResults_t *results;
   
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
@@ -63,36 +64,36 @@ main (int argc, char *argv[]){
   CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1); 
   
   /* Setting SBML Ode Solver batch integration parameters */
-  vs = VarySettings_create(1, steps+1);
+  vs = VarySettings_allocate(1, steps+1);
   VarySettings_addParameter(vs, parameter, reaction, start, end);
   VarySettings_dump(vs);
   
   /* calling the SBML ODE Solver Batch function,
      and retrieving SBMLResults */
-  results = Model_odeSolverBatch(d, set, vs);
-  
+  resM = SBML_odeSolverBatch(d, set, vs);
+
+  /* we don't need these anymore */
   CvodeSettings_free(set);  
   SBMLDocument_free(d);
+  VarySettings_free(vs);  
 
-  if ( results == NULL ) {
-    printf("### Parameter variation not succesfull!\n");
+  results = resM->results[0][0];
+
+  if ( resM->results == NULL ) {
+    printf("### Parameter variation not succesful!\n");
     return(0);
   }
   
 
-  for ( i=0; i<1; i++ ) {
-    for ( j=0; j<vs->nrdesignpoints; j++ ) {
-      printf("### RESULTS Parameter %d, Step %d # Parameter %s = %f:\n",
-	     i+1, j+1, vs->id[i], vs->params[i][j]);
-      
-      printResults(results[i][j]);
-      SBMLResults_free(results[i][j]);
+  for ( i=0; i<resM->i; i++ ) {
+    for ( j=0; j<resM->j; j++ ) {
+      results = SBMLResultsMatrix_getResults(resM, i, j);
+      printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);      
+      printResults(results);
     }
-    free(results[i]);
-  }  
-  free(results);
-  VarySettings_free(vs);
+  }
 
+  SBMLResultsMatrix_free(resM);
   return (EXIT_SUCCESS);  
 }
 
