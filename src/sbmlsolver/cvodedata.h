@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-11 18:54:45 raim>
-  $Id: cvodedata.h,v 1.8 2005/10/12 12:52:09 raimc Exp $
+  Last changed Time-stamp: <2005-10-13 18:31:32 raim>
+  $Id: cvodedata.h,v 1.9 2005/10/17 16:07:50 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -116,9 +116,9 @@ struct cvodeData {
 } ;
 
 /** get values from cvodeResults */
+SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);
 SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
 						variableIndex_t *vi, int n);
-SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);
 SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *);
 
 

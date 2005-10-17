@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 23:13:48 raim>
-  $Id: odeSolver.c,v 1.17 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 17:41:56 raim>
+  $Id: odeSolver.c,v 1.18 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,32 +14,87 @@
 
 #include "sbmlsolver/odeSolver.h"
 
+/**
 
-/***/
+*/
 
 SBML_ODESOLVER_API SBMLResults_t *
-Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
-  
-  SBMLDocument_t *d2 = NULL;
-  Model_t *m;
-  odeModel_t *om;
-  integratorInstance_t *ii; 
-  SBMLResults_t *results;
+SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
 
+  SBMLDocument_t *d2 = NULL;
+  Model_t *m = NULL;
+  SBMLResults_t *results;
   
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
   */
   if ( SBMLDocument_getLevel(d) != 2 ) {
     d2 = convertModel(d);
-    m = SBMLDocument_getModel(d2);
-    
+    m = SBMLDocument_getModel(d2);    
   }
   else {
     m = SBMLDocument_getModel(d);
+  }  
+  RETURN_ON_FATALS_WITH(NULL);
+
+  results = Model_odeSolver(m, set);
+  
+  /* free temporary level 2 version of the document */
+  if ( d2 != NULL ) {
+    SBMLDocument_free(d2);
   }
   
+  return results;
+  
+}
+
+
+/** 
+
+*/
+
+SBML_ODESOLVER_API SBMLResultsMatrix_t *
+SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
+		    varySettings_t *vs) 
+{
+
+  SBMLDocument_t *d2 = NULL;
+  Model_t *m = NULL;
+  SBMLResultsMatrix_t *resM;
+  
+  /** Convert SBML Document level 1 to level 2, and
+      get the contained model
+  */
+  if ( SBMLDocument_getLevel(d) != 2 ) {
+    d2 = convertModel(d);
+    m = SBMLDocument_getModel(d2);    
+  }
+  else {
+    m = SBMLDocument_getModel(d);
+  }  
   RETURN_ON_FATALS_WITH(NULL);
+  
+  resM = Model_odeSolverBatch(m, set, vs);
+  /* free temporary level 2 version of the document */
+  if ( d2 != NULL ) {
+    SBMLDocument_free(d2);
+  }
+  
+  return resM;
+    
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API SBMLResults_t *
+Model_odeSolver(Model_t *m, cvodeSettings_t *set) {
+  
+  odeModel_t *om;
+  integratorInstance_t *ii; 
+  SBMLResults_t *results;
   
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs. SBML RateRules,
@@ -86,10 +141,6 @@ Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   /* free odeModel */
   ODEModel_free(om);
   
-  /* free temporary level 2 version of the document */
-  if ( d2 != NULL ) {
-    SBMLDocument_free(d2);
-  }
   /* ... well done. */
   return(results);
 }
@@ -99,39 +150,23 @@ Model_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
 
 */
 
-SBML_ODESOLVER_API SBMLResults_t ***
-Model_odeSolverBatch (SBMLDocument_t *d,
-		      cvodeSettings_t *set, varySettings_t *vs) {
+SBML_ODESOLVER_API SBMLResultsMatrix_t *
+Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
+		      varySettings_t *vs) {
+
 
   int i, j;
   double value, increment;
-  SBMLDocument_t *d2 = NULL;
-  Model_t *m;
-
+ 
   odeModel_t *om;
   integratorInstance_t *ii;
   variableIndex_t *vi;
-  SBMLResults_t ***results;
+  SBMLResultsMatrix_t *resM;
 
-  /** Convert SBML Document level 1 to level 2, and
-      get the contained model
-  */
-  if ( SBMLDocument_getLevel(d) == 1 ) {
-    d2 = convertModel(d);
-    m = SBMLDocument_getModel(d2);
-  }
-  else {
-    m = SBMLDocument_getModel(d);
-  }
-  
-  ASSIGN_NEW_MEMORY_BLOCK(results, vs->nrparams, SBMLResults_t **, NULL);
-  for ( i=0; i<vs->nrparams; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(results[i],
-			    vs->nrdesignpoints, SBMLResults_t *, NULL);
-  
-  
-  RETURN_ON_FATALS_WITH(NULL);
-  
+
+  resM = SBMLResultsMatrix_allocate(vs->nrparams, vs->nrdesignpoints);
+
+
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs.
      See comments in Model_odeSolver for details.
@@ -157,29 +192,26 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   
     /* then, work through all values for this parameter */
     for ( j=0; j<vs->nrdesignpoints; j++ ) {
-      for ( j=0; j<vs->nrdesignpoints; j++ ) {
 
-	/* Set the value!*/
-	IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
+      /* Set the value!*/
+      IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
 
 
-      /** .... the integrator loop can be started,
-	  that invoking CVODE to move one time step and store.
-	  The function will also handle events and
-	  check for steady states.     */      
+      /** .... the integrator loop can be started, that invoking
+	  CVODE to move one time step and store.  The function will
+	  also handle events and check for steady states.  */      
 
-	while (!IntegratorInstance_timeCourseCompleted(ii)) {
-	  if (!IntegratorInstance_integrateOneStep(ii))
-	    IntegratorInstance_handleError(ii);
-	}
-    
-	RETURN_ON_FATALS_WITH(NULL);
-    
-	/* map cvode results to SBML compartments,
-	   species and parameters  */
-	results[i][j] = SBMLResults_fromIntegrator(m, ii);
-	IntegratorInstance_reset(ii);
+      while (!IntegratorInstance_timeCourseCompleted(ii)) {
+	if (!IntegratorInstance_integrateOneStep(ii))
+	  IntegratorInstance_handleError(ii);
       }
+    
+      RETURN_ON_FATALS_WITH(NULL);
+    
+      /* map cvode results to SBML compartments,
+	 species and parameters  */
+      resM->results[i][j] = SBMLResults_fromIntegrator(m, ii);
+      IntegratorInstance_reset(ii);
     }
   }
 
@@ -189,26 +221,21 @@ Model_odeSolverBatch (SBMLDocument_t *d,
   IntegratorInstance_free(ii);
   /* free odeModel */
   ODEModel_free(om);
-
-  /* free temporary level 2 version of the document */
-  if ( d2 != NULL ) {
-    SBMLDocument_free(d2);
-  }
-
-  return(results);
+  /* ... well done. */
+  return(resM);
 
 }
 
 
 
-/** Create settings for parameter variation batch runs,
-    nrparams is the number of parameters to be varied,
-    and nrdesignpoints is the number of values to be tested for
-    each parameter.
+/** Allocate varySettings structure for settings for parameter
+    variation batch runs: nrparams is the number of parameters to be
+    varied, and nrdesignpoints is the number of values to be tested
+    for each parameter.
 */
 
 SBML_ODESOLVER_API 
-varySettings_t *VarySettings_create(int nrparams, int nrdesignpoints)
+varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
 {
   int i;
   varySettings_t *vs;
@@ -259,12 +286,23 @@ int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
   
   /* filling internal parameter array */
   for ( j=0; j<vs->nrdesignpoints; j++ )
-    vs->params[vs->nrparams][j] = designpoints[j];
+    VarySettings_setValue(vs, vs->nrparams, j, designpoints[j]);
   
-  vs->nrparams++;  /* counts already filled parametervalues */
+  VarySettings_setParameterName(vs, vs->nrparams, id, rid);  
   
-  return VarySettings_setParameterName(vs, vs->nrparams-1, id, rid);
+  return vs->nrparams++;  /* counts already filled parametervalues */
   
+}
+
+
+/** 
+
+*/
+
+SBML_ODESOLVER_API 
+const char *VarySettings_getParameterName(varySettings_t *vs, int i)
+{   
+  return (const char *) vs->id[i];
 }
 
 
@@ -310,12 +348,21 @@ VarySettings_addParameterSet(varySettings_t *vs,
   return j;      
 }
 
-
-/** Set the jth value for the ith parameter
+/** Get the jth value of the ith parameter
 */
 
 SBML_ODESOLVER_API
-void VarySettings_setValue(varySettings_t *vs, double value, int i, int j)
+double VarySettings_getValue(varySettings_t *vs, int i, int j)
+{
+  return vs->params[i][j];
+}
+
+
+/** Set the jth value of the ith parameter
+*/
+
+SBML_ODESOLVER_API
+void VarySettings_setValue(varySettings_t *vs, int i, int j, double value)
 {
   vs->params[i][j] = value;
 }
@@ -328,6 +375,7 @@ SBML_ODESOLVER_API
 void VarySettings_dump(varySettings_t *vs)
 {
   int i, j;
+  printf("\n");
   printf("Design Series for %d Parameter(s) and %d values:",
 	 vs->nrparams, vs->nrdesignpoints);fflush(stdout);
   for ( i=0; i<vs->nrparams; i++ ) {
@@ -336,11 +384,11 @@ void VarySettings_dump(varySettings_t *vs)
       printf("%.3f ", vs->params[i][j]);
     }    
   }
+  printf("\n\n");
 }
 
 
-/** 
-
+/** Frees varySettings structure
 */
 
 SBML_ODESOLVER_API 

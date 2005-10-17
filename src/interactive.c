@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-11 18:34:46 raim>
-  $Id: interactive.c,v 1.8 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-13 14:31:46 raim>
+  $Id: interactive.c,v 1.9 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@ static void
 setFormat(void);
 static SBMLDocument_t * 
 loadFile(SBMLReader_t *sr);
-static cvodeData_t *
+static int
 callIntegrator(Model_t *m);
 
 /**
@@ -134,7 +134,7 @@ interactive() {
     }
 
     if(strcmp(select,"i")==0){
-      data = callIntegrator(m);
+      callIntegrator(m);
      }
     
     if(strcmp(select,"x")==0){
@@ -205,19 +205,18 @@ interactive() {
       setFormat();
     }
     if(strcmp(select,"rg")==0){
-      drawModel(m);
+      drawModel(m, sbmlFilename, Opt.GvFormat);
     }
     if(strcmp(select,"jg")==0){
       if ( data == NULL ) {
 	Opt.Jacobian = 1;
 	om = ODEModel_create(m, Opt.Jacobian);
 	data = CvodeData_create(om);
-    SolverError_dumpAndClearErrors();
-    
+	SolverError_dumpAndClearErrors();    
 	Opt.Jacobian = 0;	
       }
       if (data)
-        drawJacoby(data);
+        drawJacoby(data, sbmlFilename, Opt.GvFormat);
     }
     if(strcmp(select,"j")==0){
       om = ODEModel_create(m, Opt.Jacobian);
@@ -383,68 +382,24 @@ loadFile(SBMLReader_t *sr){
     return NULL;
 }
 
-static cvodeData_t *
+static int
 callIntegrator(Model_t *m){
 
   char *tout;
   char *nout;
-
-  cvodeData_t * data = NULL;
-  odeModel_t *om = NULL;
-
-  om = ODEModel_create(m, Opt.Jacobian);
-  data = CvodeData_create(om);
   
-  /* chnage of behaviour by AMF no intergation if errors in ODE construction - 23rd June 2005 */
-/*   if (!data) */
-/*   { */
-/*       SolverError_dumpAndClearErrors(); */
-/*       return NULL; */
-/*   } */
-     
-/*   printf("Please enter end time in seconds:           "); */
-/*   tout =  get_line(stdin); */
-/*   tout = util_trim(tout); */
-    
-/*   printf("... and the number of output times:         "); */
-/*   nout = get_line(stdin); */
-/*   nout = util_trim(nout); */
+/*   integratorInstance_t *ii; */
+/*   cvodeSettings_t * set; */
+/*   odeModel_t *om; */
 
+/*   om = ODEModel_create(m, Opt.Jacobian); */
+/*   SolverError_dumpAndClearErrors(); */
+/*   set = CvodeSettings_createDefaults(); */
   
-/*   if ( !(data->nout = (float) floor(atof(nout))) || */
-/*        !(data->tout = (float) atof(tout)) ) { */
-/*     printf("\nEntered outtime %s or number of output times %s\n", tout, nout); */
-/*     printf("could not be converted to a number. Try again, please!\n");     */
-/*   } */
-/*   else { */
+/*   ii = integratorInstance_create(om, set); */
 
-/*     data->tmult = data->tout / data->nout; */
-/*     data->currenttime = 0.0; */
-/*     data->t0 = 0.0; */
-
-/*     data->opt->Error = Opt.Error; */
-/*     data->opt->RError = Opt.RError; */
-/*     data->opt->Mxstep = Opt.Mxstep; */
-/*     data->opt->HaltOnEvent = Opt.HaltOnEvent; */
-/*     data->opt->SteadyState = Opt.SteadyState; */
-
-/*     /\* allow setting of Jacobian, only if construction was succesfull *\/ */
-/*     if ( data->opt->UseJacobian == 1 ) { */
-/*       data->opt->UseJacobian = Opt.Jacobian; */
-/*     } */
-    
-/*     printf("Numerical integration from\n t0 = %f  to \n tout" */
-/* 	   " = %f s\n output interval: %f s\n\n", */
-/* 	   data->t0, data->tout, data->tout/data->nout); */
-    
-/*     integrator(data, Opt.PrintMessage, Opt.PrintOnTheFly, stdout); */
-/*     SolverError_dumpAndClearErrors(); */
-/*   } */
-    
-/*   free(nout); */
-/*   free(tout); */
  
-  return data;
+  return 1;
 }
 
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:34:49 raim>
-  $Id: commandLine.c,v 1.3 2005/10/12 19:49:22 raimc Exp $
+  Last changed Time-stamp: <2005-10-13 14:32:06 raim>
+  $Id: commandLine.c,v 1.4 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,8 +17,6 @@
 #include "sbmlsolver/commandLine.h"
 
 
-static int handleError(integratorInstance_t *engine,
-		       int PrintMessage, int PrintOnTheFly, FILE *f);
 /** odeSolver(): Starting the SBML_odeSolver from command-line !!
     Command-line options are interpreted
     mainly from here and the according
@@ -116,7 +114,7 @@ odeSolver (int argc, char *argv[])
 	command-line options.
     */
     if ( Opt.DrawReactions == 1 ) {
-      if ( drawModel(m) > 0 ) {
+      if ( drawModel(m, sbmlFilename, Opt.GvFormat) > 0 ) {
 	xfree(sbmlFilename);
 	SBMLDocument_free(d);
 	fatal(stderr, "%s:%d main(): Couldn't calculate graph for >%s<",
@@ -344,7 +342,7 @@ odeSolver (int argc, char *argv[])
 	values.
     */
     if ( Opt.DrawJacobian == 1 ) {
-      if ( drawJacoby(ii->data) > 0 ) {
+      if ( drawJacoby(ii->data, sbmlFilename, Opt.GvFormat) > 0 ) {
 	Warn(stderr,
 	     "%s:%d main(): Couldn't calculate jacobian graph for >%s<",
 	      __FILE__, __LINE__, sbmlFilename);

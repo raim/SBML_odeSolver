@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 23:58:41 raim>
-  $Id: sbmlResults.c,v 1.5 2005/08/02 13:20:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 16:45:22 raim>
+  $Id: sbmlResults.c,v 1.6 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +11,13 @@
 
 /* own header files */
 #include "sbmlsolver/sbmlResults.h"
+#include "sbmlsolver/solverError.h"
 
-static timeCourse_t *
-TimeCourse_create(int names, int timepoints);
-static void
-TimeCourse_free(timeCourse_t *tc);
+
+static timeCourse_t *TimeCourseArray_create(int names, int timepoints);
+static void TimeCourseArray_free(timeCourse_t *tc);
+static timeCourse_t *TimeCourse_create(int names, int timepoints);
+static void TimeCourse_free(timeCourse_t *tc);
 
 /* The function
    SBMLResults SBMLResults_create(Model_t *m, int timepoints)
@@ -35,63 +37,56 @@ SBMLResults_create(Model_t *m, int timepoints){
   Reaction_t *r;
   SBMLResults_t *results;
 
-  if(!(results = (SBMLResults_t *) calloc(1, sizeof(SBMLResults_t)))){
-    fprintf(stderr, "failed!\n");
-  }
-  
+  ASSIGN_NEW_MEMORY(results, struct _SBMLResults, NULL);
   results->timepoints = timepoints;
   
   /* Allocating the time array:
      number of output times, plus 1 for the initial values. */
-  if(!(results->time =
-       (double *)calloc(timepoints, sizeof(double)))) {
-    fprintf(stderr, "failed!\n");
-  }
+  ASSIGN_NEW_MEMORY_BLOCK(results->time, timepoints, double, NULL);
   
   /* Allocating arrays for all SBML species */
   num_species = Model_getNumSpecies(m);
   results->species = TimeCourse_create(num_species, timepoints);
+
+  
   /* Writing species names */
   for ( i=0; i<Model_getNumSpecies(m); i++) {
     s = Model_getSpecies(m, i);
-    results->species->names[i] =
-        (char *)calloc(strlen(Species_getId(s))+1, sizeof(char));
-    strcpy(results->species->names[i], Species_getId(s));
+    ASSIGN_NEW_MEMORY_BLOCK(results->species->names[i],
+			    strlen(Species_getId(s))+1, char, NULL);
+    sprintf(results->species->names[i], "%s", Species_getId(s));
   }
 
   /* Allocating arrays for all variable SBML compartments */
   num_compartments = 0;
-  for ( i=0; i<Model_getNumCompartments(m); i++ ) {
-    if ( ! Compartment_getConstant(Model_getCompartment(m, i)) ) {
+  for ( i=0; i<Model_getNumCompartments(m); i++ ) 
+    if ( ! Compartment_getConstant(Model_getCompartment(m, i)) )
       num_compartments++;
-    }
-  }
+  
   results->compartments = TimeCourse_create(num_compartments, timepoints);
   /* Writing variable compartment names */
   for ( i=0; i<Model_getNumCompartments(m); i++) {
     c = Model_getCompartment(m, i);
     if ( ! Compartment_getConstant(c) ) {
-      results->compartments->names[i] =
-        (char *)calloc(strlen(Compartment_getId(c))+1, sizeof(char));
-      strcpy(results->compartments->names[i], Compartment_getId(c));
+      ASSIGN_NEW_MEMORY_BLOCK(results->compartments->names[i],
+			      strlen(Compartment_getId(c))+1, char, NULL);
+      sprintf(results->compartments->names[i], Compartment_getId(c));
     }
   }
 
   /* Allocating arrays for all variable SBML parameters */
   num_parameters = 0;
-  for ( i=0; i<Model_getNumParameters(m); i++ ) {
-    if ( ! Parameter_getConstant(Model_getParameter(m, i)) ) {
+  for ( i=0; i<Model_getNumParameters(m); i++ ) 
+    if ( ! Parameter_getConstant(Model_getParameter(m, i)) )
       num_parameters++;
-    }
-  }    
   results->parameters = TimeCourse_create(num_parameters, timepoints);
   /* Writing variable parameter names */
   for ( i=0; i<Model_getNumParameters(m); i++) {
     p = Model_getParameter(m, i);
     if ( ! Parameter_getConstant(p) ) {
-      results->parameters->names[i] =
-        (char *)calloc(strlen(Parameter_getId(p))+1, sizeof(char));
-      strcpy(results->parameters->names[i], Parameter_getId(p));
+      ASSIGN_NEW_MEMORY_BLOCK(results->parameters->names[i],
+			      strlen(Parameter_getId(p))+1, char, NULL);
+      sprintf(results->parameters->names[i], Parameter_getId(p));
     }
   }  
 
@@ -101,16 +96,50 @@ SBMLResults_create(Model_t *m, int timepoints){
   /* Writing reaction names */
   for ( i=0; i<Model_getNumReactions(m); i++ ) {
     r = Model_getReaction(m, i);
-    results->fluxes->names[i] =
-        (char *)calloc(strlen(Reaction_getId(r))+1, sizeof(char));
-    strcpy(results->fluxes->names[i], Reaction_getId(r));
+    ASSIGN_NEW_MEMORY_BLOCK(results->fluxes->names[i],
+			      strlen(Reaction_getId(r))+1, char, NULL);
+    sprintf(results->fluxes->names[i], Reaction_getId(r));
   }
 
   return results;
 }
 
-void
-SBMLResults_free(SBMLResults_t *results) {
+
+SBML_ODESOLVER_API SBMLResultsMatrix_t *SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
+{
+  int i;
+  SBMLResultsMatrix_t *resM;
+  ASSIGN_NEW_MEMORY(resM, struct _SBMLResultsMatrix, NULL);
+  ASSIGN_NEW_MEMORY(resM->results, struct _SBMLResults **, NULL);
+  resM -> i = nrparams;
+  resM -> j = nrdesignpoints;
+  for ( i=0; i<nrparams; i++ ) {
+    ASSIGN_NEW_MEMORY_BLOCK(resM->results[i], nrdesignpoints,
+			    struct _SBMLResults *, NULL);
+  }
+  return(resM);
+}
+
+SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *resM, int i, int j)
+{
+  return resM->results[i][j];  
+}
+
+
+SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
+{
+  int i, j;  
+  for ( i=0; i<resM->i; i++ ) {
+    for ( j=0; j<resM->j; j++ )
+      SBMLResults_free(resM->results[i][j]);
+    free(resM->results[i]);
+  }
+  free(resM->results);    
+  free(resM);    
+}
+
+
+SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results) {
 
   if ( results != NULL ) {
     if ( results->time != NULL ) {
@@ -132,24 +161,17 @@ TimeCourse_create(int num_val, int timepoints){
   int i;
   timeCourse_t *tc;
 
-  /* timecourse variables */  
-  if(!(tc = (timeCourse_t *)calloc(1, sizeof(timeCourse_t)))){
-    fprintf(stderr, "failed!\n");
-  }
+  ASSIGN_NEW_MEMORY(tc, struct timeCourse, NULL);
   tc->num_val = num_val;
   tc->timepoints = timepoints;
-  if(!(tc->names =  (char **)calloc(num_val, sizeof(char*)))){
-    fprintf(stderr, "failed!\n");
-  }  
-  if(!(tc->values =  (double **)calloc(timepoints, sizeof(double*)))){
-    fprintf(stderr, "failed!\n");
-  }
-  for ( i=0; i<tc->timepoints; i++ ) {
-    if(!(tc->values[i] =
-	 (double *)calloc(num_val, sizeof(double)))){
-      fprintf(stderr, "failed!\n");
-    }
-  }
+  /* timecourse variable names */  
+  ASSIGN_NEW_MEMORY_BLOCK(tc->names, num_val, char *, NULL);
+  /* timecourses variable matrix */
+  ASSIGN_NEW_MEMORY_BLOCK(tc->values, timepoints, double *, NULL);
+  /* timecourse arrays */
+  for ( i=0; i<tc->timepoints; i++ ) 
+    ASSIGN_NEW_MEMORY_BLOCK(tc->values[i], num_val, double, NULL);
+    
   return tc;
 }
 
@@ -158,25 +180,16 @@ TimeCourse_free(timeCourse_t *tc) {
 
   int i;
 
-  if ( tc != NULL ) {
-    if ( tc->names != NULL ) {
-      for ( i=0; i<tc->num_val; i++ ){
-	if ( tc->names[i] != NULL ) {
-	  free(tc->names[i]);
-	}
-      }  
-      free(tc->names);
-    }
-    if ( tc->values != NULL ) {
-      for ( i=0; i<tc->timepoints; i++ ){
-	if ( tc->values[i] != NULL ) {
-	  free(tc->values[i]);
-	}
-      }  
-      free(tc->values);
-    }
-    free(tc);
-  }
+  for ( i=0; i<tc->num_val; i++ )
+      free(tc->names[i]);
+  free(tc->names);
+  
+  for ( i=0; i<tc->timepoints; i++ )
+    free(tc->values[i]);
+  free(tc->values);
+
+  free(tc);
+  
 }
 
 

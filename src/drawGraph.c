@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 22:54:34 raim>
-  $Id: drawGraph.c,v 1.8 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-13 17:04:15 raim>
+  $Id: drawGraph.c,v 1.9 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +46,7 @@ drawModelTxt(Model_t *m);
 */
 
 SBML_ODESOLVER_API int
-drawJacoby(cvodeData_t *data) {
+drawJacoby(cvodeData_t *data, char *file, char *format) {
 
 #if !USE_GRAPHVIZ
 
@@ -69,33 +69,31 @@ drawJacoby(cvodeData_t *data) {
   char label[WORDSIZE];  
   char *output[3];
   char *command = "dot";
-  char *format;
+  char *formatopt;
   char *outfile;
   
   fprintf(stderr, "\n\n");
   fprintf(stderr,
-	  "Trying to draw a species interaction graph %s/%s_jm.%s from\n",
-	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+	  "Trying to draw a species interaction graph %s_jm.%s from\n",
+	  file, format);
   fprintf(stderr,
 	  "the jacobian matrix at the last time point of integration.\n");
   fprintf(stderr,
 	  "This can take a while for big models... \n\n");
 
   /* setting name of outfile */
-  outfile = (char *) calloc(strlen(Opt.ModelPath)+
-			    strlen(Opt.ModelFile)+
-			    strlen(Opt.GvFormat)+9,
+  outfile = (char *) calloc(strlen(file)+
+			    strlen(format)+7,
 			    sizeof(char));
-  sprintf(outfile, "-o%s/%s_jm.%s",
-	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+  sprintf(outfile, "-o%s_jm.%s", file, format);
   
   /* setting output format */
-  format =  (char *) calloc(strlen(Opt.GvFormat)+3, sizeof(char));
-  sprintf(format, "-T%s", Opt.GvFormat); 
+  formatopt =  (char *) calloc(strlen(format)+3, sizeof(char));
+  sprintf(formatopt, "-T%s", format); 
 
   /* construct command-line */
   output[0] = command;
-  output[1] = format;
+  output[1] = formatopt;
   output[2] = outfile;
   output[3] = NULL;
     
@@ -280,7 +278,7 @@ drawJacobyTxt(cvodeData_t *data) {
 #endif
 
 SBML_ODESOLVER_API int
-drawModel(Model_t *m) {
+drawModel(Model_t *m, char* file, char *format) {
   
 #if !USE_GRAPHVIZ
 
@@ -305,7 +303,7 @@ drawModel(Model_t *m) {
   ModifierSpeciesReference_t *mref;
   char *output[4];
   char *command = "dot";
-  char *format;
+  char *formatopt;
   char *outfile;
   int i,j;
   int reversible;
@@ -314,26 +312,22 @@ drawModel(Model_t *m) {
 
   fprintf(stderr, "\n\n");
   fprintf(stderr,
-	  "Trying to draw reaction graph '%s/%s_rn.%s' from the model.\n",
-	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+	  "Trying to draw reaction graph '%s_rn.%s' from the model.\n",
+	  file, format);
   fprintf(stderr,
 	  "This can take a while for big models... \n\n");
   
   /* setting name of outfile */
-  outfile = (char *) calloc(strlen(Opt.ModelPath)+
-			    strlen(Opt.ModelFile)+
-			    strlen(Opt.GvFormat)+8,
-			    sizeof(char));
-  sprintf(outfile, "-o%s/%s_rn.%s",
-	  Opt.ModelPath, Opt.ModelFile, Opt.GvFormat);
+  outfile = (char *) calloc(strlen(file)+ strlen(format)+7, sizeof(char));
+  sprintf(outfile, "-o%s_rn.%s", file, format);
 
   /* setting output format */
-  format =  (char *) calloc(strlen(Opt.GvFormat)+3, sizeof(char));
-  sprintf(format, "-T%s", Opt.GvFormat);
+  formatopt =  (char *) calloc(strlen(format)+3, sizeof(char));
+  sprintf(formatopt, "-T%s", format);
 
   /* construct command-line */
   output[0] = command;
-  output[1] = format;
+  output[1] = formatopt;
   output[2] = outfile;
   output[3] = NULL;
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 23:08:45 raim>
-  $Id: odeConstruct.c,v 1.11 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-14 18:31:30 raim>
+  $Id: odeConstruct.c,v 1.12 2005/10/17 16:07:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -206,12 +206,13 @@ Model_copyOdes(Model_t *m, Model_t*ode ) {
   }
 }
 
+
 /** C.3: Create ODEs from reactions
     for each species in model `m' and ODE is constructed from its
     reactions (in `m") and added as a RateRule to `ode'
 */
-static int
-Model_createOdes(Model_t *m, Model_t*ode ) {
+
+static int Model_createOdes(Model_t *m, Model_t*ode ) {
 
   Species_t *s;
   Rule_t *rl;
@@ -276,7 +277,7 @@ Model_createOdes(Model_t *m, Model_t*ode ) {
 	if ( math == NULL ) {
 	  errors++;
 	  SolverError_error(ERROR_ERROR_TYPE,
-		    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
+			    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
 			    "ODE could not be constructed for species %s",
 			    Species_getId(s));
 	}
@@ -320,194 +321,194 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
      an ODE */
 
   for ( j=0; j<Model_getNumReactions(m); j++ ) {
-      r = Model_getReaction(m,j);
-      if ( Reaction_isSetKineticLaw(r) ) {
-          kl = Reaction_getKineticLaw(r);
-      }
-      else
-          kl = NULL;
+    r = Model_getReaction(m,j);
+    if ( Reaction_isSetKineticLaw(r) ) {
+      kl = Reaction_getKineticLaw(r);
+    }
+    else
+      kl = NULL;
 
-      for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
-          sref = Reaction_getReactant(r,k);
-          if ( strcmp(SpeciesReference_getSpecies(sref),
-		      Species_getId(s)) == 0 ) {
-              if ( kl != NULL ) {
+    for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
+      sref = Reaction_getReactant(r,k);
+      if ( strcmp(SpeciesReference_getSpecies(sref),
+		  Species_getId(s)) == 0 ) {
+	if ( kl != NULL ) {
 
-                  /** Construct expression for reactant
-                  by multiplying the kinetic law
-                  with stoichiometry (math) and putting
-                  a minus in front of it
-                  */
-                  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
-                      reactant = ASTNode_create();
-                      ASTNode_setCharacter(reactant, '*');
-                      ASTNode_addChild(reactant,
-                          copyAST( \
-                          SpeciesReference_getStoichiometryMath(sref)));
-                      ASTNode_addChild(reactant,
-				       copyAST( KineticLaw_getMath(kl)));
-                  }
-                  else {
-                      if ( SpeciesReference_getStoichiometry(sref) == 1. ) {
-                          reactant = copyAST(KineticLaw_getMath(kl));
-                      }
-                      else {
-                          reactant = ASTNode_create();
-                          ASTNode_setCharacter(reactant, '*');
-                          ASTNode_addChild(reactant, ASTNode_create());
-                          ASTNode_setReal(ASTNode_getChild(reactant,0), 
+	  /** Construct expression for reactant
+	      by multiplying the kinetic law
+	      with stoichiometry (math) and putting
+	      a minus in front of it
+	  */
+	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
+	    reactant = ASTNode_create();
+	    ASTNode_setCharacter(reactant, '*');
+	    ASTNode_addChild(reactant,
+			     copyAST( \
+				      SpeciesReference_getStoichiometryMath(sref)));
+	    ASTNode_addChild(reactant,
+			     copyAST( KineticLaw_getMath(kl)));
+	  }
+	  else {
+	    if ( SpeciesReference_getStoichiometry(sref) == 1. ) {
+	      reactant = copyAST(KineticLaw_getMath(kl));
+	    }
+	    else {
+	      reactant = ASTNode_create();
+	      ASTNode_setCharacter(reactant, '*');
+	      ASTNode_addChild(reactant, ASTNode_create());
+	      ASTNode_setReal(ASTNode_getChild(reactant,0), 
                               SpeciesReference_getStoichiometry(sref));
-                          ASTNode_addChild(reactant,
-					   copyAST(KineticLaw_getMath(kl)));
-                      }
-                  }
+	      ASTNode_addChild(reactant,
+			       copyAST(KineticLaw_getMath(kl)));
+	    }
+	  }
 
-                  /* replace local parameters by their value,
-		     before adding to ODE */
-                  AST_replaceNameByParameters(reactant,
-                      KineticLaw_getListOfParameters(kl));
-                  /** Add reactant expression to ODE
-                  */
-                  if ( ode == NULL ) {
-                      ode = ASTNode_create();
-                      ASTNode_setCharacter(ode,'-');
-                      ASTNode_addChild(ode, reactant);
-                  }
-                  else {
-                      tmp = copyAST(ode);
-                      ASTNode_free(ode);
-                      ode = ASTNode_create();
-                      ASTNode_setCharacter(ode, '-');
-                      ASTNode_addChild(ode, tmp);
-                      ASTNode_addChild(ode, reactant);
-                  }
+	  /* replace local parameters by their value,
+	     before adding to ODE */
+	  AST_replaceNameByParameters(reactant,
+				      KineticLaw_getListOfParameters(kl));
+	  /** Add reactant expression to ODE
+	   */
+	  if ( ode == NULL ) {
+	    ode = ASTNode_create();
+	    ASTNode_setCharacter(ode,'-');
+	    ASTNode_addChild(ode, reactant);
+	  }
+	  else {
+	    tmp = copyAST(ode);
+	    ASTNode_free(ode);
+	    ode = ASTNode_create();
+	    ASTNode_setCharacter(ode, '-');
+	    ASTNode_addChild(ode, tmp);
+	    ASTNode_addChild(ode, reactant);
+	  }
 
-              }
-              else {
-                  SolverError_error(
-                      ERROR_ERROR_TYPE,
-                      SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
-                      "The model has no kinetic law for reaction %s",
-                      Reaction_getId(r));
-                  ++errors;
-              }
-          }
+	}
+	else {
+	  SolverError_error(
+			    ERROR_ERROR_TYPE,
+			    SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
+			    "The model has no kinetic law for reaction %s",
+			    Reaction_getId(r));
+	  ++errors;
+	}
       }
+    }
 
-      for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
-          sref = Reaction_getProduct(r,k);
-          if ( strcmp(SpeciesReference_getSpecies(sref),
-		      Species_getId(s)) == 0 ) {
-              if ( kl != NULL ) {
+    for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
+      sref = Reaction_getProduct(r,k);
+      if ( strcmp(SpeciesReference_getSpecies(sref),
+		  Species_getId(s)) == 0 ) {
+	if ( kl != NULL ) {
 
-                  reactant = ASTNode_create();
-                  ASTNode_setCharacter(reactant, '*');
+	  reactant = ASTNode_create();
+	  ASTNode_setCharacter(reactant, '*');
 
-                  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
-                      ASTNode_addChild(reactant,
-                          copyAST( \
-                          SpeciesReference_getStoichiometryMath(sref)));
-                  }
-                  else {
-                      ASTNode_addChild(reactant, ASTNode_create());
-                      ASTNode_setReal(ASTNode_getChild(reactant,0),
-                          SpeciesReference_getStoichiometry(sref));
-                  }
-                  ASTNode_addChild(reactant, copyAST(KineticLaw_getMath(kl)));
+	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
+	    ASTNode_addChild(reactant,
+			     copyAST( \
+				      SpeciesReference_getStoichiometryMath(sref)));
+	  }
+	  else {
+	    ASTNode_addChild(reactant, ASTNode_create());
+	    ASTNode_setReal(ASTNode_getChild(reactant,0),
+			    SpeciesReference_getStoichiometry(sref));
+	  }
+	  ASTNode_addChild(reactant, copyAST(KineticLaw_getMath(kl)));
 
-                  /* replace local parameters by their value,
-		     before adding to ODE */
-                  AST_replaceNameByParameters(reactant,
-                      KineticLaw_getListOfParameters(kl));
-                  /** Add reactant expression to ODE
-                  */
-                  if ( ode == NULL ) {
-                      ode = reactant;
-                  }
-                  else {
-                      tmp = copyAST(ode);
-                      ASTNode_free(ode);
-                      ode = ASTNode_create();
-                      ASTNode_setCharacter(ode, '+');
-                      ASTNode_addChild(ode, tmp);
-                      ASTNode_addChild(ode, reactant);
-                  }	  
+	  /* replace local parameters by their value,
+	     before adding to ODE */
+	  AST_replaceNameByParameters(reactant,
+				      KineticLaw_getListOfParameters(kl));
+	  /** Add reactant expression to ODE
+	   */
+	  if ( ode == NULL ) {
+	    ode = reactant;
+	  }
+	  else {
+	    tmp = copyAST(ode);
+	    ASTNode_free(ode);
+	    ode = ASTNode_create();
+	    ASTNode_setCharacter(ode, '+');
+	    ASTNode_addChild(ode, tmp);
+	    ASTNode_addChild(ode, reactant);
+	  }	  
 
-              }
-              else {
-                  SolverError_error(
-                      ERROR_ERROR_TYPE,
-                      SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
-                      "The model has no kinetic law for reaction %s",
-                      Reaction_getId(r));
-                  ++errors;
-              }
-          }
+	}
+	else {
+	  SolverError_error(
+			    ERROR_ERROR_TYPE,
+			    SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
+			    "The model has no kinetic law for reaction %s",
+			    Reaction_getId(r));
+	  ++errors;
+	}
       }
+    }
   }
 
   /* Divide ODE by Name of the species' compartment, if the
-  compartment is set variable, by the size if the compartment is
-  constant (but not if Volume is constant AND 1),
+     compartment is set variable, by the size if the compartment is
+     constant (but not if Volume is constant AND 1),
 
-  If formula is empty skip division by compartment and set formula
-  to 0.  The latter case can happen, if a species is neither
-  constant nor a boundary condition but appears only as a modifier
-  in reactions.  The rate for such species is set to 0. */
+     If formula is empty skip division by compartment and set formula
+     to 0.  The latter case can happen, if a species is neither
+     constant nor a boundary condition but appears only as a modifier
+     in reactions.  The rate for such species is set to 0. */
 
   if( ode != NULL ) {
-      for ( j=0; j<Model_getNumCompartments(m); j++ ) {
-          c = Model_getCompartment(m,j);
-          if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
-              if ( Compartment_getConstant(c) ) {
-                  if ( Compartment_getSize(c) != 1 ) {
-                      tmp = copyAST(ode);
-                      ASTNode_free(ode);
-                      ode = ASTNode_create();
-                      ASTNode_setCharacter(ode, '/');
-                      ASTNode_addChild(ode, tmp);
-                      ASTNode_addChild(ode, ASTNode_create());
-                      ASTNode_setReal(ASTNode_getChild(ode,1),
-				      Compartment_getSize(c));
-                  }
-              }
-              else if ( !(Compartment_getConstant(c)) ) {
-                  tmp = copyAST(ode);
-                  ASTNode_free(ode);
-                  ode = ASTNode_create();
-                  ASTNode_setCharacter(ode, '/');
-                  ASTNode_addChild(ode, tmp);
-                  ASTNode_addChild(ode, ASTNode_create());
-                  ASTNode_setName(ASTNode_getChild(ode,1),
-				  Compartment_getId(c));
-              }
-          }
-      }	 
+    for ( j=0; j<Model_getNumCompartments(m); j++ ) {
+      c = Model_getCompartment(m,j);
+      if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
+	if ( Compartment_getConstant(c) ) {
+	  if ( Compartment_getSize(c) != 1 ) {
+	    tmp = copyAST(ode);
+	    ASTNode_free(ode);
+	    ode = ASTNode_create();
+	    ASTNode_setCharacter(ode, '/');
+	    ASTNode_addChild(ode, tmp);
+	    ASTNode_addChild(ode, ASTNode_create());
+	    ASTNode_setReal(ASTNode_getChild(ode,1),
+			    Compartment_getSize(c));
+	  }
+	}
+	else if ( !(Compartment_getConstant(c)) ) {
+	  tmp = copyAST(ode);
+	  ASTNode_free(ode);
+	  ode = ASTNode_create();
+	  ASTNode_setCharacter(ode, '/');
+	  ASTNode_addChild(ode, tmp);
+	  ASTNode_addChild(ode, ASTNode_create());
+	  ASTNode_setName(ASTNode_getChild(ode,1),
+			  Compartment_getId(c));
+	}
+      }
+    }	 
   }
   else {
-      /*
+    /*
       for modifier species that never appear as products or reactants
       but are not defined as constant or boundarySpecies, set ODE to 0.
-      */
-      ode = ASTNode_create();
-      ASTNode_setInteger(ode, 0);
+    */
+    ode = ASTNode_create();
+    ASTNode_setInteger(ode, 0);
   }
 
   simple = AST_simplify(ode);
   ASTNode_free(ode);
 
   if ( errors>0 ) {
-      ASTNode_free(simple);
-      return NULL;
+    ASTNode_free(simple);
+    return NULL;
   }
   else {
-      return simple;
+    return simple;
   }
 }
 
-  /** C.4a: Copy Events
-      copy events to new model and print warning
-  */
+/** C.4a: Copy Events
+    copy events to new model and print warning
+*/
 static void
 Model_copyEvents(Model_t *m, Model_t*ode) {
 
@@ -547,14 +548,14 @@ Model_copyEvents(Model_t *m, Model_t*ode) {
     Model_addEvent(ode, e_new);
     
     if (!i)
-        SolverError_error(
-            WARNING_ERROR_TYPE,
-            SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
-            "The model contains events. "
-            "The SBML_odeSolver implementation of events is not fully "
-	    "SBML conformant. "
-            "Results will depend on the simulation duration and the "
-	    "number of output steps.");
+      SolverError_error(
+			WARNING_ERROR_TYPE,
+			SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
+			"The model contains events. "
+			"The SBML_odeSolver implementation of events is not fully "
+			"SBML conformant. "
+			"Results will depend on the simulation duration and the "
+			"number of output steps.");
   }
 }
 
@@ -679,8 +680,8 @@ ODE_replaceFunctionDefinitions(Model_t *m) {
 	ea = Event_getEventAssignment(e, k);
 	math = copyAST(EventAssignment_getMath(ea));
 	AST_replaceFunctionDefinition(math,
-				    FunctionDefinition_getId(f),
-				    FunctionDefinition_getMath(f));
+				      FunctionDefinition_getId(f),
+				      FunctionDefinition_getMath(f));
 	EventAssignment_setMath(ea, math);
       }
       
