@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 17:41:56 raim>
-  $Id: odeSolver.c,v 1.18 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 18:51:24 raim>
+  $Id: odeSolver.c,v 1.19 2005/10/17 16:55:14 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -423,24 +423,17 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   cvodeResults_t *cvode_results = data->results;
 
   /* check if data is available */
-  if ( data == NULL ) {
-    fatal(stderr, "No data, please construct ODE system first.\n");
+  if ( data == NULL ) 
     return NULL;
-  }
-  else if ( data->results == NULL ) {    
-    fatal(stderr, "No results, please integrate first.\n");
+  else if ( data->results == NULL ) 
     return NULL;
-  }
 
   sbml_results = SBMLResults_create(m, data->results->nout+1);    
 
   /* Allocating temporary kinetic law ASTs, for evaluation of fluxes */
 
-  if(!(kls =
-       (ASTNode_t **)calloc(Model_getNumReactions(m),
-			    sizeof(ASTNode_t *)))) {
-    fprintf(stderr, "failed!\n");
-  }  
+  ASSIGN_NEW_MEMORY_BLOCK(kls, Model_getNumReactions(m), ASTNode_t *, NULL);
+
   for ( i=0; i<Model_getNumReactions(m); i++ ) {
     r = Model_getReaction(m, i);
     kl = Reaction_getKineticLaw(r);
