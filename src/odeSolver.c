@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 16:14:05 raim>
-  $Id: odeSolver.c,v 1.21 2005/10/18 14:17:31 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 16:21:36 raim>
+  $Id: odeSolver.c,v 1.22 2005/10/18 14:24:16 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,6 +315,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
 /*   else */
 /*     return 0; */
 
+  free(newname);
   return 1;
 
 }
