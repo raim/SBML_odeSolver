@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 16:21:36 raim>
-  $Id: odeSolver.c,v 1.22 2005/10/18 14:24:16 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 16:28:08 raim>
+  $Id: odeSolver.c,v 1.23 2005/10/18 14:31:05 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -309,11 +309,11 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
   AST_replaceNameByName(math, (const char *) newname, (const char *) id);
 
   /* unfortunately the parameter cannot be freed currently */
-/*   if ((p = Model_getParameterById(m, newname)) != NULL) { */
-/*     Parameter_free(p); */
-/*   } */
-/*   else */
-/*     return 0; */
+  if ((p = Model_getParameterById(m, newname)) != NULL) {
+    Parameter_setId(p, "notUsedAnymore_asdf");
+  }
+  else
+    return 0;
 
   free(newname);
   return 1;
