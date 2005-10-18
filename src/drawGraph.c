@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-13 17:04:15 raim>
-  $Id: drawGraph.c,v 1.9 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:20:50 raim>
+  $Id: drawGraph.c,v 1.10 2005/10/18 16:40:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,12 +116,12 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
   /* set graph label */
   if ( Model_isSetName(data->model->m) )
     sprintf(label, "%s at time %g",  Model_getName(data->model->m),
-	    data->tout);
+	    data->currenttime);
   else if ( Model_isSetId(data->model->m) )
     sprintf(label, "%s at time %g",  Model_getId(data->model->m),
-	    data->tout);
+	    data->currenttime);
   else
-    sprintf(label, "label=\"at time %g\";\n", data->tout);
+    sprintf(label, "label=\"at time %g\";\n", data->currenttime);
 
   a = agraphattr(g, "label", "");
   agxset(g, a->index, label);
@@ -234,12 +234,12 @@ drawJacobyTxt(cvodeData_t *data) {
   printf("overlap=scale;\n");
   if ( Model_isSetName(data->model->m) )
     printf("label=\"%s at time %g\";\n", Model_getName(data->model->m),
-	   data->tout);
+	   data->currenttime);
   else if ( Model_isSetId(data->model->m) )
     printf("label=\"%s at time %g\";\n", Model_getId(data->model->m),
-	   data->tout);
+	   data->currenttime);
   else
-    printf("label=\"at time %g\";\n", data->tout);
+    printf("label=\"at time %g\";\n", data->currenttime);
 
 
   /*

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 18:49:57 raim>
-  $Id: commandLine.c,v 1.5 2005/10/17 16:53:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:09:02 raim>
+  $Id: commandLine.c,v 1.6 2005/10/18 16:40:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -397,17 +397,14 @@ integrator(integratorInstance_t *engine,
       print initial values, if on-the-fly printint is set
   */
   if ( PrintOnTheFly && data->run == 0 ) {
-	if ( data->t0 == 0.0 )
-	{
 	  fprintf(stderr, "\nPrinting results on the fly !\n");
       fprintf(stderr, "Overruling all other print options!!\n\n");      
       fprintf(outfile, "#t ");
       for ( i=0; i<data->nvalues; i++ )
         fprintf(outfile, "%s ", data->model->names[i]);
       fprintf(outfile, "\n");
-	}
 
-    fprintf(outfile, "%g ", data->t0);
+    fprintf(outfile, "%g ", cv->t0);
     for ( i=0; i<data->nvalues; i++ )
       fprintf(outfile, "%g ", data->value[i]);
     fprintf(outfile, "\n");
@@ -437,7 +434,7 @@ integrator(integratorInstance_t *engine,
     */
  
     if ( PrintOnTheFly ) {
-      fprintf(outfile, "%g ", cv->t + engine->data->t0);
+      fprintf(outfile, "%g ", cv->t);
       for ( i=0; i<engine->data->nvalues; i++ )
 	fprintf(outfile, "%g ", engine->data->value[i]);
       fprintf(outfile, "\n");

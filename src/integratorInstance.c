@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 21:38:46 raim>
-  $Id: integratorInstance.c,v 1.11 2005/10/12 19:49:22 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:29:20 raim>
+  $Id: integratorInstance.c,v 1.12 2005/10/18 16:40:43 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -47,7 +47,6 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 							 odeModel_t *om);
 
 
-
 /** Creates an new integratorInstance:
     reads initial values from odeModel and integration settings from
     cvodeSettings to create integration data cvodeData and
@@ -56,6 +55,18 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 
 SBML_ODESOLVER_API integratorInstance_t *
 IntegratorInstance_create(odeModel_t *om, cvodeSettings_t *opt)
+{
+  return CvodeInstance_create(om, opt);
+}
+
+/** Creates an new integratorInstance:
+    reads initial values from odeModel and integration settings from
+    cvodeSettings to create integration data cvodeData and
+    cvodeResults and initializes cvodeSolver structures.
+*/
+
+SBML_ODESOLVER_API integratorInstance_t *
+CvodeInstance_create(odeModel_t *om, cvodeSettings_t *opt)
 {
   cvodeData_t *data;
   integratorInstance_t *engine;
@@ -136,22 +147,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* data now also depends on cvodeSettings */
   data->opt = opt;
      
-  if (opt->Indefinitely)
-    {
-      data->tout = -1; /* delibrate trap for bugs - there is no
-			  defined end time */
-      data->nout = -1; /* delibrate trap for bugs - this is no
-			  defined number of steps */
-      data->tmult = opt->Time;
-    }
-  else
-    {
-      data->tout  = opt->TimePoints[opt->PrintStep];
-      data->nout  = opt->PrintStep;
-      data->tmult = data->tout / data->nout;
-    } 
-
-
   /* allow storage of results only for finite integrations */
   opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
   
@@ -198,7 +193,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     if ( data->results != NULL )
       CvodeResults_free(data->results, data->nvalues);
     
-    data->results = CvodeResults_create(data);
+    data->results = CvodeResults_create(data, opt->PrintStep);
     RETURN_ON_FATALS_WITH(0);
   }
   
@@ -239,7 +234,7 @@ IntegratorInstance_copyVariableState(integratorInstance_t *target,
 SBML_ODESOLVER_API double
 IntegratorInstance_getTime(integratorInstance_t *engine)
 {
-    return engine->cv->t + engine->data->t0 ;
+    return engine->cv->t;
 }
 
 /* not yet working, but would be nice for infinite integration runs */
@@ -516,13 +511,14 @@ int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   cv->rtol1 = opt->RError;     /* scalar relative tolerance */
   cv->t0 = 0.0;                /* initial time           */
   
-  if ( opt->Indefinitely ) 
-    cv->t1 = data->tmult;           /* first output time      */
+  if ( opt->Indefinitely )
+    /* first output time      */
+    cv->t1 = opt->TimePoints[opt->PrintStep] / opt->PrintStep;      
   else 
     cv->t1 = opt->TimePoints[1];    /* first output time      */  
   
   cv->tmult = cv->t1;           /* first output time factor */         
-  cv->nout = data->nout;        /* number of output steps */
+  cv->nout = opt->PrintStep;    /* number of output steps */
   cv->t = 0.0;                  /* CVODE current time, always 0, when
 				   starting from odeModel */
 
@@ -581,7 +577,7 @@ IntegratorInstance_createResults(integratorInstance_t *engine) {
   if ( !opt->StoreResults || iResults == NULL )
     return NULL;
   
-  results = CvodeResults_create(engine->data);
+  results = CvodeResults_create(engine->data, opt->PrintStep);
   RETURN_ON_FATALS_WITH(0);
 
   results->nout = iResults->nout;
@@ -620,9 +616,9 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     /* At first integration step, write initial conditions to results
        structure */
     if ( cv->iout == 1 && opt->StoreResults ) {
-      data->results->time[0] = 0.0;
+      results->time[0] = 0.0;
       for ( i=0; i<data->nvalues; i++ ) 
-	data->results->value[i][0] = data->value[i];
+	results->value[i][0] = data->value[i];
     }
     
     if (om->neq)
@@ -751,7 +747,7 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     if (opt->StoreResults)
     {
       results->nout = cv->iout;
-      results->time[cv->iout] = cv->t + data->t0;
+      results->time[cv->iout] = cv->t;
       for ( i=0; i<data->nvalues; i++ ) {
         results->value[i][cv->iout] = data->value[i];
       }
@@ -760,7 +756,6 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     /* check for steady state if requested by cvodeSettings */
     if ( opt->SteadyState == 1 ) {
       if ( checkSteadyState(engine) ) {
-	data->nout = cv->iout;
 	cv->iout = cv->nout+1;
       }
     }
@@ -1006,7 +1001,7 @@ static int checkTrigger(integratorInstance_t *engine)
 			    "Event Trigger %d : %s fired at %g. "
 			    "Aborting simulation.",
 			    i, SBML_formulaToString(trigger),
-			    data->t0 + data->currenttime);
+			    data->currenttime);
 
 	fired++;
 	data->trigger[i] = 1;      

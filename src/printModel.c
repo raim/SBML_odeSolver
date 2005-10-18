@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 18:52:32 raim>
-  $Id: printModel.c,v 1.8 2005/10/17 16:53:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:21:39 raim>
+  $Id: printModel.c,v 1.9 2005/10/18 16:40:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -748,7 +748,7 @@ printPhase(cvodeData_t *data) {
   GracePrintf("world ymax %g", 1.25*maxY);
 
   GracePrintf("xaxis tick major %g", (1.25*maxX)/12.5);
-  /*     GracePrintf("xaxis tick minor %d", (int) data->tout/100); */
+  /*     GracePrintf("xaxis tick minor %d", (int) data->currenttime/100); */
   GracePrintf("yaxis tick major %g", (1.25*maxY)/12.5 );
 
   if ( Model_isSetName(data->model->m) )
@@ -1142,10 +1142,10 @@ openXMGrace(cvodeData_t *data){
 	graphs into one XMGrace subprocess.
       */
      /*  GracePrintf("with g%d", data->results->xmgrace); */
-      GracePrintf("world xmax %g", data->tout);
+      GracePrintf("world xmax %g", data->currenttime);
       GracePrintf("world ymax %g", 1.25*maxY);
-      GracePrintf("xaxis tick major %g", data->tout/10);
-      /*     GracePrintf("xaxis tick minor %d", (int) data->tout/100); */
+      GracePrintf("xaxis tick major %g", data->currenttime/10);
+      /*     GracePrintf("xaxis tick minor %d", (int) data->currenttime/100); */
       GracePrintf("yaxis tick major %g", (1.25*maxY)/12.5 );
       GracePrintf("xaxis label font 4");
       GracePrintf("xaxis label \"time\"");

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 12:05:24 raim>
-  $Id: cvodedata.c,v 1.11 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:28:09 raim>
+  $Id: cvodedata.c,v 1.12 2005/10/18 16:40:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,13 +105,13 @@ static void CvodeData_freeStructures(cvodeData_t * data) {
     CVODE integration results
 */
 
-cvodeResults_t *CvodeResults_create(cvodeData_t * data) {
+cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
 
   int i;
   cvodeResults_t *results;
 
   ASSIGN_NEW_MEMORY(results, struct cvodeResults, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(results->time, data->nout+1, double, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(results->time, nout+1, double, NULL)
   
   /* The 2-D array `value' contains the time courses, that are
      calculated by ODEs (SBML species, or compartments and parameters
@@ -122,7 +122,7 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data) {
   results->nvalues = data->nvalues;    
 
   for ( i=0; i<data->nvalues; ++i )
-    ASSIGN_NEW_MEMORY_BLOCK(results->value[i], data->nout+1, double, NULL)
+    ASSIGN_NEW_MEMORY_BLOCK(results->value[i], nout+1, double, NULL)
   
   return results;  
 }

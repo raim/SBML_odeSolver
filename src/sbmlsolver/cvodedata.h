@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-13 18:31:32 raim>
-  $Id: cvodedata.h,v 1.9 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 18:31:04 raim>
+  $Id: cvodedata.h,v 1.10 2005/10/18 16:40:44 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -89,13 +89,7 @@ struct cvodeData {
 
   
   /* cvode settings: start- and end times, timesteps, number of timesteps,
-     and a counter, that is used to recalculate the settings upon a restart
-     of integration upon detection of an event. */
-  float t0;
-  float tmult;
-  int nout;
-  float tout;
-
+     error tolerances, max. number of steps, etc... */
   cvodeSettings_t *opt;
   
   /* trigger flags: check if triggers were active or not
@@ -132,7 +126,7 @@ int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 
 void CvodeData_free(cvodeData_t *data);
 
-cvodeResults_t *CvodeResults_create(cvodeData_t *data);
+cvodeResults_t *CvodeResults_create(cvodeData_t *data, int nout);
 
 void CvodeResults_free(cvodeResults_t *, int);
 #endif

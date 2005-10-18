@@ -37,6 +37,7 @@ extern "C" {
     cvodeResults_t *results; 
   };
 
+  SBML_ODESOLVER_API integratorInstance_t *CvodeInstance_create(odeModel_t *, cvodeSettings_t *);
 
   SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
