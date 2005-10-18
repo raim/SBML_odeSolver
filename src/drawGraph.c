@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:20:50 raim>
-  $Id: drawGraph.c,v 1.10 2005/10/18 16:40:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 19:30:51 raim>
+  $Id: drawGraph.c,v 1.11 2005/10/18 17:32:26 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,11 +50,13 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
 
 #if !USE_GRAPHVIZ
 
+  SolverError_error(
+            WARNING_ERROR_TYPE,
+	    SOLVER_ERROR_NO_GRAPHVIZ,
+	    "odeSolver has been compiled without GRAPHIZ functionality. ",
+	    "Graphs are printed to stdout in the graphviz' .dot format.");
+
   drawJacobyTxt(data);
-  fprintf(stderr,
-	  "odeSolver has been compiled without GRAPHIZ functionality.\n");
-  fprintf(stderr,
-	  "Graphs are printed to stdout in the graphviz' .dot format.\n");
 
 #else
 
@@ -72,14 +74,6 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
   char *formatopt;
   char *outfile;
   
-  fprintf(stderr, "\n\n");
-  fprintf(stderr,
-	  "Trying to draw a species interaction graph %s_jm.%s from\n",
-	  file, format);
-  fprintf(stderr,
-	  "the jacobian matrix at the last time point of integration.\n");
-  fprintf(stderr,
-	  "This can take a while for big models... \n\n");
 
   /* setting name of outfile */
   outfile = (char *) calloc(strlen(file)+
@@ -214,8 +208,8 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
 #elif (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6) || GRAPHVIZ_MAJOR_VERSION >= 3
   gvFreeContext(gvc);
 #endif
-  
-  xfree(format);
+
+  xfree(formatopt);
   xfree(outfile);
 
 #endif
@@ -282,11 +276,12 @@ drawModel(Model_t *m, char* file, char *format) {
   
 #if !USE_GRAPHVIZ
 
+  SolverError_error(
+            WARNING_ERROR_TYPE,
+	    SOLVER_ERROR_NO_GRAPHVIZ,
+	    "odeSolver has been compiled without GRAPHIZ functionality. ",
+	    "Graphs are printed to stdout in the graphviz' .dot format.");
   drawModelTxt(m);
-  fprintf(stderr,
-	  "odeSolver has been compiled without GRAPHIZ functionality.\n");
-  fprintf(stderr,
-	  "Graphs are printed to stdout in the graphviz' .dot format.\n");
   
 #else
 
@@ -310,13 +305,6 @@ drawModel(Model_t *m, char* file, char *format) {
   char name[WORDSIZE];
   char label[WORDSIZE];
 
-  fprintf(stderr, "\n\n");
-  fprintf(stderr,
-	  "Trying to draw reaction graph '%s_rn.%s' from the model.\n",
-	  file, format);
-  fprintf(stderr,
-	  "This can take a while for big models... \n\n");
-  
   /* setting name of outfile */
   outfile = (char *) calloc(strlen(file)+ strlen(format)+7, sizeof(char));
   sprintf(outfile, "-o%s_rn.%s", file, format);
@@ -530,7 +518,7 @@ drawModel(Model_t *m, char* file, char *format) {
   gvFreeContext(gvc); 
 #endif  
 
-  xfree(format);
+  xfree(formatopt);  
   xfree(outfile);
   
 #endif

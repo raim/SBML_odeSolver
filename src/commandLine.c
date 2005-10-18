@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:09:02 raim>
-  $Id: commandLine.c,v 1.6 2005/10/18 16:40:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 19:24:56 raim>
+  $Id: commandLine.c,v 1.7 2005/10/18 17:32:26 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,6 +114,11 @@ odeSolver (int argc, char *argv[])
 	command-line options.
     */
     if ( Opt.DrawReactions == 1 ) {
+      if ( Opt.PrintMessage ) 
+	fprintf(stderr,
+		"\n\nTrying to draw reaction graph '%s_rn.%s' from the model. \nThis can take a while for big models... \n\n",
+		sbmlFilename, Opt.GvFormat);
+  
       if ( drawModel(m, sbmlFilename, Opt.GvFormat) > 0 ) {
 	xfree(sbmlFilename);
 	SBMLDocument_free(d);
@@ -340,6 +345,13 @@ odeSolver (int argc, char *argv[])
 	values.
     */
     if ( Opt.DrawJacobian == 1 ) {
+      if ( Opt.PrintMessage )
+        fprintf(stderr,
+	  "\n\nTrying to draw a species interaction graph %s_jm.%s from\n  \
+	  the jacobian matrix at the last time point of integration.\n     \
+	  This can take a while for big models... \n\n",
+	  sbmlFilename, Opt.GvFormat);
+
       if ( drawJacoby(ii->data, sbmlFilename, Opt.GvFormat) > 0 ) {
 	Warn(stderr,
 	     "%s:%d main(): Couldn't calculate jacobian graph for >%s<",
