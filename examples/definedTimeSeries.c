@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 17:32:32 raim>
-  $Id: definedTimeSeries.c,v 1.2 2005/10/17 16:08:37 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 12:17:50 raim>
+  $Id: definedTimeSeries.c,v 1.3 2005/10/18 10:45:34 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,15 +31,13 @@ main (int argc, char *argv[]){
   set = CvodeSettings_createDefaults();
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
 
-  /* generating predefined output times */
-  timepoints = (double *)calloc(printstep, sizeof(double));
-  timepoints[0] = 0.5;
-  for ( i=1; i<printstep; i++ ) {
-    timepoints[i] = i*i;
-  }
-  CvodeSettings_setTimeSeries(set, timepoints, printstep);
-  /* the array was copied and can now be freed */
-  free(timepoints);
+  /* setting time series */
+  CvodeSettings_setTime(set, 25, printstep);
+
+  /* overwriting with predefined output times */
+  CvodeSettings_setTimeStep(set, 1, 0.5);
+  for ( i=2; i<=printstep; i++ ) 
+    CvodeSettings_setTimeStep(set, i, (i-1)*(i-1));
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
   results = SBML_odeSolver(d, set);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 18:51:24 raim>
-  $Id: odeSolver.c,v 1.19 2005/10/17 16:55:14 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 11:32:18 raim>
+  $Id: odeSolver.c,v 1.20 2005/10/18 10:45:33 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -274,11 +274,8 @@ int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
 }
 
 
-/** 
+/* */
 
-*/
-
-SBML_ODESOLVER_API 
 int VarySettings_addParameterSeries(varySettings_t *vs, char *id, char *rid,
 				    double *designpoints)
 {
@@ -334,13 +331,11 @@ int VarySettings_setParameterName(varySettings_t *vs, int i,
 }
 
 
-/** 
+/* */
 
-*/
 
-SBML_ODESOLVER_API int
-VarySettings_addParameterSet(varySettings_t *vs,
-			     double **designpoints, char **id, char **rid)
+int VarySettings_addParameterSet(varySettings_t *vs,
+				 double **designpoints, char **id, char **rid)
 {
   int i, j;
   for ( i=0; i<vs->nrparams; i++ )
@@ -358,7 +353,10 @@ double VarySettings_getValue(varySettings_t *vs, int i, int j)
 }
 
 
-/** Set the jth value of the ith parameter
+/** Set the jth value of the ith parameter, where
+    0 <= i < nrparams  and
+    0 <= j < nrdesignpoints
+    as used for varySettings_allocate
 */
 
 SBML_ODESOLVER_API

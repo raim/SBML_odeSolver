@@ -56,27 +56,36 @@ extern "C" {
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create(double EndTime, int PrintStep, double *TimePoints, double Error, double RError, double Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults);
   SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *set);
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set);
-  SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *TimePoints, int PrintStep);
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTime, int PrintStep);
+  SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *set, int, double);
   SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults);
   SBML_ODESOLVER_API void CvodeSettings_setErrors(cvodeSettings_t *set, double Error, double RError, double Mxstep);
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *set, double Error);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *set, double RError);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep);
+  SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int);
+  SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int);
+  SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int);
+  SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int);
+  SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int);
   
   SBML_ODESOLVER_API double CvodeSettings_getEndTime(cvodeSettings_t *set);
   SBML_ODESOLVER_API int CvodeSettings_getPrintsteps(cvodeSettings_t *set);
-  SBML_ODESOLVER_API double CvodeSettings_getTime(cvodeSettings_t *set, int printstep);
+  SBML_ODESOLVER_API double CvodeSettings_getTimeStep(cvodeSettings_t *set);
+  SBML_ODESOLVER_API double CvodeSettings_getTime(cvodeSettings_t *set, int);  
   SBML_ODESOLVER_API double CvodeSettings_getError(cvodeSettings_t *set);
   SBML_ODESOLVER_API double CvodeSettings_getRError(cvodeSettings_t *set);
   SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *set);
 
-  SBML_ODESOLVER_API int CvodeSettings_useJacobian(cvodeSettings_t *set);
-  SBML_ODESOLVER_API int CvodeSettings_integratieIndefinitely(cvodeSettings_t *set);
-  SBML_ODESOLVER_API int CvodeSettings_haltOnEvent(cvodeSettings_t *set);
-  SBML_ODESOLVER_API int CvodeSettings_checkSteadyState(cvodeSettings_t *set);
-  SBML_ODESOLVER_API int CvodeSettings_storeResults(cvodeSettings_t *set);
+  SBML_ODESOLVER_API int CvodeSettings_getJacobian(cvodeSettings_t *set);
+  SBML_ODESOLVER_API int CvodeSettings_getIndefinitely(cvodeSettings_t *set);
+  SBML_ODESOLVER_API int CvodeSettings_getHaltOnEvent(cvodeSettings_t *set);
+  SBML_ODESOLVER_API int CvodeSettings_getSteadyState(cvodeSettings_t *set);
+  SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *set);
 
+  int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *TimePoints, int PrintStep);
+
+  
 #ifdef __cplusplus
 }
 #endif

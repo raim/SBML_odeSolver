@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 23:01:05 raim>
-  $Id: integratorSettings.c,v 1.4 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 12:27:48 raim>
+  $Id: integratorSettings.c,v 1.5 2005/10/18 10:45:32 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,14 +176,12 @@ void CvodeSettings_setSwitches(cvodeSettings_t *set,
 }
 
 
-/**
-   Sets a predefined timeseries in cvodeSettings.
-   Assigns memory for an array of requested time points.
-   PrintStep must be the size of the passed array timeseries.
-   Returns 1, if sucessful and 0, if not.
+/* Sets a predefined timeseries in cvodeSettings. Assigns memory for
+   an array of requested time points.  PrintStep must be the size of
+   the passed array timeseries.  Returns 1, if sucessful and 0, if
+   not.
 */
 
-SBML_ODESOLVER_API 
 int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
 				 double *timeseries, int PrintStep)
 {
@@ -200,27 +198,95 @@ int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
 }
 
 
-/**
-   Calculates a time point series from Endtime and Printstep
-   and sets the time series in cvodeSettings
-   Returns 1, if sucessful and 0, if not.
+/** Calculates a time point series from Endtime and Printstep and sets
+    the time series in cvodeSettings. Returns 1, if sucessful and 0, if
+    not.
 */
 
 SBML_ODESOLVER_API 
 int CvodeSettings_setTime(cvodeSettings_t *set,
-			   double EndTime, int PrintStep)
+			  double EndTime, int PrintStep)
 {
-  int i;
+  int i, j;
   double *timeseries;
   ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);  
   for ( i=1; i<=PrintStep; i++ )
     timeseries[i-1] = i * EndTime/PrintStep;
-  CvodeSettings_setTimeSeries(set, timeseries, PrintStep);
+  j = CvodeSettings_setTimeSeries(set, timeseries, PrintStep);
   free(timeseries);
-  
-  return 1;
+  return j;
 }
 
+
+/** Sets the ith time step for the integration, where
+    0 < i <= PrintStep.
+    The first time is always 0 and can not be set.
+    Returns 1, if sucessful and 0, if not.
+*/
+
+SBML_ODESOLVER_API 
+int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, double time)
+{
+  if ( 0 < i <= set->PrintStep ) {
+    set->TimePoints[i] = time;
+    return 1;
+  }
+  else
+    return 0;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
+{
+  set->UseJacobian = i;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int i)
+{
+  set->Indefinitely = i;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i)
+{
+  set->HaltOnEvent = i;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i)
+{
+  set->SteadyState = i;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int i)
+{
+  set->StoreResults = i;
+}
+
+
+/**** cvodeSettings get methods ****/
 
 /**
    Returns the last time point of integration or -1, if
@@ -243,7 +309,7 @@ double CvodeSettings_getEndTime(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_getTimeStep(cvodeSettings_t *set)
+double CvodeSettings_getTimeStep(cvodeSettings_t *set)
 {
   if ( !set->Indefinitely )
     return set->TimePoints[1];
@@ -323,7 +389,7 @@ int CvodeSettings_getMxstep(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_useJacobian(cvodeSettings_t *set)
+int CvodeSettings_getJacobian(cvodeSettings_t *set)
 {
   return set->UseJacobian;
 }
@@ -335,7 +401,7 @@ int CvodeSettings_useJacobian(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_integratieIndefinitely(cvodeSettings_t *set)
+int CvodeSettings_getIndefinitely(cvodeSettings_t *set)
 {
   return set->Indefinitely;
 }
@@ -348,7 +414,7 @@ int CvodeSettings_integratieIndefinitely(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_haltOnEvent(cvodeSettings_t *set)
+int CvodeSettings_getHaltOnEvent(cvodeSettings_t *set)
 {
   return set->HaltOnEvent;
 }
@@ -360,7 +426,7 @@ int CvodeSettings_haltOnEvent(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_checkSteadyState(cvodeSettings_t *set)
+int CvodeSettings_getSteadyState(cvodeSettings_t *set)
 {
   return set->SteadyState;
 }
@@ -374,7 +440,7 @@ int CvodeSettings_checkSteadyState(cvodeSettings_t *set)
 */
 
 SBML_ODESOLVER_API 
-int CvodeSettings_storeResults(cvodeSettings_t *set)
+int CvodeSettings_getStoreResults(cvodeSettings_t *set)
 {
   return set->StoreResults;
 }
