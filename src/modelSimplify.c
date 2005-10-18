@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 22:51:50 raim>
-  $Id: modelSimplify.c,v 1.7 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 13:29:10 raim>
+  $Id: modelSimplify.c,v 1.8 2005/10/18 14:17:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,29 @@
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/processAST.h"
 
-/** Replaces all parameters 'name' appearing in the formula
+/** Replaces all AST_NAME types with `name' appearing in the formula 
+    'math' by the `newname'
+*/
+
+SBML_ODESOLVER_API void
+AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname) {
+
+  int i;
+  List_t *names;
+
+  names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
+
+  for ( i=0; i<List_size(names); i++ ) {
+    if ( strcmp(ASTNode_getName(List_get(names,i)), name) == 0 ) {
+      ASTNode_setName(List_get(names,i), newname);
+    }
+  }
+
+  List_free(names);
+  
+}
+
+/** Replaces all AST_NAME types with `name' appearing in the formula
     'math' by the value 'x'.
 */
 
@@ -65,7 +87,7 @@ AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp) {
 }
 
 /** Replaces an assigned variable 'name' by the full
-    assingment in the passed mathematical expression
+    assignment in the passed mathematical expression
     math.
 */
 
@@ -119,10 +141,10 @@ AST_replaceNameByFormula(ASTNode_t *math, const char *name,
   List_free(names);
 }
 
-/** Replaces all user defined functions by the ful
-    expression in the passed mathematical expression
-    math. This is quite a dirty solution and might be
-    dangerous. See comments in function.
+/** Replaces all user defined functions by the full expression of the
+    function in the passed mathematical expression `math'. This is
+    quite a dirty solution and might be dangerous. See comments in
+    function.
 */
 
 SBML_ODESOLVER_API void

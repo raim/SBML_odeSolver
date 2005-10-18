@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 16:45:51 raim>
-  $Id: batch_integrate.c,v 1.8 2005/10/17 16:08:37 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 16:15:10 raim>
+  $Id: batch_integrate.c,v 1.9 2005/10/18 14:17:32 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,9 +38,10 @@ main (int argc, char *argv[]){
   sscanf(argv[5], "%lf", &end);
   sscanf(argv[6], "%lf", &steps);
   strcpy(parameter, argv[7]);
+  
   if ( argc > 8 ) {
     ASSIGN_NEW_MEMORY_BLOCK(reaction, strlen(argv[8])+1, char, 0);
-    strcpy(reaction, argv[8]);
+    sprintf(reaction, argv[8]);
   }
   else{
     reaction = NULL;
@@ -67,28 +68,30 @@ main (int argc, char *argv[]){
   vs = VarySettings_allocate(1, steps+1);
   VarySettings_addParameter(vs, parameter, reaction, start, end);
   VarySettings_dump(vs);
-  
+
+  if ( reaction != NULL )
+    free(reaction);
+
   /* calling the SBML ODE Solver Batch function,
      and retrieving SBMLResults */
   resM = SBML_odeSolverBatch(d, set, vs);
 
-  /* we don't need these anymore */
-  CvodeSettings_free(set);  
-  SBMLDocument_free(d);
-  VarySettings_free(vs);  
-
-  results = resM->results[0][0];
-
-  if ( resM->results == NULL ) {
+  if ( resM == NULL ) {
     printf("### Parameter variation not succesful!\n");
     return(0);
   }
-  
+    /* we don't need these anymore */
+  CvodeSettings_free(set);  
+  /* printf("%s", writeSBMLToString(d)); */
+  SBMLDocument_free(d);
+  VarySettings_free(vs);
+
+  results = resM->results[0][0];
 
   for ( i=0; i<resM->i; i++ ) {
     for ( j=0; j<resM->j; j++ ) {
       results = SBMLResultsMatrix_getResults(resM, i, j);
-      printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);      
+      printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);
       printResults(results);
     }
   }

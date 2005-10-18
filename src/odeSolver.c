@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 11:32:18 raim>
-  $Id: odeSolver.c,v 1.20 2005/10/18 10:45:33 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 16:14:05 raim>
+  $Id: odeSolver.c,v 1.21 2005/10/18 14:17:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +13,9 @@
 #include <sbml/SBMLTypes.h>
 
 #include "sbmlsolver/odeSolver.h"
+
+static int globalizeParameter(Model_t *, char *id, char *rid);
+static int localizeParameter(Model_t *, char *id, char *rid);
 
 /**
 
@@ -163,20 +166,23 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   variableIndex_t *vi;
   SBMLResultsMatrix_t *resM;
 
+  char *local_param;
+
 
   resM = SBMLResultsMatrix_allocate(vs->nrparams, vs->nrdesignpoints);
-
-
-  /** At first, ODEModel_create, attempts to construct a simplified
+ 
+  /* At first, globalize all local (kineticLaw) parameters to be varied */
+  for ( i=0; i<vs->nrparams; i++ ) 
+    if ( vs->rid[i] != NULL ) 
+      globalizeParameter(m, vs->id[i], vs->rid[i]);     
+    
+ 
+  /* At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs.
-     See comments in Model_odeSolver for details.
-  */
-
-  /* here: if vary->rid !+ "": globalize parameter */
-  
+     See comments in Model_odeSolver for details.  */
   om = ODEModel_create(m, set->UseJacobian);      
   RETURN_ON_FATALS_WITH(NULL);
-  
+ 
   /* an integratorInstance is created from the odeModel and the passed
      cvodeSettings. If that worked out ...  */  
   ii = IntegratorInstance_create(om, set);
@@ -186,7 +192,17 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   for ( i=0; i<vs->nrparams; i++ ) {
 
     /* get the index for parameter i */
-    vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    if ( vs->rid[i] != NULL ) {
+      ASSIGN_NEW_MEMORY_BLOCK(local_param,
+			      strlen(vs->id[i]) + strlen(vs->rid[i]) + 4,
+			      char , 0);
+      sprintf(local_param, "r_%s_%s", vs->rid[i], vs->id[i]);
+      vi = ODEModel_getVariableIndex(om, local_param);
+      free(local_param);
+    }
+    else
+      vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    
     if ( vi == NULL )
       return NULL;
   
@@ -200,7 +216,6 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
       /** .... the integrator loop can be started, that invoking
 	  CVODE to move one time step and store.  The function will
 	  also handle events and check for steady states.  */      
-
       while (!IntegratorInstance_timeCourseCompleted(ii)) {
 	if (!IntegratorInstance_integrateOneStep(ii))
 	  IntegratorInstance_handleError(ii);
@@ -214,6 +229,11 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
       IntegratorInstance_reset(ii);
     }
   }
+  /* localize parameters again, unfortunately the new
+     globalized parameter cannot be freed currently  */
+  for ( i=0; i<vs->nrparams; i++ ) 
+    if ( vs->rid[i] != NULL ) 
+      localizeParameter(m, vs->id[i], vs->rid[i]);     
 
   /* free variableIndex, used for setting values */
   VariableIndex_free(vi);
@@ -226,7 +246,78 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
 
 }
 
+static int globalizeParameter(Model_t *m, char *id, char *rid) {
 
+  int i, found;
+  Reaction_t *r;
+  KineticLaw_t *kl;
+  Parameter_t *p, *p_global;
+  ASTNode_t *math;
+  char *newname;
+ 
+  r = Model_getReactionById (m, (const char *) rid);
+  
+  if ( r == NULL )
+    return 0;
+  
+  kl = Reaction_getKineticLaw(r);
+  math = (ASTNode_t *)KineticLaw_getMath(kl);
+
+  ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
+  sprintf(newname, "r_%s_%s", rid, id);
+  AST_replaceNameByName(math, (const char *) id,  (const char *) newname);
+
+  found = 0;
+  
+  for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
+    p = KineticLaw_getParameter(kl, i);
+    if ( strcmp(Parameter_getId(p), id) == 0 ) {
+      p_global = Model_createParameter(m);
+      Parameter_setConstant(p_global, 1);
+      Parameter_setId(p_global, newname);
+      if (Parameter_isSetValue(p)) 
+	Parameter_setValue(p_global, Parameter_getValue(p));
+      if(Parameter_isSetUnits(p)) 
+	Parameter_setUnits(p_global, Parameter_getUnits(p));
+      if (Parameter_isSetName(p)) 
+	Parameter_setName(p_global, Parameter_getName(p));
+      found = 1;
+    }
+  }
+  free(newname);
+  return found;
+}
+
+static int localizeParameter(Model_t *m, char *id, char *rid) {
+
+  int i, found;
+  Reaction_t *r;
+  KineticLaw_t *kl;
+  Parameter_t *p, *p_global;
+  ASTNode_t *math;
+  char *newname;
+  
+  r = Model_getReactionById (m, (const char *) rid);
+  
+  if ( r == NULL )
+    return 0;
+  
+  kl = Reaction_getKineticLaw(r);
+  math = (ASTNode_t *)KineticLaw_getMath(kl);  
+  ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
+  sprintf(newname, "r_%s_%s", rid, id);
+  AST_replaceNameByName(math, (const char *) newname, (const char *) id);
+
+  /* unfortunately the parameter cannot be freed currently */
+/*   if ((p = Model_getParameterById(m, newname)) != NULL) { */
+/*     Parameter_free(p); */
+/*   } */
+/*   else */
+/*     return 0; */
+
+  return 1;
+
+}
 
 /** Allocate varySettings structure for settings for parameter
     variation batch runs: nrparams is the number of parameters to be
@@ -241,6 +332,7 @@ varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
   varySettings_t *vs;
   ASSIGN_NEW_MEMORY(vs, struct varySettings, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(vs->id, nrparams, char *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(vs->rid, nrparams, char *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(vs->params, nrparams, double *, NULL);
   for ( i=0; i<nrparams; i++ ) {
     ASSIGN_NEW_MEMORY_BLOCK(vs->params[i], nrdesignpoints, double, NULL);
@@ -261,7 +353,7 @@ int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
 {
   int j;
   double *designpoints;
-  
+
   ASSIGN_NEW_MEMORY_BLOCK(designpoints, vs->nrdesignpoints, double, 0);
 
   /* calculating internal parameter array */  
@@ -314,19 +406,23 @@ int VarySettings_setParameterName(varySettings_t *vs, int i,
 
   if ( vs->id[i] != NULL )
     free(vs->id[i]);
-  
+  if  ( vs->rid[i] != NULL )
+    free(vs->rid[i]);
+   
   /* concatenating parameter reaction id: will be `globalized' from
      input model, the same way. For global parameters to be changed
      rid must be passed as "" */
   if ( rid != NULL ) {
-    ASSIGN_NEW_MEMORY_BLOCK(vs->id[i],
-			    strlen(id)+strlen(rid)+13, char, 0);
-    sprintf(vs->id[i], "%s_inReaction_%s", id, rid);
+    ASSIGN_NEW_MEMORY_BLOCK(vs->rid[i], strlen(rid)+1, char, 0);
+    sprintf(vs->rid[i], "%s", rid);    
   }
-  else {
-    ASSIGN_NEW_MEMORY_BLOCK(vs->id[i], strlen(id)+1, char, 0);
-    sprintf(vs->id[i], "%s", id);
-  }
+  else 
+    vs->rid[i] = NULL;
+
+  ASSIGN_NEW_MEMORY_BLOCK(vs->id[i], strlen(id)+1, char, 0);
+  sprintf(vs->id[i], "%s", id);
+  
+
   return 1;
 }
 
@@ -396,9 +492,11 @@ void VarySettings_free(varySettings_t *vs)
   
   for ( i=0; i<vs->nrparams; i++ ) {
     free(vs->id[i]);
+    free(vs->rid[i]);
     free(vs->params[i]);
   }
   free(vs->id);
+  free(vs->rid);
   free(vs->params);
   free(vs);    
 }

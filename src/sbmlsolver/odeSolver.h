@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 17:29:52 raim>
-  $Id: odeSolver.h,v 1.13 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-18 13:05:27 raim>
+  $Id: odeSolver.h,v 1.14 2005/10/18 14:17:32 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -41,9 +41,11 @@ typedef struct varySettings varySettings_t;
 struct varySettings {
   int nrdesignpoints; /*defines how many design points are set*/
   int nrparams;       /* defines the number of parameters to be varied */
-  int cnt_params;       /* defines the number of parameters to be varied */
+  /* int cnt_params; */     /* counts the number of parameters to be varied */
   char **id;          /* array of SBML ID of the species, compartment
 			 or parameter to be varied */
+  char **rid;         /* SBML Reaction ID, if a local parameter is to be
+			 varied */
   double **params;    /* two dimensional array with the parmaters */
 };
 
