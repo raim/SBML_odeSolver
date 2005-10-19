@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 17:38:40 raim>
-  $Id: batch_integrate.c,v 1.10 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 18:48:20 raim>
+  $Id: batch_integrate.c,v 1.11 2005/10/19 16:50:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,7 +91,7 @@ main (int argc, char *argv[]){
       results = SBMLResultsMatrix_getResults(resM, i, j);
       printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);
       /* printing results only for species*/
-      TimeCourseArray_dump(results->species, results->time);
+      SBMLResults_dumpSpecies(results);
     }
   }
 

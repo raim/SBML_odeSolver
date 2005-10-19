@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 18:21:46 raim>
-  $Id: sbmlResults.h,v 1.5 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 18:47:33 raim>
+  $Id: sbmlResults.h,v 1.6 2005/10/19 16:50:28 raimc Exp $
 */
 #ifndef _SBMLRESULTS_H_
 #define _SBMLRESULTS_H_
@@ -65,10 +65,14 @@ SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *);
 SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *);
 SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *, int);
 SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *);
+SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *);
+SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *);
+SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *);
+SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *);
 SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *);
 SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *);
 SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
-SBML_ODESOLVER_API void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *time);
+
 
 
 /* not part of the API */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 17:35:29 raim>
-  $Id: definedTimeSeries.c,v 1.4 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 18:48:36 raim>
+  $Id: definedTimeSeries.c,v 1.5 2005/10/19 16:50:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@ main (int argc, char *argv[]){
   }
 
   /* printing results only for species*/
-  TimeCourseArray_dump(results->species, results->time);
+  SBMLResults_dumpSpecies(results);
 
   /* now we can also free the result structure */
   SBMLResults_free(results);

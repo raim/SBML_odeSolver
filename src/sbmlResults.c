@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 18:22:00 raim>
-  $Id: sbmlResults.c,v 1.7 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 18:46:38 raim>
+  $Id: sbmlResults.c,v 1.8 2005/10/19 16:50:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +19,8 @@ static void TimeCourseArray_free(timeCourseArray_t *);
 static timeCourse_t *TimeCourse_create(int timepoints);
 static void TimeCourse_free(timeCourse_t *);
 static timeCourse_t *TimeCourseArray_getTimeCourse(const char *, timeCourseArray_t *);
+static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *time);
+
 
 /*** results as returned by _odeSolver ***/
 
@@ -276,7 +278,7 @@ static void TimeCourse_free(timeCourse_t *tc)
 
 */
 
-SBML_ODESOLVER_API
+static
 void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
 {
   int i, j;
@@ -311,28 +313,57 @@ void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
 
 */
 
-SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results) {
-
-  int i, j;
-  timeCourse_t *tc;
-  
-  /* print all species  */
+SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *results)
+{
   printf("## Printing Species time courses\n");
   TimeCourseArray_dump(results->species, results->time);
+}
 
-  /* print variable compartments */
-  printf("## Printing Compartment time courses\n");
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *results)
+{
+  printf("## Printing Variable Compartment time courses\n");
   TimeCourseArray_dump(results->compartments, results->time);
+}
 
-  /* print variable parameters */
-  printf("## Printing Parameter time courses\n");
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
+{
+  printf("## Printing Variable Parameter time courses\n");
   TimeCourseArray_dump(results->parameters, results->time);
+}
 
-  /* print fluxes */
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
+{
   printf("## Printing Species time courses\n");
   TimeCourseArray_dump(results->fluxes, results->time);
+}
 
-  
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
+{
+  printf("### Printing All Results \n");
+  SBMLResults_dumpCompartments(results);
+  SBMLResults_dumpSpecies(results);
+  SBMLResults_dumpParameters(results);
+  SBMLResults_dumpFluxes(results);
 }
 
 
