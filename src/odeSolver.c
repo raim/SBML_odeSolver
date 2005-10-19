@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 16:28:08 raim>
-  $Id: odeSolver.c,v 1.23 2005/10/18 14:31:05 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 12:25:18 raim>
+  $Id: odeSolver.c,v 1.24 2005/10/19 10:29:23 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -293,7 +293,8 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
   int i, found;
   Reaction_t *r;
   KineticLaw_t *kl;
-  Parameter_t *p, *p_global;
+  ListOf_t     *pl;
+  Parameter_t *p;
   ASTNode_t *math;
   char *newname;
   
@@ -308,15 +309,18 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
   sprintf(newname, "r_%s_%s", rid, id);
   AST_replaceNameByName(math, (const char *) newname, (const char *) id);
 
-  /* unfortunately the parameter cannot be freed currently */
-  if ((p = Model_getParameterById(m, newname)) != NULL) {
-    Parameter_setId(p, "notUsedAnymore_asdf");
-  }
-  else
-    return 0;
+  /* just freeing the last parameter, one for each `rid',
+     only if the globalized parameter is present */
+  found = 0;
+  if ( Model_getParameterById(m, newname) != NULL ) {
+    found = 1;
+    pl = Model_getListOfParameters(m);
+    p = (Parameter_t *) ListOf_remove(pl, ListOf_getNumItems(pl) - 1);
+    Parameter_free(p);
+  }  
 
   free(newname);
-  return 1;
+  return found;
 
 }
 
