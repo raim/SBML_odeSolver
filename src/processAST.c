@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 23:03:35 raim>
-  $Id: processAST.c,v 1.10 2005/10/12 21:22:45 raimc Exp $
+  Last changed Time-stamp: <2005-10-17 19:00:45 raim>
+  $Id: processAST.c,v 1.11 2005/10/19 16:35:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +17,7 @@
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/ASTIndexNameNode.h"
+#include "sbmlsolver/solverError.h"
 
 #ifdef WIN32
 double acosh(double x)
@@ -345,7 +346,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	/* fprintf(stderr, */
 	/* 	   "Evaluating external function\n"); */
 	double *func_vals = NULL;
-	func_vals = (double *) calloc(childnum+1, sizeof(double));
+	ASSIGN_NEW_MEMORY_BLOCK(func_vals, childnum+1, double, 0);
 	for ( i=0; i<childnum; i++ ) {
 	  func_vals[i] = evaluateAST(child(n,i), data);
 	}
