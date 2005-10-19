@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 16:15:10 raim>
-  $Id: batch_integrate.c,v 1.9 2005/10/18 14:17:32 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 17:38:40 raim>
+  $Id: batch_integrate.c,v 1.10 2005/10/19 16:39:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,8 +9,6 @@
 #include "../src/sbmlsolver/odeSolver.h"
 #include "../src/sbmlsolver/options.h"
 
-static void
-printResults(SBMLResults_t *results);
 
 int
 main (int argc, char *argv[]){
@@ -30,7 +28,7 @@ main (int argc, char *argv[]){
   varySettings_t *vs;
   SBMLResultsMatrix_t *resM;
   SBMLResults_t *results;
-  
+   
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
   sscanf(argv[3], "%lf", &printstep);
@@ -57,11 +55,11 @@ main (int argc, char *argv[]){
 
 
   /* Setting SBML ODE Solver integration parameters */
-   /* Setting SBML ODE Solver integration parameters with default values */
-  set = CvodeSettings_createDefaults();
+  /* Setting SBML ODE Solver integration parameters with default values */
+  set = CvodeSettings_create();
   /* resetting the values we need */
   CvodeSettings_setTime(set, time, printstep);
-  /* CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000); */
+  CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000);
   CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1); 
   
   /* Setting SBML Ode Solver batch integration parameters */
@@ -92,7 +90,8 @@ main (int argc, char *argv[]){
     for ( j=0; j<resM->j; j++ ) {
       results = SBMLResultsMatrix_getResults(resM, i, j);
       printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);
-      printResults(results);
+      /* printing results only for species*/
+      TimeCourseArray_dump(results->species, results->time);
     }
   }
 
@@ -100,65 +99,5 @@ main (int argc, char *argv[]){
   return (EXIT_SUCCESS);  
 }
 
-static void
-printResults(SBMLResults_t *results) {
-
-  int i, j;
-  
-  /* print all species  */
-  printf("### Printing Species time courses\n");
-  printf("#time ");
-  for ( j=0; j<results->species->num_val; j++) {
-    printf("%s ", results->species->names[j]);
-  }
-  printf("\n");
-  for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
-    for ( j=0; j<results->species->num_val; j++) {
-      printf("%g ", results->species->values[i][j]);
-    }
-    printf("\n");
-  }
-  /* print variable compartments */
-  if ( results->compartments->num_val == 0 ) {
-    printf("### No variable compartments.\n");
-
-  }
-  else {
-    printf("### Printing variable Compartment time courses\n");
-    printf("#time ");
-    for ( j=0; j<results->compartments->num_val; j++) {
-      printf("%s ", results->compartments->names[j]);
-    }
-    printf("\n");
-    for ( i=0; i<results->timepoints; i++ ) {
-      printf("%g ", results->time[i]);
-      for ( j=0; j<results->compartments->num_val; j++) {
-	printf("%g ", results->compartments->values[i][j]);
-      }
-      printf("\n");
-    }
-  }
-  /* print variable parameters */
-  if ( results->parameters->num_val == 0 ) {
-    printf("### No variable parameters.\n");
-  }
-  else {
-    printf("### Printing variable Parameter time courses\n");
-    printf("#time ");
-    for ( j=0; j<results->parameters->num_val; j++) {
-      printf("%s ", results->parameters->names[j]);
-    }
-    printf("\n");
-    for ( i=0; i<results->timepoints; i++ ) {
-      printf("%g ", results->time[i]);
-      for ( j=0; j<results->parameters->num_val; j++) {
-	printf("%g ", results->parameters->values[i][j]);
-      }
-      printf("\n");
-    }
-  }
-  printf("\n");
-}
 
 /* End of file */

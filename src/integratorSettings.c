@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 12:27:48 raim>
-  $Id: integratorSettings.c,v 1.5 2005/10/18 10:45:32 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 14:20:33 raim>
+  $Id: integratorSettings.c,v 1.6 2005/10/19 16:39:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,44 +8,35 @@
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/solverError.h"
 
-static cvodeSettings_t *
-CvodeSettings_createDefaultsFromTime(double Time, int PrintStep,
-				     double *TimePoints);
 
+static int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *, int);
 
 /**
    Creates a settings structure with default values
 */
 
-cvodeSettings_t *
-CvodeSettings_createDefaults()
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 {
-  return CvodeSettings_createDefaultsFromTime(1., 1, NULL);
+  return CvodeSettings_createWithTime(1., 1);
 }
 
 
-/* creates a settings structure with default Values
-   for Errors, MxStep and Swicthes */
-static cvodeSettings_t *
-CvodeSettings_createDefaultsFromTime(double Time, int PrintStep,
-				     double *TimePoints)
-{
-  return CvodeSettings_create(Time, PrintStep, TimePoints,
-			      1e-18, 1e-10, 10000, 1, 0, 0, 0, 1);
-}
-
-/** Creates a settings structure from a predefined timeseries
-    and fills rest with default values
+/** Creates a settings structure with default Values
+    for Errors, MxStep and Swicthes
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *
-CvodeSettings_createFromTimeSeries(double *timeseries, int n)
+CvodeSettings_createWithTime(double Time, int PrintStep)
 {
-  return CvodeSettings_createDefaultsFromTime(timeseries[n], n-1, timeseries);
+  return CvodeSettings_createWith(Time, PrintStep,
+				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1);
 }
 
+
+
 SBML_ODESOLVER_API void
-CvodeSettings_DumpToString(cvodeSettings_t *set) {
+CvodeSettings_DumpToString(cvodeSettings_t *set)
+{
 }
 
 
@@ -54,11 +45,11 @@ CvodeSettings_DumpToString(cvodeSettings_t *set) {
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *
-CvodeSettings_create(double Time, int PrintStep, double *TimeSeries,
-		     double Error, double RError, double Mxstep,
-		     int UseJacobian, 
-		     int Indefinitely, int HaltOnEvent,
-		     int SteadyState, int StoreResults) {
+CvodeSettings_createWith(double Time, int PrintStep,
+			 double Error, double RError, double Mxstep,
+			 int UseJacobian,
+			 int Indefinitely, int HaltOnEvent,
+			 int SteadyState, int StoreResults) {
 
   cvodeSettings_t *set;
   ASSIGN_NEW_MEMORY(set, struct cvodeSettings, NULL);
@@ -71,12 +62,8 @@ CvodeSettings_create(double Time, int PrintStep, double *TimeSeries,
   /* 2. Setting Requested Time Series */
   /* Unless indefinite integration, generate a TimePoints array  */
   if  ( !Indefinitely ) {    
-    /* copy optional TimePoint array */
-    if ( TimeSeries != NULL )
-      CvodeSettings_setTimeSeries(set, TimeSeries, PrintStep);
-    /* ... or generate default TimePoint array */
-    else 
-      CvodeSettings_setTime(set, Time, PrintStep);
+    /* ... generate default TimePoint array */
+    CvodeSettings_setTime(set, Time, PrintStep);
   }
   return set;
 }
@@ -118,7 +105,7 @@ CvodeSettings_clone(cvodeSettings_t *set) {
 
 SBML_ODESOLVER_API
 void CvodeSettings_setErrors(cvodeSettings_t *set,
-			double Error, double RError, double Mxstep) 
+			     double Error, double RError, double Mxstep) 
 {
   CvodeSettings_setError(set, Error);
   CvodeSettings_setRError(set, RError);
@@ -178,12 +165,11 @@ void CvodeSettings_setSwitches(cvodeSettings_t *set,
 
 /* Sets a predefined timeseries in cvodeSettings. Assigns memory for
    an array of requested time points.  PrintStep must be the size of
-   the passed array timeseries.  Returns 1, if sucessful and 0, if
-   not.
-*/
+   the passed array timeseries. Returns 1, if sucessful and 0, if
+   not. */
 
-int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
-				 double *timeseries, int PrintStep)
+static int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
+				       double *timeseries, int PrintStep)
 {
   int i;
   free(set->TimePoints);
@@ -466,7 +452,7 @@ void CvodeSettings_free(cvodeSettings_t *set)
 cvodeSettings_t *
 CvodeSettings_createFromTimeSettings(timeSettings_t *time)
 {
-  return CvodeSettings_createDefaultsFromTime(time->tend, time->nout, NULL);
+  return CvodeSettings_createWithTime(time->tend, time->nout);
 }
 
 

@@ -37,7 +37,7 @@ int doit(void)
     RETURN_ON_ERRORS_WITH(1);
 
     /* Creating settings with default values */
-    settings = CvodeSettings_createDefaults();
+    settings = CvodeSettings_create();
 
     
     /* Setting end time to .1, number of time steps to 1 and NULL

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 16:45:22 raim>
-  $Id: sbmlResults.c,v 1.6 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 18:22:00 raim>
+  $Id: sbmlResults.c,v 1.7 2005/10/19 16:39:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,10 +14,13 @@
 #include "sbmlsolver/solverError.h"
 
 
-static timeCourse_t *TimeCourseArray_create(int names, int timepoints);
-static void TimeCourseArray_free(timeCourse_t *tc);
-static timeCourse_t *TimeCourse_create(int names, int timepoints);
-static void TimeCourse_free(timeCourse_t *tc);
+static timeCourseArray_t *TimeCourseArray_create(int names, int timepoints);
+static void TimeCourseArray_free(timeCourseArray_t *);
+static timeCourse_t *TimeCourse_create(int timepoints);
+static void TimeCourse_free(timeCourse_t *);
+static timeCourse_t *TimeCourseArray_getTimeCourse(const char *, timeCourseArray_t *);
+
+/*** results as returned by _odeSolver ***/
 
 /* The function
    SBMLResults SBMLResults_create(Model_t *m, int timepoints)
@@ -27,34 +30,34 @@ static void TimeCourse_free(timeCourse_t *tc);
    contain CVODE integraton results.
 */
 
-SBMLResults_t *
-SBMLResults_create(Model_t *m, int timepoints){
-
+SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
+{
   int i, num_reactions, num_species, num_compartments, num_parameters;
   Species_t *s;
   Compartment_t *c;
   Parameter_t *p;
   Reaction_t *r;
   SBMLResults_t *results;
+  timeCourse_t *tc;
 
   ASSIGN_NEW_MEMORY(results, struct _SBMLResults, NULL);
-  results->timepoints = timepoints;
   
-  /* Allocating the time array:
-     number of output times, plus 1 for the initial values. */
-  ASSIGN_NEW_MEMORY_BLOCK(results->time, timepoints, double, NULL);
+  /* Allocating the time array  */
+  results->time =  TimeCourse_create(timepoints);
+  ASSIGN_NEW_MEMORY_BLOCK(results->time->name, 5, char, NULL);
+  sprintf(results->time->name, "time");
   
   /* Allocating arrays for all SBML species */
   num_species = Model_getNumSpecies(m);
-  results->species = TimeCourse_create(num_species, timepoints);
+  results->species = TimeCourseArray_create(num_species, timepoints);
 
   
   /* Writing species names */
   for ( i=0; i<Model_getNumSpecies(m); i++) {
     s = Model_getSpecies(m, i);
-    ASSIGN_NEW_MEMORY_BLOCK(results->species->names[i],
-			    strlen(Species_getId(s))+1, char, NULL);
-    sprintf(results->species->names[i], "%s", Species_getId(s));
+    tc = results->species->tc[i];
+    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Species_getId(s))+1, char, NULL);
+    sprintf(tc->name, "%s", Species_getId(s));
   }
 
   /* Allocating arrays for all variable SBML compartments */
@@ -63,14 +66,15 @@ SBMLResults_create(Model_t *m, int timepoints){
     if ( ! Compartment_getConstant(Model_getCompartment(m, i)) )
       num_compartments++;
   
-  results->compartments = TimeCourse_create(num_compartments, timepoints);
+  results->compartments = TimeCourseArray_create(num_compartments, timepoints);
   /* Writing variable compartment names */
   for ( i=0; i<Model_getNumCompartments(m); i++) {
     c = Model_getCompartment(m, i);
     if ( ! Compartment_getConstant(c) ) {
-      ASSIGN_NEW_MEMORY_BLOCK(results->compartments->names[i],
-			      strlen(Compartment_getId(c))+1, char, NULL);
-      sprintf(results->compartments->names[i], Compartment_getId(c));
+      tc = results->compartments->tc[i];
+      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Compartment_getId(c))+1,
+			      char, NULL);
+      sprintf(tc->name, Compartment_getId(c));
     }
   }
 
@@ -79,51 +83,275 @@ SBMLResults_create(Model_t *m, int timepoints){
   for ( i=0; i<Model_getNumParameters(m); i++ ) 
     if ( ! Parameter_getConstant(Model_getParameter(m, i)) )
       num_parameters++;
-  results->parameters = TimeCourse_create(num_parameters, timepoints);
+  
+  results->parameters = TimeCourseArray_create(num_parameters, timepoints);
   /* Writing variable parameter names */
   for ( i=0; i<Model_getNumParameters(m); i++) {
     p = Model_getParameter(m, i);
     if ( ! Parameter_getConstant(p) ) {
-      ASSIGN_NEW_MEMORY_BLOCK(results->parameters->names[i],
-			      strlen(Parameter_getId(p))+1, char, NULL);
-      sprintf(results->parameters->names[i], Parameter_getId(p));
+      tc = results->parameters->tc[i];
+      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1,
+			      char, NULL);
+      sprintf(tc->name, Parameter_getId(p));
     }
   }  
 
   /* Allocating arrays for all variable SBML reactions */
   num_reactions = Model_getNumReactions(m);
-  results->fluxes = TimeCourse_create(num_reactions, timepoints);
+  results->fluxes = TimeCourseArray_create(num_reactions, timepoints);
   /* Writing reaction names */
   for ( i=0; i<Model_getNumReactions(m); i++ ) {
     r = Model_getReaction(m, i);
-    ASSIGN_NEW_MEMORY_BLOCK(results->fluxes->names[i],
-			      strlen(Reaction_getId(r))+1, char, NULL);
-    sprintf(results->fluxes->names[i], Reaction_getId(r));
+    tc = results->fluxes->tc[i];
+    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Reaction_getId(r))+1, char, NULL);
+    sprintf(tc->name, Reaction_getId(r));
   }
 
   return results;
 }
 
 
-SBML_ODESOLVER_API SBMLResultsMatrix_t *SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
+/**
+
+*/
+
+
+SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *results)
+{
+  return results->time;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API timeCourse_t *Compartment_getTimeCourse(Compartment_t *p, SBMLResults_t *results)
+{
+  return TimeCourseArray_getTimeCourse(Compartment_getId(p),
+				       results->compartments);
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API timeCourse_t *Species_getTimeCourse(Species_t *s, SBMLResults_t *results)
+{
+  return TimeCourseArray_getTimeCourse(Species_getId(s), results->species);
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *p, SBMLResults_t *results)
+{
+  return TimeCourseArray_getTimeCourse(Parameter_getId(p),results->parameters);
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(const char *id, SBMLResults_t *results)
+{
+  timeCourse_t *tc;
+  tc = TimeCourseArray_getTimeCourse(id, results->species);
+  if ( tc != NULL )
+    return tc;
+  tc = TimeCourseArray_getTimeCourse(id, results->compartments);
+  if ( tc != NULL )
+    return tc;
+  tc = TimeCourseArray_getTimeCourse(id, results->parameters);
+  if ( tc != NULL )
+    return tc;
+
+  tc = TimeCourseArray_getTimeCourse(id, results->fluxes);
+  return tc;
+}
+
+static timeCourse_t *TimeCourseArray_getTimeCourse(const char *id, timeCourseArray_t *tcA)
 {
   int i;
-  SBMLResultsMatrix_t *resM;
-  ASSIGN_NEW_MEMORY(resM, struct _SBMLResultsMatrix, NULL);
-  ASSIGN_NEW_MEMORY(resM->results, struct _SBMLResults **, NULL);
-  resM -> i = nrparams;
-  resM -> j = nrdesignpoints;
-  for ( i=0; i<nrparams; i++ ) {
-    ASSIGN_NEW_MEMORY_BLOCK(resM->results[i], nrdesignpoints,
-			    struct _SBMLResults *, NULL);
+  timeCourse_t *tc;
+  for ( i=0; i<tcA->num_val; i++ ) {
+    tc = tcA->tc[i];
+    if ( strcmp(id, tc->name) == 0 )
+      return tc;
   }
-  return(resM);
+  return NULL;
 }
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
+{
+  return (const char*) tc->name;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
+{
+  return tc->timepoints;
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
+{
+  return tc->values[i];
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results)
+{
+  TimeCourse_free(results->time);
+  TimeCourseArray_free(results->species);
+  TimeCourseArray_free(results->compartments);
+  TimeCourseArray_free(results->parameters);
+  TimeCourseArray_free(results->fluxes);
+  free(results);
+}
+
+static timeCourseArray_t *TimeCourseArray_create(int num_val, int timepoints)
+{
+  int i;
+  timeCourseArray_t *tcA;
+
+  ASSIGN_NEW_MEMORY(tcA, struct timeCourseArray, NULL);
+  tcA->num_val = num_val;
+   /* num_val time course structures */  
+  ASSIGN_NEW_MEMORY_BLOCK(tcA->tc, num_val, struct timeCourse *, NULL);
+  for ( i=0; i<num_val; i++ )
+    tcA->tc[i] = TimeCourse_create(timepoints);
+  
+  return tcA;
+}
+
+static void TimeCourseArray_free(timeCourseArray_t *tcA)
+{
+  int i;
+  for ( i=0; i<tcA->num_val; i++ )
+    TimeCourse_free(tcA->tc[i]);
+  free(tcA);  
+}
+
+static timeCourse_t *TimeCourse_create(int timepoints)
+{
+  timeCourse_t *tc;
+  ASSIGN_NEW_MEMORY(tc, struct timeCourse, NULL);
+  tc->timepoints = timepoints;
+  /* timecourses variable matrix */
+  ASSIGN_NEW_MEMORY_BLOCK(tc->values, timepoints, double, NULL);  
+  return tc;
+}
+
+static void TimeCourse_free(timeCourse_t *tc)
+{
+  free(tc->name);
+  free(tc->values);
+  free(tc);
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API
+void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
+{
+  int i, j;
+  timeCourse_t *tc;
+  
+  /* print all species  */
+  /* print variable compartments */
+  if ( tcA == NULL ) 
+    printf("## No Values.\n");
+  else if ( tcA->num_val == 0 ) 
+    printf("## No Values.\n");
+  else {    
+    printf("# time ");
+    for ( j=0; j<tcA->num_val; j++) {
+      tc = tcA->tc[j];
+      printf("%s ", tc->name);
+    }
+    printf("\n");
+    for ( i=0; i<time->timepoints; i++ ) {
+      printf("%g ", time->values[i]);
+      for ( j=0; j<tcA->num_val; j++) {
+	tc = tcA->tc[j];
+	printf("%g ", tc->values[i]);
+      }
+      printf("\n");
+    }
+  }  
+}
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results) {
+
+  int i, j;
+  timeCourse_t *tc;
+  
+  /* print all species  */
+  printf("## Printing Species time courses\n");
+  TimeCourseArray_dump(results->species, results->time);
+
+  /* print variable compartments */
+  printf("## Printing Compartment time courses\n");
+  TimeCourseArray_dump(results->compartments, results->time);
+
+  /* print variable parameters */
+  printf("## Printing Parameter time courses\n");
+  TimeCourseArray_dump(results->parameters, results->time);
+
+  /* print fluxes */
+  printf("## Printing Species time courses\n");
+  TimeCourseArray_dump(results->fluxes, results->time);
+
+  
+}
+
+
+
+/*** results matrix as returned by _odeSolverBatch parameter variation ***/
+
+/**
+
+*/
 
 SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *resM, int i, int j)
 {
   return resM->results[i][j];  
 }
+
+
+/**
+
+*/
 
 
 SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
@@ -138,60 +366,19 @@ SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
   free(resM);    
 }
 
-
-SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results) {
-
-  if ( results != NULL ) {
-    if ( results->time != NULL ) {
-      free(results->time);
-    }
-    /* see SBMLResults_create and header file for comments */
-    TimeCourse_free(results->species);
-    TimeCourse_free(results->compartments);
-    TimeCourse_free(results->parameters);
-    TimeCourse_free(results->fluxes);
-
-    free(results);
+SBMLResultsMatrix_t *
+SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
+{
+  int i;
+  SBMLResultsMatrix_t *resM;
+  ASSIGN_NEW_MEMORY(resM, struct _SBMLResultsMatrix, NULL);
+  ASSIGN_NEW_MEMORY(resM->results, struct _SBMLResults **, NULL);
+  resM -> i = nrparams;
+  resM -> j = nrdesignpoints;
+  for ( i=0; i<nrparams; i++ ) {
+    ASSIGN_NEW_MEMORY_BLOCK(resM->results[i], nrdesignpoints,
+			    struct _SBMLResults *, NULL);
   }
+  return(resM);
 }
-
-static timeCourse_t *
-TimeCourse_create(int num_val, int timepoints){
-
-  int i;
-  timeCourse_t *tc;
-
-  ASSIGN_NEW_MEMORY(tc, struct timeCourse, NULL);
-  tc->num_val = num_val;
-  tc->timepoints = timepoints;
-  /* timecourse variable names */  
-  ASSIGN_NEW_MEMORY_BLOCK(tc->names, num_val, char *, NULL);
-  /* timecourses variable matrix */
-  ASSIGN_NEW_MEMORY_BLOCK(tc->values, timepoints, double *, NULL);
-  /* timecourse arrays */
-  for ( i=0; i<tc->timepoints; i++ ) 
-    ASSIGN_NEW_MEMORY_BLOCK(tc->values[i], num_val, double, NULL);
-    
-  return tc;
-}
-
-static void
-TimeCourse_free(timeCourse_t *tc) {
-
-  int i;
-
-  for ( i=0; i<tc->num_val; i++ )
-      free(tc->names[i]);
-  free(tc->names);
-  
-  for ( i=0; i<tc->timepoints; i++ )
-    free(tc->values[i]);
-  free(tc->values);
-
-  free(tc);
-  
-}
-
-
-
 /* End of file */

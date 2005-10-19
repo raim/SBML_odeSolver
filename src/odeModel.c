@@ -674,7 +674,6 @@ ODEModel_getConstantIndex(odeModel_t *om, int i)
 }
 
 
-
 /**
   Frees a variableIndex structure
 */

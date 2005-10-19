@@ -1,11 +1,12 @@
 /*
-  Last changed Time-stamp: <2005-10-13 17:40:17 raim>
-  $Id: integrate.c,v 1.6 2005/10/17 16:08:37 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 17:29:59 raim>
+  $Id: integrate.c,v 1.7 2005/10/19 16:39:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <sbmlsolver/odeSolver.h>
+
 
 int
 main (int argc, char *argv[]){
@@ -19,6 +20,7 @@ main (int argc, char *argv[]){
   Model_t *m;
   
   SBMLResults_t *results;
+  timeCourse_t *tc;
   cvodeSettings_t *set;
 
    
@@ -32,12 +34,11 @@ main (int argc, char *argv[]){
   SBMLReader_free(sr);
 
   /* Setting SBML ODE Solver integration parameters  */
-  set = CvodeSettings_createDefaults();
+  set = CvodeSettings_create();
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   
-  /* calling the SBML ODE Solver,
-     and retrieving SBMLResults */  
+  /* calling the SBML ODE Solver which returns SBMLResults */  
   results = SBML_odeSolver(d, set);
   
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
@@ -45,81 +46,21 @@ main (int argc, char *argv[]){
     SolverError_dumpAndClearErrors();
     return(EXIT_FAILURE);
   }
-  
+
+  /* now we have the results and can free the inputs */
   CvodeSettings_free(set);
   SBMLDocument_free(d);
 
-  /* print all species  */
-  printf("Printing Species time courses\n");
-  printf("time ");
-  for ( j=0; j<results->species->num_val; j++) {
-    printf("%s ", results->species->names[j]);
-  }
-  printf("\n");
-  for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
-    for ( j=0; j<results->species->num_val; j++) {
-      printf("%g ", results->species->values[i][j]);
-    }
-    printf("\n");
-  }
-  /* print variable compartments */
-  if ( results->compartments->num_val == 0 ) {
-    printf("No variable compartments.\n");
-
-  }
-  else {
-    printf("Printing variable Compartment time courses\n");
-    printf("time ");
-    for ( j=0; j<results->compartments->num_val; j++) {
-      printf("%s ", results->compartments->names[j]);
-    }
-    printf("\n");
-    for ( i=0; i<results->timepoints; i++ ) {
-      printf("%g ", results->time[i]);
-      for ( j=0; j<results->compartments->num_val; j++) {
-	printf("%g ", results->compartments->values[i][j]);
-      }
-      printf("\n");
-    }
-  }
-  /* print variable parameters */
-  if ( results->parameters->num_val == 0 ) {
-    printf("No variable parameters.\n");
-  }
-  else {
-    printf("Printing variable Parameter time courses\n");
-    printf("time ");
-    for ( j=0; j<results->parameters->num_val; j++) {
-      printf("%s ", results->parameters->names[j]);
-    }
-    printf("\n");
-    for ( i=0; i<results->timepoints; i++ ) {
-      printf("%g ", results->time[i]);
-      for ( j=0; j<results->parameters->num_val; j++) {
-	printf("%g ", results->parameters->values[i][j]);
-      }
-      printf("\n");
-    }
-  }
-  /* print fluxes */
-  printf("Printing Reaction Fluxes\n");
-  printf("time ");
-  for ( j=0; j<results->fluxes->num_val; j++) {
-    printf("%s ", results->fluxes->names[j]);
-  }
-  printf("\n");
-  for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
-    for ( j=0; j<results->fluxes->num_val; j++) {
-      printf("%g ", results->fluxes->values[i][j]);
-    }
-    printf("\n");
-  }
+  /* print results */
+  printf("### RESULTS \n");
+  SBMLResults_dump(results);
+  
   /* now we can also free the result structure */
   SBMLResults_free(results);
 
   return (EXIT_SUCCESS);  
 }
+
+
 
 /* End of file */

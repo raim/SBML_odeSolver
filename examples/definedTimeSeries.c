@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 12:17:50 raim>
-  $Id: definedTimeSeries.c,v 1.3 2005/10/18 10:45:34 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 17:35:29 raim>
+  $Id: definedTimeSeries.c,v 1.4 2005/10/19 16:39:43 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,14 +11,15 @@ int
 main (int argc, char *argv[]){
   int i, j;
   char model[256];
-  double printstep = 6;
-  double *timepoints;
   
   SBMLDocument_t *d;
   SBMLReader_t *sr;
   SBMLResults_t *results;
+  timeCourse_t *tc;
   cvodeSettings_t *set;
 
+  double printstep = 6;
+  double endtime = 25;
    
   sscanf(argv[1], "%s", model);
 
@@ -28,13 +29,11 @@ main (int argc, char *argv[]){
   SBMLReader_free(sr);
   
   /* Setting SBML ODE Solver integration parameters  */
-  set = CvodeSettings_createDefaults();
+  set = CvodeSettings_create();
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
+  CvodeSettings_setTime(set, endtime, printstep);
 
-  /* setting time series */
-  CvodeSettings_setTime(set, 25, printstep);
-
-  /* overwriting with predefined output times */
+  /* writing predefined output times */
   CvodeSettings_setTimeStep(set, 1, 0.5);
   for ( i=2; i<=printstep; i++ ) 
     CvodeSettings_setTimeStep(set, i, (i-1)*(i-1));
@@ -50,20 +49,8 @@ main (int argc, char *argv[]){
     return (EXIT_FAILURE);  
   }
 
-  /* print all species  */
-  printf("Printing Species time courses\n");
-  printf("time ");
-  for ( j=0; j<results->species->num_val; j++) {
-    printf("%s ", results->species->names[j]);
-  }
-  printf("\n");
-  for ( i=0; i<results->timepoints; i++ ) {
-    printf("%g ", results->time[i]);
-    for ( j=0; j<results->species->num_val; j++) {
-      printf("%g ", results->species->values[i][j]);
-    }
-    printf("\n");
-  }
+  /* printing results only for species*/
+  TimeCourseArray_dump(results->species, results->time);
 
   /* now we can also free the result structure */
   SBMLResults_free(results);

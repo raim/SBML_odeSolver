@@ -32,7 +32,6 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
-
   SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *);
 
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);

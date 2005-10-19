@@ -26,7 +26,7 @@ int doIt(void)
     s2 = ODEModel_getVariableIndex(model, "S2");
 
     /* Creating settings with default values */
-    settings = CvodeSettings_createDefaults();
+    settings = CvodeSettings_create();
     
     /* Setting end time to .1, number of time steps to 1 and NULL
        instead of an optional predefined time series (double *); due
@@ -69,7 +69,7 @@ int doIt(void)
 
     /* now, let's try again, with different settings */
     printf("now, let's try again, with different settings:\n");
-    set2 = CvodeSettings_createDefaults();
+    set2 = CvodeSettings_create();
     CvodeSettings_setTime(set2, .1, 5);
     CvodeSettings_setErrors(set2, 1e-18, 1e-14, 500);
     CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
