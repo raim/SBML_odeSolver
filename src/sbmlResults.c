@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 18:46:38 raim>
-  $Id: sbmlResults.c,v 1.8 2005/10/19 16:50:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 20:25:21 raim>
+  $Id: sbmlResults.c,v 1.9 2005/10/19 20:18:47 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -253,6 +253,7 @@ static void TimeCourseArray_free(timeCourseArray_t *tcA)
   int i;
   for ( i=0; i<tcA->num_val; i++ )
     TimeCourse_free(tcA->tc[i]);
+  free(tcA->tc);
   free(tcA);  
 }
 
