@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 19:40:44 raim>
-  $Id: drawGraph.c,v 1.12 2005/10/18 17:44:18 raimc Exp $
+  Last changed Time-stamp: <2005-10-19 13:46:42 raim>
+  $Id: drawGraph.c,v 1.13 2005/10/19 16:33:29 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,12 +38,8 @@ drawModelTxt(Model_t *m);
 
 #define WORDSIZE 10000
 
-/*
-  Experimental functions !!
-  Unfortunately the following functions don't work satisfactory
-  at the moment. In one run, only one graph can be drawn due to
-  difficulties with the graphviz Context definitions.
-  Help is appreciated.
+/**
+
 */
 
 SBML_ODESOLVER_API int
@@ -77,13 +73,11 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
   
 
   /* setting name of outfile */
-  outfile = (char *) calloc(strlen(file)+
-			    strlen(format)+7,
-			    sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(outfile, strlen(file)+ strlen(format)+7, char, 0);
   sprintf(outfile, "-o%s_jm.%s", file, format);
   
   /* setting output format */
-  formatopt =  (char *) calloc(strlen(format)+3, sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(formatopt, strlen(format)+3, char, 0);
   sprintf(formatopt, "-T%s", format); 
 
   /* construct command-line */
@@ -215,7 +209,7 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
 
 #endif
 
-  return 0;
+  return 1;
 }
 
 #if !USE_GRAPHVIZ
@@ -267,10 +261,15 @@ drawJacobyTxt(cvodeData_t *data) {
 	   data->model->names[i]);
   }   
   printf("}\n");
-  return 0;
+  return 1;
 }
 
 #endif
+
+
+/**
+
+*/
 
 SBML_ODESOLVER_API int
 drawModel(Model_t *m, char* file, char *format) {
@@ -307,11 +306,11 @@ drawModel(Model_t *m, char* file, char *format) {
   char label[WORDSIZE];
 
   /* setting name of outfile */
-  outfile = (char *) calloc(strlen(file)+ strlen(format)+7, sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(outfile, strlen(file)+ strlen(format)+7, char, 0);
   sprintf(outfile, "-o%s_rn.%s", file, format);
 
   /* setting output format */
-  formatopt =  (char *) calloc(strlen(format)+3, sizeof(char));
+  ASSIGN_NEW_MEMORY_BLOCK(formatopt, strlen(format)+3, char, 0);
   sprintf(formatopt, "-T%s", format);
 
   /* construct command-line */
@@ -524,7 +523,7 @@ drawModel(Model_t *m, char* file, char *format) {
   
 #endif
   
-  return 0;
+  return 1;
 
 }
 
