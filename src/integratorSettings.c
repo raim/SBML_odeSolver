@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:35:10 raim>
-  $Id: integratorSettings.c,v 1.7 2005/10/20 15:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:51:45 raim>
+  $Id: integratorSettings.c,v 1.8 2005/10/20 15:52:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,13 +11,14 @@
 
 static int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *, int);
 
-/**
-   Creates a settings structure with default values
+
+/** Creates a settings structure with default values
+    Time = 1 and Printstep = 10
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 {
-  return CvodeSettings_createWithTime(1., 1);
+  return CvodeSettings_createWithTime(1., 10);
 }
 
 
@@ -33,6 +34,8 @@ CvodeSettings_createWithTime(double Time, int PrintStep)
 }
 
 
+/** Print all cvodeSettings
+*/
 
 SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 {
@@ -74,8 +77,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 }
 
 
-/**
-   Creates a settings structure from input values
+/** Creates a settings structure from input values
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *
@@ -103,8 +105,7 @@ CvodeSettings_createWith(double Time, int PrintStep,
 }
 
 
-/**
-   Creates a settings structure and copies all values from input
+/** Creates a settings structure and copies all values from input
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *
@@ -132,9 +133,8 @@ CvodeSettings_clone(cvodeSettings_t *set) {
 }
 
 
-/**
-   Sets absolute and relative error tolerances and maximum number of
-   internal steps during CVODE integration 
+/** Sets absolute and relative error tolerances and maximum number of
+    internal steps during CVODE integration 
 */
 
 SBML_ODESOLVER_API
@@ -147,8 +147,7 @@ void CvodeSettings_setErrors(cvodeSettings_t *set,
 }
 
 
-/**
-   Sets absolute error tolerance 
+/** Sets absolute error tolerance 
 */
 
 SBML_ODESOLVER_API 
@@ -158,8 +157,7 @@ void CvodeSettings_setError(cvodeSettings_t *set, double Error)
 }
 
 
-/**
-   Sets relative error tolerance 
+/** Sets relative error tolerance 
 */
 
 SBML_ODESOLVER_API 
@@ -169,8 +167,7 @@ void CvodeSettings_setRError(cvodeSettings_t *set, double RError)
 }
 
 
-/**
-   Sets maximum number of internal steps during CVODE integration
+/** Sets maximum number of internal steps during CVODE integration
 */
 
 SBML_ODESOLVER_API 
@@ -179,8 +176,8 @@ void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep)
   set->Mxstep = Mxstep;  
 }
 
-/**
-   Sets integration switches in cvodeSettings
+
+/** Sets integration switches in cvodeSettings
 */
 
 SBML_ODESOLVER_API
@@ -256,8 +253,10 @@ int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, double time)
 }
 
 
-/**
-
+/** Sets use of generated Jacobian matrix (i=1) or
+    of CVODE's internal approximation (i=0). If construction
+    of the Jacobian matrix fails, the internal approximation will
+    be used even if i==1.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
@@ -266,8 +265,9 @@ SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
 }
 
 
-/**
-
+/** Sets indefinite integration (i=1). For indefinite integration
+    Time will be used as integration step and PrintStep will
+    be ignored.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int i)
@@ -276,8 +276,11 @@ SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int 
 }
 
 
-/**
-
+/** Sets event handling: if i==1, the integration will stop upon
+    detection of an event and evaluation of event assignments;
+    if i==0 the integration continues after evaluation of event
+    assignments. CAUTION: the accuracy of event evaluations depends
+    on the chosen printstep values!
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i)
@@ -286,8 +289,10 @@ SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i
 }
 
 
-/**
-
+/** Sets steady state handling: if i==1, the integration will stop
+    upon an approximate detection of a steady state, which is here
+    defined as some threshold value of the mean value and standard
+    deviation of current ODE values.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i)
@@ -296,8 +301,12 @@ SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i
 }
 
 
-/**
-
+/** Results will only be stored, if i==1 and if a finite integration
+    has been chosen (CvodeSettings_setIndefinitely(settings, 0)). The results
+    can be retrieved after integration has been finished. If i==0 or
+    infinite integration has been chosen, results can only be retrieved
+    during integration via variableIndex interface or dump functions for
+    the integratorInstance.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int i)
@@ -308,9 +317,8 @@ SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int 
 
 /**** cvodeSettings get methods ****/
 
-/**
-   Returns the last time point of integration or -1, if
-   Indefinitely is set to TRUE (1);   
+/** Returns the last time point of integration or -1, if
+    Indefinitely is set to TRUE (1);   
 */
 
 SBML_ODESOLVER_API 
@@ -323,9 +331,8 @@ double CvodeSettings_getEndTime(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns the time step of integration; if a pre-defined
-   time series has been set, this is only the first time step
+/** Returns the time step of integration; if infinite integration
+    has been chosen, this is only the first time step.
 */
 
 SBML_ODESOLVER_API 
@@ -338,9 +345,8 @@ double CvodeSettings_getTimeStep(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns the number of integration steps or -1,
-   Indefinitely is set to TRUE (1)
+/**  Returns the number of integration steps or -1, if
+     infinite integration has been chosen
 */
 
 SBML_ODESOLVER_API 
@@ -353,9 +359,9 @@ int CvodeSettings_getPrintsteps(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns the time of the ith time step, i must be smaller or
-   equal to PrintStep unless Indefinitely is set to TRUE (1)
+/** Returns the time of the ith time step, where
+    0 <= i < PrintStep, unless
+    infinite integration has been chosen
 */
 
 SBML_ODESOLVER_API 
@@ -368,8 +374,7 @@ double CvodeSettings_getTime(cvodeSettings_t *set, int i)
 }
 
 
-/**
-   Returns the absolute error tolerance
+/**  Returns the absolute error tolerance
 */
 
 SBML_ODESOLVER_API 
@@ -379,8 +384,7 @@ double CvodeSettings_getError(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns the relative error tolerance
+/** Returns the relative error tolerance
 */
 
 SBML_ODESOLVER_API 
@@ -390,9 +394,8 @@ double CvodeSettings_getRError(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns the maximum number of internal time steps taken
-   by CVODE to reach the next output time (printstep)
+/** Returns the maximum number of internal time steps taken
+    by CVODE to reach the next output time (printstep)
 */
 
 SBML_ODESOLVER_API 
@@ -402,10 +405,9 @@ int CvodeSettings_getMxstep(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns 1, if the automatically generated 
-   or 0 if CVODE's internal approximation
-   of the jacobian matrix will be used by CVODE 
+/** Returns 1, if the automatically generated
+    or 0 if CVODE's internal approximation
+    of the jacobian matrix will be used by CVODE 
 */
 
 SBML_ODESOLVER_API 
@@ -415,9 +417,8 @@ int CvodeSettings_getJacobian(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns 1, if indefinite integration has been chosen,
-   and 0 otherwise
+/** Returns 1, if infinite integration has been chosen,
+    and 0 otherwise
 */
 
 SBML_ODESOLVER_API 
@@ -427,10 +428,9 @@ int CvodeSettings_getIndefinitely(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns 1, if integration should stop upon an event trigger
-   and 0 if integration should continue afert evaluation of
-   event assignments
+/** Returns 1, if integration should stop upon an event trigger
+    and 0 if integration should continue after evaluation of
+    event assignments
 */
 
 SBML_ODESOLVER_API 
@@ -440,9 +440,8 @@ int CvodeSettings_getHaltOnEvent(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns 1, if integration should stop upon detection of a
-   steady state, and 0 if integration should continue 
+/** Returns 1, if integration should stop upon detection of a
+    steady state, and 0 if integration should continue 
 */
 
 SBML_ODESOLVER_API 
@@ -452,11 +451,10 @@ int CvodeSettings_getSteadyState(cvodeSettings_t *set)
 }
 
 
-/**
-   Returns 1, if integration results should be stored internally,
-   and 0 if not; If set to 0 current values can be retrieved during
-   an integration loop, and the values at the end time of integration
-   afterwards.
+/** Returns 1, if integration results should be stored internally,
+    and 0 if not; If set to 0 current values can be retrieved during
+    an integration loop, and the values at the end time of integration
+    afterwards.
 */
 
 SBML_ODESOLVER_API 
@@ -466,8 +464,7 @@ int CvodeSettings_getStoreResults(cvodeSettings_t *set)
 }
 
 
-/**
-   Frees cvodeSettings.
+/** Frees cvodeSettings.
 */
 
 SBML_ODESOLVER_API 
@@ -478,9 +475,8 @@ void CvodeSettings_free(cvodeSettings_t *set)
   free(set);
 }
 
-/**
-   Creates a settings structure from a timeSettings structure
-   and fills rest with default values
+/** Creates a settings structure from a timeSettings structure
+    and fills rest with default values
 */
 
 cvodeSettings_t *
