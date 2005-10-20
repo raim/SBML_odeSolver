@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 20:25:21 raim>
-  $Id: sbmlResults.c,v 1.9 2005/10/19 20:18:47 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 14:00:05 raim>
+  $Id: sbmlResults.c,v 1.10 2005/10/20 13:29:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,8 +113,7 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
 }
 
 
-/**
-
+/** Returns the timeCourse for the integration time points
 */
 
 
@@ -124,19 +123,18 @@ SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *results)
 }
 
 
-/**
-
+/** Returns the timeCourse for a  variable (non-constant) compartment.
+    For a constant compartment NULL is returned.
 */
 
-SBML_ODESOLVER_API timeCourse_t *Compartment_getTimeCourse(Compartment_t *p, SBMLResults_t *results)
+SBML_ODESOLVER_API timeCourse_t *Compartment_getTimeCourse(Compartment_t *c, SBMLResults_t *results)
 {
-  return TimeCourseArray_getTimeCourse(Compartment_getId(p),
+  return TimeCourseArray_getTimeCourse(Compartment_getId(c),
 				       results->compartments);
 }
 
 
-/**
-
+/** Returns the timeCourse for a species, whether constant or not.
 */
 
 SBML_ODESOLVER_API timeCourse_t *Species_getTimeCourse(Species_t *s, SBMLResults_t *results)
@@ -145,8 +143,8 @@ SBML_ODESOLVER_API timeCourse_t *Species_getTimeCourse(Species_t *s, SBMLResults
 }
 
 
-/**
-
+/** Returns the timeCourse for a variable (non-constant) parameters.
+    For a constant parameter NULL is returned.
 */
 
 SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *p, SBMLResults_t *results)
@@ -155,8 +153,8 @@ SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *p, SBMLRes
 }
 
 
-/**
-
+/** Returns the timeCourse for a species, variable compartment or parameter
+    or a reaction flux with the corresponding SBML ID.
 */
 
 SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(const char *id, SBMLResults_t *results)
@@ -189,8 +187,7 @@ static timeCourse_t *TimeCourseArray_getTimeCourse(const char *id, timeCourseArr
 }
 
 
-/**
-
+/** Returns the variable name (SBML ID) of a timeCourse
 */
 
 SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
@@ -199,8 +196,7 @@ SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
 }
 
 
-/**
-
+/** Returns the number of timepoints in a timeCourse
 */
 
 SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
@@ -209,8 +205,8 @@ SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
 }
 
 
-/**
-
+/**  Returns ith value in a timeCourse, where
+     0 <= i < TimeCourse_getNumValues
 */
 
 SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
@@ -219,8 +215,7 @@ SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
 }
 
 
-/**
-
+/** Frees SBMLResults structure
 */
 
 SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results)
@@ -275,10 +270,7 @@ static void TimeCourse_free(timeCourse_t *tc)
 }
 
 
-/**
-
-*/
-
+/* */
 static
 void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
 {
@@ -310,8 +302,7 @@ void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
 }
 
 
-/**
-
+/** Prints the timeCourses of all SBML species
 */
 
 SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *results)
@@ -321,8 +312,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *results)
 }
 
 
-/**
-
+/** Prints the timeCourses of all variable SBML compartments
 */
 
 SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *results)
@@ -332,8 +322,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *results)
 }
 
 
-/**
-
+/** Prints the timeCourses of all variable SBML parameters.
 */
 
 SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
@@ -343,8 +332,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
 }
 
 
-/**
-
+/**  Prints the timeCourses of all SBML reaction fluxes
 */
 
 SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
@@ -354,8 +342,8 @@ SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
 }
 
 
-/**
-
+/** Prints the timeCourses of all SBML species, of variable
+    compartments and parameters, and of reaction fluxes  
 */
 
 SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
@@ -371,8 +359,8 @@ SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
 
 /*** results matrix as returned by _odeSolverBatch parameter variation ***/
 
-/**
-
+/** Returns the SBMLResults for the jth value of the ith parameter from
+    a parameter variation batch run SBMLResultMatrix
 */
 
 SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *resM, int i, int j)
@@ -381,8 +369,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix
 }
 
 
-/**
-
+/** Frees the SBMLResultMatrix from a parameter variation batch run 
 */
 
 

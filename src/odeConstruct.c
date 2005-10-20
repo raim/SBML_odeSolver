@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-14 18:31:30 raim>
-  $Id: odeConstruct.c,v 1.12 2005/10/17 16:07:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 15:27:42 raim>
+  $Id: odeConstruct.c,v 1.13 2005/10/20 13:29:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,10 +82,9 @@ Model_reduceToOdes(Model_t *m) {
 }
 
 
-/** C.1: Initialize a new model from an input model
-    Creates a new SBML model and copies
-    compartments, species and parameters from the passed model
-*/ 
+/* C.1: Initialize a new model from an input model
+   Creates a new SBML model and copies
+   compartments, species and parameters from the passed model */ 
 static Model_t *
 Model_copyInits(Model_t *old)
 {
@@ -160,8 +159,7 @@ Model_copyInits(Model_t *old)
     }
     Model_addSpecies(new, s_new);
   }
-  /** Function Definitions
-  */
+  /* Function Definitions  */
   for ( i=0; i<Model_getNumFunctionDefinitions(old); i++ ) {
     f = Model_getFunctionDefinition(old, i);
     f_new = FunctionDefinition_create();
@@ -174,10 +172,9 @@ Model_copyInits(Model_t *old)
   return(new);
 }
 
-/** C.2: Copy predefined ODEs (RateRules) from `m' to `ode'
-    identifies all predefined ODEs in `m' (RateRules) and
-    adds them as RateRules to the model `ode'
-*/
+/* C.2: Copy predefined ODEs (RateRules) from `m' to `ode'
+   identifies all predefined ODEs in `m' (RateRules) and
+   adds them as RateRules to the model `ode' */
 static void
 Model_copyOdes(Model_t *m, Model_t*ode ) {
   
@@ -207,10 +204,9 @@ Model_copyOdes(Model_t *m, Model_t*ode ) {
 }
 
 
-/** C.3: Create ODEs from reactions
-    for each species in model `m' and ODE is constructed from its
-    reactions (in `m") and added as a RateRule to `ode'
-*/
+/* C.3: Create ODEs from reactions
+   for each species in model `m' and ODE is constructed from its
+   reactions (in `m") and added as a RateRule to `ode' */
 
 static int Model_createOdes(Model_t *m, Model_t*ode ) {
 
@@ -277,7 +273,7 @@ static int Model_createOdes(Model_t *m, Model_t*ode ) {
 	if ( math == NULL ) {
 	  errors++;
 	  SolverError_error(ERROR_ERROR_TYPE,
-			    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
+		    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
 			    "ODE could not be constructed for species %s",
 			    Species_getId(s));
 	}
@@ -344,7 +340,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
 	    ASTNode_setCharacter(reactant, '*');
 	    ASTNode_addChild(reactant,
 			     copyAST( \
-				      SpeciesReference_getStoichiometryMath(sref)));
+			      SpeciesReference_getStoichiometryMath(sref)));
 	    ASTNode_addChild(reactant,
 			     copyAST( KineticLaw_getMath(kl)));
 	  }
@@ -367,8 +363,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
 	     before adding to ODE */
 	  AST_replaceNameByParameters(reactant,
 				      KineticLaw_getListOfParameters(kl));
-	  /** Add reactant expression to ODE
-	   */
+	  /** Add reactant expression to ODE  */
 	  if ( ode == NULL ) {
 	    ode = ASTNode_create();
 	    ASTNode_setCharacter(ode,'-');
@@ -407,7 +402,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
 	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
 	    ASTNode_addChild(reactant,
 			     copyAST( \
-				      SpeciesReference_getStoichiometryMath(sref)));
+			      SpeciesReference_getStoichiometryMath(sref)));
 	  }
 	  else {
 	    ASTNode_addChild(reactant, ASTNode_create());
@@ -507,8 +502,7 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
 }
 
 /** C.4a: Copy Events
-    copy events to new model and print warning
-*/
+    copy events to new model and print warning */
 static void
 Model_copyEvents(Model_t *m, Model_t*ode) {
 
@@ -548,26 +542,23 @@ Model_copyEvents(Model_t *m, Model_t*ode) {
     Model_addEvent(ode, e_new);
     
     if (!i)
-      SolverError_error(
-			WARNING_ERROR_TYPE,
+      SolverError_error(WARNING_ERROR_TYPE,
 			SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
 			"The model contains events. "
-			"The SBML_odeSolver implementation of events is not fully "
-			"SBML conformant. "
-			"Results will depend on the simulation duration and the "
+			"The SBML_odeSolver implementation of events "
+			"is not fully SBML conformant. Results will "
+			"depend on the simulation duration and the "
 			"number of output steps.");
   }
 }
 
 
 
-/** C.4.b: Copy Algebraic Rules
-    copy algebraic rules to new model and create error
-    message, return number of AlgebraicRules
-*/
-static int
-Model_copyAlgebraicRules(Model_t *m, Model_t*ode) {
-
+/* C.4.b: Copy Algebraic Rules
+   copy algebraic rules to new model and create error
+   message, return number of AlgebraicRules */
+static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
+{
   int i, j;
   Rule_t *rl;
   AlgebraicRule_t *alr, *alr_new;
@@ -603,10 +594,9 @@ Model_copyAlgebraicRules(Model_t *m, Model_t*ode) {
   return errors;
 }
 
-/** Step C.4.c: Copy Assignment Rules  */
-static void
-Model_copyAssignmentRules(Model_t *m, Model_t*ode) {
-
+/* Step C.4.c: Copy Assignment Rules  */
+static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
+{
   int i;
   Rule_t *rl;
   AssignmentRule_t *ar, *ar_new;
@@ -636,10 +626,8 @@ Model_copyAssignmentRules(Model_t *m, Model_t*ode) {
     replaces all occurences of a user defined function by
     their function definition  
 */
-static void
-ODE_replaceFunctionDefinitions(Model_t *m) {
-
-
+static void ODE_replaceFunctionDefinitions(Model_t *m)
+{
   int i, j, k;
   Rule_t *rl_new;
   FunctionDefinition_t *f;
@@ -697,7 +685,8 @@ ODE_replaceFunctionDefinitions(Model_t *m) {
 
 
 /** Returns the value from a compartment, species or parameter
-    with the passed ID */
+    with the passed ID
+*/
 
 SBML_ODESOLVER_API double
 Model_getValueById(Model_t *m, const char *id) {
@@ -726,14 +715,14 @@ Model_getValueById(Model_t *m, const char *id) {
       return Species_getInitialAmount(s) / Compartment_getSize(c);
     }
   }
-  Warn(stderr, "Value for \"%s\" not found!", id);
-  Warn(stderr, "Defaults to 0. Please check model!");
+  fprintf(stderr, "Value for %s not found!", id); 
+  fprintf(stderr, "Defaults to 0. Please check model!"); 
   return (0.0);
 }
 
 
-/** 
-
+/** Sets the value of a compartment, species or parameter
+    with the passed ID
 */
 
 SBML_ODESOLVER_API int

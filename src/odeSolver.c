@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 17:26:20 raim>
-  $Id: odeSolver.c,v 1.25 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 14:07:13 raim>
+  $Id: odeSolver.c,v 1.26 2005/10/20 13:29:31 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,8 +17,9 @@
 static int globalizeParameter(Model_t *, char *id, char *rid);
 static int localizeParameter(Model_t *, char *id, char *rid);
 
-/**
-
+/** Solves the timeCourses for a SBML model, passed via its
+    containint SBMLDocument and according to passed integration
+    settings and returns the SBMLResults structure.
 */
 
 SBML_ODESOLVER_API SBMLResults_t *
@@ -52,8 +53,11 @@ SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
 }
 
 
-/** 
-
+/** Solves the timeCourses for a SBML model, passed via its
+    containing SBMLDocument and according to passed
+    integration and parameter variation settings and returns
+    the SBMLResultsMatrix containing SBMLResults for each
+    varied parameter (columns) and each of its values (rows).
 */
 
 SBML_ODESOLVER_API SBMLResultsMatrix_t *
@@ -88,8 +92,8 @@ SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
 }
 
 
-/**
-
+/** The same as SBML_odeSolver, but starting with a Model_t structure.
+    The passed model must be SBML level 2!
 */
 
 SBML_ODESOLVER_API SBMLResults_t *
@@ -148,8 +152,8 @@ Model_odeSolver(Model_t *m, cvodeSettings_t *set) {
 }
 
 
-/** 
-
+/** The same as SBML_odeSolverBatch, but starting with a Model_t
+    structure. The passed model must be SBML level 2!
 */
 
 SBML_ODESOLVER_API SBMLResultsMatrix_t *
@@ -511,9 +515,9 @@ int VarySettings_addParameterSet(varySettings_t *vs,
 }
 
 
-
-/** Maps the integration results from internal back
-    to SBML structures in  model `m' 
+/** Maps the integration results from internal data structures
+    back to SBML structures (compartments, species, parameters
+    and reaction fluxes)
 */
 
 SBML_ODESOLVER_API SBMLResults_t *
@@ -527,6 +531,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   timeCourse_t *tc;
   SBMLResults_t *sbml_results;
 
+  odeModel_t *om = ii->om;
   cvodeData_t *data = ii->data;
   cvodeResults_t *cv_results = ii->results;
 
@@ -568,7 +573,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
-	if ( (strcmp(tc->name, data->model->names[k]) == 0) )
+	if ( (strcmp(tc->name, om->names[k]) == 0) )
 	  tc->values[i] = cv_results->value[k][i];
     }
     
@@ -578,7 +583,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
-	if ( (strcmp(tc->name, data->model->names[k]) == 0) )
+	if ( (strcmp(tc->name, om->names[k]) == 0) )
 	  tc->values[i] = cv_results->value[k][i];
     }         
 
@@ -588,7 +593,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ ) 
-	if ( (strcmp(tc->name, data->model->names[k]) == 0) ) 
+	if ( (strcmp(tc->name, om->names[k]) == 0) ) 
 	  tc->values[i] = cv_results->value[k][i];
     }
 
