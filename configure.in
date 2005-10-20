@@ -212,5 +212,5 @@ fi
 echo ""
 echo "NOTE:"
 echo "     Unfortunately the current version of the SBML ODE Solver"
-echo "     only works with the latest libSBML release 2.3.2.       "
+echo "     only works with the libSBML version >= 2.3.2.           "
 echo ""
