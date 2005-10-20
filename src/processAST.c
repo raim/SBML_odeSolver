@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 19:00:45 raim>
-  $Id: processAST.c,v 1.11 2005/10/19 16:35:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 15:10:36 raim>
+  $Id: processAST.c,v 1.12 2005/10/20 13:30:40 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,13 +188,16 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   double result;
 
   if ( n == NULL ) {
-    Warn(stderr,
-	 "%s:%d evaluateAST(): An empty Abstract Syntax Tree (AST)");
-    Warn(stderr, "has been passed.",
-	      __FILE__, __LINE__);
+    SolverError_error(FATAL_ERROR_TYPE,
+		      SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
+		      "evaluateAST: empty Abstract Syntax Tree (AST).");
     return (0);
   }
-
+  if ( ASTNode_isUnknown(n) ) {
+    SolverError_error(FATAL_ERROR_TYPE,
+		      SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
+		      "evaluateAST: unknown ASTNode type");
+  }
   result = 0;
 
   childnum = ASTNode_getNumChildren(n);
@@ -218,24 +221,14 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	
     case AST_NAME:
       /*
-	Finds the value of the variable in 'data' either
-	* the species'/'value' string/double array pair
-	(holding the current value as updated from CVODE's N_Vector,
-	in the case of the SBML_odeSolver),
-	or   
-	* the 'parameter'/'constants' string/double array pair.
-	
-	If the variable is found in neither places, the user is asked
-	to enter a value and the variable and value are added to the
-	cvodeData_t 'parameter'/'constants' array.
-	
-	NOTE:
-	This procedure should be implemented with a search algorithm.
-	Eg. the lists of species/assignments/constants
-	could be ordered alphabetically or by using a HASH library
-	<search.h>
-	
-      */
+	Finds the value of the variable in
+	the data->value array. SOSlib's extension to libSBML's
+	AST allows to add the index of the variable in this array
+	to AST_NAME (ASTIndexName). If the ASTNode is node is not
+	indexed, its array index is searched via the model->names
+	array, that corresponds to the value array. For nodes
+        with name `Time' or `time' the data->currenttime is returned.
+	If no value is found a fatal error is produced. */
       found = 0;
       if ( ASTNode_isSetIndex(n) ) {
 	result = data->value[ASTNode_getIndex(n)];
@@ -257,36 +250,19 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	}
       }
       if ( found == 0 ) {
-	fprintf(stderr,
-		"\nNo value for variable %s found!!\n", ASTNode_getName(n));
-	fprintf(stderr, "Please enter a value: %s = ", ASTNode_getName(n));
-	unknown = get_line(stdin);
-	result = (double) atof(unknown);
-	free(unknown);
-	/* reallocate constants array and set value */
-	data->nvalues++;
-	data->model->nconst++;
-	if(!(data->value = (double *)realloc(data->value,
-					     data->nvalues*sizeof(double))))
-	  fprintf(stderr, "failed!\n");
-	if(!(data->model->names =
-	     (char **) realloc(data->model->names,
-			       data->nvalues*sizeof(char *))))
-	  fprintf(stderr, "failed!\n");
-	data->model->names[data->nvalues - 1] =
-	  (char *) calloc(strlen(ASTNode_getName(n))+1, sizeof(char));
-	sprintf(data->model->names[data->nvalues - 1], ASTNode_getName(n));
-	data->value[data->nvalues - 1] = result;
+        SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_AST_EVALUATION_FAILED_MISSING_VALUE,
+			  "No value found for AST_NAME %s . Defaults to Zero "
+			  "to avoid program crash", ASTNode_getName(n));
+	result = 0;
       }
       break;
     case AST_FUNCTION_DELAY:
-      fprintf(stderr, "Delays are not implemented yet.\n");
-      fprintf(stderr, "The delay is ignored and the current\n");
-      fprintf(stderr, "value is passed.\n");
-      if ( childnum>0 ) 
-	result = evaluateAST(child(n,0),data);
-      else
-	result = 0.0;
+      SolverError_error(FATAL_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_DELAY,
+			"Solving ODEs with Delay is not implemented. "
+			"Defaults to 0 to avoid program crash");
+      result = 0.0;
       break;
     case AST_NAME_TIME:
       result = (double) data->currenttime;
@@ -329,21 +305,25 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
       break;
     case AST_LAMBDA:
-      fprintf(stderr,
-	      "Evaluating user defined functions is not implemented!\n");
-      fprintf(stderr, "Defaults to 0.\n");
+      SolverError_error(FATAL_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_LAMBDA,
+			"Lambda can only be used in SBML function definitions."
+			" Defaults to 0 to avoid program crash");
       result = 0.0;
       break;
       
     case AST_FUNCTION:
       if (UsrDefFunc == NULL) {
-	fprintf(stderr,
-		"Evaluating user defined functions is not implemented!\n");
-	fprintf(stderr, "Defaults to 0.\n");      
+	SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_AST_EVALUATION_FAILED_FUNCTION,
+			  "The function %s() has not been defined "
+			  "in the SBML input model or as an externally "
+			  "supplied function. Defaults to 0 to avoid "
+			  "program crash",
+			  ASTNode_getName(n));
 	result = 0.0;
       }
       else {
-	/* fprintf(stderr, */
 	/* 	   "Evaluating external function\n"); */
 	double *func_vals = NULL;
 	ASSIGN_NEW_MEMORY_BLOCK(func_vals, childnum+1, double, 0);
@@ -438,10 +418,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	int j;
 	j = floor(evaluateAST(child(n,0),data));
 	if ( evaluateAST(child(n,0),data) != j ) {
-	  fprintf(stderr, "The factorial is only implemented.\n");
-	  fprintf(stderr, "for integer values. If a floating\n");
-	  fprintf(stderr, "point number is passed, its floor value\n");
-	  fprintf(stderr, "is used for calculation!\n");
+	  SolverError_error(ERROR_ERROR_TYPE,
+			    SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL,
+			    "The factorial is only implemented."
+			    "for integer values. The floor value of the "
+			    "passed float is used for calculation!");
 	}	
 	for(result=1;j>1;--j)
 	  result *= j;
@@ -639,7 +620,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setType(fprime, type);
       break;
     default:
-      nrerror("differentiateAST: constant: impossible case");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_CONSTANT,
+                        "differentiateAST: constant: impossible case");
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
@@ -788,7 +771,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(help_3, copyAST(ASTNode_getChild(f, 0)));
       break;
     default:
-      nrerror("differentiateAST: operator: impossible case");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_OPERATOR,
+                        "differentiateAST: operator: impossible case");
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
@@ -796,10 +781,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   else if ( ASTNode_isFunction(f) || type==AST_LAMBDA ) {
     switch(type) {
     case AST_LAMBDA:
-      Warn(stderr,
-	   "Differentiating doesn't work for lambdas, yet!\n"
-	   "Option -j activated. Jacobian matrix can not be generated.\n"
-	   "Internal approximation will be used for integration!");      
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LAMBDA,
+                        "differentiateAST: lambda: not implemented");
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION:
@@ -808,7 +792,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 	 differentiation for (sic!) a user-defined function */
       if ( strcmp(fname, x) == 0 ) {
 	ASTNode_setType (fprime, AST_FUNCTION);	
-	dfname = space( (strlen(fname)+3) * sizeof(char) );
+	ASSIGN_NEW_MEMORY_BLOCK(dfname, strlen(fname)+3, char, NULL);
 	sprintf(dfname, "d_%s", fname);
 	ASTNode_setName(fprime, dfname);
 	free(dfname);
@@ -843,7 +827,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 	  ASTNode_addChild(prod, differentiateAST(ASTNode_getChild(f, i) , x));
 	  helper = ASTNode_getChild(prod, 0);
 	  ASTNode_setType (helper, AST_FUNCTION);
-	  dfname = space( (strlen(fname)+5) * sizeof(char) );
+	  ASSIGN_NEW_MEMORY_BLOCK(dfname, strlen(fname)+5, char, NULL);
 	  sprintf(dfname, "d%i_%s", i, fname);
 	  ASTNode_setName(helper, dfname);
 	  free(dfname);
@@ -1336,10 +1320,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));	
       break;
     case AST_FUNCTION_DELAY:
-      Warn(stderr,
-	   "Differentiating doesn't work for delays, yet!\n"
-	   "Option -j activated. Jacobian matrix can not be generated.\n"
-	   "Internal approximation will be used for integration!");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_DELAY,
+                        "differentiateAST: delay: not implemented");
        ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_EXP:
@@ -1349,11 +1332,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_FACTORIAL:
-      Warn(stderr,
-	   "Factorials result in a discontinous function and thus "
-	   "can not be differentiated.\n"
-	   "Option -j activated. Jacobian matrix can not be generated,\n"
-	   "internal approximation will be used for integration!");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_FACTORIAL,
+                        "differentiateAST: factorial: impossible case");
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_FLOOR:                                       /* WRONG */
@@ -1396,10 +1377,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_free(helper);
       break;
     case AST_FUNCTION_PIECEWISE:
-      Warn(stderr,
-	   "Piecewise functions can not be differentiated.\n"
-	   "Option -j activated. Jacobian matrix can not be generated,\n"
-	   "internal approximation will be used for integration!");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_FACTORIAL,
+                        "differentiateAST: piecewise: not implemented");
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_ROOT:
@@ -1514,7 +1494,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(child2(fprime,1,1), 2); 
       break;
     default:
-      nrerror("simplifyAST: function: impossible case");
+       SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_UNKNOWN_FAILURE,
+                        "differentiateAST: unknown failure for function type");
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     }
@@ -1524,7 +1506,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
     fprime = copyAST(f);
   }
   else if ( ASTNode_isUnknown(fprime) ) {
-    nrerror("simplifyAST: unknown ASTNode");
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
+		      "differentiateAST: unknown ASTNode type");
     ASTNode_setName(fprime, "differentiation_failed");
   }
   
@@ -1721,28 +1705,11 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   int simplify;
   ASTNode_t *simple, *left, *right, *helper;
   ASTNodeType_t type;
-/*   List_t *list; */
-/*   char *str = space (16*sizeof(char)); /\* maximal 15 chars *\/ */
-/*   double round; */
 
   /* new ASTNode */
   simple = ASTNode_create();
 
-  /* if the AST doesn't contain any variables or user-defined functions,
-     evaluate it */
-/*   list = ASTNode_getListOfNodes(f, (ASTNodePredicate) user_defined); */
-/*   if (List_size(list) == 0) { */
-/*     sprintf(str, "%.14g", evaluateAST(f, NULL)); /\* 14 chars and . *\/ */
-/*     sscanf(str, "%lg", &round); */
-/*     ASTNode_setReal(simple, round); */
-/*     free(str); */
-/*     List_free(list); */
-/*     return simple; */
-/*   } */
-/*   else { */
-/*     List_free(list); */
-/*   } */
-
+  
   type = ASTNode_getType(f);
 
   /* DISTINCTION OF CASES */
@@ -1958,7 +1925,9 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
       }
       break;
     default:
-      nrerror("simplifyAST: switch: impossible case");
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_AST_UNKNOWN_FAILURE,
+                        "simplifyAST: unknown failure for operator type");
       break;
     }
     /* after all no simplification */
