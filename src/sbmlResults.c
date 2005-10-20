@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 14:00:05 raim>
-  $Id: sbmlResults.c,v 1.10 2005/10/20 13:29:31 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:34:19 raim>
+  $Id: sbmlResults.c,v 1.11 2005/10/20 15:36:24 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -284,7 +284,7 @@ void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
   else if ( tcA->num_val == 0 ) 
     printf("## No Values.\n");
   else {    
-    printf("# time ");
+    printf("#time ");
     for ( j=0; j<tcA->num_val; j++) {
       tc = tcA->tc[j];
       printf("%s ", tc->name);

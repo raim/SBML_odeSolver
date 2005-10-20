@@ -98,7 +98,7 @@ int doit(void)
             IntegratorInstance_setVariableValue(integratorInstanceB,
 						s2,1.5e-15);
         }
-	
+
         DumpState(integratorInstanceA, integratorInstanceB, s1, s2);
 
     }

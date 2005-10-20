@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 14:20:33 raim>
-  $Id: integratorSettings.c,v 1.6 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:35:10 raim>
+  $Id: integratorSettings.c,v 1.7 2005/10/20 15:36:24 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,9 +34,43 @@ CvodeSettings_createWithTime(double Time, int PrintStep)
 
 
 
-SBML_ODESOLVER_API void
-CvodeSettings_DumpToString(cvodeSettings_t *set)
+SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 {
+  int i;
+  printf("\n");
+  printf("SOSlib INTEGRATION SETTINGS:\n");
+  printf("1) CVODE SPECIFIC SETTINGS:\n");
+  printf("absolute error tolerance for each output time:     %g\n",
+	 set->Error);
+  printf("relative error tolerance for each output time:     %g\n",
+	 set->RError);
+  printf("max. nr. of steps to reach next output time:       %d\n",
+	 set->Mxstep);
+  printf("2) SOSlib SPECIFIC SETTINGS:\n");
+  printf("Jacobian matrix: %s\n", set->UseJacobian ?
+	 "1: generate Jacobian" : "0: CVODE's internal approximation");
+  printf("In/Finite:       %s\n", set->Indefinitely ?
+	 "1: infinite integration" :
+	 "0: finite integration");
+  printf("Event Handling:  %s\n", set->HaltOnEvent ?
+	 "1: stop integration" :
+	 "0: keep integrating");
+  printf("Steady States:   %s\n", set->SteadyState ?
+	 "1: stop integration" :
+	 "0: keep integrating");
+  printf("Store Results:   %s\n", set->StoreResults ?
+	 "1: store results (only for finite integration)" :
+	 "0: don't store results");  
+  printf("3) TIME SETTINGS:\n");
+  if ( set->Indefinitely )
+    printf("Infinite integration with time step %g", set->Time);
+  else {
+    printf("Finite integration for time points: ");
+    for ( i=0; i<=set->PrintStep; i++)
+      printf("%g ", set->TimePoints[i]);
+  }
+  printf("\n");
+  printf("\n");
 }
 
 
@@ -46,7 +80,7 @@ CvodeSettings_DumpToString(cvodeSettings_t *set)
 
 SBML_ODESOLVER_API cvodeSettings_t *
 CvodeSettings_createWith(double Time, int PrintStep,
-			 double Error, double RError, double Mxstep,
+			 double Error, double RError, int Mxstep,
 			 int UseJacobian,
 			 int Indefinitely, int HaltOnEvent,
 			 int SteadyState, int StoreResults) {
@@ -105,7 +139,7 @@ CvodeSettings_clone(cvodeSettings_t *set) {
 
 SBML_ODESOLVER_API
 void CvodeSettings_setErrors(cvodeSettings_t *set,
-			     double Error, double RError, double Mxstep) 
+			     double Error, double RError, int Mxstep) 
 {
   CvodeSettings_setError(set, Error);
   CvodeSettings_setRError(set, RError);

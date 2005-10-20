@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 18:48:36 raim>
-  $Id: definedTimeSeries.c,v 1.5 2005/10/19 16:50:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 15:50:45 raim>
+  $Id: definedTimeSeries.c,v 1.6 2005/10/20 15:36:24 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,11 +32,14 @@ main (int argc, char *argv[]){
   set = CvodeSettings_create();
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   CvodeSettings_setTime(set, endtime, printstep);
-
+ 
   /* writing predefined output times */
   CvodeSettings_setTimeStep(set, 1, 0.5);
   for ( i=2; i<=printstep; i++ ) 
     CvodeSettings_setTimeStep(set, i, (i-1)*(i-1));
+
+ /* printing integration settings */
+  CvodeSettings_dump(set);
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
   results = SBML_odeSolver(d, set);

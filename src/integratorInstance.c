@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:29:20 raim>
-  $Id: integratorInstance.c,v 1.12 2005/10/18 16:40:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:27:28 raim>
+  $Id: integratorInstance.c,v 1.13 2005/10/20 15:36:24 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -105,7 +105,7 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 
 /** Resets and existing integratorInstance with new settings.
     The instance can the be used for further integration runs
-    with these new settings.
+    with these new settings. Don't use during an integration run!
 */
 
 SBML_ODESOLVER_API int
@@ -120,13 +120,27 @@ IntegratorInstance_set(integratorInstance_t *engine, cvodeSettings_t *opt)
 
 /** Resets and integratorInstance to its initial values from the
     integratorInstance's cvodeSettings. After that, a new integration
-    can be run.
+    can be run. Don't use during an integration run!
 */
 
 SBML_ODESOLVER_API int
 IntegratorInstance_reset(integratorInstance_t *engine)
 {
   return IntegratorInstance_set(engine, engine->opt);
+}
+
+
+
+/** Returns the settings of this integratorInstance. These
+    settings can then be change with cvodeSettings interface
+    functions. The changes become only effective after
+    IntegratorInstance_reset has been called. Don't use during
+    an integration run!
+*/
+
+SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *engine)
+{
+  return engine->opt;
 }
 
 
@@ -168,6 +182,9 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     else if ((p = Model_getParameterById(ode, om->names[i])) )
       data->value[i] = Parameter_getValue(p);
   }
+
+  /* set current time */
+  data->currenttime = opt->TimePoints[0];
   
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
@@ -296,7 +313,6 @@ IntegratorInstance_setVariableValue(integratorInstance_t *engine,
 
 
 /** Writes current simulation data to original model
-
 */
 
 SBML_ODESOLVER_API int
@@ -467,6 +483,63 @@ void IntegratorInstance_freeODESolverStructures(cvodeSolver_t *cv)
 
     /* Free the integrator memory */
     CVodeFree(cv->cvode_mem);
+}
+
+
+/** Prints variable names, the first value is the time,
+    ODE variable values, assigned variable values and
+    constant values follow. The order is the same
+    as in IntegratorInstance_dumpData.
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpNames(integratorInstance_t *engine)
+{
+  printf("#time  ");
+  ODEModel_dumpNames(engine->om);
+}
+
+
+/** Prints the current integration data, the first value is
+    the current time, ODE variable values, assigned variable
+    values and constant values follow. The order is the same
+    as in IntegratorInstance_dumpNames.
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpData(integratorInstance_t *engine)
+{
+  int i;
+  cvodeData_t *data = engine->data;
+
+  printf("%g  ", data->currenttime);
+  for ( i=0; i<data->nvalues; i++ )
+    printf("%g ", data->value[i]);
+  printf("\n");
+}
+
+/** Prints the current state of the solver
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpSolver(integratorInstance_t *engine)
+{
+  cvodeSolver_t *cv = engine->cv;
+  printf("\n");
+  printf("CVODE INTEGRATOR STATE\n\n");
+  printf("Current Time Settings:\n");
+  printf("start time:          %g\n", cv->t0);
+  printf("first output time:   %g\n", cv->t1);
+  printf("current time:        %g\n", cv->t);
+  printf("next output time:    %g\n", cv->tout);
+  printf("next step number:    %d\n", cv->iout);
+  printf("total step number:   %d\n", cv->nout);
+  printf("\n");  
+  printf("Error Settings:\n");
+  printf("absolute error tolerance: %g\n", cv->atol1);
+  printf("relative error tolerance: %g\n", cv->rtol1);
+  printf("max. internal step nr.:   %d\n", engine->opt->Mxstep);
+  printf("\n");
 }
 
 

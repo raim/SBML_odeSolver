@@ -685,7 +685,13 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 
 
 /* to be implemented */
-SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om);
+SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om)
+{
+  int i;
+  for ( i=0; i<(om->neq+om->nass+om->nconst); i++ )
+    printf("%s ", om->names[i]);
+  printf("\n");
+}
 
 
 /** Returns the SBML model that has been extracted from the input

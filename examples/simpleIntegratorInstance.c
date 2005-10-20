@@ -3,15 +3,6 @@
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"
 
-void DumpState(integratorInstance_t *ii, variableIndex_t *v1, variableIndex_t *v2)
-{
-    printf(
-        " %g %g %g\n", 
-        IntegratorInstance_getTime(ii),
-        IntegratorInstance_getVariableValue(ii, v1),
-        IntegratorInstance_getVariableValue(ii, v2));
-}
-
 int doIt(void)
 {
     int i ;
@@ -19,7 +10,9 @@ int doIt(void)
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstance;
 
-    odeModel_t *model = ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
+    odeModel_t *model =
+      ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
+    
     RETURN_ON_ERRORS_WITH(1)
 
     s1 = ODEModel_getVariableIndex(model, "S1");
@@ -35,56 +28,67 @@ int doIt(void)
     CvodeSettings_setTime(settings, .1, 5);
 
     /* Setting Cvode Parameters: absolute tolerance, relative
-       tolerance and maximal internal step */
-    CvodeSettings_setErrors(settings, 1e-18, 1e-14, 500);
+       tolerance and maximal internal step, respectively */
+    CvodeSettings_setErrors(settings, 1e-20, 1e-14, 500);
     
-    /* Setting Integration Switches:
-       
-    settings->UseJacobian = 1;  toggle use of Jacobian ASTs (1) or
-                                internal approximation  (0)
-    settings->Indefinitely = 1; run without a defined end time, Time
-			        field contains step duration, ignore
-			        PrintStep field
-    settings->HaltOnEvent = 0;  doesn't stops integration upon an event
-    settings->SteadyState = 0;  don't stop integration upon a steady state 
-    settings->StoreResults = 0; don't Store time course history
-    */
+    /* Setting Integration Switches */
+    CvodeSettings_setJacobian(settings, 1);
+    CvodeSettings_setIndefinitely(settings, 1);
+    CvodeSettings_setHaltOnEvent(settings, 0);
+    CvodeSettings_setSteadyState(settings, 0);
+    CvodeSettings_setStoreResults(settings, 0);
 
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0);
-
+    /* first integration run */
+    printf("\nFIRST INTEGRATION RUN WITH:\n");
+    CvodeSettings_dump(settings);
 
     integratorInstance = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
 
-    DumpState(integratorInstance, s1, s2);
+    /* print variable (ODE, assignments) and constant names */
+    IntegratorInstance_dumpNames(integratorInstance);
+    /* print initial conditions and parameters */
+    IntegratorInstance_dumpData(integratorInstance);
     
     for (i=0; i != 12; i++)
     {
 
         IntegratorInstance_integrateOneStep(integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
-
-        DumpState(integratorInstance, s1, s2);
+	/* print current data */
+	IntegratorInstance_dumpData(integratorInstance);
     }
 
     /* now, let's try again, with different settings */
-    printf("now, let's try again, with different settings:\n");
-    set2 = CvodeSettings_create();
-    CvodeSettings_setTime(set2, .1, 5);
-    CvodeSettings_setErrors(set2, 1e-18, 1e-14, 500);
-    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
 
-    IntegratorInstance_set(integratorInstance, set2);
+    set2 = CvodeSettings_create();
+    /* as Indefinitely will be set to 0, a finite integration
+       to time 0.24 in 6 steps will be run */
+    CvodeSettings_setTime(set2, .24, 6);
+    CvodeSettings_setErrors(set2, 1e-10, 1e-7, 500);
+    /* switches can be set all together, same order as above */
+    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
     
+    printf("\nNOW, LET'S TRY AGAIN WITH DIFFERENT SETTINGS:\n");
+    CvodeSettings_dump(set2);
+    
+    IntegratorInstance_set(integratorInstance, set2);
+
+    IntegratorInstance_dumpData(integratorInstance);  
 
     while( !IntegratorInstance_timeCourseCompleted(integratorInstance) ) {
 
         IntegratorInstance_integrateOneStep(integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
 
-        DumpState(integratorInstance, s1, s2);
+ 	IntegratorInstance_dumpData(integratorInstance);
     }
     
+    printf("\n\nFINISHED SUCCESSFULLY!\n");
+    printf("Please, note the different values e.g. at time 0.24.\n");
+    printf("The values for the first run a more exact, due to the much\n");
+    printf("lower tolerances. For such concentrations as in this model,\n");
+    printf("the last error settings are NOT recommended!!\n\n");
 
     IntegratorInstance_free(integratorInstance);
     ODEModel_free(model);
