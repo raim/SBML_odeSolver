@@ -16,12 +16,12 @@ SHORT INSTALLATION INFORMATION:
 
 1) INSTALL REQUIRED LIBRARIES
 
- The SBML_odeSolver depends on the following libraries:
+ The SBML_odeSolver depends on the following free libraries:
 
  Required libraries (SBML and numerical integration):
 	libSBML:        http://sbml.org/software/libsbml/
 			Version 2.3.2 or higher required!
-	SUNDIALS Suite: http://robotics.stanford.edu/people/scohen/
+	SUNDIALS Suite: http://www.llnl.gov/CASC/sundials/
                         Version 2.1.1 or higher required!
 	        
  Optional libraries (data visualization):
