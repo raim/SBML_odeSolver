@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 14:06:29 raim>
-  $Id: commandLine.c,v 1.8 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:56:44 raim>
+  $Id: commandLine.c,v 1.9 2005/10/20 15:59:49 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -468,7 +468,7 @@ integrator(integratorInstance_t *engine,
 
   /* Print some final statistics   */
   if ( PrintMessage && data->model->neq )
-    IntegratorInstance_printStatistics(engine);   
+    IntegratorInstance_printStatistics(engine, outfile);   
 
   return 0;
 

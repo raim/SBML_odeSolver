@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:27:28 raim>
-  $Id: integratorInstance.c,v 1.13 2005/10/20 15:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-10-20 17:58:04 raim>
+  $Id: integratorInstance.c,v 1.14 2005/10/20 15:59:49 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -24,7 +24,7 @@
 #include "sbmlsolver/solverError.h"
 
 static int
-check_flag(void *flagvalue, char *funcname, int opt);
+check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
 
 /**
  * CVode solver: function computing the ODE rhs for a given value
@@ -372,14 +372,14 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * Allocate y, abstol vectors
      */
     cv->y = N_VNew_Serial(neq);
-    if (check_flag((void *)cv->y, "N_VNew_Serial", 0)) {
+    if (check_flag((void *)cv->y, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
     cv->abstol = N_VNew_Serial(neq);
-    if (check_flag((void *)cv->abstol, "N_VNew_Serial", 0)) {
+    if (check_flag((void *)cv->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector abstol failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"N_VNew_Serial for vector abstol failed");
@@ -408,7 +408,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * CV_NEWTON  specifies a Newton iteration
      */
     cv->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
-    if (check_flag((void *)(cv->cvode_mem), "CVodeCreate", 0)) {
+    if (check_flag((void *)(cv->cvode_mem), "CVodeCreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeCreate failed");
     }
@@ -426,7 +426,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      */
     flag = CVodeMalloc(cv->cvode_mem, f, cv->t0, cv->y,
                        CV_SV, cv->reltol, cv->abstol);
-    if (check_flag(&flag, "CVodeMalloc", 1)) {
+    if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeMalloc failed");
       return 0; /* error */
@@ -436,7 +436,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * Link the main integrator with data for right-hand side function
      */ 
     flag = CVodeSetFdata(cv->cvode_mem, engine->data);
-    if (check_flag(&flag, "CVodeSetFdata", 1)) {
+    if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
       /* ERROR HANDLING CODE if CVodeSetFdata failes */
     }
     
@@ -444,7 +444,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
      * Link the main integrator with the CVDENSE linear solver
      */
     flag = CVDense(cv->cvode_mem, neq);
-    if (check_flag(&flag, "CVDense", 1)) {
+    if (check_flag(&flag, "CVDense", 1, stderr)) {
       /* ERROR HANDLING CODE if CVDense failes */
     }
 
@@ -461,7 +461,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
       flag = CVDenseSetJacFn(cv->cvode_mem, NULL, NULL);
     }
     
-    if ( check_flag(&flag, "CVDenseSetJacFn", 1) ) {
+    if ( check_flag(&flag, "CVDenseSetJacFn", 1, stderr) ) {
       /* ERROR HANDLING CODE if CVDenseSetJacFn failes */
     }
 
@@ -888,7 +888,7 @@ IntegratorInstance_handleError(integratorInstance_t *engine)
     are located in CVODE's iopt array.
 */
 SBML_ODESOLVER_API void
-IntegratorInstance_printStatistics(integratorInstance_t *engine)
+IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 {
     int flag;
     long int nst, nfe, nsetups, nje, nni, ncfn, netf;
@@ -897,25 +897,25 @@ IntegratorInstance_printStatistics(integratorInstance_t *engine)
     cvodeSolver_t *cv = engine->cv;
 
     flag = CVodeGetNumSteps(cv->cvode_mem, &nst);
-    check_flag(&flag, "CVodeGetNumSteps", 1);
+    check_flag(&flag, "CVodeGetNumSteps", 1, f);
     CVodeGetNumRhsEvals(cv->cvode_mem, &nfe);
-    check_flag(&flag, "CVodeGetNumRhsEvals", 1);
+    check_flag(&flag, "CVodeGetNumRhsEvals", 1, f);
     flag = CVodeGetNumLinSolvSetups(cv->cvode_mem, &nsetups);
-    check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
+    check_flag(&flag, "CVodeGetNumLinSolvSetups", 1, f);
     flag = CVDenseGetNumJacEvals(cv->cvode_mem, &nje);
-    check_flag(&flag, "CVDenseGetNumJacEvals", 1);
+    check_flag(&flag, "CVDenseGetNumJacEvals", 1, f);
     flag = CVodeGetNonlinSolvStats(cv->cvode_mem, &nni, &ncfn);
-    check_flag(&flag, "CVodeGetNonlinSolvStats", 1);
+    check_flag(&flag, "CVodeGetNonlinSolvStats", 1, f);
     flag = CVodeGetNumErrTestFails(cv->cvode_mem, &netf);
-    check_flag(&flag, "CVodeGetNumErrTestFails", 1);
+    check_flag(&flag, "CVodeGetNumErrTestFails", 1, f);
 
-    fprintf(stderr, "\nIntegration Parameters:\n");
-    fprintf(stderr, "mxstep   = %-6g rel.err. = %-6g abs.err. = %-6g \n",
+    fprintf(f, "\n## Integration Parameters:\n");
+    fprintf(f, "## mxstep   = %-6g rel.err. = %-6g abs.err. = %-6g \n",
 	    opt->Mxstep, opt->RError, opt->Error);
-    fprintf(stderr, "CVode Statistics:\n");
-    fprintf(stderr, "nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
+    fprintf(f, "## CVode Statistics:\n");
+    fprintf(f, "## nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
 	    nst, nfe, nsetups, nje); 
-    fprintf(stderr, "nni = %-6ld ncfn = %-6ld netf = %ld\n\n",
+    fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n\n",
 	    nni, ncfn, netf);
 }
 
@@ -923,14 +923,14 @@ IntegratorInstance_printStatistics(integratorInstance_t *engine)
  * check return values of SUNDIALS functions
  */
 static int
-check_flag(void *flagvalue, char *funcname, int opt)
+check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
 {
 
   int *errflag;
 
   /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
   if (opt == 0 && flagvalue == NULL) {
-    fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n",
+    fprintf(f, "\n## SUNDIALS_ERROR: %s() failed - returned NULL pointer\n",
             funcname);
     return(1); }
 
@@ -938,13 +938,13 @@ check_flag(void *flagvalue, char *funcname, int opt)
   else if (opt == 1) {
     errflag = (int *) flagvalue;
     if (*errflag < 0) {
-      fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n",
+      fprintf(f, "\n## SUNDIALS_ERROR: %s() failed with flag = %d\n",
               funcname, *errflag);
       return(1); }}
 
   /* Check if function returned NULL pointer - no memory allocated */
   else if (opt == 2 && flagvalue == NULL) {
-    fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n",
+    fprintf(f, "\n## MEMORY_ERROR: %s() failed - returned NULL pointer\n",
             funcname);
     return(1); }
 
