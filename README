@@ -47,7 +47,7 @@ for more information on program and output control via command-line options.
 
 ARCHITECTURE
 
-Currently, the SBML_odeSolver has been tested on Fedora Core 2 Linux, 
+Currently, the SBML_odeSolver has been tested on Fedora Linux, 
 MasOS X/Darwin and Windows. It is written in pure ANSI C and
 should thus also run on other systems. 
 We would highly appreciate any reports! 
