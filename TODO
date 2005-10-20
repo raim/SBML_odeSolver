@@ -8,16 +8,8 @@
 	* choose CVODE error tolerances automatically for each ODE??
 	* choose other solvers from the CVODE package
 
-* batchIntegrator:
-	* change parameter in CvodeData, 
-	  don't construct ODEs twice (use ODE SBML model, see below)
-
-	  
-* Constants, Parameter, Assignment Rule and 
-  Function Definition Replacement:
-  	* should be separate
+* Function Definition Replacement:
 	* implement in evaulate/differentiateAST
-	* allow online change of parameters (e.g. for inverse methods)
 
 * transfer to SUNDIALS
 	* CVODES for sensitivity analysis
