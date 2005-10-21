@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 10:43:29 raim>
-  $Id: integratorInstance.c,v 1.15 2005/10/21 08:55:20 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 11:08:43 raim>
+  $Id: integratorInstance.c,v 1.16 2005/10/21 18:07:28 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -1055,10 +1055,10 @@ static int checkSteadyState(integratorInstance_t *engine) {
   if ( (dy_mean + dy_std) < 1e-11 ) {
     data->steadystate = 1;
     SolverError_error(WARNING_ERROR_TYPE,
-		       SOLVER_MESSAGE_STEADYSTATE_FOUND,
-		       "Steady state found. "
-		       "Simulation aborted at %g seconds. "
-		       "Mean of rates: %g, std %g",
+		      SOLVER_MESSAGE_STEADYSTATE_FOUND,
+		      "Steady state found. "
+		      "Simulation aborted at %g seconds. "
+		      "Mean of rates: %g, std %g",
 		      data->currenttime, dy_mean, dy_std);
     return(1) ;
   }

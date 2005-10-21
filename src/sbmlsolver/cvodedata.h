@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 09:51:47 raim>
-  $Id: cvodedata.h,v 1.11 2005/10/21 08:55:20 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 20:03:22 raim>
+  $Id: cvodedata.h,v 1.12 2005/10/21 18:07:28 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -39,10 +39,20 @@ struct odeModel
      current value of the ODE variables during simulation. */
   ASTNode_t **ode; 
 
-   /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
+  /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
+  /* neq x neq */
   ASTNode_t ***jacob;
   /* was the model the jacobian constructed ? */
   int jacobian;
+
+  /* forward sensitivity analysis */
+  /* neq x num_param */
+  int num_param;    /* number of parameters for sens. analysis */
+  int *index_param; /* indexes of parameters in char **names, char *value*/
+  ASTNode_t ***jacob_param; /*  (d[Y]/dt)/dP  */
+  int sensitivity;  /* just a flag, might not be required (in options) */
+
+  /* adjoint */
 
 };
 
@@ -61,7 +71,12 @@ struct cvodeResults {
   int nvalues;     /* number of variables for which results exist */
   /* the following arrays represent the time series of all variables
      and parameters of the model */
-  double **value;  
+  double **value;
+
+  /* number of parameters for sens. analysis */
+  int num_param;
+  /* sensitivities: d[Y(t)]/dP */
+  double ***sensitivity;
 
 } ;
 
@@ -87,6 +102,8 @@ struct cvodeData {
   /* stores the current time of the integration */
   float currenttime;
 
+  /* current sensitivities: d[Y(t)]/dP */
+  double **sensitivity;
   
   /* cvode settings: start- and end times, timesteps, number of timesteps,
      error tolerances, max. number of steps, etc... */
@@ -128,7 +145,7 @@ void CvodeData_free(cvodeData_t *);
 
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 
-void CvodeResults_free(cvodeResults_t *, int);
+void CvodeResults_free(cvodeResults_t *);
 #endif
 
 /* End of file */

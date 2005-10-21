@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 09:50:25 raim>
-  $Id: cvodedata.c,v 1.13 2005/10/21 08:55:20 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 11:46:31 raim>
+  $Id: cvodedata.c,v 1.14 2005/10/21 18:07:28 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,7 +106,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   if ( opt->StoreResults ) {
 
     if ( data->results != NULL )
-      CvodeResults_free(data->results, data->nvalues);
+      CvodeResults_free(data->results);
     
     data->results = CvodeResults_create(data, opt->PrintStep);
     RETURN_ON_FATALS_WITH(0);
@@ -167,7 +167,7 @@ static void CvodeData_freeStructures(cvodeData_t * data) {
   }
 
   /* free results structure */
-  CvodeResults_free(data->results, data->nvalues);
+  CvodeResults_free(data->results);
 
   /* free current values array */
   free(data->value);
@@ -240,12 +240,12 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
 /** Frees results structure cvodeResults filled by the
     CVODE integrator
 */
-void CvodeResults_free(cvodeResults_t *results, int nvalues) {
+void CvodeResults_free(cvodeResults_t *results) {
 
   int i;
   /* free CVODE results if filled */
   if(results != NULL){
-    for(i=0;i<nvalues;i++){
+    for(i=0;i<results->nvalues;i++){
       free(results->value[i]);
     }
     free(results->time);

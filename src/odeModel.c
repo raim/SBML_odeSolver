@@ -302,7 +302,7 @@ ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian)
   if ( SBMLDocument_getLevel(d) == 1 ) {
     SolverError_error(ERROR_ERROR_TYPE,
          SOLVER_ERROR_DOCUMENTLEVEL_ONE,
-	 "SBML Level %d cannot be processed \n", SBMLDocument_getLevel(d));
+	 "SBML Level %d cannot be processed", SBMLDocument_getLevel(d));
     RETURN_ON_ERRORS_WITH(NULL);
   }
  
@@ -363,8 +363,8 @@ ODEModel_constructJacobian(odeModel_t *model) {
        SolverError_error(
             WARNING_ERROR_TYPE,
          SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-	    "%d entries of the Jacobian matrix could not be constructed,\n"
-            "due to failure of differentiation. Cvode will use internal\n"
+	    "%d entries of the Jacobian matrix could not be constructed, "
+            "due to failure of differentiation. Cvode will use internal "
             "approximation of the Jacobian instead.", failed);
       model->jacobian = 0;
       /* Opt.Jacobian = 0; */
