@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:51:45 raim>
-  $Id: integratorSettings.c,v 1.8 2005/10/20 15:52:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 10:09:15 raim>
+  $Id: integratorSettings.c,v 1.9 2005/10/21 08:55:20 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 {
   int i;
   printf("\n");
-  printf("SOSlib INTEGRATION SETTINGS:\n");
+  printf("SOSlib INTEGRATION SETTINGS\n");
   printf("1) CVODE SPECIFIC SETTINGS:\n");
   printf("absolute error tolerance for each output time:     %g\n",
 	 set->Error);
@@ -271,7 +271,7 @@ SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int i)
-{
+{ /*??? set->Time ??*/
   set->Indefinitely = i;
 }
 

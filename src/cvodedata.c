@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:28:09 raim>
-  $Id: cvodedata.c,v 1.12 2005/10/18 16:40:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 09:50:25 raim>
+  $Id: cvodedata.c,v 1.13 2005/10/21 08:55:20 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +12,8 @@
 
 /* own header files */
 #include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/integratorInstance.h"
+#include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/processAST.h"
@@ -36,6 +38,81 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents){
   ASSIGN_NEW_MEMORY_BLOCK(data->value, nvalues, double, NULL);
   
   return data ;
+}
+
+
+
+/* initialize cvodeData from cvodeSettings and odeModel (could be
+   separated in to functions to further support modularity and
+   independence of data structures */
+int
+CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
+{
+
+  int i;
+  Parameter_t *p;
+  Species_t *s;
+  Compartment_t *c;
+
+  Model_t *ode = om->simple;
+
+  /* data now also depends on cvodeSettings */
+  data->opt = opt;
+     
+  /* allow storage of results only for finite integrations */
+  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
+  
+  /* allow setting of Jacobian,
+     only if its construction was succesfull */
+  opt->UseJacobian = om->jacobian && opt->UseJacobian;
+    
+
+  /*
+    First, fill cvodeData_t  structure with data from
+    the ODE model
+  */
+
+  for ( i=0; i<data->nvalues; i++ ) {
+    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
+      data->value[i] = Species_getInitialConcentration(s);
+    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
+      data->value[i] = Compartment_getSize(c);
+    else if ((p = Model_getParameterById(ode, om->names[i])) )
+      data->value[i] = Parameter_getValue(p);
+  }
+
+  /* set current time */
+  data->currenttime = opt->TimePoints[0];
+  
+  /*
+    Then, check if formulas can be evaluated, and cvodeData_t *
+    contains all necessary variables:
+    evaluateAST(ASTNode_t *f, ,data) will
+    ask the user for a value, if a a variable is unknown
+  */
+  for ( i=0; i<om->neq; i++ ) {
+    evaluateAST(om->ode[i], data);
+  }
+  /* initialize assigned parameters */
+  for ( i=0; i<om->nass; i++ ) {
+    data->value[om->neq+i] =
+      evaluateAST(om->assignment[i],data);
+  }
+  
+  /*
+    Now we should have all variables, and can allocate the
+    results structure, where the time series will be stored ...
+  */
+  if ( opt->StoreResults ) {
+
+    if ( data->results != NULL )
+      CvodeResults_free(data->results, data->nvalues);
+    
+    data->results = CvodeResults_create(data, opt->PrintStep);
+    RETURN_ON_FATALS_WITH(0);
+  }
+  
+  return 1;
 }
 
 /* I.2: Initialize Data for Integration

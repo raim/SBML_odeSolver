@@ -20,7 +20,7 @@ extern "C" {
   /* integrator state information */
   struct cvodeSolver
   {
-    realtype reltol, t, tout, atol1, rtol1, t0, t1, tmult;
+    realtype reltol, t, tout, atol1, t0;
     N_Vector y, abstol;
     void *cvode_mem;
     int iout, nout;    

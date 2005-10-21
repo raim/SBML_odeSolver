@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:58:04 raim>
-  $Id: integratorInstance.c,v 1.14 2005/10/20 15:59:49 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 10:43:29 raim>
+  $Id: integratorInstance.c,v 1.15 2005/10/21 08:55:20 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -144,79 +144,6 @@ SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorIns
 }
 
 
-/* initialize cvodeData from cvodeSettings and odeModel (could be
-   separated in to functions to further support modularity and
-   independence of data structures */
-int
-CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
-{
-
-  int i;
-  Parameter_t *p;
-  Species_t *s;
-  Compartment_t *c;
-
-  Model_t *ode = om->simple;
-
-  /* data now also depends on cvodeSettings */
-  data->opt = opt;
-     
-  /* allow storage of results only for finite integrations */
-  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
-  
-  /* allow setting of Jacobian,
-     only if its construction was succesfull */
-  opt->UseJacobian = om->jacobian && opt->UseJacobian;
-    
-
-  /*
-    First, fill cvodeData_t  structure with data from
-    the ODE model
-  */
-
-  for ( i=0; i<data->nvalues; i++ ) {
-    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
-      data->value[i] = Species_getInitialConcentration(s);
-    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
-      data->value[i] = Compartment_getSize(c);
-    else if ((p = Model_getParameterById(ode, om->names[i])) )
-      data->value[i] = Parameter_getValue(p);
-  }
-
-  /* set current time */
-  data->currenttime = opt->TimePoints[0];
-  
-  /*
-    Then, check if formulas can be evaluated, and cvodeData_t *
-    contains all necessary variables:
-    evaluateAST(ASTNode_t *f, ,data) will
-    ask the user for a value, if a a variable is unknown
-  */
-  for ( i=0; i<om->neq; i++ ) {
-    evaluateAST(om->ode[i], data);
-  }
-  /* initialize assigned parameters */
-  for ( i=0; i<om->nass; i++ ) {
-    data->value[om->neq+i] =
-      evaluateAST(om->assignment[i],data);
-  }
-  
-  /*
-    Now we should have all variables, and can allocate the
-    results structure, where the time series will be stored ...
-  */
-  if ( opt->StoreResults ) {
-
-    if ( data->results != NULL )
-      CvodeResults_free(data->results, data->nvalues);
-    
-    data->results = CvodeResults_create(data, opt->PrintStep);
-    RETURN_ON_FATALS_WITH(0);
-  }
-  
-  return 1;
-}
-
 
 /** Copies variable and parameter values between two integratorInstances
     that have been created from the same odeModel
@@ -351,6 +278,79 @@ IntegratorInstance_updateModel(integratorInstance_t *engine) {
 
 }
 
+/** Prints variable names, the first value is the time,
+    ODE variable values, assigned variable values and
+    constant values follow. The order is the same
+    as in IntegratorInstance_dumpData.
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpNames(integratorInstance_t *engine)
+{
+  printf("#time  ");
+  ODEModel_dumpNames(engine->om);
+}
+
+
+/** Prints the current integration data, the first value is
+    the current time, ODE variable values, assigned variable
+    values and constant values follow. The order is the same
+    as in IntegratorInstance_dumpNames.
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpData(integratorInstance_t *engine)
+{
+  int i;
+  cvodeData_t *data = engine->data;
+
+  printf("%g  ", data->currenttime);
+  for ( i=0; i<data->nvalues; i++ )
+    printf("%g ", data->value[i]);
+  printf("\n");
+}
+
+/** Prints the current state of the solver
+*/
+
+SBML_ODESOLVER_API void
+IntegratorInstance_dumpSolver(integratorInstance_t *engine)
+{
+  cvodeSolver_t *cv = engine->cv;
+  printf("\n");
+  printf("CVODE INTEGRATOR STATE\n\n");
+  printf("Current Time Settings:\n");
+  printf("start time:          %g\n", cv->t0);
+  printf("current time:        %g\n", cv->t);
+  printf("next time:           %g\n", cv->tout);
+  printf("current step number: %d\n", cv->iout);
+  printf("total step number:   %d\n", cv->nout);
+  printf("\n");  
+  printf("Error Settings:\n");
+  /* currently the same abs. error for all y */
+  printf("absolute error tolerance: %g\n", cv->abstol[0]);
+  printf("relative error tolerance: %g\n", cv->reltol);
+  printf("max. internal step nr.:   %d\n", engine->opt->Mxstep);
+  printf("\n");
+}
+
+
+/** Frees an integratorInstance, including cvodeData
+    but not the originating odeModel!
+*/
+
+SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
+{
+    if (engine->om->neq)
+        IntegratorInstance_freeODESolverStructures(engine->cv);
+
+    CvodeData_free(engine->data);
+    free(engine->cv);
+    free(engine);
+}
+
+/**** internal integrator setup functions ****/
+
 
 /* creates CVODE structures and fills cvodeSolver 
    return 1 => success
@@ -368,6 +368,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
+    
     /**
      * Allocate y, abstol vectors
      */
@@ -386,6 +387,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
       return 0; /* error */
     }
 
+    
     /**
      * Initialize y, abstol vectors
      */
@@ -394,12 +396,13 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
     for ( i=0; i<neq; i++ ) {
       /* Set initial value vector components of y and y' */
       ydata[i] = data->value[i];
-      /* Set absolute tolerance vector components */ 
-      abstoldata[i] = cv->atol1;       
+      /* Set absolute tolerance vector components,
+         currently the same absolute error is used for all y */ 
+      abstoldata[i] = opt->Error;       
     }
-
-    /* Set the scalar relative tolerance */
-    cv->reltol = cv->rtol1;                  
+    
+    /* scalar relative tolerance: the same for all y */
+    cv->reltol = opt->RError;
 
     /**
      * Call CVodeCreate to create the solver memory:
@@ -429,7 +432,7 @@ IntegratorInstance_createODESolverStructures(integratorInstance_t *engine)
     if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeMalloc failed");
-      return 0; /* error */
+      return 0; /* error ??? not required, handled by solverError ???  */
     }
 
     /**
@@ -486,79 +489,6 @@ void IntegratorInstance_freeODESolverStructures(cvodeSolver_t *cv)
 }
 
 
-/** Prints variable names, the first value is the time,
-    ODE variable values, assigned variable values and
-    constant values follow. The order is the same
-    as in IntegratorInstance_dumpData.
-*/
-
-SBML_ODESOLVER_API void
-IntegratorInstance_dumpNames(integratorInstance_t *engine)
-{
-  printf("#time  ");
-  ODEModel_dumpNames(engine->om);
-}
-
-
-/** Prints the current integration data, the first value is
-    the current time, ODE variable values, assigned variable
-    values and constant values follow. The order is the same
-    as in IntegratorInstance_dumpNames.
-*/
-
-SBML_ODESOLVER_API void
-IntegratorInstance_dumpData(integratorInstance_t *engine)
-{
-  int i;
-  cvodeData_t *data = engine->data;
-
-  printf("%g  ", data->currenttime);
-  for ( i=0; i<data->nvalues; i++ )
-    printf("%g ", data->value[i]);
-  printf("\n");
-}
-
-/** Prints the current state of the solver
-*/
-
-SBML_ODESOLVER_API void
-IntegratorInstance_dumpSolver(integratorInstance_t *engine)
-{
-  cvodeSolver_t *cv = engine->cv;
-  printf("\n");
-  printf("CVODE INTEGRATOR STATE\n\n");
-  printf("Current Time Settings:\n");
-  printf("start time:          %g\n", cv->t0);
-  printf("first output time:   %g\n", cv->t1);
-  printf("current time:        %g\n", cv->t);
-  printf("next output time:    %g\n", cv->tout);
-  printf("next step number:    %d\n", cv->iout);
-  printf("total step number:   %d\n", cv->nout);
-  printf("\n");  
-  printf("Error Settings:\n");
-  printf("absolute error tolerance: %g\n", cv->atol1);
-  printf("relative error tolerance: %g\n", cv->rtol1);
-  printf("max. internal step nr.:   %d\n", engine->opt->Mxstep);
-  printf("\n");
-}
-
-
-/** Frees an integratorInstance, including cvodeData
-    but not the originating odeModel!
-*/
-
-SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
-{
-    if (engine->om->neq)
-        IntegratorInstance_freeODESolverStructures(engine->cv);
-
-    CvodeData_free(engine->data);
-    free(engine->cv);
-    free(engine);
-}
-
-
-
 /* initializes a cvodeSolver structure */
 int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 					cvodeData_t *data,
@@ -577,25 +507,24 @@ int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
 
   /* CVODE settings: set Problem Constants */
-  /* set first output time, output intervals and number of outputs
-     from the values in cvodeData_t *data */
-
-  cv->atol1 = opt->Error;      /* vector absolute tolerance components */ 
-  cv->rtol1 = opt->RError;     /* scalar relative tolerance */
-  cv->t0 = 0.0;                /* initial time           */
   
+  /* set initial time, first output time and number of time steps */
+  cv->t0     = 0.0;             /* initial time           */
+  
+  /* first output time as passed to CVODE */
   if ( opt->Indefinitely )
-    /* first output time      */
-    cv->t1 = opt->TimePoints[opt->PrintStep] / opt->PrintStep;      
+    cv->tout = opt->Time;      
   else 
-    cv->t1 = opt->TimePoints[1];    /* first output time      */  
-  
-  cv->tmult = cv->t1;           /* first output time factor */         
-  cv->nout = opt->PrintStep;    /* number of output steps */
-  cv->t = 0.0;                  /* CVODE current time, always 0, when
-				   starting from odeModel */
+    cv->tout = opt->TimePoints[1];
 
-  /* count integration run with this instance */
+  cv->nout = opt->PrintStep;     /* number of output steps */
+  cv->t = 0.0;                   /* CVODE current time, always 0, when
+				   starting from odeModel */
+  
+  /* set up loop variables */
+  cv->iout=1;         /* counts integration steps, start with 1 */
+  
+  /* count integration runs with this integratorInstance */
   data->run++;
 
   if (om->neq)
@@ -605,37 +534,31 @@ int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
       IntegratorInstance_freeODESolverStructures(engine->cv);
 
     IntegratorInstance_createODESolverStructures(engine);
-      RETURN_ON_ERRORS_WITH(0);
+    RETURN_ON_ERRORS_WITH(0);
   }
 
-  /* set up loop variables */
-  cv->iout=1;         /* counts integration steps, start with 1 */
-  
-  /* first output time as passed to CVODE */
-  if ( opt->Indefinitely )
-    cv->tout = cv->t1;
-  else 
-    cv->tout = opt->TimePoints[1];
-  
   return 1;
 }
 
 
-/** Start the default integration loop with standard error handling
+/** Starts the default integration loop with standard error handling
+    and returns 0 if integration was OK, and the error code if not.
 */
 
 SBML_ODESOLVER_API int
 IntegratorInstance_integrate(integratorInstance_t *engine) {
 
-  while (!IntegratorInstance_timeCourseCompleted(engine)) {
+  while ( engine->cv->iout <= engine->cv->nout )
     if (!IntegratorInstance_integrateOneStep(engine))
       return IntegratorInstance_handleError(engine);
-  }
-  return 0;
+ 
+  return 0; /* return 0, if ok */
 }
 
-/** Creates and returns a cvodeResults structure containing
-    the results of one integration run and NULL if not successful
+/** Creates and returns a cvodeResults structure containing the
+    results of one integration run and NULL if not successful.
+    The results must be freed by the caller with
+    CvodeResults_free(results);
 */
 
 SBML_ODESOLVER_API cvodeResults_t *
@@ -697,7 +620,7 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     if (om->neq)
     {
 
-        /* !! calling Cvode !! */
+        /* !!!! calling CVODE !!!! */
         flag = CVode(cv->cvode_mem, cv->tout,
                      cv->y, &(cv->t), CV_NORMAL);
 
@@ -821,23 +744,23 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
     {
       results->nout = cv->iout;
       results->time[cv->iout] = cv->t;
-      for ( i=0; i<data->nvalues; i++ ) {
+      for ( i=0; i<data->nvalues; i++ ) 
         results->value[i][cv->iout] = data->value[i];
-      }
     }
           
-    /* check for steady state if requested by cvodeSettings */
-    if ( opt->SteadyState == 1 ) {
-      if ( checkSteadyState(engine) ) {
+    /* check for steady state if requested by cvodeSettings
+       and stop integration if an approximate steady state is
+       found   */
+    if ( opt->SteadyState == 1 ) 
+      if ( checkSteadyState(engine) )
 	cv->iout = cv->nout+1;
-      }
-    }
 
     /* increase integration step counter */
     cv->iout++;
+    
     /* ... and set next output time */
     if ( opt->Indefinitely )
-      cv->tout += cv->tmult;
+      cv->tout += opt->Time;
     else if ( cv->iout <= cv->nout )
       cv->tout = opt->TimePoints[cv->iout];
     
@@ -846,7 +769,6 @@ IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 
 
 /** Standard handler for when the integrate function fails.
-    WARNING: RERUN CURRENTLY DOESN't WORK 
 */
 
 SBML_ODESOLVER_API int
@@ -859,7 +781,7 @@ IntegratorInstance_handleError(integratorInstance_t *engine)
   
   if ( errorCode ) {
         
-    /* on flag -6/CV_CONV_FAILURE
+    /* on flag CV_CONV_FAILURE
        try again, but now with/without generated Jacobian matrix  */
     if ( errorCode == CV_CONV_FAILURE && data->run == 1 &&
 	 opt->StoreResults) {
@@ -887,6 +809,7 @@ IntegratorInstance_handleError(integratorInstance_t *engine)
 /** Prints some final statistics of the calls to CVODE routines, that
     are located in CVODE's iopt array.
 */
+
 SBML_ODESOLVER_API void
 IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 {
@@ -919,7 +842,7 @@ IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 	    nni, ncfn, netf);
 }
 
-/**
+/*
  * check return values of SUNDIALS functions
  */
 static int

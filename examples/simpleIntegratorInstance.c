@@ -64,8 +64,8 @@ int doIt(void)
     set2 = CvodeSettings_create();
     /* as Indefinitely will be set to 0, a finite integration
        to time 0.24 in 6 steps will be run */
-    CvodeSettings_setTime(set2, .24, 6);
-    CvodeSettings_setErrors(set2, 1e-10, 1e-7, 500);
+    CvodeSettings_setTime(set2, 1.2, 6);
+    CvodeSettings_setErrors(set2, 1e-16, 1e-14, 500);
     /* switches can be set all together, same order as above */
     CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
     
@@ -85,10 +85,10 @@ int doIt(void)
     }
     
     printf("\n\nFINISHED SUCCESSFULLY!\n");
-    printf("Please, note the different values e.g. at time 0.24.\n");
+    printf("Please, note the different values e.g. at time 1.2.\n");
     printf("The values for the first run a more exact, due to the much\n");
-    printf("lower tolerances. For such concentrations as in this model,\n");
-    printf("the last error settings are NOT recommended!!\n\n");
+    printf("lower error tolerances. The error tolerances have to be\n");
+    printf("adapted to the ranges of each model!!\n\n");
 
     IntegratorInstance_free(integratorInstance);
     ODEModel_free(model);

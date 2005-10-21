@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:31:04 raim>
-  $Id: cvodedata.h,v 1.10 2005/10/18 16:40:44 raimc Exp $
+  Last changed Time-stamp: <2005-10-21 09:51:47 raim>
+  $Id: cvodedata.h,v 1.11 2005/10/21 08:55:20 raimc Exp $
 */
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
@@ -118,15 +118,15 @@ SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *);
 
 
 
-/* internal functions of integratorInstance.c */
+/* internal functions used by integratorInstance.c */
 
-cvodeData_t *CvodeData_create(odeModel_t *m);
+cvodeData_t *CvodeData_create(odeModel_t *);
 
 int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 
-void CvodeData_free(cvodeData_t *data);
+void CvodeData_free(cvodeData_t *);
 
-cvodeResults_t *CvodeResults_create(cvodeData_t *data, int nout);
+cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 
 void CvodeResults_free(cvodeResults_t *, int);
 #endif
