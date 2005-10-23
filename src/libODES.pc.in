@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+                                                                                       
+Name: libODES
+Description: The SBML ODE Solver library 
+Version: @VERSION@
+Libs: -L${libdir} -lODES
+Cflags: -I${includedir}
