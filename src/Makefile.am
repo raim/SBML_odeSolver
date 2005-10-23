@@ -1,7 +1,8 @@
-# $Id: Makefile.am,v 1.11 2005/10/12 19:43:36 raimc Exp $
+# $Id: Makefile.am,v 1.12 2005/10/23 19:25:37 chfl Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
+pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
 INCLUDES = @CVODE_CFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
@@ -59,6 +60,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/solverError.h \
 		     sbmlsolver/util.h \
 		     sbmlsolver/variableIndex.h
+pkgconfig_DATA = libODES.pc
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c
 odeSolver_LDADD   = -L. -lODES \
