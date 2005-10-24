@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 11:08:43 raim>
-  $Id: integratorInstance.c,v 1.16 2005/10/21 18:07:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-24 11:30:33 raim>
+  $Id: integratorInstance.c,v 1.17 2005/10/24 09:42:40 raimc Exp $
 */
 
 #include "sbmlsolver/integratorInstance.h"
@@ -833,7 +833,7 @@ IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
     check_flag(&flag, "CVodeGetNumErrTestFails", 1, f);
 
     fprintf(f, "\n## Integration Parameters:\n");
-    fprintf(f, "## mxstep   = %-6g rel.err. = %-6g abs.err. = %-6g \n",
+    fprintf(f, "## mxstep   = %d rel.err. = %g abs.err. = %g \n",
 	    opt->Mxstep, opt->RError, opt->Error);
     fprintf(f, "## CVode Statistics:\n");
     fprintf(f, "## nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:56:44 raim>
-  $Id: commandLine.c,v 1.9 2005/10/20 15:59:49 raimc Exp $
+  Last changed Time-stamp: <2005-10-24 11:27:14 raim>
+  $Id: commandLine.c,v 1.10 2005/10/24 09:42:40 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -397,9 +397,8 @@ parseModelWithArguments (char *file)
   of functions, to integrate the ODEs.
 */
 
-int
-integrator(integratorInstance_t *engine,
-	   int PrintMessage, int PrintOnTheFly, FILE *outfile)
+int integrator(integratorInstance_t *engine,
+	       int PrintMessage, int PrintOnTheFly, FILE *outfile)
 {
   int i;
   cvodeData_t *data = engine->data;

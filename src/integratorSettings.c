@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 10:09:15 raim>
-  $Id: integratorSettings.c,v 1.9 2005/10/21 08:55:20 raimc Exp $
+  Last changed Time-stamp: <2005-10-24 11:38:58 raim>
+  $Id: integratorSettings.c,v 1.10 2005/10/24 09:42:40 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
   printf("2) SOSlib SPECIFIC SETTINGS:\n");
   printf("Jacobian matrix: %s\n", set->UseJacobian ?
 	 "1: generate Jacobian" : "0: CVODE's internal approximation");
-  printf("In/Finite:       %s\n", set->Indefinitely ?
+  printf("Indefinitely:    %s\n", set->Indefinitely ?
 	 "1: infinite integration" :
 	 "0: finite integration");
   printf("Event Handling:  %s\n", set->HaltOnEvent ?
@@ -68,9 +68,8 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
   if ( set->Indefinitely )
     printf("Infinite integration with time step %g", set->Time);
   else {
-    printf("Finite integration for time points: ");
-    for ( i=0; i<=set->PrintStep; i++)
-      printf("%g ", set->TimePoints[i]);
+    printf("endtime: %g\n", set->TimePoints[set->PrintStep]);
+    printf("steps:   %d", set->PrintStep);
   }
   printf("\n");
   printf("\n");

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-17 18:50:36 raim>
-  $Id: interactive.c,v 1.10 2005/10/17 16:53:59 raimc Exp $
+  Last changed Time-stamp: <2005-10-24 11:37:57 raim>
+  $Id: interactive.c,v 1.11 2005/10/24 09:42:40 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,16 +16,11 @@
 #include "sbmlsolver/options.h"
 #include "sbmlsolver/commandLine.h"
 
-static void
-printMenu(void);
-static void
-setValues(Model_t *m);
-static void
-setFormat(void);
-static SBMLDocument_t * 
-loadFile(SBMLReader_t *sr);
-static int
-callIntegrator(Model_t *m);
+static void printMenu(void);
+static void setValues(Model_t *);
+static void setFormat(void);
+static SBMLDocument_t *loadFile();
+static integratorInstance_t *callIntegrator(odeModel_t *, cvodeSettings_t *);
 
 /**
    Interactive Mode:
@@ -52,14 +47,12 @@ interactive() {
   char *select;
   int quit;
   SBMLDocument_t *d  = NULL;
-  SBMLReader_t   *sr = NULL;
   Model_t        *m  = NULL;
   odeModel_t *om     = NULL;
   cvodeData_t * data = NULL;
-  ASTNode_t *det;
+  integratorInstance_t *ii = NULL;
+  cvodeSettings_t *set = NULL;
 
-  sr = newSBMLReader(Opt.SchemaPath, Opt.Schema11, Opt.Schema12, Opt.Schema21);
-  
   printf("\n\nWelcome to the simple SBML ODE solver.\n");
   printf("You have entered the interactive mode.\n");
   printf("All other commandline options have been ignored.\n");
@@ -86,12 +79,15 @@ interactive() {
     }
     Warn(stderr, "%s:%d interactive(): Can't parse Model >%s<",
 	  __FILE__, __LINE__, sbmlFilename);
-    d = loadFile(sr);
+    d = loadFile();
   }
 
+  /* load models and default settings */
   m = SBMLDocument_getModel(d);
-
-
+  om = ODEModel_create(m, Opt.Jacobian);
+  set = CvodeSettings_create();
+  SolverError_dumpAndClearErrors();
+  
   quit = 0;
   data = NULL;
   
@@ -105,37 +101,44 @@ interactive() {
     printf("\n");
 
     if( strcmp(select,"l") == 0 ) {
-      d = loadFile(sr);
+      /* free all existing structures */
+      if ( om != NULL )
+	ODEModel_free(data->model);
+      if ( d != NULL )
+	SBMLDocument_free(d);
+      if ( ii != NULL )
+	IntegratorInstance_free(ii);
+
+      /* load a new file */
+      d = loadFile();
+      
+      /* load new models */
       m = SBMLDocument_getModel(d);
-    }
-
-    if(strcmp(select,"h")==0){
-      printMenu();
-    }
-    
-    if(strcmp(select,"s")==0){
-      printModel(m, stdout);
-    }
-    
-    if(strcmp(select,"c")==0){
-      printSpecies(m, stdout);
-    }
-    
-    if(strcmp(select,"r")==0){
-      printReactions(m, stdout);
-    }
-    
-    if(strcmp(select,"o")==0){
       om = ODEModel_create(m, Opt.Jacobian);
-      SolverError_dumpAndClearErrors();
-      if (data)
-          printODEs(om, stdout);
+      SolverError_dumpAndClearErrors();            
     }
 
-    if(strcmp(select,"i")==0){
-      callIntegrator(m);
-     }
+    if(strcmp(select,"h")==0)
+      printMenu();
     
+    if(strcmp(select,"s")==0)
+      printModel(m, stdout);
+    
+    if(strcmp(select,"c")==0)
+      printSpecies(m, stdout);
+    
+    if(strcmp(select,"r")==0)
+      printReactions(m, stdout);
+    
+    if(strcmp(select,"o")==0)
+      printODEs(om, stdout);
+
+    /* integrate interface functions, asks for time and printsteps */
+    if(strcmp(select,"i")==0){
+      ii = callIntegrator(om, set);
+       SolverError_dumpAndClearErrors();
+    }
+
     if(strcmp(select,"x")==0){
       if ( Opt.Xmgrace == 1 ) {
 	Opt.Xmgrace = 0;
@@ -146,37 +149,27 @@ interactive() {
 	printf(" Printing results to XMGrace\n");
       }
     }      
-    if(strcmp(select,"st")==0){
-      printConcentrationTimeCourse(data, stdout);
-    }
+    if(strcmp(select,"st")==0)
+      printConcentrationTimeCourse(ii->data, stdout);
     
-    if(strcmp(select,"jt")==0){
-      printJacobianTimeCourse(data, stdout);
-    }
-    
-    if(strcmp(select,"rt")==0){
-      printOdeTimeCourse(data, stdout);
-    }
+    if(strcmp(select,"jt")==0)
+      printJacobianTimeCourse(ii->data, stdout);
 
-    if(strcmp(select,"dt")==0){
-      if ( data != NULL && data->model->jacob != NULL ) {
-	det = determinantNAST(data->model->jacob, data->model->neq);
-	printDeterminantTimeCourse(data, det, stdout);
-	ASTNode_free(det);
-      }
-      else {
-	printf("Please integrate first!\n");
-      }
-    }
-	
-
-    if(strcmp(select,"xp")==0){
-      printPhase(data);
-    }
     
-    if(strcmp(select,"set")==0){
+    if(strcmp(select,"ot")==0)
+      printOdeTimeCourse(ii->data, stdout);
+
+    
+    if(strcmp(select,"rt")==0)
+	printReactionTimeCourse(ii->data, m, stdout);
+    
+    if(strcmp(select,"xp")==0)
+      printPhase(ii->data);
+    
+    
+    if(strcmp(select,"set")==0)
       setValues(m);
-    }
+    
     
     if(strcmp(select,"ss")==0){
       if ( Opt.SteadyState == 1 ) {
@@ -188,6 +181,7 @@ interactive() {
 	printf(" Checking for steady states during integration.\n");
       }
     }
+
     if(strcmp(select,"uj")==0){
       if ( Opt.Jacobian == 1 ) {
 	Opt.Jacobian = 0;
@@ -199,53 +193,50 @@ interactive() {
 	printf(" Using automatically generated\n");
 	printf(" jacobian matrix for integration\n");
       }
-    }    
-    if(strcmp(select,"gf")==0){
+    }
+    
+    if(strcmp(select,"gf")==0)
       setFormat();
-    }
-    if(strcmp(select,"rg")==0){
+    
+    if(strcmp(select,"rg")==0)
       drawModel(m, sbmlFilename, Opt.GvFormat);
-    }
+    
     if(strcmp(select,"jg")==0){
-      if ( data == NULL ) {
-	Opt.Jacobian = 1;
-	om = ODEModel_create(m, Opt.Jacobian);
+      if ( ii == NULL ) {
 	data = CvodeData_create(om);
-	SolverError_dumpAndClearErrors();    
-	Opt.Jacobian = 0;	
+	CvodeData_initialize(data, set, om);
+	drawJacoby(data, sbmlFilename, Opt.GvFormat);
+	CvodeData_free(data);
       }
-      if (data)
-        drawJacoby(data, sbmlFilename, Opt.GvFormat);
+      else 
+	drawJacoby(ii->data, sbmlFilename, Opt.GvFormat);	
     }
-    if(strcmp(select,"j")==0){
-      om = ODEModel_create(m, Opt.Jacobian);
-      data = CvodeData_create(om);
-      SolverError_dumpAndClearErrors();
-      if (data)
-          printJacobian(data->model, stdout);
-    }
-    if(strcmp(select,"q")==0){
+
+    
+    if(strcmp(select,"j")==0)
+      printJacobian(om, stdout);
+
+    
+    if(strcmp(select,"q")==0)
       quit = 1;
-    }
+    
   }
 
-  if ( data != NULL ) {
-    ODEModel_free(data->model);
-    CvodeData_free(data);    
-  }
+  if ( ii != NULL )
+    IntegratorInstance_free(ii);
+  if ( om != NULL ) 
+    ODEModel_free(om);
+
   SBMLDocument_free(d);
-  xfree(sr);
   printf("\n\nGood Bye. Thx for using.\n\n");
 }
 
 
-/**
+/*
   setValues: the user can enter a species name and
   change its initial condition (amount or concentration)
 */
-
-static void
-setValues(Model_t *m) {
+static void setValues(Model_t *m) {
 
   char *species;
   char *newIA;
@@ -315,13 +306,12 @@ setValues(Model_t *m) {
   
 }
 
+
 /*
-  Set a new output format for graph drawing with graphviz.
+  set a new output format for graph drawing with graphviz.
 */
-
-static void
-setFormat(void) {
-
+static void setFormat(void)
+{
   char *format;
   
   while(1){
@@ -342,9 +332,11 @@ setFormat(void) {
 }
 
 
-static SBMLDocument_t * 
-loadFile(SBMLReader_t *sr){
-
+/*
+  force to load an SBML file
+*/
+static SBMLDocument_t *loadFile()
+{
     char *filename;
     SBMLDocument_t *d;
 
@@ -381,29 +373,44 @@ loadFile(SBMLReader_t *sr){
     return NULL;
 }
 
-static int
-callIntegrator(Model_t *m){
+static integratorInstance_t *callIntegrator(odeModel_t *om,
+					    cvodeSettings_t *set)
+{
 
   char *tout;
   char *nout;
+  double time;
+  int printstep;
+  integratorInstance_t *ii;
   
-/*   integratorInstance_t *ii; */
-/*   cvodeSettings_t * set; */
-/*   odeModel_t *om; */
+  printf("Please enter end time in seconds:           ");
+  tout =  get_line(stdin);
+  tout = util_trim(tout);
+    
+  printf("... and the number of output times:         ");
+  nout = get_line(stdin);
+  nout = util_trim(nout);
 
-/*   om = ODEModel_create(m, Opt.Jacobian); */
-/*   SolverError_dumpAndClearErrors(); */
-/*   set = CvodeSettings_createDefaults(); */
   
-/*   ii = integratorInstance_create(om, set); */
-
- 
-  return 1;
+  if ( !(time = (float) floor(atof(tout))) ||
+       !(printstep = (int) atof(nout)) ) {
+    printf("\nEntered outtime %s or number of output times %s\n", tout, nout);
+    printf("could not be converted to a number. Try again, please!\n");    
+  }
+  else {
+    CvodeSettings_setTime(set, time, printstep);
+    CvodeSettings_dump(set);
+    ii = IntegratorInstance_create(om, set);
+    integrator(ii, 1, 0, stdout);
+    SolverError_dumpAndClearErrors();
+    return (ii);
+  }
+  
+  return NULL;
 }
 
 
-static void
-printMenu(void)
+static void printMenu(void)
 {  
   printf("\n");
   printf("(l)    Load Model\n");
@@ -428,16 +435,16 @@ printMenu(void)
   printf("(x)    Toggle printing to XMGrace or stdout, ");
   printf("currently %s\n", Opt.Xmgrace ? "XMGrace" : "stdout");
   printf("(st)   Print time course of species concentrations\n");
-  printf("(rt)   Print time course of the ODEs\n");
+  printf("(ot)   Print time course of the ODEs\n");
+  printf("(rt)   Print time course of the reaction fluxes\n");
   printf("(jt)   Print time course of the jacobian\n");
-  printf("(dt)   Print time course of the determinant of the jacobian\n");
  
   printf("(xp)   Open XMGrace and print a phase diagram\n");  
 
   printf("DRAW GRAPHS\n");
   printf("(gf)   Set output format for graph drawing (now: %s)\n",
 	 Opt.GvFormat);
-  printf("(rg)   Draw a bipartite graph of the Reaction Network\n");
+  printf("(rg)   Draw a bipartite graph of the reaction network\n");
   printf("(jg)   Draw a interaction graph from the jacobian matrix\n");
   printf("       for the last time integrated\n");
 /*   printf("()    Write model in SBML Level 2 Version 1\n"); */
