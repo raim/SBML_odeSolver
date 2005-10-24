@@ -1,7 +1,7 @@
 \input texinfo
 @c -*-texinfo-*-
-@c Last changed Time-stamp: <2005-08-29 16:23:53 xtof>
-@set revision $Id: libODES.texinfo,v 1.1 2005/09/01 14:08:35 chfl Exp $
+@c Last changed Time-stamp: <2005-10-24 18:41:05 xtof>
+@set revision $Id: libODES.texinfo,v 1.2 2005/10/24 16:42:03 chfl Exp $
 @setfilename libODES.info
 @settitle libODES
 @ifclear Version
@@ -84,13 +84,226 @@ Please send comments and bug reports to
 @comment  node-name,  next,  previous,  up
 @chapter API Reference
 
-@node Function Index, Variable Index, API Reference, Top
+Information is ordered by include header files of the libSOS.
 
+@menu
+* ASTIndexNameNode.h::
+* commandLine.h::
+* config.h::
+* cvodedata.h::
+* cvodedatatype.h::
+* drawGraph.h::
+* exportdefs.h::
+* integratorInstance.h::
+* integratorSettings.h::
+* interactive.h::
+* modelSimplify.h::
+* odeConstruct.h::
+* odemodeldatatype.h::
+* odeModel.h::
+* odeSolver.h::
+* options.h::
+* printModel.h::
+* processAST.h::
+* sbml.h::
+* sbmlResults.h::
+* solverError.h::
+* util.h::
+* variableIndex.h::
+@end menu
+
+@c +-----------------------------+
+@c | begin of ASTIndexNameNode.h |
+@node ASTIndexNameNode.h, commandLine.h, , API Reference
+@section @file{ASTIndexNameNode.h}
+
+Class @code{ASTIndexNameNode} is inherited from the libsbml class
+@code{ASTNode} and adds the two private fields @code{index} and
+@code{indexSet} to this class.
+
+@subsection public class methodes
+@deftypemethod ASTIndexNameNode void ASTIndexNameNode ()
+Default constructor.
+@end deftypemethod
+
+@deftypemethod  ASTIndexNameNode {unsigned int} getIndex ()
+Returns value of the object field @code{index}.
+@end deftypemethod
+
+@deftypemethod ASTIndexNameNode bool isSetIndex ()
+Returns @code{true} if the object field @code{index} is set,
+@code{false} otherwise
+@end deftypemethod
+
+@subsection private class data
+@deftypeivar ASTIndexNameNode {unsigned int} index
+Holdes index of species in the concentration array.
+@end deftypeivar
+@deftypeivar ASTIndexNameNode int indexSet
+Flag to indicate if object field @code{index} is set.
+@end deftypeivar
+@c | end of ASTIndexNameNode.h |
+@c +---------------------------+
+
+@c +---------------+
+@c | commandLine.h |
+@node commandLine.h, config.h, ASTIndexNameNode.h, API Reference
+@section @file{commandLine.h}
+@c | commandLine.h |
+@c +---------------+
+
+@c +----------+
+@c | config.h |
+@node config.h, cvodedata.h, commandLine.h, API Reference
+@section @file{config.h}
+@c | config.h |
+@c +----------+
+
+@c +-------------+
+@c | cvodedata.h |
+@node cvodedata.h, cvodedatatype.h, config.h, API Reference
+@section @file{cvodedata.h}
+@c | cvodedata.h |
+@c +-------------+
+
+@c +-----------------+
+@c | cvodedatatype.h |
+@node cvodedatatype.h, drawGraph.h, cvodedata.h, API Reference
+@section @file{cvodedatatype.h}
+@c | cvodedatatype.h |
+@c +-----------------+
+
+@c +-------------+
+@c | drawGraph.h |
+@node drawGraph.h, exportdefs.h, cvodedatatype.h, API Reference
+@section @file{drawGraph.h}
+@c | drawGraph.h |
+@c +-------------+
+
+@c +--------------+
+@c | exportdefs.h |
+@node exportdefs.h, integratorInstance.h, drawGraph.h, API Reference
+@section @file{exportdefs.h}
+@c | exportdefs.h |
+@c +--------------+
+
+@c +----------------------+
+@c | integratorInstance.h |
+@node integratorInstance.h, integratorSettings.h, exportdefs.h, API Reference
+@section @file{integratorInstance.h}
+@c | integratorInstance.h |
+@c +----------------------+
+
+@c +----------------------+
+@c | integratorSettings.h |
+@node integratorSettings.h, interactive.h, integratorInstance.h, API Reference
+@section @file{integratorSettings.h}
+@c | integratorSettings.h |
+@c +----------------------+
+
+@c +---------------+
+@c | interactive.h |
+@node interactive.h, modelSimplify.h, integratorSettings.h, API Reference
+@section @file{interactive.h}
+@c | interactive.h |
+@c +---------------+
+
+@c +-----------------+
+@c | modelSimplify.h |
+@node modelSimplify.h, odeConstruct.h, interactive.h, API Reference
+@section @file{modelSimplify.h}
+@c | modelSimplify.h |
+@c +-----------------+
+
+@c +----------------+
+@c | odeConstruct.h |
+@node odeConstruct.h, odemodeldatatype.h, modelSimplify.h, API Reference
+@section @file{odeConstruct.h}
+@c | odeConstruct.h |
+@c +----------------+
+
+@c +--------------------+
+@c | odemodeldatatype.h |
+@node odemodeldatatype.h, odeModel.h, odeConstruct.h, API Reference
+@section @file{odemodeldatatype.h}
+@c | odemodeldatatype.h |
+@c +--------------------+
+
+@c +------------+
+@c | odeModel.h |
+@node odeModel.h, odeSolver.h, odemodeldatatype.h, API Reference
+@section @file{odeModel.h}
+@c | odeModel.h |
+@c +------------+
+
+@c +-------------+
+@c | odeSolver.h |
+@node odeSolver.h, options.h, odeModel.h, API Reference
+@section @file{odeSolver.h}
+@c | odeSolver.h |
+@c +-------------+
+
+@c +-----------+
+@c | options.h |
+@node options.h, printModel.h, odeSolver.h, API Reference
+@section @file{options.h}
+@c | options.h |
+@c +-----------+
+
+@c +--------------+
+@c | printModel.h |
+@node printModel.h, processAST.h, options.h, API Reference
+@section @file{printModel.h}
+@c | printModel.h |
+@c +--------------+
+
+@c +--------------+
+@c | processAST.h |
+@node processAST.h, sbml.h, printModel.h, API Reference
+@section @file{processAST.h}
+@c | processAST.h |
+@c +--------------+
+
+@c +--------+
+@c | sbml.h |
+@node sbml.h, sbmlResults.h, processAST.h, API Reference
+@section @file{sbml.h}
+@c | sbml.h |
+@c +--------+
+
+@c +---------------+
+@c | sbmlResults.h |
+@node sbmlResults.h, solverError.h, sbml.h, API Reference
+@section @file{sbmlResults.h}
+@c | sbmlResults.h |
+@c +---------------+
+
+@c +---------------+
+@c | solverError.h |
+@node solverError.h, util.h, sbmlResults.h, API Reference
+@section @file{solverError.h}
+@c | solverError.h |
+@c +---------------+
+
+@c +--------+
+@c | util.h |
+@node util.h, variableIndex.h, solverError.h, API Reference
+@section @file{util.h}
+@c | util.h |
+@c +--------+
+
+@c +-----------------+
+@c | variableIndex.h |
+@node variableIndex.h, , util.h, API Reference
+@section @file{variableIndex.h}
+@c | variableIndex.h |
+@c +-----------------+
+
+@node Function Index, Variable Index, API Reference, Top
 @unnumbered Function Index
 @printindex fn
 
 @node Variable Index,  , Function Index, Top
-
 @unnumbered Variable Index
 @printindex vr
 
