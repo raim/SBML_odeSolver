@@ -1,3 +1,8 @@
+/*
+  Last changed Time-stamp: <2005-10-26 17:00:39 raim>
+  $Id: odeModel.c,v 1.16 2005/10/26 15:01:02 raimc Exp $ 
+*/
+
 #include "sbmlsolver/odeModel.h"
 
 #include <string.h>

@@ -1,3 +1,8 @@
+/*
+  Last changed Time-stamp: <2005-10-26 17:04:39 raim>
+  $Id: integratorInstance.h,v 1.13 2005/10/26 15:04:52 raimc Exp $ 
+*/
+
 #ifndef _INTEGRATORINSTANCE_H_
 #define _INTEGRATORINSTANCE_H_
 

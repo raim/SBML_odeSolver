@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 16:56:03 raim>
-  $Id: 
+  Last changed Time-stamp: <2005-10-26 16:57:32 raim>
+  $Id: solverError.c,v 1.9 2005/10/26 14:57:39 raimc Exp $ 
 */
 
 #include "sbmlsolver/solverError.h"

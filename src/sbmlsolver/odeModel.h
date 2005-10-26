@@ -1,3 +1,8 @@
+/*
+  Last changed Time-stamp: <2005-10-26 17:00:22 raim>
+  $Id: odeModel.h,v 1.10 2005/10/26 15:01:02 raimc Exp $ 
+*/
+
 #ifndef _ODEMODEL_H_
 #define _ODEMODEL_H_
 

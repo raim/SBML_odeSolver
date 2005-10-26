@@ -1,3 +1,8 @@
+/*
+  Last changed Time-stamp: <2005-10-26 16:58:29 raim>
+  $Id: solverError.h,v 1.9 2005/10/26 14:58:40 raimc Exp $ 
+*/
+
 #ifndef _SOLVERERROR_H_
 #define _SOLVERERROR_H_
 
