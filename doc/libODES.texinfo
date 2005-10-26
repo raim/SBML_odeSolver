@@ -1,7 +1,7 @@
 \input texinfo
 @c -*-texinfo-*-
-@c Last changed Time-stamp: <2005-10-25 12:21:12 xtof>
-@set revision $Id: libODES.texinfo,v 1.3 2005/10/26 09:53:25 chfl Exp $
+@c Last changed Time-stamp: <2005-10-26 16:24:17 xtof>
+@set revision $Id: libODES.texinfo,v 1.4 2005/10/26 14:25:08 chfl Exp $
 @setfilename libODES.info
 @settitle libODES
 @ifclear Version
@@ -40,6 +40,7 @@ Copyright @copyright{2005} Rainer Machne and Christoph Flamm
 * API Reference::
 * Function Index::
 * Variable Index::
+* Datatype Index::
 @end menu
 
 @node Introduction, API Reference, Top, Top
@@ -119,7 +120,9 @@ Information is ordered by include header files of the libSOS.
 
 Class @code{ASTIndexNameNode} is inherited from the libsbml class
 @code{ASTNode} and adds the two private fields @code{index} and
-@code{indexSet} to this class.
+@code{indexSet} to this class. It is intended to make the name lookup
+fast, since the index relates the name of a species in an AST to its
+concentration (position) in the @code{cvodeResults.values} array.
 
 @subsection public class methodes
 @deftypemethod ASTIndexNameNode void ASTIndexNameNode ()
@@ -163,6 +166,31 @@ Flag to indicate if object field @code{index} is set.
 @c | cvodedata.h |
 @node cvodedata.h, cvodedatatype.h, config.h, API Reference
 @section @file{cvodedata.h}
+@deftp {Data type} cvodeData_t {}
+@example
+struct @{
+ odeModel_t*      @var{model};
+ int              @var{nvalues};
+ double*          @var{value};
+ float            @var{currenttime};
+ double**         @var{sensitivity};
+ cvodeSettings_t* @var{opt};
+ int*             @var{trigger};
+ int              @var{steadystate};
+ cvodeResults_t*  @var{results};
+ int              @var{run}
+@}
+@end example
+@var{model} is a pointer to the the model system.  @var{nvalues} is
+the size of array @var{value} holding the values of all variables and
+parameters of the model system.
+@end deftp
+
+@deftp {Data type} cvodeResults_t {}
+@end deftp
+
+@deftp {Data type} odeModel_t {}
+@end deftp
 @c | cvodedata.h |
 @c +-------------+
 
@@ -192,7 +220,7 @@ Flag to indicate if object field @code{index} is set.
 @node integratorInstance.h, integratorSettings.h, exportdefs.h, API Reference
 @section @file{integratorInstance.h}
 
-@deftypefun {integratorInstance_t*} IntegratorInstance_create (odeModel_t* @var{om}, cvodeSettings_t* @var{opt}) 
+@deftypefun {} {integratorInstance_t*} IntegratorInstance_create (odeModel_t* @var{om}, cvodeSettings_t* @var{opt}) 
 Creates and returns a new @code{integratorInstance} structure. Reads
 initial values from @var{om} (@code{odeModel} structure) and
 integration settings from @var{opt} (@code{cvodeSettings}
@@ -314,9 +342,13 @@ previous timesteps of the integration. In addition the structure
 @unnumbered Function Index
 @printindex fn
 
-@node Variable Index,  , Function Index, Top
+@node Variable Index, Datatype Index, Function Index, Top
 @unnumbered Variable Index
 @printindex vr
+
+@node Datatype Index, , Variable Index, Top
+@unnumbered Datatype Index
+@printindex tp
 
 @contents
 @bye
