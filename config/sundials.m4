@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.2 2005/10/12 18:08:59 raimc Exp $
+dnl $Id: sundials.m4,v 1.3 2005/10/26 14:51:41 raimc Exp $
 
 dnl
 dnl look for SUNDAILS CVODE Library headers in some standard set of directories
@@ -85,7 +85,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS_CVODE],
   dnl reset global variables to cached values
   CFLAGS=$sundials_cvode_save_CFLAGS
   LDFLAGS=$sundials_cvode_save_LDFLAGS
-  LIBS=$sudials_cvode_save_LIBS
+  LIBS=$sundials_cvode_save_LIBS
   AC_LANG_POP
 
   AC_DEFINE([USE_SUNDIALS_CVODE], 1,
