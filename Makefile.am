@@ -1,11 +1,14 @@
-# $Id: Makefile.am,v 1.8 2005/10/12 12:55:37 raimc Exp $
+# $Id: Makefile.am,v 1.9 2005/10/26 14:27:42 raimc Exp $
 if MAKE_BINDINGS
-   SUBDIRS = src bindings
+   SUBDIRS = src odeSolver bindings
 else
-   SUBDIRS = src
+   SUBDIRS = src odeSolver
 endif
 CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas
-EXTRA_DIST = Perlen/AddLegend.pl \
+EXTRA_DIST = odeSolver/*.c \
+             odeSolver/*.h \
+             odeSolver/Makefile.am \
+             Perlen/AddLegend.pl \
              sbml/*.xsd \
              Test/MAPK.xml Test/simple.sh \
              doc/os_v1-5.pdf \
@@ -22,4 +25,4 @@ EXTRA_DIST = Perlen/AddLegend.pl \
 	     examples/Makefile.in \
              examples/Makefile.integrate \
              examples/README \
-	     examples/simpleIntegratorInstanc.c
+	     examples/simpleIntegratorInstance.c

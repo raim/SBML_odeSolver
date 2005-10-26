@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-24 11:37:57 raim>
-  $Id: interactive.c,v 1.11 2005/10/24 09:42:40 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 15:40:05 raim>
+  $Id: interactive.c,v 1.1 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +12,12 @@
 #include <sbml/util/util.h> /* only for util_trim */
 
 /* own header files */
-#include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/options.h"
-#include "sbmlsolver/commandLine.h"
+#include "../src/sbmlsolver/odeSolver.h"
+
+#include "interactive.h"
+#include "options.h"
+#include "commandLine.h"
+#include "printModel.h"
 
 static void printMenu(void);
 static void setValues(Model_t *);

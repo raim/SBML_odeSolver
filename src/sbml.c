@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 12:37:02 raim>
-  $Id: sbml.c,v 1.8 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 14:45:17 raim>
+  $Id: sbml.c,v 1.9 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>

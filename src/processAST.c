@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 15:10:36 raim>
-  $Id: processAST.c,v 1.12 2005/10/20 13:30:40 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 14:40:52 raim>
+  $Id: processAST.c,v 1.13 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,6 @@
    created by configure script */
 #include "config.h"
 
-#include "sbmlsolver/util.h"
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/ASTIndexNameNode.h"

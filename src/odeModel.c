@@ -9,7 +9,6 @@
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/processAST.h"
-#include "sbmlsolver/util.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 

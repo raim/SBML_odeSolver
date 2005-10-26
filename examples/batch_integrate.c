@@ -1,13 +1,12 @@
 /*
-  Last changed Time-stamp: <2005-10-26 14:31:13 raim>
-  $Id: batch_integrate.c,v 1.12 2005/10/26 12:36:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 16:18:23 raim>
+  $Id: batch_integrate.c,v 1.13 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../src/sbmlsolver/odeSolver.h"
-#include "../src/sbmlsolver/options.h"
 
 
 int

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-21 11:46:31 raim>
-  $Id: cvodedata.c,v 1.14 2005/10/21 18:07:28 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 14:37:21 raim>
+  $Id: cvodedata.c,v 1.15 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,6 @@
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/util.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/solverError.h"

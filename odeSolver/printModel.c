@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-18 18:21:39 raim>
-  $Id: printModel.c,v 1.9 2005/10/18 16:40:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 15:40:58 raim>
+  $Id: printModel.c,v 1.1 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,16 +13,16 @@
 
 /* System specific definitions,
    created by configure script */
-#include "config.h"
+#include "../src/config.h"
 
 /* Own Header Files */
-#include "sbmlsolver/util.h"
-#include "sbmlsolver/options.h"
-#include "sbmlsolver/cvodedata.h"
-#include "sbmlsolver/printModel.h"
-#include "sbmlsolver/modelSimplify.h"
-#include "sbmlsolver/processAST.h"
+#include "../src/sbmlsolver/util.h"
+#include "../src/sbmlsolver/cvodedata.h"
+#include "../src/sbmlsolver/modelSimplify.h"
+#include "../src/sbmlsolver/processAST.h"
 
+#include "options.h"
+#include "printModel.h"
 
 /*
   XMGrace Library dependent functions,

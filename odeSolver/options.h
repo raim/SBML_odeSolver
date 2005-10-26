@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-08-01 21:10:05 raim>
-  $Id: options.h,v 1.2 2005/08/02 13:20:32 raimc Exp $
+  $Id: options.h,v 1.1 2005/10/26 14:27:42 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_

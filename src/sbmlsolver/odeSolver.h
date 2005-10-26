@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-19 15:48:38 raim>
-  $Id: odeSolver.h,v 1.15 2005/10/19 16:39:43 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 15:36:44 raim>
+  $Id: odeSolver.h,v 1.16 2005/10/26 14:27:42 raimc Exp $
 */
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
@@ -18,9 +18,7 @@
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/printModel.h"
 #include "sbmlsolver/drawGraph.h"
-#include "sbmlsolver/interactive.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/sbmlResults.h"
 #include "sbmlsolver/exportdefs.h"

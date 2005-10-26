@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 14:09:33 raim>
-  $Id: commandLine.c,v 1.11 2005/10/26 12:36:50 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 15:42:04 raim>
+  $Id: commandLine.c,v 1.1 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +12,12 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/options.h"
-#include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/commandLine.h"
+#include "../src/sbmlsolver/odeSolver.h"
+
+#include "interactive.h"
+#include "printModel.h"
+#include "options.h"
+#include "commandLine.h"
 
 
 /** odeSolver(): Starting the SBML_odeSolver from command-line !!
@@ -174,7 +177,7 @@ odeSolver (int argc, char *argv[])
 	derived ODE system; the jacobian matrix expressions
 	will NOT be printed ONLY when additionally option '-j' was
 	set. Exit afterwards.
-    */
+    */    
     if ( Opt.PrintModel == 1 ) {
       printModel(m, outfile);
       printSpecies(m, outfile);

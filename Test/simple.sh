@@ -1,12 +1,12 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2005-10-13 16:07:40 xtof>
-# $Id: simple.sh,v 1.6 2005/10/13 14:08:15 chfl Exp $
+# Last changed Time-stamp: <2005-10-26 16:17:37 raim>
+# $Id: simple.sh,v 1.7 2005/10/26 14:27:42 raimc Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
 PERL=$(which perl)
-SOLVER="../src/odeSolver"
+SOLVER="../odeSolver/odeSolver"
 TIME=1e4
 ABSE=1e-7
 RELE=1e-3

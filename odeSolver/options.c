@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-12 12:56:15 raim>
-  $Id: options.c,v 1.7 2005/10/12 12:52:08 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 15:54:31 raim>
+  $Id: options.c,v 1.1 2005/10/26 14:27:42 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +10,9 @@
 
 
 /* own header files */
-#include "sbmlsolver/util.h"
-#include "sbmlsolver/options.h"
+#include <sbmlsolver/util.h>
+
+#include "options.h"
 
 static struct option const long_options[] =
 { {"modelgraph",    no_argument,       0, 'g'},
@@ -313,14 +314,18 @@ usage (int status)
     " -h, --help            Print (this) usage information.\n"
     " -i, --interactive     Turn on interactive mode\n"
     "     --gvformat <Str>  Set output format for graph drawings (now set \n"
-    "                       to: %s); ignored if compiled w/o graphviz)\n"
+    "                       to: %s); ignored if compiled w/o graphviz)\n",
+	  Opt.GvFormat);
+  fprintf(stderr,
    "SBML FILE PARSING\n"	  
     " -v, --validate        Validate SBML file before further processing\n"
 	  
     "     --model <Str>     SBML file name (not needed!, see USAGE)\n"
     "                       (now set to: %s)\n"
     "     --mpath <Dir>     Set Model File Path\n"
-    "                       (now set to: %s)\n"
+	  "                       (now set to: %s)\n",
+	  Opt.ModelFile, Opt.ModelPath);
+  fprintf(stderr,
     "     --schema11 <Str>  Set filename for SBML schema Level 1 Version 1\n"
     "                       (now set to: %s)\n"
     "     --schema12 <Str>  Set filename for SBML schema Level 1 Version 2\n"
@@ -328,22 +333,27 @@ usage (int status)
     "     --schema21 <Str>  Set filename for SBML schema Level 2 Version 1\n"
     "                       (now set to: %s)\n"
     "     --spath <Dir>     Set schema file path, absolute or relative to\n"
-    "                       model path (now set to: %s)\n"
+	  "                       model path (now set to: %s)\n",	  
+	  Opt.Schema11, Opt.Schema12, Opt.Schema21,  Opt.SchemaPath);
+  fprintf(stderr,
     "(1) PRINT REACTIONS AND DERIVED ODEs\n"
     " -e, --equations       Print Reactions and derived ODE system\n"
     " -o, --printsbml       Construct ODEs and print as SBML model\n"
     " -g, --modelgraph      Draw bipartite graph of reaction network\n"
-    "                       (to .dot text file if compiled w/o graphviz)\n"
+    "                       (to .dot text file if compiled w/o graphviz)\n");
+  fprintf(stderr,
     "(2) INTEGRATING\n"
     " -f, --onthefly        Print results during integration\n"
     " -l, --message         Print messages, and integration statistics\n"
     " -j, --jacobian        Toggle use of the jacobian matrix or CVODE's\n"
-    "                       internal approximation (default: jacobian)\n"
+    "                       internal approximation (default: jacobian)\n");
+  fprintf(stderr,
     " -s, --steadyState     Abort integration at steady states\n"
     " -n, --event           Do not abort on event detection, but keep\n"
     "                       integrating. ACCURACY DEPENDS ON --printstep!!\n"
     "     --param <Str>     Choose a parameter to vary during batch\n"
-    "                       integration, from 0 to value in 50 steps\n"
+	  "                       integration, from 0 to value in 50 steps\n");
+  fprintf(stderr,
     "     --printstep <Int> Time steps of output, or\n"
     "                       (now set to: %g)\n"
     "     --time <Float>    Integration end time\n"
@@ -353,7 +363,9 @@ usage (int status)
     "     --rerror <Float>  Relative error tolerance during integration\n"
     "                       (now set to: %g)\n"
     "     --mxstep <Int>    Maximum step number during integration\n"
-    "                       (now set to: %g)\n"
+    "                       (now set to: %g)\n",
+	  Opt.PrintStep, Opt.Time, Opt.Error, Opt.RError, Opt.Mxstep);	  
+  fprintf(stderr,
     "(3) INTEGRATION RESULTS\n"
     " -a, --all             Print all available results (y/k/r + conc.).\n"
     " -y, --jacobianTime    Print time course of jacobian matrix entries,\n"
@@ -361,18 +373,15 @@ usage (int status)
     " -k, --reactions       Print time course of the reactions\n"
     "                       (kinetic laws) instead of concentrations\n"
     " -r, --rates           Print time course of the ODEs, instead of\n"
-    "                       concentrations\n"	  
+	  "                       concentrations\n");	  
+  fprintf(stderr,
     " -w, --write           Write results to file (path/modelfile.xml.dat)\n"  
     " -x, --xmgrace         Print results to XMGrace; uses SBML Names\n"
     "                       instead of Ids (ignored if compiled w/o Grace)\n" 
     " -m, --matrixgraph     Draw species interactions from the jacobian\n"
     "                       matrix at last timepoint of integration\n"
     "                       (to .dot text file if compiled w/o graphviz)\n"
-    "\n",
-	  Opt.GvFormat,
-	  Opt.ModelFile, Opt.ModelPath,
-	  Opt.Schema11, Opt.Schema12, Opt.Schema21,  Opt.SchemaPath,
-	  Opt.PrintStep, Opt.Time, Opt.Error, Opt.RError, Opt.Mxstep);
+	  "\n");	  
   exit (status);
 }
 
