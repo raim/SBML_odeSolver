@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-24 11:27:14 raim>
-  $Id: commandLine.c,v 1.10 2005/10/24 09:42:40 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 14:09:33 raim>
+  $Id: commandLine.c,v 1.11 2005/10/26 12:36:50 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -259,7 +259,7 @@ odeSolver (int argc, char *argv[])
     set = CvodeSettings_createWith(Opt.Time, Opt.PrintStep,
 				   Opt.Error, Opt.RError, Opt.Mxstep,
 				   Opt.Jacobian, 0, Opt.HaltOnEvent,
-				   Opt.SteadyState, 1);
+				   Opt.SteadyState, 1, 0);
 
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);
@@ -402,7 +402,7 @@ int integrator(integratorInstance_t *engine,
 {
   int i;
   cvodeData_t *data = engine->data;
-  cvodeSolver_t *cv = engine->cv;
+  cvodeSolver_t *solver = engine->solver;
 
   
  /** Command-line option -f/--onthefly:
@@ -416,7 +416,7 @@ int integrator(integratorInstance_t *engine,
         fprintf(outfile, "%s ", data->model->names[i]);
       fprintf(outfile, "\n");
 
-    fprintf(outfile, "%g ", cv->t0);
+    fprintf(outfile, "%g ", solver->t0);
     for ( i=0; i<data->nvalues; i++ )
       fprintf(outfile, "%g ", data->value[i]);
     fprintf(outfile, "\n");
@@ -446,7 +446,7 @@ int integrator(integratorInstance_t *engine,
     */
  
     if ( PrintOnTheFly ) {
-      fprintf(outfile, "%g ", cv->t);
+      fprintf(outfile, "%g ", solver->t);
       for ( i=0; i<engine->data->nvalues; i++ )
 	fprintf(outfile, "%g ", engine->data->value[i]);
       fprintf(outfile, "\n");
@@ -455,8 +455,8 @@ int integrator(integratorInstance_t *engine,
       const  char chars[5] = "|/-\\";
       fprintf(stderr, "\b\b\b\b\b\b");
       fprintf(stderr, "%.2f %c",
-	      (float)(cv->iout-1)/(float)cv->nout,
-	      chars[(cv->iout-1) % 4]);
+	      (float)(solver->iout-1)/(float)solver->nout,
+	      chars[(solver->iout-1) % 4]);
     }
   }
   if ( !PrintOnTheFly && PrintMessage ) {

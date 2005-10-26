@@ -37,6 +37,7 @@ int doIt(void)
     CvodeSettings_setHaltOnEvent(settings, 0);
     CvodeSettings_setSteadyState(settings, 0);
     CvodeSettings_setStoreResults(settings, 0);
+    CvodeSettings_setSensitivity(settings, 0);
 
     /* first integration run */
     printf("\nFIRST INTEGRATION RUN WITH:\n");
@@ -52,6 +53,9 @@ int doIt(void)
     
     for (i=0; i != 12; i++)
     {
+        /* setting the next time step, uncomment the following
+	   function call to see its effect */
+     /* IntegratorInstance_setNextTimeStep(integratorInstance, 0.2*(i+1)); */
 
         IntegratorInstance_integrateOneStep(integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
@@ -67,7 +71,7 @@ int doIt(void)
     CvodeSettings_setTime(set2, 1.2, 6);
     CvodeSettings_setErrors(set2, 1e-16, 1e-14, 500);
     /* switches can be set all together, same order as above */
-    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0, 0);
     
     printf("\nNOW, LET'S TRY AGAIN WITH DIFFERENT SETTINGS:\n");
     CvodeSettings_dump(set2);

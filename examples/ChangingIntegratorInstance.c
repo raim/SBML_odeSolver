@@ -51,17 +51,10 @@ int doit(void)
     CvodeSettings_setErrors(settings, 1e-18, 1e-14, 500);
 
     
-    /* Setting Integration Switches:       
-    settings->UseJacobian = 1;  toggle use of Jacobian ASTs (1) or
-                                internal approximation  (0)
-    settings->Indefinitely = 1; run without a defined end time, Time
-			        field contains step duration, ignore
-			        PrintStep field
-    settings->HaltOnEvent = 0;  doesn't stops integration upon an event
-    settings->SteadyState = 0;  don't stop integration upon a steady state 
-    settings->StoreResults = 0; don't Store time course history
-    */
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0);
+    /* Setting Integration Switches: see documentation or
+       example simpleIntegratorInstance.c for details on
+       the passed values */
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
 
 
     /* Generate two independent integrator instances from the same

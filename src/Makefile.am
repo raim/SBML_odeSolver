@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.13 2005/10/26 09:47:31 chfl Exp $
+# $Id: Makefile.am,v 1.14 2005/10/26 12:36:50 raimc Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -22,6 +22,7 @@ libODES_a_SOURCES = ASTIndexNameNode.cpp \
 		    commandLine.c \
 		    cvodedata.c \
 		    drawGraph.c \
+		    cvodeSolver.c \
 		    integratorInstance.c \
 		    integratorSettings.c \
 		    interactive.c \
@@ -43,6 +44,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/cvodedatatype.h \
 		     sbmlsolver/drawGraph.h \
 		     sbmlsolver/exportdefs.h \
+		     sbmlsolver/cvodeSolver.h \
 		     sbmlsolver/integratorInstance.h \
 		     sbmlsolver/integratorSettings.h \
 		     sbmlsolver/interactive.h \
