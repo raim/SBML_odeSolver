@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:22:45 raim>
-  $Id: cvodedata.h,v 1.13 2005/10/26 15:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 20:40:12 raim>
+  $Id: cvodedata.h,v 1.14 2005/10/26 18:40:46 raimc Exp $
 */
 /* 
  *
@@ -27,9 +27,10 @@
  *
  * The original code contained here was initially developed by:
  *
- *     Christoph Flamm
+ *     Rainer Machne
  *
  * Contributor(s):
+ *     Andrew Finney
  *     
  */
 
