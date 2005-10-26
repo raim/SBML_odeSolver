@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.10 2005/10/26 15:46:48 raimc Exp $
+# $Id: Makefile.am,v 1.11 2005/10/26 19:04:44 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -44,14 +44,17 @@ EXTRA_DIST = odeSolver/*.c \
              doc/Makefile.am \
              doc/Makefile.in \
              doc/SBML_odeSolver.1.in \
+             examples/printODEModel.c \
              examples/ASTIndexTest.c \
              examples/batch_integrate.c \
              examples/ChangingIntegratorInstance.c \
+	     examples/simpleIntegratorInstance.c \
              examples/definedTimeSeries.c \
 	     examples/integrate.c \
+	     examples/basic-model1-forward-l2.xml \
              examples/Makefile.am \
              examples/Makefile.batch \
 	     examples/Makefile.in \
              examples/Makefile.integrate \
              examples/README \
-	     examples/simpleIntegratorInstance.c
+
