@@ -1,7 +1,7 @@
 \input texinfo
 @c -*-texinfo-*-
-@c Last changed Time-stamp: <2005-10-24 18:41:05 xtof>
-@set revision $Id: libODES.texinfo,v 1.2 2005/10/24 16:42:03 chfl Exp $
+@c Last changed Time-stamp: <2005-10-25 12:21:12 xtof>
+@set revision $Id: libODES.texinfo,v 1.3 2005/10/26 09:53:25 chfl Exp $
 @setfilename libODES.info
 @settitle libODES
 @ifclear Version
@@ -191,6 +191,17 @@ Flag to indicate if object field @code{index} is set.
 @c | integratorInstance.h |
 @node integratorInstance.h, integratorSettings.h, exportdefs.h, API Reference
 @section @file{integratorInstance.h}
+
+@deftypefun {integratorInstance_t*} IntegratorInstance_create (odeModel_t* @var{om}, cvodeSettings_t* @var{opt}) 
+Creates and returns a new @code{integratorInstance} structure. Reads
+initial values from @var{om} (@code{odeModel} structure) and
+integration settings from @var{opt} (@code{cvodeSettings}
+structure). Two internal structures are create @code{cvodeData},
+holding data to perform the integration of the next timstep and
+@code{cvodeResults}, holding the integration output data for all
+previous timesteps of the integration. In addition the structure
+@code{cvodeSolver} is initialized.
+@end deftypefun
 @c | integratorInstance.h |
 @c +----------------------+
 
