@@ -1,3 +1,8 @@
+/*
+  Last changed Time-stamp: <2005-10-26 16:56:03 raim>
+  $Id: 
+*/
+
 #include "sbmlsolver/solverError.h"
 
 #include <stdio.h>
