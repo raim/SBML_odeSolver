@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-20 17:34:19 raim>
-  $Id: sbmlResults.c,v 1.11 2005/10/20 15:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 13:59:55 raim>
+  $Id: sbmlResults.c,v 1.12 2005/10/26 12:00:34 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -337,7 +337,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
 
 SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
 {
-  printf("## Printing Species time courses\n");
+  printf("## Printing Reaction Flux time courses\n");
   TimeCourseArray_dump(results->fluxes, results->time);
 }
 
