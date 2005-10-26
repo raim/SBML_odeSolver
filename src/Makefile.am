@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.12 2005/10/23 19:25:37 chfl Exp $
+# $Id: Makefile.am,v 1.13 2005/10/26 09:47:31 chfl Exp $
 #if MAKE_INVERSE
 #   SUBDIRS = . inverse
 #endif
@@ -9,7 +9,6 @@ INCLUDES = @CVODE_CFLAGS@ \
            @SBML_CFLAGS@ \
            @GRACE_CFLAGS@ \
            -I.
-CFLAGS  = @CFLAGS@ -Wno-unknown-pragmas
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @CVODE_LDFLAGS@ @CVODE_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
