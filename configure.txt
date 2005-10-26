@@ -4418,7 +4418,7 @@ echo "$as_me: error: Can not link to SUNDIALS CVODE Library" >&2;}
   fi
     CFLAGS=$sundials_cvode_save_CFLAGS
   LDFLAGS=$sundials_cvode_save_LDFLAGS
-  LIBS=$sudials_cvode_save_LIBS
+  LIBS=$sundials_cvode_save_LIBS
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5999,7 +5999,11 @@ esac
 
           ac_config_files="$ac_config_files examples/Makefile"
 
+          ac_config_files="$ac_config_files odeSolver/Makefile"
+
           ac_config_files="$ac_config_files src/Makefile"
+
+          ac_config_files="$ac_config_files src/libODES.pc"
 
           ac_config_files="$ac_config_files bindings/Makefile"
 
@@ -6577,7 +6581,9 @@ do
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "doc/SBML_odeSolver.1" ) CONFIG_FILES="$CONFIG_FILES doc/SBML_odeSolver.1" ;;
   "examples/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
+  "odeSolver/Makefile" ) CONFIG_FILES="$CONFIG_FILES odeSolver/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
+  "src/libODES.pc" ) CONFIG_FILES="$CONFIG_FILES src/libODES.pc" ;;
   "bindings/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/Makefile" ;;
   "bindings/swig/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/swig/Makefile" ;;
   "bindings/perl/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/perl/Makefile" ;;
