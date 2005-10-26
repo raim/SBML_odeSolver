@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:14:03 raim>
-  $Id: odeSolver.c,v 1.27 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 17:39:47 raim>
+  $Id: odeSolver.c,v 1.28 2005/10/26 15:41:56 raimc Exp $
 */
 /* 
  *
@@ -30,7 +30,10 @@
  *     Rainer Machne
  *
  * Contributor(s):
- *
+ *     Stefanie Widder
+ *     Christoph Flamm
+ *     Stefan Müller
+ *     Andrew Finney *
  */
 
 #include <stdio.h>

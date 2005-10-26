@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.16 2005/10/26 15:41:56 raimc Exp $
+# $Id: Makefile.am,v 1.17 2005/10/26 15:46:48 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -26,7 +26,8 @@
 ##     Christoph Flamm
 ## 
 ## Contributor(s):
-##     Rainer Machne    
+##     Rainer Machne
+##
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
 INCLUDES = @CVODE_CFLAGS@ \
