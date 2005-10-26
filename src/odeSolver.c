@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:39:47 raim>
-  $Id: odeSolver.c,v 1.28 2005/10/26 15:41:56 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 17:49:50 raim>
+  $Id: odeSolver.c,v 1.29 2005/10/26 15:55:11 raimc Exp $
 */
 /* 
  *
@@ -33,7 +33,7 @@
  *     Stefanie Widder
  *     Christoph Flamm
  *     Stefan Müller
- *     Andrew Finney *
+ *     Andrew Finney
  */
 
 #include <stdio.h>
