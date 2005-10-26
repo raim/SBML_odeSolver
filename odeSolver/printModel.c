@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:38:51 raim>
-  $Id: printModel.c,v 1.2 2005/10/26 15:41:56 raimc Exp $
+  Last changed Time-stamp: <2005-10-26 19:58:24 raim>
+  $Id: printModel.c,v 1.3 2005/10/26 17:59:35 raimc Exp $
 */
 /* 
  *
@@ -44,7 +44,7 @@
 
 /* System specific definitions,
    created by configure script */
-#include "../src/config.h"
+#include "../src/sbmlsolver/config.h"
 
 /* Own Header Files */
 #include "../src/sbmlsolver/util.h"
