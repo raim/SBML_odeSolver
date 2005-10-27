@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:51:55 raim>
-  $Id: printODEModel.c,v 1.3 2005/10/26 15:53:16 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:22:38 raim>
+  $Id: printODEModel.c,v 1.4 2005/10/27 14:52:50 raimc Exp $
 */
 /* 
  *
@@ -48,7 +48,7 @@ int main(void)
     variableIndex_t *vi = NULL;
 
     odeModel_t *model =
-      ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
+      ODEModel_createFromFile("basic-model1-forward-l2.xml");
 
 
     /* Get some information from constructed odeModel */

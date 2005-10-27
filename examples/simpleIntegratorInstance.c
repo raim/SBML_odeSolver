@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:52:13 raim>
-  $Id: simpleIntegratorInstance.c,v 1.9 2005/10/26 15:53:16 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:30:36 raim>
+  $Id: simpleIntegratorInstance.c,v 1.10 2005/10/27 14:52:50 raimc Exp $
 */
 /* 
  *
@@ -46,7 +46,7 @@ int doIt(void)
     integratorInstance_t *integratorInstance;
 
     odeModel_t *model =
-      ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
+      ODEModel_createFromFile("basic-model1-forward-l2.xml");
     
     RETURN_ON_ERRORS_WITH(1)
 

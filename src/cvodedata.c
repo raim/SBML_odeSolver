@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:14:35 raim>
-  $Id: cvodedata.c,v 1.16 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 15:51:06 raim>
+  $Id: cvodedata.c,v 1.17 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -89,13 +89,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* data now also depends on cvodeSettings */
   data->opt = opt;
      
-  /* allow storage of results only for finite integrations */
-  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
-  
-  /* allow setting of Jacobian,
-     only if its construction was succesfull */
-  opt->UseJacobian = om->jacobian && opt->UseJacobian;
-    
 
   /*
     First, fill cvodeData_t  structure with data from
@@ -128,16 +121,16 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     data->value[om->neq+i] =
       evaluateAST(om->assignment[i],data);
   }
-  
-  /*
-    Now we should have all variables, and can allocate the
-    results structure, where the time series will be stored ...
-  */
-  if ( opt->StoreResults ) {
 
-    if ( data->results != NULL )
+  /* Now we should have all variables, and can allocate the
+     results structure, where the time series will be stored ...  */
+  /* allow results only for finite integrations */
+  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
+  /* free former results */
+  if ( data->results != NULL )
       CvodeResults_free(data->results);
-    
+  /* create new results if required */
+  if ( opt->StoreResults ) {
     data->results = CvodeResults_create(data, opt->PrintStep);
     RETURN_ON_FATALS_WITH(0);
   }

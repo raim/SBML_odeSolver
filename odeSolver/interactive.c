@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 13:00:55 raim>
-  $Id: interactive.c,v 1.3 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:35:04 raim>
+  $Id: interactive.c,v 1.4 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -118,7 +118,7 @@ interactive() {
 
   /* load models and default settings */
   m = SBMLDocument_getModel(d);
-  om = ODEModel_create(m, Opt.Jacobian);
+  om = ODEModel_create(m);
   set = CvodeSettings_create();
   SolverError_dumpAndClearErrors();
   
@@ -148,7 +148,7 @@ interactive() {
       
       /* load new models */
       m = SBMLDocument_getModel(d);
-      om = ODEModel_create(m, Opt.Jacobian);
+      om = ODEModel_create(m);
       SolverError_dumpAndClearErrors();            
     }
 
@@ -252,8 +252,11 @@ interactive() {
     }
 
     
-    if(strcmp(select,"j")==0)
+    if(strcmp(select,"j")==0) {
+      if ( om->jacob == NULL )
+	ODEModel_constructJacobian(om);
       printJacobian(om, stdout);
+    }
 
     
     if(strcmp(select,"q")==0)

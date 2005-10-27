@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:49:50 raim>
-  $Id: odeSolver.c,v 1.29 2005/10/26 15:55:11 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:20:06 raim>
+  $Id: odeSolver.c,v 1.30 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -152,7 +152,7 @@ Model_odeSolver(Model_t *m, cvodeSettings_t *set) {
      integration.
   */
 
-  om = ODEModel_create(m, set->UseJacobian);      
+  om = ODEModel_create(m);      
   RETURN_ON_FATALS_WITH(NULL);
   /**
      Second, an integratorInstance is created from the odeModel
@@ -217,7 +217,7 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   /* At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs.
      See comments in Model_odeSolver for details.  */
-  om = ODEModel_create(m, set->UseJacobian);      
+  om = ODEModel_create(m);      
   RETURN_ON_FATALS_WITH(NULL);
  
   /* an integratorInstance is created from the odeModel and the passed

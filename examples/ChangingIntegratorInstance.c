@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:52:26 raim>
-  $Id: ChangingIntegratorInstance.c,v 1.7 2005/10/26 15:53:16 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
+  $Id: ChangingIntegratorInstance.c,v 1.8 2005/10/27 14:52:48 raimc Exp $
 */
 /* 
  *
@@ -64,7 +64,7 @@ int doit(void)
     integratorInstance_t *integratorInstanceA;
     integratorInstance_t *integratorInstanceB;
 
-    odeModel_t *model = ODEModel_createFromFile("basic-model1-forward-l2.xml", 1);
+    odeModel_t *model = ODEModel_createFromFile("basic-model1-forward-l2.xml");
     RETURN_ON_ERRORS_WITH(1);
 
     s1 = ODEModel_getVariableIndex(model, "S1");

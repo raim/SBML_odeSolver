@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:15:31 raim>
-  $Id: cvodeSolver.c,v 1.2 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:50:20 raim>
+  $Id: cvodeSolver.c,v 1.3 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -201,11 +201,36 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     int i, flag, neq;
     realtype *ydata, *abstoldata;
 
+    odeModel_t *om = engine->om;
     cvodeData_t *data = engine->data;
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
 
     neq = engine->om->neq; /* number of equations */
+
+     /* construct jacobian, if wanted and not yet existing */
+    if ( opt->UseJacobian && om->jacob == NULL ) 
+      /* reset UseJacobian option, depending on success */
+      opt->UseJacobian = ODEModel_constructJacobian(om);
+    else if ( !opt->UseJacobian ) {
+      /* free jacobian from former runs (not necessary, frees also
+         unsuccessful jacobians from former runs ) */
+      if ( om->jacob != NULL) {
+	for ( i=0; i<om->neq; i++ )
+	  free(om->jacob[i]);
+	free(om->jacob);
+	om->jacob = NULL;
+      }
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+			"Jacobian matrix construction skipped.");
+      om->jacobian = opt->UseJacobian;
+    }
+
+    
+    /* CVODESolverStructures from former runs must be freed */
+    if ( data->run > 1 )
+      IntegratorInstance_freeCVODESolverStructures(engine->solver);
 
     
     /**

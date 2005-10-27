@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:20:58 raim>
-  $Id: commandLine.c,v 1.3 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:32:16 raim>
+  $Id: commandLine.c,v 1.4 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -187,7 +187,7 @@ odeSolver (int argc, char *argv[])
 	options. 
     */
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 ) {
-      om = ODEModel_create(m, Opt.Jacobian);
+      om = ODEModel_create(m);
       det = ODEModel_constructDeterminant(om);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
@@ -214,7 +214,7 @@ odeSolver (int argc, char *argv[])
       printSpecies(m, outfile);
       printReactions(m, outfile);
       
-      om = ODEModel_create(m, Opt.Jacobian);
+      om = ODEModel_create(m);
       /* slight change in behavour - halt now rather than continue
 	 with null model
          used to continue with empty model */
@@ -272,7 +272,7 @@ odeSolver (int argc, char *argv[])
 	Then the initial values and ODEs of the remaining species
 	will be written to the structure cvodeData_t *data.
     */
-    om = ODEModel_create(m, Opt.Jacobian);
+    om = ODEModel_create(m);
    
     SolverError_dump();
     SolverError_haltOnErrors();

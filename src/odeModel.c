@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:18:32 raim>
-  $Id: odeModel.c,v 1.17 2005/10/26 15:32:12 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-27 16:31:32 raim>
+  $Id: odeModel.c,v 1.18 2005/10/27 14:52:51 raimc Exp $ 
 */
 /* 
  *
@@ -47,7 +47,7 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 
-static odeModel_t *ODEModel_fillStructures(Model_t *ode, int jacobian);
+static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				    int nass, int nevents);
 
@@ -74,7 +74,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 */
 
 SBML_ODESOLVER_API odeModel_t *
-ODEModel_create(Model_t *m, int jacobian)
+ODEModel_create(Model_t *m)
 {
   Model_t *ode;
   odeModel_t *om;
@@ -82,7 +82,7 @@ ODEModel_create(Model_t *m, int jacobian)
   ode = Model_reduceToOdes(m);
   RETURN_ON_ERRORS_WITH(NULL);
 
-  om = ODEModel_fillStructures(ode, jacobian);
+  om = ODEModel_fillStructures(ode);
   /* Errors will cause the program to stop, e.g. when some
       mathematical expressions are missing.  */
   RETURN_ON_ERRORS_WITH(NULL);
@@ -97,7 +97,7 @@ ODEModel_create(Model_t *m, int jacobian)
    variable and parameter names and returns a pointer to the
    the newly created odeModel. */
 static odeModel_t *
-ODEModel_fillStructures(Model_t *ode, int jacobian)
+ODEModel_fillStructures(Model_t *ode)
 {
   int i, j, found, neq, nconst, nass, nevents, nvalues;
   Compartment_t *c;
@@ -257,23 +257,9 @@ ODEModel_fillStructures(Model_t *ode, int jacobian)
   }  
   
 
-  om->simple = ode; 
-  om->jacobian = jacobian;
-
-  if ( jacobian ) {
-    ODEModel_constructJacobian(om);
-  }
-  else {
-    SolverError_error(
-        WARNING_ERROR_TYPE,
-        SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-        "Jacobian matrix construction skipped.");
-    for ( i=0; i<om->neq; i++ ) {
-      free(om->jacob[i]);
-    }
-    free(om->jacob);
-    om->jacob = NULL;
-  }
+  om->simple = ode;
+  /* set jacobian to NULL */
+  om->jacob = NULL;
 
   return om;
 }
@@ -291,10 +277,6 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
     
-  ASSIGN_NEW_MEMORY_BLOCK(data->jacob, neq, ASTNode_t **, NULL)
-  for ( i=0; i<neq; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(data->jacob[i], neq, ASTNode_t *, NULL)
-
   return data ;
 }
 
@@ -304,7 +286,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 */
 
 SBML_ODESOLVER_API odeModel_t *
-ODEModel_createFromFile(char *sbmlFileName, int jacobian)
+ODEModel_createFromFile(char *sbmlFileName)
 {
     SBMLDocument_t *d;
     odeModel_t *om;
@@ -316,7 +298,7 @@ ODEModel_createFromFile(char *sbmlFileName, int jacobian)
     
     RETURN_ON_ERRORS_WITH(NULL);
     
-    om = ODEModel_createFromSBML2(d, jacobian);
+    om = ODEModel_createFromSBML2(d);
     /* Errors will cause the program to stop, e.g. when some
     mathematical expressions are missing. */
     RETURN_ON_ERRORS_WITH(NULL);
@@ -327,8 +309,7 @@ ODEModel_createFromFile(char *sbmlFileName, int jacobian)
 /** I.1b: Create internal model odeModel_t from SBMLDocument
     see I.1 for details
 */
-SBML_ODESOLVER_API odeModel_t *
-ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
 {
   Model_t *m;
   odeModel_t *om;
@@ -343,7 +324,7 @@ ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian)
   
   m = SBMLDocument_getModel(d);
   
-  om = ODEModel_create(m, jacobian);
+  om = ODEModel_create(m);
   /* Errors will cause the program to stop, e.g. when some
       mathematical expressions are missing.  */
   RETURN_ON_ERRORS_WITH(NULL);
@@ -356,10 +337,9 @@ ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian)
    Once an ODE system has been constructed from an SBML model, this
    function calculates the derivative of each species' ODE with respect
    to all other species for which an ODE exists, i.e. it constructs the
-   jacobian matrix of the ODE system.
+   jacobian matrix of the ODE system. Returns 1 if successful, 0 otherwise. 
 */
-void
-ODEModel_constructJacobian(odeModel_t *model) {
+SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
   
   int i, j, k, failed, nvalues;
   ASTNode_t *fprime, *simple, *index;
@@ -368,17 +348,21 @@ ODEModel_constructJacobian(odeModel_t *model) {
   /* Calculate Jacobian */
 
   failed = 0;
-  nvalues = model->neq + model->nass + model->nconst;
+  nvalues = om->neq + om->nass + om->nconst;
   
-  if ( model != NULL ) {
-    for ( i=0; i<model->neq; i++ ) {
-      for ( j=0; j<model->neq; j++ ) {
-	fprime = differentiateAST(model->ode[i], model->names[j]);
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0)
+  for ( i=0; i<om->neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0)
+      
+  if ( om != NULL ) {
+    for ( i=0; i<om->neq; i++ ) {
+      for ( j=0; j<om->neq; j++ ) {
+	fprime = differentiateAST(om->ode[i], om->names[j]);
 	simple =  AST_simplify(fprime);
 	ASTNode_free(fprime);
-	index = indexAST(simple, nvalues, model->names);
+	index = indexAST(simple, nvalues, om->names);
 	ASTNode_free(simple);
-	model->jacob[i][j] = index;
+	om->jacob[i][j] = index;
 	/* check if the AST contains a failure notice */
 	names = ASTNode_getListOfNodes(index ,
 				       (ASTNodePredicate) ASTNode_isName);
@@ -400,16 +384,36 @@ ODEModel_constructJacobian(odeModel_t *model) {
 	    "%d entries of the Jacobian matrix could not be constructed, "
             "due to failure of differentiation. Cvode will use internal "
             "approximation of the Jacobian instead.", failed);
-      model->jacobian = 0;
-      /* Opt.Jacobian = 0; */
+      om->jacobian = 0;
     }
     else {
-      model->jacobian = 1;
+      om->jacobian = 1;
     }
-
   }
+  return om->jacobian;
 }
 
+
+/** Returns the entry (d(vi1)/dt)/d(vi2) of the jacobian matrix,
+    or NULL if either the jacobian has not been constructed yet,
+    or if the v1 or vi2 are not ODE variables. Ownership remains
+    within the odeModel_t structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
+{
+  if ( om->jacob != NULL )
+    return NULL;
+  if ( vi1->index >= om->neq || vi2->index >= om->neq )
+    return NULL;
+  return (const ASTNode_t *) om->jacob[vi1->index][vi2->index];
+}
+
+
+/** Constructs and returns the determinant of the jacobian matrix.
+    The calling application takes ownership of the returned ASTNode_t
+    and must free it, if not required.
+*/
 
 SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 {
@@ -453,7 +457,7 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   }  
   free(om->assignment);
   
-  /* free Jacobian matrix */
+  /* free Jacobian matrix, if it has been constructed */
   if ( om->jacob != NULL ) {
     for ( i=0; i<om->neq; i++ ) {
       for ( j=0; j<om->neq; j++ ) {

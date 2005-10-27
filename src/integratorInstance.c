@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:01:39 raim>
-  $Id: integratorInstance.c,v 1.20 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 16:47:56 raim>
+  $Id: integratorInstance.c,v 1.21 2005/10/27 14:52:51 raimc Exp $
 */
 /* 
  *
@@ -94,7 +94,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
    
   cvodeSolver_t *solver = engine->solver;
 
-  /* irreversible linking the engine to its input model */
+  /* irreversibly linking the engine to its input model */
   engine->om = om;
 
   /* joining option, data and result structures */
@@ -493,30 +493,27 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 static int
 IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 {
+  int i;
+  cvodeSettings_t *opt = engine->opt;
   cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
 
-  
-  /* if (om->algebraic) initializeIDASolverStructures; return 1; */
-  /* if (opt->Sensitivity) initializeCVODESSolverStructures; return 1; */
+  /* IDA SOLVER for DAE systems */
+  /* if (om->algebraic)
+       return initializeIDASolverStructures; */
+
+  /* CVODES SOLVER for sensitivity analysis */
+  /* if (opt->Sensitivity)
+       return initializeCVODESSolverStructures; */
 
   /* nothing to be done for models without ODEs */
   if (!om->neq)
     return 1;
 
-  /* standard CVODE SOLVER */
-  if (om->neq)
-  {
-    /* CVODESolverStructures from former runs must be freed */
-    if ( data->run > 1 )
-      IntegratorInstance_freeCVODESolverStructures(engine->solver);
-
-    IntegratorInstance_createCVODESolverStructures(engine);
-    RETURN_ON_ERRORS_WITH(0);
-    return 1;
-  }
-  
-  return 1;
+  /* CVODE SOLVER */
+  if (om->neq)  
+    return IntegratorInstance_createCVODESolverStructures(engine);
+    
 }
 
 
