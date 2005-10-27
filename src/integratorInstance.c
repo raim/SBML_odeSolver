@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 17:04:10 raim>
-  $Id: integratorInstance.c,v 1.22 2005/10/27 15:05:38 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 17:09:27 raim>
+  $Id: integratorInstance.c,v 1.23 2005/10/27 15:09:49 raimc Exp $
 */
 /* 
  *
@@ -539,7 +539,8 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
 /** The Hot Stuff!
     Moves the current integration one step forward and switches
-    between different solvers for filling ODE variables
+    between different solvers for filling ODE variables.
+    Returns 1 if integration can continue, 0 otherwise.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
@@ -553,6 +554,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     cvodeResults_t *results = engine->results;
     odeModel_t *om = engine->om;
 
+    /* will be set to 1 by successful solvers */
     flag = 0;
     
     /* At first integration step, write initial conditions to results
@@ -600,7 +602,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
 	      evaluateAST(om->assignment[i], data);
 
         if (opt->HaltOnEvent) 
-            return 0; /* stop integration */
+            flag = 0; /* stop integration */
     }
 
     /* store results */
@@ -617,7 +619,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
        found   */
     if ( opt->SteadyState == 1 ) 
       if ( IntegratorInstance_checkSteadyState(engine) )
-	solver->iout = solver->nout+1;
+	flag = 0;  /* stop integration */
 
     /* increase integration step counter */
     solver->iout++;
@@ -628,7 +630,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     else if ( solver->iout <= solver->nout )
       solver->tout = opt->TimePoints[solver->iout];
     
-    return flag; /* continue integration */
+    return flag; /* continue integration if flag == 1*/
 }
 
 
