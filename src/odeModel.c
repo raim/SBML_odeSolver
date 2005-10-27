@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:31:32 raim>
-  $Id: odeModel.c,v 1.18 2005/10/27 14:52:51 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-28 00:25:39 raim>
+  $Id: odeModel.c,v 1.19 2005/10/27 22:30:31 raimc Exp $ 
 */
 /* 
  *
@@ -73,8 +73,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
     see I.1 for details
 */
 
-SBML_ODESOLVER_API odeModel_t *
-ODEModel_create(Model_t *m)
+SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 {
   Model_t *ode;
   odeModel_t *om;
@@ -125,12 +124,10 @@ ODEModel_fillStructures(Model_t *ode)
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
     rl = Model_getRule(ode,j);
     type = SBase_getTypeCode((SBase_t *)rl);    
-    if ( type == SBML_RATE_RULE ) {
+    if ( type == SBML_RATE_RULE )
       neq++;
-    }
-    if ( type == SBML_ASSIGNMENT_RULE ) {
+    if ( type == SBML_ASSIGNMENT_RULE )
       nass++;
-    }    
   }
 
   nvalues = Model_getNumCompartments(ode) + Model_getNumSpecies(ode) +
@@ -285,8 +282,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
     see I.1 for details
 */
 
-SBML_ODESOLVER_API odeModel_t *
-ODEModel_createFromFile(char *sbmlFileName)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
 {
     SBMLDocument_t *d;
     odeModel_t *om;
@@ -339,6 +335,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
    to all other species for which an ODE exists, i.e. it constructs the
    jacobian matrix of the ODE system. Returns 1 if successful, 0 otherwise. 
 */
+
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
   
   int i, j, k, failed, nvalues;
@@ -367,12 +364,10 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
 	names = ASTNode_getListOfNodes(index ,
 				       (ASTNodePredicate) ASTNode_isName);
 
-	for ( k=0; k<List_size(names); k++ ) {
+	for ( k=0; k<List_size(names); k++ ) 
 	  if ( strcmp(ASTNode_getName(List_get(names,k)),
-		      "differentiation_failed") == 0 ) {
+		      "differentiation_failed") == 0 ) 
 	    failed++;
-	  }
-	}
 	List_free(names);
       }      
     }
@@ -386,13 +381,26 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
             "approximation of the Jacobian instead.", failed);
       om->jacobian = 0;
     }
-    else {
+    else 
       om->jacobian = 1;
-    }
   }
   return om->jacobian;
 }
 
+/** Returns the ith/jth entry of the jacobian matrix,
+    or NULL if either the jacobian has not been constructed yet,
+    or if i or j are >neq.
+    Ownership remains within the odeModel_t structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
+{
+  if ( om->jacob != NULL )
+    return NULL;
+  if ( i >= om->neq || j >= om->neq )
+    return NULL;
+  return (const ASTNode_t *) om->jacob[i][j];
+}
 
 /** Returns the entry (d(vi1)/dt)/d(vi2) of the jacobian matrix,
     or NULL if either the jacobian has not been constructed yet,
@@ -402,11 +410,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
 {
-  if ( om->jacob != NULL )
-    return NULL;
-  if ( vi1->index >= om->neq || vi2->index >= om->neq )
-    return NULL;
-  return (const ASTNode_t *) om->jacob[vi1->index][vi2->index];
+  return ODEModel_getJacobianIJEntry(om, vi1->index, vi2->index);
 }
 
 
@@ -435,43 +439,34 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 
   int i,j;
 
-  if(om == NULL){
+  if(om == NULL)
     return;
-  }
 
-
-  for ( i=0; i<om->neq+om->nass+om->nconst; i++ ) {
+  for ( i=0; i<om->neq+om->nass+om->nconst; i++ ) 
     free(om->names[i]);
-  }
   free(om->names);
 
   /* free ODEs */
-  for ( i=0; i<om->neq; i++ ) {
+  for ( i=0; i<om->neq; i++ )
     ASTNode_free(om->ode[i]);
-  }
   free(om->ode);
   
   /* free assignments */
-  for ( i=0; i<om->nass; i++ ) {
+  for ( i=0; i<om->nass; i++ ) 
     ASTNode_free(om->assignment[i]);
-  }  
   free(om->assignment);
   
   /* free Jacobian matrix, if it has been constructed */
-  if ( om->jacob != NULL ) {
-    for ( i=0; i<om->neq; i++ ) {
-      for ( j=0; j<om->neq; j++ ) {
+  if ( om->jacob != NULL ) 
+    for ( i=0; i<om->neq; i++ ) 
+      for ( j=0; j<om->neq; j++ ) 
 	ASTNode_free(om->jacob[i][j]);
-      }
       free(om->jacob[i]);
-    }
     free(om->jacob);
-  }
 
   /* free simplified ODE model */
-  if ( om->simple != NULL ) {
+  if ( om->simple != NULL ) 
     Model_free(om->simple); 
-  }
 
   /* free model structure */
   free(om);

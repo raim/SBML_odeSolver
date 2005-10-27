@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:11:09 raim>
-  $Id: cvodedata.h,v 1.15 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 23:57:32 raim>
+  $Id: cvodedata.h,v 1.16 2005/10/27 22:30:31 raimc Exp $
 */
 /* 
  *
@@ -161,11 +161,13 @@ struct cvodeData {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-  /** get values from cvodeResults */
+  /* create data for formula evaluation */
+  SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *);
+  SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *);
+  SBML_ODESOLVER_API void CvodeData_free(cvodeData_t *);
+  /* get values from cvodeResults */
   SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);
-  SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
-						  variableIndex_t *vi, int n);
+  SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *, variableIndex_t *, int);
   SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *);
 
 #ifdef __cplusplus
@@ -174,10 +176,7 @@ extern "C" {
 
 
 /* internal functions used by integratorInstance.c */
-
-cvodeData_t *CvodeData_create(odeModel_t *);
 int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
-void CvodeData_free(cvodeData_t *);
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 void CvodeResults_free(cvodeResults_t *);
 

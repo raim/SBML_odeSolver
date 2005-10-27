@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:12:29 raim>
-  $Id: odeModel.h,v 1.13 2005/10/27 14:52:51 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-28 00:04:02 raim>
+  $Id: odeModel.h,v 1.14 2005/10/27 22:30:31 raimc Exp $ 
 */
 /* 
  *
@@ -61,6 +61,7 @@ extern "C" {
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);

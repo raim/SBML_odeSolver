@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 19:54:48 raim>
-  $Id: cvodedata.c,v 1.18 2005/10/27 17:58:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 23:58:18 raim>
+  $Id: cvodedata.c,v 1.19 2005/10/27 22:30:31 raimc Exp $
 */
 /* 
  *
@@ -80,33 +80,20 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 {
 
   int i;
-  Parameter_t *p;
-  Species_t *s;
-  Compartment_t *c;
-
-  Model_t *ode = om->simple;
 
   /* data now also depends on cvodeSettings */
   data->opt = opt;
+  
+  /* initialize values */
+  CvodeData_initializeValues(data);
      
-
-  /*
-    First, fill cvodeData_t  structure with data from
-    the ODE model
-  */
-
-  for ( i=0; i<data->nvalues; i++ ) {
-    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
-      data->value[i] = Species_getInitialConcentration(s);
-    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
-      data->value[i] = Compartment_getSize(c);
-    else if ((p = Model_getParameterById(ode, om->names[i])) )
-      data->value[i] = Parameter_getValue(p);
-  }
-
   /* set current time */
   data->currenttime = opt->TimePoints[0];
-  
+
+  /* update assigned parameters, in case they depend on new time */
+  for ( i=0; i<om->nass; i++ ) 
+    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
     contains all necessary variables:
@@ -115,10 +102,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   */
   for ( i=0; i<om->neq; i++ ) 
     evaluateAST(om->ode[i], data);
-
-  /* initialize assigned parameters */
-  for ( i=0; i<om->nass; i++ ) 
-    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
 
   /* Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */
@@ -136,11 +119,13 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   return 1;
 }
 
-/* I.2: Initialize Data for Integration
-   Use the odeModel structure to initialize and
-   fill the data structure cvodeData_t *, that can then
-   be passed to CVODE for integration */
-cvodeData_t *CvodeData_create(odeModel_t *om)
+
+/* Step I.2: */
+/** Create cvodeData.
+    Use the odeModel structure to initialize and
+    fill the data structure cvodeData_t *, that can then
+    be passed to CVODE for integration */
+SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 {
   int neq, nconst, nass, nvalues, nevents;
   cvodeData_t *data;
@@ -153,7 +138,6 @@ cvodeData_t *CvodeData_create(odeModel_t *om)
 
   /* allocate memory for current integration data storage */
   data = CvodeData_allocate(nvalues, nevents);
-
   RETURN_ON_FATALS_WITH(NULL);
 
   data->nvalues = nvalues;
@@ -165,10 +149,47 @@ cvodeData_t *CvodeData_create(odeModel_t *om)
      used for multiple reruns of integration  */
   data->run = 0;
 
+    /* initialize values */
+  CvodeData_initializeValues(data);
+  
   return data;
 }
 
-/*  Frees cvodeData, as created by IntegratorInstance */
+
+/** Writes values from the input SBML model into
+    the data structure */
+
+SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
+{
+  int i;
+  Parameter_t *p;
+  Species_t *s;
+  Compartment_t *c;
+  odeModel_t *om = data->model;
+  Model_t *ode = om->simple;
+
+  /* First, fill cvodeData_t  structure with data from
+     the derived SBML model  */
+
+  for ( i=0; i<data->nvalues; i++ ) {
+    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
+      data->value[i] = Species_getInitialConcentration(s);
+    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
+      data->value[i] = Compartment_getSize(c);
+    else if ((p = Model_getParameterById(ode, om->names[i])) )
+      data->value[i] = Parameter_getValue(p);
+  }
+  /* initialize assigned parameters */
+  for ( i=0; i<om->nass; i++ ) 
+    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+  /* set current time to 0 */
+  data->currenttime = 0.0;
+}
+
+
+/** Frees cvodeData, as created by IntegratorInstance
+*/
+
 void CvodeData_free(cvodeData_t * data) {
   
   if(data == NULL)
@@ -199,10 +220,10 @@ static void CvodeData_freeStructures(cvodeData_t * data) {
 }
 
 
-/** Creates cvodeResults, the structure that stores
-    CVODE integration results
-*/
+/********* cvodeResults will be created by integration runs *********/
 
+/* Creates cvodeResults, the structure that stores
+   CVODE integration results */
 cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
 
   int i;
@@ -254,8 +275,6 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
 {
   return results->value[n][vi->index];
 }
-
-
 
 
 /** Frees results structure cvodeResults filled by the
