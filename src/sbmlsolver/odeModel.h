@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:27:24 raim>
-  $Id: odeModel.h,v 1.11 2005/10/26 15:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-27 12:50:11 raim>
+  $Id: odeModel.h,v 1.12 2005/10/27 12:36:13 raimc Exp $ 
 */
 /* 
  *
@@ -38,8 +38,8 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/odemodeldatatype.h"
+#include "sbmlsolver/exportdefs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,36 +47,33 @@ extern "C" {
 
   typedef struct variableIndex variableIndex_t;
 
-  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName, int jacobian);
-  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d, int jacobian);
-  SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *model, int jacobian);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *, int);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *, int);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *, int);
   SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
   
-  SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *symbol);
+  SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *symbol);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *);
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
-
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
   SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *);
-
-  SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);
-  
-  void ODEModel_constructJacobian(odeModel_t *);
-  
-  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om);
+  SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);  
+  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
  
 #ifdef __cplusplus
 }
 #endif
+
+void ODEModel_constructJacobian(odeModel_t *);
 
 #endif

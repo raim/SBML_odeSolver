@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:37:43 raim>
-  $Id: commandLine.c,v 1.2 2005/10/26 15:41:56 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:20:58 raim>
+  $Id: commandLine.c,v 1.3 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -153,10 +153,10 @@ odeSolver (int argc, char *argv[])
 		"\n\nTrying to draw reaction graph '%s_rn.%s' from the model. \nThis can take a while for big models... \n\n",
 		sbmlFilename, Opt.GvFormat);
   
-      if ( drawModel(m, sbmlFilename, Opt.GvFormat) > 0 ) {
+      if ( !drawModel(m, sbmlFilename, Opt.GvFormat) > 0 ) {
 	xfree(sbmlFilename);
 	SBMLDocument_free(d);
-	fatal(stderr, "%s:%d main(): Couldn't calculate graph for >%s<",
+	fatal(stderr, "%s:%d odeSolver(): Couldn't calculate graph for >%s<",
 	      __FILE__, __LINE__, sbmlFilename);
       }
       xfree(sbmlFilename); 
@@ -387,7 +387,7 @@ odeSolver (int argc, char *argv[])
 	  This can take a while for big models... \n\n",
 	  sbmlFilename, Opt.GvFormat);
 
-      if ( drawJacoby(ii->data, sbmlFilename, Opt.GvFormat) > 0 ) {
+      if ( !drawJacoby(ii->data, sbmlFilename, Opt.GvFormat) > 0 ) {
 	Warn(stderr,
 	     "%s:%d main(): Couldn't calculate jacobian graph for >%s<",
 	      __FILE__, __LINE__, sbmlFilename);

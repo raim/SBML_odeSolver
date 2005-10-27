@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:26:44 raim>
-  $Id: odeConstruct.h,v 1.8 2005/10/26 15:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:47:43 raim>
+  $Id: odeConstruct.h,v 1.9 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -37,11 +37,20 @@
 #define _ODECONSTRUCT_H_
 
 #include "cvodedata.h"
+#include "sbmlsolver/exportdefs.h"
 
-SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id);
-SBML_ODESOLVER_API int Model_setValue(Model_t *m, const char *id, const char *rid, double value);
-SBML_ODESOLVER_API Model_t* Model_reduceToOdes(Model_t *m);
-SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
+  SBML_ODESOLVER_API double Model_getValueById(Model_t *, const char *);
+  SBML_ODESOLVER_API int Model_setValue(Model_t *, const char *, const char *, double);
+  SBML_ODESOLVER_API Model_t* Model_reduceToOdes(Model_t *);
+  SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *, Model_t *);
+  
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

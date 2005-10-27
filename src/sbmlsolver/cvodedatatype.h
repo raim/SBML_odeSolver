@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:23:39 raim>
-  $Id: cvodedatatype.h,v 1.7 2005/10/26 15:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-27 14:24:59 raim>
+  $Id: cvodedatatype.h,v 1.8 2005/10/27 12:36:13 raimc Exp $ 
 */
 /* 
  *
@@ -27,10 +27,10 @@
  *
  * The original code contained here was initially developed by:
  *
- *     Rainer Machne
+ *     Andrew Finney
  *
  * Contributor(s):
- *     Andrew Finney
+ *     Rainer Machne
  */
 
 #ifndef _CVODEDATATYPE_H_
@@ -40,8 +40,8 @@
 extern "C" {
 #endif
 
-typedef struct cvodeData cvodeData_t ;
-typedef struct cvodeResults cvodeResults_t ;
+  typedef struct cvodeData cvodeData_t ;
+  typedef struct cvodeResults cvodeResults_t ;
   
 #ifdef __cplusplus
 }

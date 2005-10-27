@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:38:26 raim>
-  $Id: interactive.c,v 1.2 2005/10/26 15:41:56 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 13:00:55 raim>
+  $Id: interactive.c,v 1.3 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -170,7 +170,7 @@ interactive() {
     /* integrate interface functions, asks for time and printsteps */
     if(strcmp(select,"i")==0){
       ii = callIntegrator(om, set);
-       SolverError_dumpAndClearErrors();
+      SolverError_dumpAndClearErrors();
     }
 
     if(strcmp(select,"x")==0){
@@ -195,7 +195,7 @@ interactive() {
 
     
     if(strcmp(select,"rt")==0)
-	printReactionTimeCourse(ii->data, m, stdout);
+      printReactionTimeCourse(ii->data, m, stdout);
     
     if(strcmp(select,"xp")==0)
       printPhase(ii->data);
@@ -232,18 +232,23 @@ interactive() {
     if(strcmp(select,"gf")==0)
       setFormat();
     
-    if(strcmp(select,"rg")==0)
+    if(strcmp(select,"rg")==0) {
       drawModel(m, sbmlFilename, Opt.GvFormat);
+      SolverError_dumpAndClearErrors();
+    }
     
     if(strcmp(select,"jg")==0){
       if ( ii == NULL ) {
 	data = CvodeData_create(om);
 	CvodeData_initialize(data, set, om);
 	drawJacoby(data, sbmlFilename, Opt.GvFormat);
+	SolverError_dumpAndClearErrors();
 	CvodeData_free(data);
       }
-      else 
-	drawJacoby(ii->data, sbmlFilename, Opt.GvFormat);	
+      else {
+	drawJacoby(ii->data, sbmlFilename, Opt.GvFormat);
+	SolverError_dumpAndClearErrors();
+      }
     }
 
     
@@ -262,6 +267,7 @@ interactive() {
     ODEModel_free(om);
 
   SBMLDocument_free(d);
+  SolverError_dumpAndClearErrors();
   printf("\n\nGood Bye. Thx for using.\n\n");
 }
 
@@ -475,11 +481,11 @@ static void printMenu(void)
  
   printf("(xp)   Open XMGrace and print a phase diagram\n");  
 
-  printf("DRAW GRAPHS\n");
+  printf("DRAW GRAPHS with GRAPHVIZ\n");
   printf("(gf)   Set output format for graph drawing (now: %s)\n",
 	 Opt.GvFormat);
-  printf("(rg)   Draw a bipartite graph of the reaction network\n");
-  printf("(jg)   Draw a interaction graph from the jacobian matrix\n");
+  printf("(rg)   Draw bipartite graph of the reaction network\n");
+  printf("(jg)   Draw interaction graph from the jacobian matrix\n");
   printf("       for the last time integrated\n");
 /*   printf("()    Write model in SBML Level 2 Version 1\n"); */
   printf("\n");  

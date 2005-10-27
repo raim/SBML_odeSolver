@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:24:01 raim>
-  $Id: cvodeSolver.h,v 1.2 2005/10/26 15:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:58:40 raim>
+  $Id: cvodeSolver.h,v 1.3 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -37,7 +37,7 @@
 #define _CVODESOLVER_H_
 
 /* Header Files for CVODE */
-#include "cvode.h"
+#include <cvode.h>
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorInstance.h"

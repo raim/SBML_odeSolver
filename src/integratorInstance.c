@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:15:03 raim>
-  $Id: integratorInstance.c,v 1.19 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:01:39 raim>
+  $Id: integratorInstance.c,v 1.20 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -51,12 +51,16 @@
 
 
 /* local integratorInstance allocation and initialization */ 
-static int IntegratorInstance_initializeSolver(integratorInstance_t *, cvodeData_t *, cvodeSettings_t *, odeModel_t *);
+static int
+IntegratorInstance_initializeSolver(integratorInstance_t *,
+				    cvodeData_t *,
+				    cvodeSettings_t *,
+				    odeModel_t *);
 /* the following functions contain solver specific switches */
-static int IntegratorInstance_initializeSolverStructures(integratorInstance_t *);
-static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *,
-							 cvodeSettings_t *,
-							 odeModel_t *);
+static int
+IntegratorInstance_initializeSolverStructures(integratorInstance_t *);
+static integratorInstance_t *
+IntegratorInstance_allocate(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 
 
 /***************** functions common to all solvers ************************/
@@ -499,7 +503,8 @@ IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
   /* nothing to be done for models without ODEs */
   if (!om->neq)
     return 1;
-  
+
+  /* standard CVODE SOLVER */
   if (om->neq)
   {
     /* CVODESolverStructures from former runs must be freed */

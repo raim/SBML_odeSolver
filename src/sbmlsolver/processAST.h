@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:29:02 raim>
-  $Id: processAST.h,v 1.5 2005/10/26 15:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:52:30 raim>
+  $Id: processAST.h,v 1.6 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -41,6 +41,7 @@
 
 /* own header files */
 #include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/exportdefs.h"
 
 #define SQR(x) ((x)*(x))
 #define SQRT(x) pow((x),(.5))
@@ -50,16 +51,24 @@
 #define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
 #define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
 
-SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data);
-SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);
-SBML_ODESOLVER_API ASTNode_t *AST_simplify(ASTNode_t *f);
-SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
+  SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data);
+  SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);
+  SBML_ODESOLVER_API ASTNode_t *AST_simplify(ASTNode_t *f);
+  SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
+
+#ifdef __cplusplus
+}
+#endif
 
 ASTNode_t *copyAST(const ASTNode_t *f);
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
-ASTNode_t *determinantNAST(ASTNode_t ***A, int N);  
+ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
 ASTNode_t *simplifyAST(ASTNode_t *f);
-
 
 #endif
 

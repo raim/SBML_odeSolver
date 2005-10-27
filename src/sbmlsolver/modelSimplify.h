@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:26:30 raim>
-  $Id: modelSimplify.h,v 1.5 2005/10/26 15:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 12:46:37 raim>
+  $Id: modelSimplify.h,v 1.6 2005/10/27 12:36:13 raimc Exp $
 */
 /* 
  *
@@ -38,12 +38,21 @@
 
 #include "sbmlsolver/exportdefs.h"
 
-SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula);
-SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname);
-SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x);
-SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t* lp);
-SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const char *name, const ASTNode_t *formula);
-SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *, const char *, const ASTNode_t *);
+  SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *, const char *, const char *);
+  SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *, const char *, double);
+  SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *, ListOf_t* );
+  SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *, const char *, const ASTNode_t *);
+  SBML_ODESOLVER_API void AST_replaceConstants(Model_t *, ASTNode_t *);
+
+  
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
