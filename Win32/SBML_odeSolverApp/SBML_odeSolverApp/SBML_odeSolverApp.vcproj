@@ -13,7 +13,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(ProjectDir)\..\..\bin"
+			OutputDirectory="$(ProjectDir)..\..\bin"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
 			CharacterSet="2">

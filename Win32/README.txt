@@ -56,7 +56,8 @@ xcopy $(ProjectDir)\..\src\validator\*.h $(ProjectDir)\include\sbml\validator /S
 To do this open <libsbml>/win32/libsbml.vcproj then select menu item 'project'/'libSBML properties',
 select 'Custom Build Step' and paste the above commands into the 'Command Line' text box.
 
-d) build the various dlls and the solver executable in the following sequence:
+d) create the directory <SBML_odeSolver>\Win32\bin and then
+build the various dlls and the solver executable in the following sequence:
 
 <libSBML>\win32\libsbml.vcproj
 <SBML_odeSolver>\Win32\WinCVODE\WinCVODE\WinCVODE.vcproj

@@ -24,6 +24,7 @@
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -71,6 +72,7 @@
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SBML_ODESOLVER_EXPORTS"
 				RuntimeLibrary="2"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -118,7 +120,10 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\..\src\batchIntegrator.c">
+				RelativePath="..\..\..\src\ASTIndexNameNode.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\src\commandLine.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\cvodedata.c">
@@ -140,9 +145,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\odeConstruct.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\odeConstructUsingOptions.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\odeIntegrate.c">
@@ -172,9 +174,6 @@
 				RelativePath="..\..\..\src\sbmlResults.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\sbmlUsingOptions.c">
-			</File>
-			<File
 				RelativePath="..\..\..\src\solverError.c">
 			</File>
 			<File
@@ -186,7 +185,13 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\ASTIndexNameNode.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\batchIntegrator.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\commandLine.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\cvodedata.h">
@@ -216,6 +221,9 @@
 				RelativePath="..\..\..\src\sbmlsolver\odeIntegrate.h">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\odeModel.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\odemodeldatatype.h">
 			</File>
 			<File
@@ -237,13 +245,13 @@
 				RelativePath="..\..\..\src\sbmlsolver\sbmlResults.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\sbmlsolver\sbmlUsingOptions.h">
-			</File>
-			<File
 				RelativePath="..\..\..\src\sbmlsolver\solverError.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\util.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\variableIndex.h">
 			</File>
 		</Filter>
 		<Filter
