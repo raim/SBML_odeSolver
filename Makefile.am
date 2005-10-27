@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.11 2005/10/26 19:04:44 raimc Exp $
+# $Id: Makefile.am,v 1.12 2005/10/27 12:32:02 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -56,5 +56,5 @@ EXTRA_DIST = odeSolver/*.c \
              examples/Makefile.batch \
 	     examples/Makefile.in \
              examples/Makefile.integrate \
-             examples/README \
+             examples/README
 
