@@ -116,40 +116,55 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\Cvode\source\band.c">
+				RelativePath="..\sundials\shared\source\band.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvband.c">
+				RelativePath="..\sundials\cvode\source\cvband.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvbandpre.c">
+				RelativePath="..\sundials\cvode\source\cvbandpre.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvdense.c">
+				RelativePath="..\sundials\cvode\source\cvbbdpre.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvdiag.c">
+				RelativePath="..\sundials\cvode\source\cvdense.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvode.c">
+				RelativePath="..\sundials\cvode\source\cvdiag.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\cvspgmr.c">
+				RelativePath="..\sundials\cvode\source\cvode.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\dense.c">
+				RelativePath="..\sundials\cvode\source\cvodeio.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\iterativ.c">
+				RelativePath="..\sundials\cvode\source\cvspgmr.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\llnlmath.c">
+				RelativePath="..\sundials\shared\source\dense.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\nvector.c">
+				RelativePath="..\sundials\nvec_ser\fnvector_serial.c">
 			</File>
 			<File
-				RelativePath="..\Cvode\source\spgmr.c">
+				RelativePath="..\sundials\shared\source\iterative.c">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\source\nvector.c">
+			</File>
+			<File
+				RelativePath="..\sundials\nvec_ser\nvector_serial.c">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\source\smalldense.c">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\source\spgmr.c">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\source\sundialsmath.c">
 			</File>
 			<File
 				RelativePath=".\WinCVODE.cpp">
@@ -160,46 +175,88 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\Cvode\include\band.h">
+				RelativePath="..\sundials\shared\include\band.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvband.h">
+				RelativePath="..\sundials\cvode\include\cvband.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvbandpre.h">
+				RelativePath="..\sundials\cvode\source\cvband_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvdense.h">
+				RelativePath="..\sundials\cvode\include\cvbandpre.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvdiag.h">
+				RelativePath="..\sundials\cvode\source\cvbandpre_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvode.h">
+				RelativePath="..\sundials\cvode\include\cvbbdpre.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\cvspgmr.h">
+				RelativePath="..\sundials\cvode\source\cvbbdpre_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\dense.h">
+				RelativePath="..\sundials\cvode\include\cvdense.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\iterativ.h">
+				RelativePath="..\sundials\cvode\source\cvdense_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\llnlmath.h">
+				RelativePath="..\sundials\cvode\include\cvdiag.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\llnltyps.h">
+				RelativePath="..\sundials\cvode\source\cvdiag_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\nvector.h">
+				RelativePath="..\sundials\cvode\include\cvode.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\spgmr.h">
+				RelativePath="..\sundials\cvode\source\cvode_impl.h">
 			</File>
 			<File
-				RelativePath="..\Cvode\include\WinCVODE.h">
+				RelativePath="..\sundials\cvode\include\cvspgmr.h">
+			</File>
+			<File
+				RelativePath="..\sundials\cvode\source\cvspgmr_impl.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\dense.h">
+			</File>
+			<File
+				RelativePath="..\sundials\nvec_par\fnvector_parallel.h">
+			</File>
+			<File
+				RelativePath="..\sundials\nvec_ser\fnvector_serial.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\iterative.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\nvector.h">
+			</File>
+			<File
+				RelativePath="..\sundials\nvec_par\nvector_parallel.h">
+			</File>
+			<File
+				RelativePath="..\sundials\nvec_ser\nvector_serial.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\smalldense.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\spgmr.h">
+			</File>
+			<File
+				RelativePath="..\sundials\config\sundials_config.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\sundialsmath.h">
+			</File>
+			<File
+				RelativePath="..\sundials\shared\include\sundialstypes.h">
+			</File>
+			<File
+				RelativePath=".\WinCVODE.h">
 			</File>
 		</Filter>
 		<Filter
