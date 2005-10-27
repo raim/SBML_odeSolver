@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:47:56 raim>
-  $Id: integratorInstance.c,v 1.21 2005/10/27 14:52:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 17:04:10 raim>
+  $Id: integratorInstance.c,v 1.22 2005/10/27 15:05:38 raimc Exp $
 */
 /* 
  *
@@ -493,9 +493,6 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 static int
 IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 {
-  int i;
-  cvodeSettings_t *opt = engine->opt;
-  cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
 
   /* IDA SOLVER for DAE systems */
@@ -555,6 +552,8 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     cvodeSettings_t *opt = engine->opt;
     cvodeResults_t *results = engine->results;
     odeModel_t *om = engine->om;
+
+    flag = 0;
     
     /* At first integration step, write initial conditions to results
        structure */
@@ -569,8 +568,10 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
      with index i:  0 <= i < neq    */
     
     /* for models without ODEs, we just need to increase the time */
-    if ( om->neq == 0 )
+    if ( om->neq == 0 ) {
+      flag = 1;
       solver->t = solver->tout ;
+    }
     /* call CVODE Solver */
     else
       flag = IntegratorInstance_cvodeOneStep(engine);
@@ -627,7 +628,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     else if ( solver->iout <= solver->nout )
       solver->tout = opt->TimePoints[solver->iout];
     
-    return 1; /* continue integration */
+    return flag; /* continue integration */
 }
 
 
