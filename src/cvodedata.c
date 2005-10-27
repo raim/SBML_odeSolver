@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 15:51:06 raim>
-  $Id: cvodedata.c,v 1.17 2005/10/27 14:52:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 19:54:48 raim>
+  $Id: cvodedata.c,v 1.18 2005/10/27 17:58:51 raimc Exp $
 */
 /* 
  *
@@ -113,14 +113,12 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     evaluateAST(ASTNode_t *f, ,data) will
     ask the user for a value, if a a variable is unknown
   */
-  for ( i=0; i<om->neq; i++ ) {
+  for ( i=0; i<om->neq; i++ ) 
     evaluateAST(om->ode[i], data);
-  }
+
   /* initialize assigned parameters */
-  for ( i=0; i<om->nass; i++ ) {
-    data->value[om->neq+i] =
-      evaluateAST(om->assignment[i],data);
-  }
+  for ( i=0; i<om->nass; i++ ) 
+    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
 
   /* Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */

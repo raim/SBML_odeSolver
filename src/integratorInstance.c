@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 17:09:27 raim>
-  $Id: integratorInstance.c,v 1.23 2005/10/27 15:09:49 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 19:56:57 raim>
+  $Id: integratorInstance.c,v 1.24 2005/10/27 17:58:51 raimc Exp $
 */
 /* 
  *
@@ -91,8 +91,9 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 					cvodeData_t *data,
 					cvodeSettings_t *opt, odeModel_t *om)
 {
-   
+  int i;
   cvodeSolver_t *solver = engine->solver;
+  cvodeResults_t *results = data->results;; 
 
   /* irreversibly linking the engine to its input model */
   engine->om = om;
@@ -102,11 +103,10 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   engine->data = data;
   engine->results = data->results;
 
-
   /* initialize the solver's time settings */
   
   /* set initial time, first output time and number of time steps */
-  solver->t0     = 0.0;             /* initial time           */
+  solver->t0 = opt->TimePoints[0];      /* initial time           */
   
   /* first output time as passed to CVODE */
   if ( opt->Indefinitely )
@@ -115,11 +115,18 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     solver->tout = opt->TimePoints[1];
 
   solver->nout = opt->PrintStep;     /* number of output steps */
-  solver->t = 0.0;                   /* CVODE current time, always 0, when
-				   starting from odeModel */
+  solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
+				       when starting from odeModel */
   
   /* set up loop variables */
   solver->iout=1;         /* counts integration steps, start with 1 */
+
+  /* write initial conditions to results structure */
+  if ( opt->StoreResults ) {
+    results->time[0] = data->currenttime;
+    for ( i=0; i<data->nvalues; i++ )
+      results->value[i][0] = data->value[i];
+  }
   
   /* count integration runs with this integratorInstance */
   data->run++;
@@ -378,6 +385,87 @@ SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engi
 
 }
 
+
+/** Handles the simple case of models that contain no ODEs
+*/
+
+SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *engine)
+{
+  /* just increase the time */
+  engine->solver->t = engine->solver->tout;
+  /* ... and call the default update function */
+  return IntegratorInstance_updateData(engine);  
+}
+
+
+/** Default function for updating data, to be used
+    by solvers after calculating the dependent variables
+    data->value[i], where 0 <= i < neq) and setting the
+    current solver time solver->t.
+    The function updates assigend values, and checks for
+    event triggers and steady state, and increases loop
+    variables, stores results and sets next output time.
+*/
+
+int IntegratorInstance_updateData(integratorInstance_t *engine)
+{
+  int i, flag;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeData_t *data = engine->data;
+  cvodeSettings_t *opt = engine->opt;
+  cvodeResults_t *results = engine->results;
+  odeModel_t *om = engine->om;
+    
+  /* update rest of cvodeData_t **/
+  data->currenttime = solver->t;
+
+  for ( i=0; i<om->nass; i++ )
+    data->value[om->neq+i] =
+      evaluateAST(om->assignment[i], data);
+
+  /* check for event triggers and evaluate the triggered
+     events' assignments;
+     stop integration if requested by cvodeSettings */
+  if ( IntegratorInstance_checkTrigger(engine) )
+    {
+      /* recalculate assignments - they may be dependent
+	 on event assignment results */
+      for ( i=0; i<om->nass; i++ )
+	data->value[om->neq+i] =
+	  evaluateAST(om->assignment[i], data);
+
+      if (opt->HaltOnEvent) 
+	flag = 0; /* stop integration */
+    }
+
+  /* store results */
+  if (opt->StoreResults)
+    {
+      results->nout = solver->iout;
+      results->time[solver->iout] = solver->t;
+      for ( i=0; i<data->nvalues; i++ ) 
+        results->value[i][solver->iout] = data->value[i];
+    }
+          
+  /* check for steady state if requested by cvodeSettings
+     and stop integration if an approximate steady state is
+     found   */
+  if ( opt->SteadyState == 1 ) 
+    if ( IntegratorInstance_checkSteadyState(engine) )
+      flag = 0;  /* stop integration */
+
+  /* increase integration step counter */
+  solver->iout++;
+    
+  /* ... and set next output time */
+  if ( opt->Indefinitely )
+    solver->tout += opt->Time;
+  else if ( solver->iout <= solver->nout )
+    solver->tout = opt->TimePoints[solver->iout];
+  return flag;
+}
+
+
 /************* Internal Checks During Integration Step *******************/
 
 /** Evaluates event trigger expressions and executes event assignments
@@ -545,35 +633,20 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 {
-    int i, flag;
-    realtype *ydata = NULL;
+    int flag;
     
-    cvodeSolver_t *solver = engine->solver;
-    cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = engine->opt;
-    cvodeResults_t *results = engine->results;
-    odeModel_t *om = engine->om;
-
     /* will be set to 1 by successful solvers */
     flag = 0;
     
-    /* At first integration step, write initial conditions to results
-       structure */
-    if ( solver->iout == 1 && opt->StoreResults ) {
-      results->time[0] = 0.0;
-      for ( i=0; i<data->nvalues; i++ ) 
-	results->value[i][0] = data->value[i];
-    }
-
     /* switch between solvers, the called functions are
      required to update ODE variables, that is data->values
-     with index i:  0 <= i < neq    */
+     with index i:  0 <= i < neq
+     and use the default update IntegratorInstance_updateData(engine)
+     afterwards */
     
     /* for models without ODEs, we just need to increase the time */
-    if ( om->neq == 0 ) {
-      flag = 1;
-      solver->t = solver->tout ;
-    }
+    if ( engine->om->neq == 0 ) 
+      flag = IntegratorInstance_simpleOneStep(engine);      
     /* call CVODE Solver */
     else
       flag = IntegratorInstance_cvodeOneStep(engine);
@@ -581,54 +654,6 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     /* upcoming solvers */
     /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
     /* if (opt->Sensitivity)  IntegratorInstance_cvodesOneStep(engine); */
-    
-
-    /* update rest of cvodeData_t **/
-    data->currenttime = solver->t;
-
-    for ( i=0; i<om->nass; i++ )
-      data->value[om->neq+i] =
-	evaluateAST(om->assignment[i], data);
-
-    /* check for event triggers and evaluate the triggered
-       events' assignments;
-       stop integration if requested by cvodeSettings */
-    if ( IntegratorInstance_checkTrigger(engine) )
-    {
-        /* recalculate assignments - they may be dependent
-	   on event assignment results */
-        for ( i=0; i<om->nass; i++ )
-            data->value[om->neq+i] =
-	      evaluateAST(om->assignment[i], data);
-
-        if (opt->HaltOnEvent) 
-            flag = 0; /* stop integration */
-    }
-
-    /* store results */
-    if (opt->StoreResults)
-    {
-      results->nout = solver->iout;
-      results->time[solver->iout] = solver->t;
-      for ( i=0; i<data->nvalues; i++ ) 
-        results->value[i][solver->iout] = data->value[i];
-    }
-          
-    /* check for steady state if requested by cvodeSettings
-       and stop integration if an approximate steady state is
-       found   */
-    if ( opt->SteadyState == 1 ) 
-      if ( IntegratorInstance_checkSteadyState(engine) )
-	flag = 0;  /* stop integration */
-
-    /* increase integration step counter */
-    solver->iout++;
-    
-    /* ... and set next output time */
-    if ( opt->Indefinitely )
-      solver->tout += opt->Time;
-    else if ( solver->iout <= solver->nout )
-      solver->tout = opt->TimePoints[solver->iout];
     
     return flag; /* continue integration if flag == 1*/
 }

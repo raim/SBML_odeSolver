@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:25:20 raim>
-  $Id: integratorInstance.h,v 1.14 2005/10/26 15:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-27 19:51:03 raim>
+  $Id: integratorInstance.h,v 1.15 2005/10/27 17:58:51 raimc Exp $ 
 */
 /* 
  *
@@ -95,7 +95,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
-
+  SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
   
   /* these functions contain solver specific switches and need to be adapted
      for any new solver, and so does the local
@@ -111,5 +111,10 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+/* default function for data update, event and steady state handling,
+   result storage and loop variables; to be used by solver
+   specific ...OneStep functions */
+int IntegratorInstance_updateData(integratorInstance_t *);
 
 #endif

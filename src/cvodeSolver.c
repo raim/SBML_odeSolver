@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:50:20 raim>
-  $Id: cvodeSolver.c,v 1.3 2005/10/27 14:52:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-27 19:46:33 raim>
+  $Id: cvodeSolver.c,v 1.4 2005/10/27 17:58:51 raimc Exp $
 */
 /* 
  *
@@ -180,11 +180,12 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     ydata = NV_DATA_S(solver->y);
 
     
-    /* update cvodeData */    
+    /* update cvodeData time dependent variables */    
     for ( i=0; i<om->neq; i++ )
       data->value[i] = ydata[i];
 
-    return 1;
+    /* update rest of data with internal default function */
+    return IntegratorInstance_updateData(engine);
 }
 
 
