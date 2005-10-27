@@ -7,8 +7,8 @@ in main directory), change to the examples directory, and type
 `make'. The configure process has constructed a `Makefile', that 
 should include all necessary paths to header and library files.
 
-The two files `Makefile.integrate' and `Makefile.batch' illustrate, how you
-could `hand-write' your own Makefile, and which paths need to be given.
+The example .c files are extensively documented and include a variety
+of the available interface functions.
 
 
 2 Usage of example programs:
@@ -16,15 +16,49 @@ could `hand-write' your own Makefile, and which paths need to be given.
 ./integrate ../Test/MAPK.xml 1000 100
 
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
-1000, and will print out the time course of species concentrations (and
-other variable parameters or compartments, if a model includes such), and
-reaction fluxes in 100 time steps (producing 101 time points, including 
-the initial conditions).
+1000 in 100 steps, and will print out the time course of species
+concentrations (and other variable parameters or compartments, if a model
+includes such), and reaction fluxes in 100 time steps (producing 101 time
+points, including the initial conditions).
 
-./batchIntegrate ../Test/MAPK.xml 1000 2 10 1000 30 MKKK
+./batchIntegrate ../Test/MAPK.xml 1000 2 0 10 5 V1 J0
 
 will do the same integration as above, with only 2 time steps, 
-but 31 integration runs, varying the initial
-concentration of the species `MKKK' from 10 to 1000 in 30 steps.
+but 6 integration runs, varying the initial
+concentration of the paramer `V1' in reaction `J0 from 0 to 10 in 5 steps. 
 It will then print out one timecourse after the other. 
 The last argument can be a species, a compartment or a global parameter.
+
+
+./defSeries ../Test/MAPK.xml
+
+exemplifies how to define specific time points for integration.
+
+
+./ASTIndexTest
+
+just tests SOSlib's extension to libSBML's ASTNode, by an index in the
+AST_NAME type of ASTNode. This index is used to retrieve current values
+of variables and parameters during formula evaluation.
+
+
+./printODEs
+
+exemplifies how to interface the internal ODE model that is constructed
+from an input SBML model (basic-model1-forward-l2.xml from the SBML
+semantic test suite).
+
+
+./simpleIntInst
+
+
+exemplifies how to set up integration options and run the integration
+with two different setings.
+
+
+./changeIntInst
+
+exemplifies how to use one internal ODE model structure with two different
+integrator instances, and how the integrator interface functions can be
+used to change values during an integration run, in this case depending on
+values in the other integrator instance.
