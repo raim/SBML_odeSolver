@@ -1,0 +1,107 @@
+# -----------------------------------------------------------------
+# $Revision: 1.1 $
+# $Date: 2005/10/27 13:48:52 $
+# -----------------------------------------------------------------
+# Programmer(s): Radu Serban and Aaron Collier @ LLNL
+# -----------------------------------------------------------------
+# Copyright (c) 2002, The Regents of the University of California.
+# Produced at the Lawrence Livermore National Laboratory.
+# All rights reserved.
+# For details, see sundials/shared/LICENSE.
+# -----------------------------------------------------------------
+# Makefile for SHARED module
+#
+# @configure_input@
+# -----------------------------------------------------------------
+
+SHELL = @SHELL@
+
+srcdir       = @srcdir@
+builddir     = @builddir@
+abs_builddir = @abs_builddir@
+top_builddir = @top_builddir@
+prefix       = @prefix@
+exec_prefix  = @exec_prefix@
+includedir   = @includedir@
+libdir       = @libdir@
+
+INSTALL        = @INSTALL@
+INSTALL_LIB    = @INSTALL_PROGRAM@
+INSTALL_HEADER = @INSTALL_DATA@
+
+LIBTOOL      = @LIBTOOL@
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+
+CPP      = @CPP@
+CPPFLAGS = @CPPFLAGS@
+CC       = @CC@
+CFLAGS   = @CFLAGS@
+LIBS     = @LIBS@
+
+SHARED_INC_DIR   = $(srcdir)/../include
+
+SHARED_LIB       = libsundials_shared.la
+SHARED_LIB_FILES = band.lo dense.lo iterative.lo sundialsmath.lo nvector.lo smalldense.lo spgmr.lo
+
+OBJECT_FILES = band.o dense.o iterative.o sundialsmath.o nvector.o smalldense.o spgmr.o
+
+all: update $(SHARED_LIB_FILES)
+
+update:
+	${INSTALL_HEADER} ${top_builddir}/config/sundials_config.h ${builddir}
+
+install: update $(SHARED_LIB_FILES)
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) -o $(SHARED_LIB) $(SHARED_LIB_FILES) -rpath $(libdir) $(LIBS) -avoid-version
+	$(LIBTOOL) --mode=install $(INSTALL_LIB) $(SHARED_LIB) $(libdir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/band.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/dense.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/iterative.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/sundialsmath.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/sundialstypes.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/nvector.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/smalldense.h $(includedir)
+	$(INSTALL_HEADER) $(SHARED_INC_DIR)/spgmr.h $(includedir)
+	$(INSTALL_HEADER) $(builddir)/sundials_config.h $(includedir)
+
+clean:
+	$(LIBTOOL) --mode=clean rm -f $(SHARED_LIB)
+	rm -f $(SHARED_LIB_FILES)
+	rm -f $(OBJECT_FILES)
+	rm -f sundials_config.h
+
+uninstall: clean
+	$(LIBTOOL) --mode=uninstall rm -f $(libdir)/$(SHARED_LIB)
+	rm -f $(includedir)/band.h
+	rm -f $(includedir)/dense.h
+	rm -f $(includedir)/iterative.h
+	rm -f $(includedir)/sundialsmath.h
+	rm -f $(includedir)/sundialstypes.h
+	rm -f $(includedir)/nvector.h
+	rm -f $(includedir)/smalldense.h
+	rm -f $(includedir)/spgmr.h
+	@if test -f ${includedir}/sundials_config.h ; then \
+	   echo "rm -f $(includedir)/sundials_config.h" ;  \
+	   rm -f $(includedir)/sundials_config.h ;         \
+	 fi
+
+band.lo: $(srcdir)/band.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/band.c
+dense.lo: $(srcdir)/dense.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/dense.c
+iterative.lo: $(srcdir)/iterative.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/iterative.c
+sundialsmath.lo: $(srcdir)/sundialsmath.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/sundialsmath.c
+sundialstypes.lo: $(srcdir)/sundialstypes.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/sundialstypes.c
+nvector.lo: $(srcdir)/nvector.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/nvector.c
+smalldense.lo: $(srcdir)/smalldense.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/smalldense.c
+spgmr.lo: $(srcdir)/spgmr.c
+	$(LIBTOOL) --mode=compile $(CC) $(CPPFLAGS) -I. -I$(SHARED_INC_DIR) $(CFLAGS) -c $(srcdir)/spgmr.c
+
+libtool: $(top_builddir)/$(LIBTOOL_DEPS)
+	@cd $(top_builddir) ;                 \
+	 $(SHELL) ./config.status --recheck ; \
+	 cd $(abs_builddir)
