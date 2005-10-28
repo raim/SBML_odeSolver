@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 13:31:50 raim>
-  $Id: analyzeJacobian.c,v 1.1 2005/10/28 11:45:48 raimc Exp $
+  Last changed Time-stamp: <2005-10-28 14:31:39 raim>
+  $Id: analyzeJacobian.c,v 1.2 2005/10/28 12:40:11 raimc Exp $
 */
 /* 
  *
@@ -142,8 +142,8 @@ int main(void)
       VariableIndex_free(vi);
       VariableIndex_free(vj);
       
-      printf("MAPK_P is both a substrate and a product of MKK_PP");
-      printf("in different reactions.\nTherefor the corresponding");
+      printf("MAPK_P is both a substrate and a product of MKK_PP ");
+      printf("in different reactions.\nTherefor the corresponding ");
       printf("entry in the jacobian can change its sign, depending ");
       printf("on concentrations!\n");
       /* finally draw a `species interaction graph' of the jacobian' */

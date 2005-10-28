@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 12:48:03 raim>
-  $Id: integratorInstance.c,v 1.26 2005/10/28 11:45:48 raimc Exp $
+  Last changed Time-stamp: <2005-10-28 14:06:16 raim>
+  $Id: integratorInstance.c,v 1.27 2005/10/28 12:40:11 raimc Exp $
 */
 /* 
  *
@@ -730,6 +730,9 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)
 {
+  if ( SolverError_getNum(ERROR_ERROR_TYPE) == 0 )
+    return 0;
+  
   int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE) ;
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;

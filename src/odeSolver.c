@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:20:06 raim>
-  $Id: odeSolver.c,v 1.30 2005/10/27 14:52:51 raimc Exp $
+  Last changed Time-stamp: <2005-10-28 14:26:21 raim>
+  $Id: odeSolver.c,v 1.31 2005/10/28 12:40:11 raimc Exp $
 */
 /* 
  *
@@ -249,10 +249,10 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
       /* Set the value!*/
       IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
 
-
+ 
       /** .... the integrator loop can be started, that invoking
-	  CVODE to move one time step and store.  The function will
-	  also handle events and check for steady states.  */      
+	  CVODE to move one time step and store results. The
+	  function will also handle events and check for steady states. */ 
       while (!IntegratorInstance_timeCourseCompleted(ii)) {
 	if (!IntegratorInstance_integrateOneStep(ii))
 	  IntegratorInstance_handleError(ii);

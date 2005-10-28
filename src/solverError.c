@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:12:21 raim>
-  $Id: solverError.c,v 1.10 2005/10/26 15:32:12 raimc Exp $ 
+  Last changed Time-stamp: <2005-10-28 14:35:35 raim>
+  $Id: solverError.c,v 1.11 2005/10/28 12:40:11 raimc Exp $ 
 */
 /* 
  *
@@ -70,8 +70,7 @@ SBML_ODESOLVER_API int SolverError_getNum(errorType_t type)
       (type == FATAL_ERROR_TYPE ? memoryExhaustion : 0) ;
 }
 
-SBML_ODESOLVER_API
-solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
+SBML_ODESOLVER_API solverErrorMessage_t *SolverError_getError(errorType_t type, int errorNum)
 {
     List_t *errors = solverErrors[type];
 
@@ -100,12 +99,14 @@ errorCode_t SolverError_getCode(errorType_t type, int errorNum)
 /** get error code of last error stored of given type */
 errorCode_t SolverError_getLastCode(errorType_t type)
 {
+  if ( !SolverError_getNum(type) )
+    return 0;
+  else
     return SolverError_getCode(type, SolverError_getNum(type) - 1);
 }
 
 /** empty error store */
-SBML_ODESOLVER_API
-void SolverError_clear()
+SBML_ODESOLVER_API void SolverError_clear()
 {
     int i ;
 
@@ -129,8 +130,7 @@ void SolverError_clear()
     memoryExhaustion = 0;
 }
 
-SBML_ODESOLVER_API 
-void SolverError_dumpAndClearErrors()
+SBML_ODESOLVER_API void SolverError_dumpAndClearErrors()
 {
     SolverError_dump();
     SolverError_clear();
@@ -138,8 +138,7 @@ void SolverError_dumpAndClearErrors()
 
 
 /** create an error */
-SBML_ODESOLVER_API 
-void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
+SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
 {
     List_t *errors = solverErrors[type];
     char buffer[2000], *variableLengthBuffer;
