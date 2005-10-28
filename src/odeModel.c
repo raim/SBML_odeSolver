@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-28 00:25:39 raim>
-  $Id: odeModel.c,v 1.19 2005/10/27 22:30:31 raimc Exp $ 
+  $Id: odeModel.c,v 1.20 2005/10/28 09:04:12 afinney Exp $ 
 */
 /* 
  *
@@ -458,11 +458,15 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   
   /* free Jacobian matrix, if it has been constructed */
   if ( om->jacob != NULL ) 
-    for ( i=0; i<om->neq; i++ ) 
-      for ( j=0; j<om->neq; j++ ) 
-	ASTNode_free(om->jacob[i][j]);
-      free(om->jacob[i]);
-    free(om->jacob);
+  {
+      for ( i=0; i<om->neq; i++ ) 
+      {
+          for ( j=0; j<om->neq; j++ ) 
+	          ASTNode_free(om->jacob[i][j]);
+          free(om->jacob[i]);
+      }
+      free(om->jacob);
+  }
 
   /* free simplified ODE model */
   if ( om->simple != NULL ) 
@@ -715,7 +719,6 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 {
     free(vi);
 }
-
 
 /* to be implemented */
 SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om)

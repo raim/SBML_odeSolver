@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 12:52:30 raim>
-  $Id: processAST.h,v 1.6 2005/10/27 12:36:13 raimc Exp $
+  $Id: processAST.h,v 1.7 2005/10/28 09:04:12 afinney Exp $
 */
 /* 
  *
@@ -60,15 +60,15 @@ extern "C" {
   SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);
   SBML_ODESOLVER_API ASTNode_t *AST_simplify(ASTNode_t *f);
   SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
+  SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f);
+  SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
 
 #ifdef __cplusplus
 }
 #endif
 
-ASTNode_t *copyAST(const ASTNode_t *f);
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
-ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
-ASTNode_t *simplifyAST(ASTNode_t *f);
+SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
 
 #endif
 

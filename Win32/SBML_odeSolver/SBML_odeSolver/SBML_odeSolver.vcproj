@@ -123,10 +123,10 @@
 				RelativePath="..\..\..\src\ASTIndexNameNode.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\commandLine.c">
+				RelativePath="..\..\..\src\cvodedata.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\cvodedata.c">
+				RelativePath="..\..\..\src\cvodeSolver.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\drawGraph.c">
@@ -135,31 +135,19 @@
 				RelativePath="..\..\..\src\integratorInstance.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\interactive.c">
+				RelativePath="..\..\..\src\integratorSettings.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\modelSimplify.c">
 			</File>
 			<File
-				RelativePath=".\my_getopt.c">
-			</File>
-			<File
 				RelativePath="..\..\..\src\odeConstruct.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\odeIntegrate.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\odeModel.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\odeSolver.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\options.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\printModel.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\processAST.c">
@@ -188,16 +176,7 @@
 				RelativePath="..\..\..\src\sbmlsolver\ASTIndexNameNode.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\sbmlsolver\batchIntegrator.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\commandLine.h">
-			</File>
-			<File
 				RelativePath="..\..\..\src\sbmlsolver\cvodedata.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\drawGraph.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\exportdefs.h">
@@ -206,19 +185,13 @@
 				RelativePath="..\..\..\src\sbmlsolver\integratorInstance.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\sbmlsolver\interactive.h">
+				RelativePath="..\..\..\src\sbmlsolver\integratorSettings.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\modelSimplify.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeConstruct.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\odeConstructUsingOptions.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\odeIntegrate.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeModel.h">
@@ -228,12 +201,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeSolver.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\options.h">
-			</File>
-			<File
-				RelativePath="..\..\..\src\sbmlsolver\printModel.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\processAST.h">

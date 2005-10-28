@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-26 17:38:04 raim>
-  $Id: commandLine.h,v 1.2 2005/10/26 15:41:56 raimc Exp $
+  $Id: commandLine.h,v 1.3 2005/10/28 09:05:53 afinney Exp $
 */
 /* 
  *
@@ -45,7 +45,7 @@ SBMLDocument_t* parseModelWithArguments(char *file);
 int integrator(integratorInstance_t *engine, int PrintMessage,
 	       int PrintOnTheFly, FILE *outfile);
 
-SBML_ODESOLVER_API int odeSolver (int argc, char *argv[]);
+int odeSolver (int argc, char *argv[]);
 
 #endif
 

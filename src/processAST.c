@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-26 17:20:18 raim>
-  $Id: processAST.c,v 1.14 2005/10/26 15:32:12 raimc Exp $
+  $Id: processAST.c,v 1.15 2005/10/28 09:04:12 afinney Exp $
 */
 /* 
  *
@@ -84,9 +84,6 @@ setUserDefinedFunction(double(*udf)(char*, int, double*))
 #if OLD_LIBSBML
 #define AST_FUNCTION_DELAY AST_NAME_DELAY
 #endif
-
-ASTNode_t *
-simplifyAST(ASTNode_t *f);
 
 /* ------------------------------------------------------------------------ */
 

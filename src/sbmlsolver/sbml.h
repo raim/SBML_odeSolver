@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-26 17:29:33 raim>
-  $Id: sbml.h,v 1.4 2005/10/26 15:32:13 raimc Exp $
+  $Id: sbml.h,v 1.5 2005/10/28 09:04:12 afinney Exp $
 */
 /* 
  *
@@ -39,6 +39,12 @@
 
 #include <sbml/SBMLTypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "sbmlsolver/exportdefs.h"
+
 SBMLDocument_t *convertModel (SBMLDocument_t *d1);
 
 SBMLReader_t*newSBMLReader(
@@ -47,7 +53,7 @@ SBMLReader_t*newSBMLReader(
     char *schema12FileName,
     char *schema21FileName);
 
-SBMLDocument_t*parseModel(
+SBML_ODESOLVER_API SBMLDocument_t*parseModel(
     char *file,
     int printMessage,
     int validate,
@@ -58,4 +64,7 @@ SBMLDocument_t*parseModel(
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* End of file */

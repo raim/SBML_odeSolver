@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 19:56:57 raim>
-  $Id: integratorInstance.c,v 1.24 2005/10/27 17:58:51 raimc Exp $
+  $Id: integratorInstance.c,v 1.25 2005/10/28 09:04:12 afinney Exp $
 */
 /* 
  *
@@ -409,7 +409,7 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 
 int IntegratorInstance_updateData(integratorInstance_t *engine)
 {
-  int i, flag;
+  int i, flag = 1;
   cvodeSolver_t *solver = engine->solver;
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;

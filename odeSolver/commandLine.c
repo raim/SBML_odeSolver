@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 16:32:16 raim>
-  $Id: commandLine.c,v 1.4 2005/10/27 14:52:51 raimc Exp $
+  $Id: commandLine.c,v 1.5 2005/10/28 09:05:53 afinney Exp $
 */
 /* 
  *
@@ -69,7 +69,7 @@
     functions, using graphviz layout algorithms.   
 */
 
-SBML_ODESOLVER_API int
+int
 odeSolver (int argc, char *argv[])
 {
   SBMLDocument_t *d   = NULL;

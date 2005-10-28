@@ -1,6 +1,6 @@
 /*
  * Filename    : util.c
- * Revision    : $Id: util.h,v 1.2 2005/10/26 15:32:13 raimc Exp $
+ * Revision    : $Id: util.h,v 1.3 2005/10/28 09:04:12 afinney Exp $
  * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/sbmlsolver/util.h,v $
 */
 /* 
@@ -37,6 +37,8 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include "sbmlsolver/exportdefs.h"
+
 extern void nrerror(const char message[]);
 
 #ifdef WITH_DMALLOC
@@ -48,15 +50,24 @@ extern void  *space(unsigned size);
 extern void  *xrealloc(void *p, unsigned size);
 #endif
 
-char *get_line(FILE *fp);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
+  /** get values from cvodeResults */
+SBML_ODESOLVER_API char *get_line(FILE *fp);
                                                                                
-char *concat (char *a, char *b);
+SBML_ODESOLVER_API char *concat (char *a, char *b);
 
-void fatal (FILE *hdl, char *fmt, ...);
-void Warn  (FILE *hdl, char *fmt, ...);
+SBML_ODESOLVER_API void fatal (FILE *hdl, char *fmt, ...);
+SBML_ODESOLVER_API void Warn  (FILE *hdl, char *fmt, ...);
 
-void *xalloc (size_t nmemb, size_t size);
-void xfree (void *ptr);
+SBML_ODESOLVER_API void *xalloc (size_t nmemb, size_t size);
+SBML_ODESOLVER_API void xfree (void *ptr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
                                                                                
