@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:32:16 raim>
-  $Id: commandLine.c,v 1.5 2005/10/28 09:05:53 afinney Exp $
+  Last changed Time-stamp: <2005-10-28 11:14:41 raim>
+  $Id: commandLine.c,v 1.6 2005/10/28 09:18:09 raimc Exp $
 */
 /* 
  *
@@ -254,6 +254,7 @@ odeSolver (int argc, char *argv[])
       return(EXIT_SUCCESS);      
     }
 
+    /**************** integration routines start below ****************/
     
     /** Default: Start Integration Procedure
 	See files odeConstruct.c,
@@ -407,6 +408,7 @@ odeSolver (int argc, char *argv[])
     SolverError_clear();
 
     IntegratorInstance_free(ii);
+    CvodeSettings_free(set);
     ODEModel_free(om);
     free(set);
     
