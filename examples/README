@@ -13,7 +13,7 @@ of the available interface functions.
 
 2 Usage of example programs:
 
-./integrate ../Test/MAPK.xml 1000 100
+./integrate MAPK.xml 1000 100
 
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
 1000 in 100 steps, and will print out the time course of species
@@ -21,7 +21,7 @@ concentrations (and other variable parameters or compartments, if a model
 includes such), and reaction fluxes in 100 time steps (producing 101 time
 points, including the initial conditions).
 
-./batchIntegrate ../Test/MAPK.xml 1000 2 0 10 5 V1 J0
+./batchIntegrate MAPK.xml 1000 2 0 10 5 V1 J0
 
 will do the same integration as above, with only 2 time steps, 
 but 6 integration runs, varying the initial
@@ -30,7 +30,7 @@ It will then print out one timecourse after the other.
 The last argument can be a species, a compartment or a global parameter.
 
 
-./defSeries ../Test/MAPK.xml
+./defSeries MAPK.xml
 
 exemplifies how to define specific time points for integration.
 
@@ -51,7 +51,6 @@ semantic test suite).
 
 ./simpleIntInst
 
-
 exemplifies how to set up integration options and run the integration
 with two different setings.
 
@@ -62,3 +61,9 @@ exemplifies how to use one internal ODE model structure with two different
 integrator instances, and how the integrator interface functions can be
 used to change values during an integration run, in this case depending on
 values in the other integrator instance.
+
+
+./analyzeJacobian
+
+exemplifies how to construct the jacobian matrix of a derived ODE system
+and how to interface evaluate the ODE model and its jacobian.

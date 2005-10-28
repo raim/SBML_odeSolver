@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 19:58:24 raim>
-  $Id: printModel.c,v 1.4 2005/10/28 09:05:53 afinney Exp $
+  Last changed Time-stamp: <2005-10-28 12:18:07 raim>
+  $Id: printModel.c,v 1.5 2005/10/28 11:45:48 raimc Exp $
 */
 /* 
  *
@@ -45,7 +45,7 @@
 /* System specific definitions,
    created by configure script */
 #ifndef WIN32
-#include "../src/sbmlsolver/config.h"*/
+#include "../src/sbmlsolver/config.h"
 #endif
 
 /* Own Header Files */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:16:15 raim>
-  $Id: drawGraph.c,v 1.15 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-10-28 13:29:25 raim>
+  $Id: drawGraph.c,v 1.16 2005/10/28 11:45:48 raimc Exp $
 */
 /* 
  *
@@ -61,9 +61,9 @@
 #endif
 #else
 static int
-drawJacobyTxt(cvodeData_t *data);
+drawJacobyTxt(cvodeData_t *data, char *file);
 static int
-drawModelTxt(Model_t *m);
+drawModelTxt(Model_t *m, char *file);
 #endif
 
 #define WORDSIZE 10000
@@ -72,18 +72,17 @@ drawModelTxt(Model_t *m);
 
 */
 
-SBML_ODESOLVER_API int
-drawJacoby(cvodeData_t *data, char *file, char *format) {
+SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
 
 #if !USE_GRAPHVIZ
 
   SolverError_error(
-            WARNING_ERROR_TYPE,
-	    SOLVER_ERROR_NO_GRAPHVIZ,
-	    "odeSolver has been compiled without GRAPHIZ functionality. ",
-	    "Graphs are printed to stdout in the graphviz' .dot format.");
+		    WARNING_ERROR_TYPE,
+		    SOLVER_ERROR_NO_GRAPHVIZ,
+		    "odeSolver has been compiled without GRAPHIZ functionality. ",
+		    "Graphs are printed to stdout in the graphviz' .dot format.");
 
-  drawJacobyTxt(data);
+  drawJacobyTxt(data, file);
 
 #else
 
@@ -245,20 +244,23 @@ drawJacoby(cvodeData_t *data, char *file, char *format) {
 #if !USE_GRAPHVIZ
 
 static int
-drawJacobyTxt(cvodeData_t *data) {
+drawJacobyTxt(cvodeData_t *data, char *file) {
 
   int i, j;
-
-  printf("digraph jacoby {\n");
-  printf("overlap=scale;\n");
+  char filename[WORDSIZE];
+  sprintf(name, "%s.dot", file);
+  FILE *f = fopen(filename, "w");
+  
+  fprintf(f ,"digraph jacoby {\n");
+  fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(data->model->m) )
-    printf("label=\"%s at time %g\";\n", Model_getName(data->model->m),
-	   data->currenttime);
+    fprintf(f ,"label=\"%s at time %g\";\n", Model_getName(data->model->m),
+	    data->currenttime);
   else if ( Model_isSetId(data->model->m) )
-    printf("label=\"%s at time %g\";\n", Model_getId(data->model->m),
-	   data->currenttime);
+    fprintf(f ,"label=\"%s at time %g\";\n", Model_getId(data->model->m),
+	    data->currenttime);
   else
-    printf("label=\"at time %g\";\n", data->currenttime);
+    fprintf(f ,"label=\"at time %g\";\n", data->currenttime);
 
 
   /*
@@ -272,25 +274,25 @@ drawJacobyTxt(cvodeData_t *data) {
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
       if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
-	printf("%s->%s [label=\"%g\" ",
-	       data->model->names[j],
-	       data->model->names[i],
-	       evaluateAST(data->model->jacob[i][j],
-			   data));
+	fprintf(f ,"%s->%s [label=\"%g\" ",
+		data->model->names[j],
+		data->model->names[i],
+		evaluateAST(data->model->jacob[i][j],
+			    data));
 	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
-	  printf("arrowhead=tee color=red];\n");
+	  fprintf(f ,"arrowhead=tee color=red];\n");
 	}
 	else {
-	  printf("];\n");
+	  fprintf(f ,"];\n");
 	}
       }
     }
   }
   for ( i=0; i<data->model->neq; i++ ) {
-    printf("%s [label=\"%s\"];", data->model->names[i],
-	   data->model->names[i]);
+    fprintf(f ,"%s [label=\"%s\"];", data->model->names[i],
+	    data->model->names[i]);
   }   
-  printf("}\n");
+  fprintf(f, "}\n");
   return 1;
 }
 
@@ -301,17 +303,16 @@ drawJacobyTxt(cvodeData_t *data) {
 
 */
 
-SBML_ODESOLVER_API int
-drawModel(Model_t *m, char* file, char *format) {
+SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
   
 #if !USE_GRAPHVIZ
 
   SolverError_error(
-            WARNING_ERROR_TYPE,
-	    SOLVER_ERROR_NO_GRAPHVIZ,
-	    "odeSolver has been compiled without GRAPHIZ functionality. ",
-	    "Graphs are printed to stdout in the graphviz' .dot format.");
-  drawModelTxt(m);
+		    WARNING_ERROR_TYPE,
+		    SOLVER_ERROR_NO_GRAPHVIZ,
+		    "odeSolver has been compiled without GRAPHIZ functionality. ",
+		    "Graphs are printed to stdout in the graphviz' .dot format.");
+  drawModelTxt(m, file);
   
 #else
 
@@ -390,7 +391,7 @@ drawModel(Model_t *m, char* file, char *format) {
       sprintf(name,"%s", Species_getId(sp));
       s = agnode(g,name);
       sprintf(label, "%s", Species_isSetName(sp) ? 
-	   Species_getName(sp) : Species_getId(sp));
+	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
       if ( Species_getBoundaryCondition(sp) ) {
@@ -421,7 +422,7 @@ drawModel(Model_t *m, char* file, char *format) {
       sprintf(name,"%s", Species_getId(sp));
       s = agnode(g, name);
       sprintf(label, "%s", Species_isSetName(sp) ? 
-	   Species_getName(sp) : Species_getId(sp));
+	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
       if ( Species_getBoundaryCondition(sp) ) {
@@ -454,8 +455,8 @@ drawModel(Model_t *m, char* file, char *format) {
 	}
       }
       if ( reversible == 1 ) {
-      a = agedgeattr(g, "arrowtail", "");
-      agxset(e, a->index, "onormal");
+	a = agedgeattr(g, "arrowtail", "");
+	agxset(e, a->index, "onormal");
       }      
     }
     
@@ -465,7 +466,7 @@ drawModel(Model_t *m, char* file, char *format) {
       sprintf(name,"%s", Species_getId(sp));
       s = agnode(g,name);
       sprintf(label, "%s", Species_isSetName(sp) ? 
-	   Species_getName(sp) : Species_getId(sp));
+	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
       if ( Species_getBoundaryCondition(sp) ) {
@@ -560,7 +561,7 @@ drawModel(Model_t *m, char* file, char *format) {
 #if !USE_GRAPHVIZ
 
 static int
-drawModelTxt(Model_t *m) {
+drawModelTxt(Model_t *m, char *file) {
 
   Species_t *s;
   Reaction_t *re;
@@ -569,12 +570,15 @@ drawModelTxt(Model_t *m) {
   ModifierSpeciesReference_t *mref;
   int i,j;
   int reversible;
+  char filename[WORDSIZE];
+  sprintf(name, "%s.dot", file);
+  FILE *f = fopen(filename, "w");
 
-  printf("digraph reactionnetwork {\n");
-  printf("label=\"%s\";\n",
-	 Model_isSetName(m) ?
-	 Model_getName(m) : (Model_isSetId(m) ? Model_getId(m) : "noId") );
-  printf("overlap=scale;\n");
+  fprintf(f ,"digraph reactionnetwork {\n");
+  fprintf(f ,"label=\"%s\";\n",
+	  Model_isSetName(m) ?
+	  Model_getName(m) : (Model_isSetId(m) ? Model_getId(m) : "noId") );
+  fprintf(f ,"overlap=scale;\n");
  
   for ( i=0; i<Model_getNumReactions(m); i++ ) {
     
@@ -583,54 +587,54 @@ drawModelTxt(Model_t *m) {
     
     for ( j=0; j<Reaction_getNumModifiers(re); j++ ) {
       mref = Reaction_getModifier(re,j);
-      printf("%s->%s [style=dashed arrowhead=odot];\n",
-	     ModifierSpeciesReference_getSpecies(mref), Reaction_getId(re));
+      fprintf(f ,"%s->%s [style=dashed arrowhead=odot];\n",
+	      ModifierSpeciesReference_getSpecies(mref), Reaction_getId(re));
     }
     for ( j=0; j<Reaction_getNumReactants(re); j++ ) {
       sref = Reaction_getReactant(re,j);
-      printf("%s->%s [label=\"",
-	     SpeciesReference_getSpecies(sref), Reaction_getId(re));
+      fprintf(f ,"%s->%s [label=\"",
+	      SpeciesReference_getSpecies(sref), Reaction_getId(re));
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
 	math = SpeciesReference_getStoichiometryMath(sref);
 	if ( (strcmp(SBML_formulaToString(math),"1") !=
 	      0) ) {
-	  printf("%s", SBML_formulaToString(math));
+	  fprintf(f ,"%s", SBML_formulaToString(math));
 	}	
       }
       else {
 	if ( SpeciesReference_getStoichiometry(sref) != 1) {
-	  printf("%g",SpeciesReference_getStoichiometry(sref));
+	  fprintf(f ,"%g",SpeciesReference_getStoichiometry(sref));
 	}
       }
       if ( reversible == 1 ) {
-	printf("\" arrowtail=onormal];\n");
+	fprintf(f ,"\" arrowtail=onormal];\n");
       }
       else {
-	printf("\" ];\n");
+	fprintf(f ,"\" ];\n");
       }
     }
     for ( j=0; j<Reaction_getNumProducts(re); j++ ) {
       sref = Reaction_getProduct(re,j);
-      printf("%s->%s [label=\"",
-	     Reaction_getId(re), SpeciesReference_getSpecies(sref));
+      fprintf(f ,"%s->%s [label=\"",
+	      Reaction_getId(re), SpeciesReference_getSpecies(sref));
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
 	math = SpeciesReference_getStoichiometryMath(sref);
 	if ( (strcmp(SBML_formulaToString(math),"1") !=
 	      0) ) {
-	  printf("%s ", SBML_formulaToString(math));
+	  fprintf(f ,"%s ", SBML_formulaToString(math));
 	}
       }
       else {
 	if ( SpeciesReference_getStoichiometry(sref) != 1) {
-	  printf("%g ",SpeciesReference_getStoichiometry(sref));
+	  fprintf(f ,"%g ",SpeciesReference_getStoichiometry(sref));
 	}
       }
       if ( reversible == 1 ) {
-	printf("\" arrowtail=onormal];\n");
+	fprintf(f ,"\" arrowtail=onormal];\n");
       }
       else {
-	printf("\" ];\n");
+	fprintf(f ,"\" ];\n");
       }    
 
     }
@@ -638,19 +642,19 @@ drawModelTxt(Model_t *m) {
   }
   for ( i=0; i<Model_getNumReactions(m); i++ ) {
     re = Model_getReaction(m,i);
-    printf("%s [label=\"%s\" shape=box];\n",
-	   Reaction_getId(re),
-	   Reaction_isSetName(re) ?
-	   Reaction_getName(re) : Reaction_getId(re));
+    fprintf(f ,"%s [label=\"%s\" shape=box];\n",
+	    Reaction_getId(re),
+	    Reaction_isSetName(re) ?
+	    Reaction_getName(re) : Reaction_getId(re));
   }
 
   for ( i=0; i<Model_getNumSpecies(m); i++) {
     s = Model_getSpecies(m, i);
-    printf("%s [label=\"%s\"];",
-	   Species_getId(s),
-	   Species_isSetName(s) ? Species_getName(s) : Species_getId(s));
+    fprintf(f ,"%s [label=\"%s\"];",
+	    Species_getId(s),
+	    Species_isSetName(s) ? Species_getName(s) : Species_getId(s));
   }  
-  printf("}\n");
+  fprintf(f ,"}\n");
   return 1;
 }
 

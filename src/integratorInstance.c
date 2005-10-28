@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 19:56:57 raim>
-  $Id: integratorInstance.c,v 1.25 2005/10/28 09:04:12 afinney Exp $
+  Last changed Time-stamp: <2005-10-28 12:48:03 raim>
+  $Id: integratorInstance.c,v 1.26 2005/10/28 11:45:48 raimc Exp $
 */
 /* 
  *
@@ -290,6 +290,19 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
     printf("%g ", data->value[i]);
   printf("\n");
 }
+
+
+/** Gets a pointer cvodeData of the integratorInstance, which contains
+    the current values of all variables. This structure can only be used 
+    for evaluation of formulas with evaluateAST after integration.
+    Ownership stays with the integratorInstance.
+*/
+
+SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *engine)
+{
+    return engine->data;
+}
+
 
 /** Starts the default integration loop with standard error handling
     and returns 0 if integration was OK, and the error code if not.
