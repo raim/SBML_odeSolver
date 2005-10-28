@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: ChangingIntegratorInstance.c,v 1.8 2005/10/27 14:52:48 raimc Exp $
+  $Id: ChangingIntegratorInstance.c,v 1.9 2005/10/28 13:10:55 afinney Exp $
 */
 /* 
  *
@@ -58,8 +58,12 @@ void DumpState(
 int doit(void)
 {
     int i ;
+<<<<<<< ChangingIntegratorInstance.c
+    cvodeSettings_t settings ;
+=======
     double value;
     cvodeSettings_t *settings ;
+>>>>>>> 1.7
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstanceA;
     integratorInstance_t *integratorInstanceB;
@@ -86,11 +90,24 @@ int doit(void)
     CvodeSettings_setErrors(settings, 1e-18, 1e-14, 500);
 
     
+<<<<<<< ChangingIntegratorInstance.c
+    settings.Time = 0.1;          /*  the step size - Indefinitely == 1 */
+    settings.Error = 1e-20;         /* absolute tolerance in Cvode integration */
+    settings.RError = 1e-20;        /* relative tolerance in Cvode integration */
+    settings.Mxstep = 500;        /* maximum step number for CVode integration */
+    settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
+    settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
+    settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
+    settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
+    settings.StoreResults = 0;     /* don't Store time course history */
+    settings.EnableVariableChanges = 1; /* allow modification of variables between integration steps. */
+=======
     /* Setting Integration Switches: see documentation or
        example simpleIntegratorInstance.c for details on
        the passed values */
     CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
 
+>>>>>>> 1.7
 
     /* Generate two independent integrator instances from the same
        odeModel and cvodeSettings */

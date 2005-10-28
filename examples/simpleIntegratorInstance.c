@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 16:30:36 raim>
-  $Id: simpleIntegratorInstance.c,v 1.10 2005/10/27 14:52:50 raimc Exp $
+  $Id: simpleIntegratorInstance.c,v 1.11 2005/10/28 13:10:55 afinney Exp $
 */
 /* 
  *
@@ -41,7 +41,15 @@
 int doIt(void)
 {
     int i ;
+<<<<<<< simpleIntegratorInstance.c
+<<<<<<< simpleIntegratorInstance.c
+    cvodeSettings_t settings ;
+=======
+    cvodeSettings_t settings;
+>>>>>>> 1.3
+=======
     cvodeSettings_t *settings, *set2;
+>>>>>>> 1.9
     variableIndex_t *s1, *s2;
     integratorInstance_t *integratorInstance;
 
@@ -53,6 +61,23 @@ int doIt(void)
     s1 = ODEModel_getVariableIndex(model, "S1");
     s2 = ODEModel_getVariableIndex(model, "S2");
 
+<<<<<<< simpleIntegratorInstance.c
+    settings.Time = 0.1;          /*  the step size - Indefinitely == 1 */
+    settings.Error = 1e-20;         /* absolute tolerance in Cvode integration */
+    settings.RError = 1e-20;        /* relative tolerance in Cvode integration */
+    settings.Mxstep = 500;        /* maximum step number for CVode integration */
+    settings.Indefinitely = 1;     /* run without a defined end time, Time field contains step duration, ignore PrintStep field*/
+<<<<<<< simpleIntegratorInstance.c
+=======
+
+>>>>>>> 1.3
+    settings.HaltOnEvent = 0;      /* doesn't stops integration upon an event */
+    settings.SteadyState = 0;      /* doesn't stop integration upon a steady state */
+    settings.UseJacobian = 1;      /* Toggle use of Jacobian ASTs or approximation */
+    settings.StoreResults = 0;     /* don't Store time course history */
+    settings.EnableVariableChanges = 0; /* optimize excution without allowing modification of variables
+                                            between integration steps. */
+=======
     /* Creating settings with default values */
     settings = CvodeSettings_create();
     
@@ -77,6 +102,7 @@ int doIt(void)
     /* first integration run */
     printf("\nFIRST INTEGRATION RUN WITH:\n");
     CvodeSettings_dump(settings);
+>>>>>>> 1.9
 
     integratorInstance = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
