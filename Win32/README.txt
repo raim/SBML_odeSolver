@@ -28,8 +28,13 @@ add the following entries:
 <XERCES-C>\include
 <libSBML>\win32\include
 <libSBML>\win32\include\sbml
-<SBML_odeSolver>\Win32\WinCVODE\CVODE\include
-<SBML_odeSolver>\Win32\SBML_odeSolver\include
+<SBML_odeSolver>\Win32\SBML_odeSolverApp\SBML_odeSolverApp
+<SBML_odeSolver>\src
+<SBML_odeSolver>\Win32\WinCVODE\sundials\nvec_ser
+<SBML_odeSolver>\Win32\WinCVODE\sundials\cvode\include
+<SBML_odeSolver>\Win32\WinCVODE\sundials\shared\include
+<SBML_odeSolver>\Win32\WinCVODE\sundials\config
+<SBML_odeSolver>\Win32\WinCVODE\WinCVODE
 
 (substitute the full paths for these directories)
 
