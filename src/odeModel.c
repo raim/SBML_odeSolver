@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 00:25:39 raim>
-  $Id: odeModel.c,v 1.20 2005/10/28 09:04:12 afinney Exp $ 
+  Last changed Time-stamp: <2005-10-28 12:16:08 raim>
+  $Id: odeModel.c,v 1.21 2005/10/28 11:44:50 raimc Exp $ 
 */
 /* 
  *
@@ -395,10 +395,10 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om) {
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
 {
-  if ( om->jacob != NULL )
+  if ( om->jacob == NULL )
     return NULL;
   if ( i >= om->neq || j >= om->neq )
-    return NULL;
+    return NULL;  
   return (const ASTNode_t *) om->jacob[i][j];
 }
 
