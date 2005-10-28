@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-28 11:14:41 raim>
-  $Id: commandLine.c,v 1.6 2005/10/28 09:18:09 raimc Exp $
+  $Id: commandLine.c,v 1.7 2005/10/28 09:56:53 afinney Exp $
 */
 /* 
  *
@@ -410,7 +410,6 @@ odeSolver (int argc, char *argv[])
     IntegratorInstance_free(ii);
     CvodeSettings_free(set);
     ODEModel_free(om);
-    free(set);
     
     xfree(sbmlFilename);   
     SBMLDocument_free(d);
