@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:55:02 raim>
-  $Id: integratorInstance.c,v 1.31 2005/11/02 19:57:24 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 21:44:28 raim>
+  $Id: integratorInstance.c,v 1.32 2005/11/02 20:48:56 raimc Exp $
 */
 /* 
  *
@@ -40,6 +40,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include  <cvode.h>
+
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
@@ -47,6 +49,7 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
+#include "sbmlsolver/sensSolver.h"
 
 
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:02:40 raim>
-  $Id: integratorInstance.h,v 1.17 2005/11/02 17:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-02 21:40:21 raim>
+  $Id: integratorInstance.h,v 1.18 2005/11/02 20:48:56 raimc Exp $ 
 */
 /* 
  *
@@ -37,9 +37,7 @@
 #define _INTEGRATORINSTANCE_H_
 
 /* Header Files for CVODE */
-#ifndef _CVODES_H
-#include <cvode.h>
-#endif
+#include "nvector_serial.h"
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorSettings.h"
