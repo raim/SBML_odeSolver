@@ -21,7 +21,7 @@ concentrations (and other variable parameters or compartments, if a model
 includes such), and reaction fluxes in 100 time steps (producing 101 time
 points, including the initial conditions).
 
-./batchIntegrate MAPK.xml 1000 2 0 10 5 V1 J0
+./batchIntegrate MAPK.xml 1000 2 0 10 5 V2 J1
 
 will do the same integration as above, with only 2 time steps, 
 but 6 integration runs, varying the initial
