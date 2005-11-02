@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:43:11 raim>
-  $Id: analyzeSensitivity.c,v 1.1 2005/11/02 18:44:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:59:50 raim>
+  $Id: analyzeSensitivity.c,v 1.2 2005/11/02 20:00:28 raimc Exp $
 */
 /* 
  *
@@ -110,7 +110,7 @@ int main(void)
 	
 	vi = ODEModel_getOdeVariableIndex(odeModel, i);
 	
-	printf("\nODE VARIABLE %d: %s\n", i,
+	printf("\nODE VARIABLE %d: %s\n", i+1,
 	       ODEModel_getVariableName(odeModel, vi));
 	
 	f = ODEModel_getOde(odeModel, vi);
