@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:32:01 raim>
-  $Id: odeSolver.c,v 1.32 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 23:20:43 raim>
+  $Id: odeSolver.c,v 1.33 2005/11/02 22:24:22 raimc Exp $
 */
 /* 
  *
@@ -255,14 +255,14 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
  
       /** .... the integrator loop can be started, that invoking
 	  CVODE to move one time step and store results. The
-	  function will also handle events and check for steady states. */ 
-      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode) {
+	  function will also handle events and check for steady states. */
+      errorCode = 0;
+      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
 	if (!IntegratorInstance_integrateOneStep(ii))
 	  errorCode = IntegratorInstance_handleError(ii);
-      }
-    
+  
       RETURN_ON_FATALS_WITH(NULL);
-    
+        
       /* map cvode results to SBML compartments, species and parameters  */
       resM->results[i][j] = SBMLResults_fromIntegrator(m, ii);
       IntegratorInstance_reset(ii);
