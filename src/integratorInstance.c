@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 21:44:28 raim>
-  $Id: integratorInstance.c,v 1.32 2005/11/02 20:48:56 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 23:22:32 raim>
+  $Id: integratorInstance.c,v 1.33 2005/11/02 22:24:54 raimc Exp $
 */
 /* 
  *
@@ -653,7 +653,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
      1e-11 */
   if ( (dy_mean + dy_std) < 1e-11 ) {
     data->steadystate = 1;
-    SolverError_error(ERROR_ERROR_TYPE,
+    SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_MESSAGE_STEADYSTATE_FOUND,
 		      "Steady state found. "
 		      "Simulation aborted at %g seconds. "
@@ -664,7 +664,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   else {
     data->steadystate = 0;
     return(0);
-  }
+  }  
 }
 
 
@@ -790,7 +790,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
   if (om->neq) {
     printf("CVODE Error Settings:\n");
   /* currently the same abs. error for all y */
-    printf("absolute error tolerance: %g\n", solver->abstol[0]);
+    printf("absolute error tolerance: %g\n", engine->opt->Error);
     printf("relative error tolerance: %g\n", solver->reltol);
     printf("max. internal step nr.:   %d\n", engine->opt->Mxstep);
   }
@@ -827,9 +827,9 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)
 {
   if ( SolverError_getNum(ERROR_ERROR_TYPE) == 0 )
-    return 0;
+    return SolverError_getLastCode(WARNING_ERROR_TYPE);
   
-  int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE) ;
+  int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE);
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;
 
