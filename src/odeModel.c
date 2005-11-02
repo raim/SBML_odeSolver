@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:39:42 raim>
-  $Id: odeModel.c,v 1.23 2005/11/02 19:57:24 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-02 21:17:08 raim>
+  $Id: odeModel.c,v 1.24 2005/11/02 20:19:23 raimc Exp $ 
 */
 /* 
  *
@@ -86,6 +86,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
   RETURN_ON_ERRORS_WITH(NULL);
   
   om->m = m;
+  om->d = NULL; /* will be set if created from file */
     
   return om;
 }
@@ -296,7 +297,8 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     /* Errors will cause the program to stop, e.g. when some
     mathematical expressions are missing. */
     RETURN_ON_ERRORS_WITH(NULL);
-    SBMLDocument_free(d);
+    /* remember for freeing afterwards */
+    om->d = d;
 
     return om;
 }
@@ -607,6 +609,10 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   /* free simplified ODE model */
   if ( om->simple != NULL ) 
     Model_free(om->simple); 
+
+  /* free document, if model was constructed from file */
+  if ( om->d != NULL ) 
+    SBMLDocument_free(om->d);    
 
   /* free model structure */
   free(om);

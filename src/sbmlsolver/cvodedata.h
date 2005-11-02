@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 18:51:16 raim>
-  $Id: cvodedata.h,v 1.19 2005/11/02 17:59:09 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 21:11:22 raim>
+  $Id: cvodedata.h,v 1.20 2005/11/02 20:19:24 raimc Exp $
 */
 /* 
  *
@@ -54,6 +54,7 @@
 
 struct odeModel
 {
+  SBMLDocument_t *d; /* only if directly created from file */
   Model_t *m;
   Model_t *simple;
 
