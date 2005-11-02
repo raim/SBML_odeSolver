@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 11:50:09 raim>
-  $Id: cvodeSolver.c,v 1.5 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:48:33 raim>
+  $Id: cvodeSolver.c,v 1.6 2005/11/02 19:57:24 raimc Exp $
 */
 /* 
  *
@@ -265,6 +265,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
          currently the same absolute error is used for all y */ 
       abstoldata[i] = opt->Error;       
     }
+
+    /* set sensitivity structure to NULL */
+    solver->yS = NULL;
     
     /* scalar relative tolerance: the same for all y */
     solver->reltol = opt->RError;
@@ -351,6 +354,10 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 
     /* Free the integrator memory */
     CVodeFree(engine->solver->cvode_mem);
+
+    /* Free sensitivity vector yS */
+    if (engine->solver->yS != NULL)
+      N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
 }
 
 

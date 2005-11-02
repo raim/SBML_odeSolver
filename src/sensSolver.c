@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 18:54:33 raim>
-  $Id: sensSolver.c,v 1.2 2005/11/02 17:59:09 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:52:43 raim>
+  $Id: sensSolver.c,v 1.3 2005/11/02 19:57:24 raimc Exp $
 */
 /* 
  *
@@ -360,15 +360,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 /* frees N_V vector structures, and the cvode_mem solver */
 void IntegratorInstance_freeCVODESSolverStructures(integratorInstance_t *engine)
 {
-    /* Free CVODE structures */ 
+    /* Free CVODE structures: the same for both */ 
     IntegratorInstance_freeCVODESolverStructures(engine);
-    
-    /* Free sensitivity vector yS */
-    IntegratorInstance_freeSensSolverStructures(engine);
- 
 }
 
-/* frees N_V vector structures, and the cvode_mem solver */
+/* frees only sensitivity structure, not used at the moment  */
 static void IntegratorInstance_freeSensSolverStructures(integratorInstance_t *engine)
 {
     /* Free sensitivity vector yS */

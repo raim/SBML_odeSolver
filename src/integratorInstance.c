@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:18:51 raim>
-  $Id: integratorInstance.c,v 1.30 2005/11/02 19:34:02 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:55:02 raim>
+  $Id: integratorInstance.c,v 1.31 2005/11/02 19:57:24 raimc Exp $
 */
 /* 
  *
@@ -804,10 +804,8 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 {
   /* solver specific switches */
   if (engine->om->neq) {
-    if (engine->opt->Sensitivity)
-      IntegratorInstance_freeCVODESSolverStructures(engine);
-    else
-      IntegratorInstance_freeCVODESolverStructures(engine);
+    /* the same for CVODES and CVODE */
+    IntegratorInstance_freeCVODESolverStructures(engine);
   }
 
   /* if (om->algebraic) ?? */

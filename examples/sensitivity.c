@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:31:16 raim>
-  $Id: sensitivity.c,v 1.2 2005/11/02 19:33:58 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:55:50 raim>
+  $Id: sensitivity.c,v 1.3 2005/11/02 19:57:24 raimc Exp $
 */
 /* 
  *
@@ -76,6 +76,7 @@ main (int argc, char *argv[]){
     
   }
   printf("\n");
+  VariableIndex_free(p);
   
   /* IntegratorInstance_integrate(ii); */
   
@@ -144,9 +145,9 @@ main (int argc, char *argv[]){
   VariableIndex_free(y);
   VariableIndex_free(p);
   /* now we have the results and can free the inputs */
+  IntegratorInstance_free(ii);
   CvodeSettings_free(set);
   CvodeResults_free(results);
-  IntegratorInstance_free(ii);
   ODEModel_free(om);
 
 

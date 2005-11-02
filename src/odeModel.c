@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:01:55 raim>
-  $Id: odeModel.c,v 1.22 2005/11/02 17:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-02 20:39:42 raim>
+  $Id: odeModel.c,v 1.23 2005/11/02 19:57:24 raimc Exp $ 
 */
 /* 
  *
@@ -286,7 +286,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     odeModel_t *om;
 
     d =  parseModel(sbmlFileName,
-		    1 /* print message */,
+		    0 /* print message */,
 		    0 /* don't validate */,
 		    0, 0, 0, 0 /* empty validation parameters */);
     
@@ -296,6 +296,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     /* Errors will cause the program to stop, e.g. when some
     mathematical expressions are missing. */
     RETURN_ON_ERRORS_WITH(NULL);
+    SBMLDocument_free(d);
 
     return om;
 }
