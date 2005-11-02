@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:30:36 raim>
-  $Id: simpleIntegratorInstance.c,v 1.12 2005/10/28 14:37:56 afinney Exp $
+  Last changed Time-stamp: <2005-11-02 20:19:02 raim>
+  $Id: simpleIntegratorInstance.c,v 1.13 2005/11/02 19:33:58 raimc Exp $
 */
 /* 
  *
@@ -81,6 +81,7 @@ int doIt(void)
     RETURN_ON_ERRORS_WITH(1);
 
     /* print variable (ODE, assignments) and constant names */
+    printf("#time  ");
     IntegratorInstance_dumpNames(integratorInstance);
     /* print initial conditions and parameters */
     IntegratorInstance_dumpData(integratorInstance);

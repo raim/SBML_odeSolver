@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 19:02:22 raim>
-  $Id: sensitivity.c,v 1.1 2005/11/02 18:42:49 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 20:31:16 raim>
+  $Id: sensitivity.c,v 1.2 2005/11/02 19:33:58 raimc Exp $
 */
 /* 
  *
@@ -51,35 +51,31 @@ main (int argc, char *argv[]){
    
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
-  CvodeSettings_setTime(set, 1000.0, 10);
+  CvodeSettings_setTime(set, 300.0, 10);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
 
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
-  y = ODEModel_getVariableIndex(om, "MKKK_P");
+  y = ODEModel_getVariableIndex(om, "MAPK_P");
+  p = ODEModel_getVariableIndex(om, "K1");
   
   /* calling the integrator */
   ii = IntegratorInstance_create(om, set);
 
-  printf("#time  Variable  Sensitivity Params...\n");
-  printf("#time  ");
-  printf("%s  ", ODEModel_getVariableName(om, y));
-  for ( j=0; j<ODEModel_getNsens(om); j++ ) {
-    p = ODEModel_getSensParamIndexByNum(om, j);
-    printf("%s ", ODEModel_getVariableName(om, p));
-    VariableIndex_free(p);
-  }
-  printf("\n");
-  
-  IntegratorInstance_dumpYSensitivities(ii, y);
+  printf("### Printing Sensitivities for one parameter on the fly,\n");
+  printf("#%s  ", ODEModel_getVariableName(om, p));
+  IntegratorInstance_dumpNames(ii);
+
+  IntegratorInstance_dumpPSensitivities(ii, p);
   while( !IntegratorInstance_timeCourseCompleted(ii) ) {
 
     IntegratorInstance_integrateOneStep(ii);
-    IntegratorInstance_dumpYSensitivities(ii, y);
+    IntegratorInstance_dumpPSensitivities(ii, p);
     
   }
+  printf("\n");
   
   /* IntegratorInstance_integrate(ii); */
   
@@ -90,8 +86,18 @@ main (int argc, char *argv[]){
   }
 
 
+  printf("\nLet's look at a specific ODE variable:\n");
   /* print sensitivities again, but now from stored results */
-  printf("### RESULTS for Sensitivity Analysis\n");
+  printf("### RESULTS for Sensitivity Analysis for one ODE variable\n");
+  printf("#time  Variable  Sensitivity Params...\n");
+  printf("#time  ");
+  printf("%s  ", ODEModel_getVariableName(om, y));
+  for ( j=0; j<ODEModel_getNsens(om); j++ ) {
+    p = ODEModel_getSensParamIndexByNum(om, j);
+    printf("%s ", ODEModel_getVariableName(om, p));
+    VariableIndex_free(p);
+  }
+  printf("\n");
 
   results = IntegratorInstance_createResults(ii);
  
@@ -106,7 +112,37 @@ main (int argc, char *argv[]){
     printf("\n");
   }
 
+  p = ODEModel_getVariableIndex(om, "V1");
+  printf("\nWhat do sensitivities mean? Let's try out!\n\n");
+  printf("... add 1 to %s:  %g + 1 = ",
+	 ODEModel_getVariableName(om, p),
+	 IntegratorInstance_getVariableValue(ii, p));
+  
+  CvodeSettings_setSensitivity(set, 0);
+  IntegratorInstance_reset(ii);
+  IntegratorInstance_setVariableValue(ii, p,
+		     IntegratorInstance_getVariableValue(ii,p)+1);
+  printf("%g\n", IntegratorInstance_getVariableValue(ii, p));
+  
+  printf("... and integrate again:\n\n");
+
+  CvodeResults_free(results);
+  IntegratorInstance_integrate(ii);
+  results = IntegratorInstance_createResults(ii);
+
+  /* and print changed results */
+  printf("#time  %s\n", ODEModel_getVariableName(om, y));
+  for ( i=0; i<CvodeResults_getNout(results); i++ ) {
+    printf("%g  ", CvodeResults_getTime(results, i));
+    printf("%g\n", CvodeResults_getValue(results, y, i));
+  }
+  
+  printf("\nSee the difference?\n");
+  printf("Look what happens when the sensitivity changes its sign\n");
+  printf("between times 180 and 210.\n\n");
+
   VariableIndex_free(y);
+  VariableIndex_free(p);
   /* now we have the results and can free the inputs */
   CvodeSettings_free(set);
   CvodeResults_free(results);
