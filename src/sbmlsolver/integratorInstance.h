@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 12:35:56 raim>
-  $Id: integratorInstance.h,v 1.16 2005/10/28 11:45:49 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-02 17:02:40 raim>
+  $Id: integratorInstance.h,v 1.17 2005/11/02 17:32:13 raimc Exp $ 
 */
 /* 
  *
@@ -37,7 +37,9 @@
 #define _INTEGRATORINSTANCE_H_
 
 /* Header Files for CVODE */
-#include "cvode.h"    
+#ifndef _CVODES_H
+#include <cvode.h>
+#endif
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorSettings.h"
@@ -52,7 +54,7 @@ extern "C" {
   typedef struct cvodeSolver cvodeSolver_t;
   typedef struct integratorInstance integratorInstance_t ;
 
-  /* CVODE integrator state information */
+  /* CVODE/S integrator state information */
   struct cvodeSolver
   {
     /* these data are required by the functions common to all solvers */
@@ -62,6 +64,9 @@ extern "C" {
     realtype reltol, atol1;
     N_Vector y, abstol;
     void *cvode_mem;
+    /* CVODES specific data */
+    int nsens;
+    N_Vector *yS;    
   };
 
 
@@ -86,9 +91,12 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *, variableIndex_t *y,  variableIndex_t *p);
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
   SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *, variableIndex_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *);

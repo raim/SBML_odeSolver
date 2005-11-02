@@ -147,16 +147,10 @@ else
   yes_libsbml="no"
 fi
 
-if test $sundials_cvode_functional != no; then
-  yes_libsundialscvode="yes"
+if test $sundials_functional != no; then
+  yes_libsundials="yes"
 else
-  yes_libsundialscvode="no"
-fi
-
-if test $cvode_functional != no; then
-  yes_libcvode="yes"
-else
-  yes_libcvode="no"
+  yes_libsundials="no"
 fi
 
 if test $grace_functional != no; then
@@ -189,8 +183,8 @@ if test $yes_libsbml = yes; then
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
-echo "SUNDIALS CVODE Library = $yes_libsundialscvode"
-if test $yes_libsundialscvode = yes; then
+echo "SUNDIALS Library         = $yes_libsundials"
+if test $yes_libsundials       = yes; then
   echo "       CFLAGS          = $CVODE_CFLAGS"
   echo "       LDFLAGS         = $CVODE_LDFLAGS"
   echo "       LIBS            = $CVODE_LIBS"

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 23:57:32 raim>
-  $Id: cvodedata.h,v 1.17 2005/10/28 09:04:12 afinney Exp $
+  Last changed Time-stamp: <2005-11-02 16:35:34 raim>
+  $Id: cvodedata.h,v 1.18 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -36,6 +36,11 @@
 
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
+
+/* Header Files for CVODE: required only for realtype *p  */
+#ifndef _CVODES_H
+#include <cvode.h>
+#endif
 
 #include <stdio.h>
 #include <sbml/SBMLTypes.h>
@@ -79,10 +84,10 @@ struct odeModel
 
   /* forward sensitivity analysis */
   /* neq x num_param */
-  int num_param;    /* number of parameters for sens. analysis */
-  int *index_param; /* indexes of parameters in char **names, char *value*/
-  ASTNode_t ***jacob_param; /*  (d[Y]/dt)/dP  */
-  int sensitivity;  /* just a flag, might not be required (in options) */
+  int nsens;    /* number of parameters for sens. analysis */
+  int *index_sens; /* indexes of parameters in char **names, char *value*/
+  ASTNode_t ***jacob_sens; /*  (d[Y]/dt)/dP  */
+  int sensitivity;  /* a flag for success */
 
   /* adjoint */
 
@@ -106,7 +111,7 @@ struct cvodeResults {
   double **value;
 
   /* number of parameters for sens. analysis */
-  int num_param;
+  int neq, nsens;
   /* sensitivities: d[Y(t)]/dP */
   double ***sensitivity;
 
@@ -135,7 +140,11 @@ struct cvodeData {
   float currenttime;
 
   /* current sensitivities: d[Y(t)]/dP */
+  int neq, nsens;
   double **sensitivity;
+  /* required by sens. analysis,
+     if no r.h.s function fS is available */
+  realtype *p;
   
   /* cvode settings: start- and end times, timesteps, number of timesteps,
      error tolerances, max. number of steps, etc... */
@@ -180,6 +189,7 @@ extern "C" {
 
 /* internal functions used by integratorInstance.c */
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
+int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
 void CvodeResults_free(cvodeResults_t *);
 
 

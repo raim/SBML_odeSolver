@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 14:06:16 raim>
-  $Id: integratorInstance.c,v 1.27 2005/10/28 12:40:11 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 17:32:57 raim>
+  $Id: integratorInstance.c,v 1.28 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -137,7 +137,8 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 }
 
 
-/** Creates an new integratorInstance:
+/**  \brief Creates an new integratorInstance
+     
     reads initial values from odeModel and integration settings from
     cvodeSettings to create integration data cvodeData and
     cvodeResults and initializes cvodeSolver structures.
@@ -158,7 +159,8 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 }
 
 
-/** Resets and existing integratorInstance with new settings.
+/** \brief Resets and existing integratorInstance with new settings.
+    
     The instance can the be used for further integration runs
     with these new settings. Don't use during an integration run!
 */
@@ -172,9 +174,10 @@ SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *engine, cvod
 }
 
 
-/** Resets and integratorInstance to its initial values from the
-    integratorInstance's cvodeSettings. After that, a new integration
-    can be run. Don't use during an integration run!
+/**  \brief Resets and integratorInstance to its initial values
+
+    After that, a new integration can be run. Don't use during an
+    integration run!
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *engine)
@@ -184,11 +187,12 @@ SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *engine)
 
 
 
-/** Returns the settings of this integratorInstance. These
-    settings can then be change with cvodeSettings interface
-    functions. The changes become only effective after
-    IntegratorInstance_reset has been called. Don't use during
-    an integration run!
+/**  \brief Returns the settings of this integratorInstance.
+
+     These settings can then be change with cvodeSettings interface
+     functions. The changes become only effective after
+     IntegratorInstance_reset has been called. Don't use during an
+     integration run!
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *engine)
@@ -198,8 +202,8 @@ SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorIns
 
 
 
-/** Copies variable and parameter values between two integratorInstances
-    that have been created from the same odeModel
+/**  \brief Copies variable and parameter values between two
+     integratorInstances that have been created from the same odeModel
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
@@ -223,7 +227,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 }
 
 
-/** Returns the current time of an integration
+/**  \brief Returns the current time of an integration
 */
 
 SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engine)
@@ -232,10 +236,12 @@ SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engin
 }
 
 
-/** Sets the next output time. WARNING: the next output time must always
-    be bigger then the previous. This function can only be used for
-    infinite integration (CvodeSettings_setIndefinite(set, 1)).
-    Returns 1 if successful and 0 otherwise.
+/** \brief Sets the next output time for infinite integration
+
+    WARNING: the next output time must always be bigger then the
+    previous. This function can only be used for infinite integration
+    (CvodeSettings_setIndefinite(set, 1)).  Returns 1 if successful
+    and 0 otherwise.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *engine, double nexttime)
@@ -248,11 +254,13 @@ SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *
 }
 
 
-/** Gets the value of a variable or parameter during an integration
-    via its variableIndex. The variableIndex can be retrieved from the
-    odeModel with ODEModel_getVariable via the variable's or the
-    parameter's ID symbol in the input SBML model (can be SBML
-    compartments, species and parameters).
+/**  \brief Gets the value of a variable or parameter during an integration
+    via its variableIndex.
+
+    The variableIndex can be retrieved from the odeModel with
+    ODEModel_getVariable via the variable's or the parameter's ID
+    symbol in the input SBML model (can be SBML compartments, species
+    and parameters).
 */
 
 SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *engine, variableIndex_t *vi)
@@ -261,7 +269,20 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
 }
 
 
-/** Prints variable names, the first value is the time,
+/** \brief Gets the sensitivity of variable y to parameter p at
+    the current time.
+
+    Must not be called, if sensitivity wasn't calculated!
+*/
+
+SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *engine,  variableIndex_t *y,  variableIndex_t *p)
+{
+  return engine->data->sensitivity[y->index][p->type_index];
+}
+
+
+/**  \brief Prints variable names, the first value is the time,
+
     ODE variable values, assigned variable values and
     constant values follow. The order is the same
     as in IntegratorInstance_dumpData.
@@ -274,9 +295,10 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *engin
 }
 
 
-/** Prints the current integration data, the first value is
-    the current time, ODE variable values, assigned variable
-    values and constant values follow. The order is the same
+/**  \brief Prints the current integration data,
+
+    the first value is the current time, ODE variable values, assigned
+    variable values and constant values follow. The order is the same
     as in IntegratorInstance_dumpNames.
 */
 
@@ -288,6 +310,47 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
   printf("%g  ", data->currenttime);
   for ( i=0; i<data->nvalues; i++ )
     printf("%g ", data->value[i]);
+  printf("\n");
+}
+
+
+/**  \brief Prints the current time, current value of variable y and 
+     sensitivities to all parameters for which calculated
+*/
+
+SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *engine, variableIndex_t *y)
+{
+  int i;
+  cvodeData_t *data = engine->data;
+
+  if ( data->sensitivity == NULL )
+    return;
+
+  printf("%g  ", data->currenttime);
+  printf("%g  ", data->value[y->index]);
+  for ( i=0; i<data->nsens; i++ )
+    printf("%g ", data->sensitivity[y->index][i]);
+  printf("\n");
+}
+
+
+/**  \brief Prints the current time, the value of parameter p and 
+     all variable's sensitivities Si to p, where
+     i = 1 ... NEQ
+*/
+
+SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *engine, variableIndex_t *p)
+{
+  int j, index;
+  cvodeData_t *data = engine->data;
+
+  if ( data->sensitivity == NULL )
+    return;
+
+  printf("%g  ", data->currenttime);
+  printf("%g  ", data->value[p->index]);
+  for ( j=0; j<data->neq; j++ )
+    printf("%g ", data->sensitivity[j][p->type_index]);
   printf("\n");
 }
 
@@ -304,15 +367,16 @@ SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t 
 }
 
 
-/** Starts the default integration loop with standard error handling
-    and returns 0 if integration was OK, and the error code if not.
+/**  \brief Starts the default integration loop with standard error
+    handling and returns 0 if integration was OK, and the error code
+    if not.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine)
 {
   while ( engine->solver->iout <= engine->solver->nout )
-    if (!IntegratorInstance_integrateOneStep(engine))
-      return IntegratorInstance_handleError(engine);
+    if (!IntegratorInstance_integrateOneStep(engine)) 
+      return IntegratorInstance_handleError(engine);    
  
   return 0; /* return 0, if ok */
 }
@@ -328,15 +392,16 @@ SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance
 }
 
 
-/** Creates and returns a cvodeResults structure containing the
-    results of one integration run and NULL if not successful.
+/**  \brief Creates and returns a cvodeResults structure containing
+    the results of one integration run and NULL if not successful.
+    
     The results must be freed by the caller with
-    CvodeResults_free(results);
+    CvodeResults_free(results).
 */
 
 SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *engine)
 {
-  int i, j;
+  int i, j, k;
   cvodeResults_t *results;
 
   cvodeSettings_t *opt = engine->opt;
@@ -345,22 +410,31 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
   if ( !opt->StoreResults || iResults == NULL )
     return NULL;
   
-  results = CvodeResults_create(engine->data, opt->PrintStep);
+  results = CvodeResults_create(engine->data, iResults->nout);
   RETURN_ON_FATALS_WITH(0);
 
   results->nout = iResults->nout;
 
-  for ( i=0; i < iResults->nout; i++ ) {
+  for ( i=0; i <iResults->nout; i++ ) {
     results->time[i] = iResults->time[i];
     for ( j=0; j < iResults->nvalues; j++ )
-      results->value[i][j] = iResults->value[i][j];
+      results->value[j][i] = iResults->value[j][i];
+  }
+
+  if ( iResults->sensitivity != NULL ) {
+    CvodeResults_allocateSens(results, iResults->neq, iResults->nsens,
+			      iResults->nout);
+    for ( i=0; i<results->neq; i++ )
+      for ( j=0; j<results->nsens; ++j )
+	for ( k=0; k<results->nout; k++ )
+	  results->sensitivity[i][j][k] = iResults->sensitivity[i][j][k];
   }
 
   return results;  
 }
 
 
-/** Writes current simulation data to original model
+/**  \brief Writes current simulation data to original model
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engine)
@@ -399,7 +473,7 @@ SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engi
 }
 
 
-/** Handles the simple case of models that contain no ODEs
+/**  \brief Handles the simple case of models that contain no ODEs
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *engine)
@@ -411,13 +485,13 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 }
 
 
-/** Default function for updating data, to be used
-    by solvers after calculating the dependent variables
-    data->value[i], where 0 <= i < neq) and setting the
-    current solver time solver->t.
-    The function updates assigend values, and checks for
-    event triggers and steady state, and increases loop
-    variables, stores results and sets next output time.
+/*
+    Default function for updating data, to be used by solvers after
+    calculating the dependent variables data->value[i], where 0 <= i <
+    neq) and setting the current solver time solver->t.  The function
+    updates assigend values, and checks for event triggers and steady
+    state, and increases loop variables, stores results and sets next
+    output time.
 */
 
 int IntegratorInstance_updateData(integratorInstance_t *engine)
@@ -481,11 +555,10 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 
 /************* Internal Checks During Integration Step *******************/
 
-/** Evaluates event trigger expressions and executes event assignments
-    for those triggers that are true. Results are stored appropriately
-    in
-       engine->data->value.
+/**  \brief Evaluates event trigger expressions and executes event assignments
+    for those triggers that are true.
 
+    Results are stored appropriately  in engine->data->value.
     Recreation of new solver structures (if an ODE variable is changed)
     is handled by integratorInstance_setVariableValue(engine).
     Returns the number of triggers that fired.
@@ -511,12 +584,18 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
       if ( data->trigger[i] == 0 && evaluateAST(trigger, data) ) {
 
 	if (opt->HaltOnEvent)
-	  SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_EVENT_TRIGGER_FIRED,
-			    "Event Trigger %d : %s fired at %g. "
+	  SolverError_error(ERROR_ERROR_TYPE,
+			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
+			    "Event Trigger %d (%s) fired at time %g. "
 			    "Aborting simulation.",
 			    i, SBML_formulaToString(trigger),
 			    data->currenttime);
-
+	else 
+	  SolverError_error(WARNING_ERROR_TYPE,
+			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
+			    "Event Trigger %d (%s) fired at time %g. ",
+			    i, SBML_formulaToString(trigger),
+			    data->currenttime);
 	fired++;
 	data->trigger[i] = 1;      
 	for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
@@ -538,8 +617,9 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 
 }
 
-/** provisional identification of a steady state,
-    evaluates mean and std of rates and returns 1 if a "steady state"
+/** \brief Approximate identification of a steady state
+    
+    Evaluates mean and std of rates and returns 1 if a "steady state"
     is reached to stop  the calling integrator.
     This function is only called by the integrator function if specified
     via commandline options!
@@ -572,7 +652,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
      1e-11 */
   if ( (dy_mean + dy_std) < 1e-11 ) {
     data->steadystate = 1;
-    SolverError_error(WARNING_ERROR_TYPE,
+    SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_MESSAGE_STEADYSTATE_FOUND,
 		      "Steady state found. "
 		      "Simulation aborted at %g seconds. "
@@ -595,33 +675,35 @@ static int
 IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 {
   odeModel_t *om = engine->om;
+  cvodeSettings_t *opt = engine->opt;
 
   /* IDA SOLVER for DAE systems */
   /* if (om->algebraic)
        return initializeIDASolverStructures; */
-
-  /* CVODES SOLVER for sensitivity analysis */
-  /* if (opt->Sensitivity)
-       return initializeCVODESSolverStructures; */
 
   /* nothing to be done for models without ODEs */
   if (!om->neq)
     return 1;
 
   /* CVODE SOLVER */
-  if (om->neq)  
-    return IntegratorInstance_createCVODESolverStructures(engine);
+  if (om->neq) {
+    if ( opt->Sensitivity )
+      return IntegratorInstance_createCVODESSolverStructures(engine);
+    else
+      return IntegratorInstance_createCVODESolverStructures(engine);
+  }
     
 }
 
 
-/** Sets the value of a variable or parameter during an integration via
-    its variableIndex.This function also takes care of creating and
-    freeing solver structures and ODE variables are changed!
-    The variableIndex can be retrieved from the odeModel with
-    ODEModel_getVariable via the variable's or the parameter's ID
-    symbol in the input SBML model (can be SBML compartments, species
-    and parameters).
+/** \brief Sets the value of a variable or parameter during an
+    integration via its variableIndex.
+
+    This function also takes care of creating and freeing solver
+    structures and ODE variables are changed!  The variableIndex can
+    be retrieved from the odeModel with ODEModel_getVariable via the
+    variable's or the parameter's ID symbol in the input SBML model
+    (can be SBML compartments, species and parameters).
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
@@ -630,17 +712,24 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
   if ( vi->index < engine->om->neq ) {
     /* if (om->algebraic) ?? */
-    /* if (opt->Sensitivity) ?? */
-    IntegratorInstance_freeCVODESolverStructures(engine->solver);
-    engine->solver->t0 = engine->solver->t;
-    IntegratorInstance_createCVODESolverStructures(engine);  
+    if ( !engine->opt->Sensitivity ) {
+      IntegratorInstance_freeCVODESolverStructures(engine);
+      engine->solver->t0 = engine->solver->t;
+      IntegratorInstance_createCVODESolverStructures(engine);
+    }
+    else {
+      IntegratorInstance_freeCVODESSolverStructures(engine);
+      engine->solver->t0 = engine->solver->t;
+      IntegratorInstance_createCVODESSolverStructures(engine);
+    }
   }
+    
 }	
 
 
-/** The Hot Stuff!
-    Moves the current integration one step forward and switches
+/** \brief Moves the current integration one step forward and switches
     between different solvers for filling ODE variables.
+    
     Returns 1 if integration can continue, 0 otherwise.
 */
 
@@ -661,9 +750,13 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     if ( engine->om->neq == 0 ) 
       flag = IntegratorInstance_simpleOneStep(engine);      
     /* call CVODE Solver */
-    else
-      flag = IntegratorInstance_cvodeOneStep(engine);
-
+    else {
+      if (engine->opt->Sensitivity)
+	flag = IntegratorInstance_cvodesOneStep(engine);
+      else
+	flag = IntegratorInstance_cvodeOneStep(engine);
+    }
+    
     /* upcoming solvers */
     /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
     /* if (opt->Sensitivity)  IntegratorInstance_cvodesOneStep(engine); */
@@ -672,7 +765,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
 }
 
 
-/** Prints the current state of the solver
+/**  \brief Prints the current state of the solver
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engine)
@@ -706,14 +799,18 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
 }
 
 
-/** Frees an integratorInstance, including cvodeData
+/**  \brief Frees an integratorInstance, including cvodeData
  */
 
 SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 {
   /* solver specific switches */
-  if (engine->om->neq)
-    IntegratorInstance_freeCVODESolverStructures(engine->solver);
+  if (engine->om->neq) {
+    if (engine->opt->Sensitivity)
+      IntegratorInstance_freeCVODESSolverStructures(engine);
+    else
+      IntegratorInstance_freeCVODESolverStructures(engine);
+  }
 
   /* if (om->algebraic) ?? */
   /* if (opt->Sensitivity) ?? */
@@ -725,7 +822,7 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 }
 
 
-/** Standard handler for when the integrate function fails.
+/**  \brief Standard handler for when the integrate function fails.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)
@@ -759,21 +856,22 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
       IntegratorInstance_reset(engine);
       return IntegratorInstance_integrate(engine);
     }
-    else
-      SolverError_dumpAndClearErrors();
+    /* else */
+/*       SolverError_dumpAndClearErrors(); */
   }
 
-  return errorCode ;
+  return errorCode;
 }
 
 
-/** Prints some final statistics of the solver
+/**  \brief Prints some final statistics of the solver
 */
 
 SBML_ODESOLVER_API void
 IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 {
   odeModel_t *om = engine->om;
+  cvodeSettings_t *opt = engine->opt;
 
   /* if (om->algebraic) IntegratorInstance_printIDAStatistics(engine, f); */
   /* if (opt->Sensitivity)
@@ -781,7 +879,11 @@ IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
     
   if (!om->neq)
     fprintf(f, "## No statistics available for models without ODEs.\n");
-  else
-    IntegratorInstance_printCVODEStatistics(engine, f);
+  else {
+    if (opt->Sensitivity)
+      IntegratorInstance_printCVODESStatistics(engine, f);
+    else
+      IntegratorInstance_printCVODEStatistics(engine, f);
+  }
 }
 

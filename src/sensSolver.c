@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-01 18:01:13 raim>
-  $Id: cvodesSolver.c,v 1.1 2005/11/01 17:48:08 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 17:25:24 raim>
+  $Id: sensSolver.c,v 1.1 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -30,8 +30,7 @@
  *     Rainer Machne
  *
  * Contributor(s):
- *     Andrew M. Finney
- *     Christoph Flamm
+ *
  */
 
 #include <stdio.h>
@@ -48,6 +47,7 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
+#include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/cvodeSolver.h"
 
 static int
@@ -75,9 +75,12 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
                int iS, N_Vector yS, N_Vector ySdot, 
                void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
+static void
+IntegratorInstance_freeSensSolverStructures(integratorInstance_t *);
 
 /* The Hot Stuff! */
-/** \brief Calls CVODE to move the current simulation one time step;
+/** \brief Calls CVODES to move the current simulation, including
+    sensitivity analysis one time step;
 
     produces appropriate error messages on failures and returns 1 if
     the integration can continue, 0 otherwise.  The function also
@@ -86,7 +89,7 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
     (only assignment rules or constant parameters).
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *engine)
+SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *engine)
 {
     int i, j, flag;
     realtype *ydata = NULL;
@@ -96,138 +99,42 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     cvodeData_t *data = engine->data;
     cvodeSettings_t *opt = engine->opt;
     cvodeResults_t *results = engine->results;
-    odeModel_t *om = engine->om;
     
-    /* !!!! calling CVODE !!!! */
-    flag = CVode(solver->cvode_mem, solver->tout,
-		 solver->y, &(solver->t), CV_NORMAL);
-
+    /*  calling CVODE: the same call can be used for CVODES  */
+    flag = IntegratorInstance_cvodeOneStep(engine);
+    if ( flag != 1 )
+      return 0;
+    RETURN_ON_FATALS_WITH(0);
+    
+    /* getting sensitivity */
+    flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     if ( flag != CV_SUCCESS )
-      {
-	char *message[] =
-	  {
-	    /*  0 CV_SUCCESS */
-	    "Success",
-	    /**/
-	    /*  1 CV_ROOT_RETURN */
-	    /*   "CVode succeeded, and found one or more roots" */
-	    /*  2 CV_TSTOP_RETURN */
-	    /*   "CVode succeeded and returned at tstop" */
-	    /**/
-	    /* -1 CV_MEM_NULL -1 (old CVODE_NO_MEM) */
-	    "The cvode_mem argument was NULL",
-	    /* -2 CV_ILL_INPUT */
-	    "One of the inputs to CVode is illegal. This "
-	    "includes the situation when a component of the "
-	    "error weight vectors becomes < 0 during "
-	    "internal time-stepping. The ILL_INPUT flag "
-	    "will also be returned if the linear solver "
-	    "routine CV--- (called by the user after "
-	    "calling CVodeMalloc) failed to set one of the "
-	    "linear solver-related fields in cvode_mem or "
-	    "if the linear solver's init routine failed. In "
-	    "any case, the user should see the printed "
-	    "error message for more details.",
-	    /* -3 CV_NO_MALLOC */
-	    "cvode_mem was not allocated",
-	    /* -4 CV_TOO_MUCH_WORK */
-	    "The solver took %g internal steps but could not "
-	    "compute variable values for time %g",
-	    /* -5 CV_TOO_MUCH_ACC */
-	    "The solver could not satisfy the accuracy " 
-	    "requested for some internal step.",
-	    /* -6 CV_ERR_FAILURE */
-	    "Error test failures occurred too many times "
-	    "during one internal time step or "
-	    "occurred with |h| = hmin.",
-	    /* -7 CV_CONV_FAILURE */
-	    "Convergence test failures occurred too many "
-	    "times during one internal time step or occurred "
-	    "with |h| = hmin.",
-	    /* -8 CV_LINIT_FAIL */
-	    "CVode -- Initial Setup: "
-	    "The linear solver's init routine failed.",
-	    /* -9 CV_LSETUP_FAIL */
-	    "The linear solver's setup routine failed in an "
-	    "unrecoverable manner.",
-	    /* -10 CV_LSOLVE_FAIL */
-	    "The linear solver's solve routine failed in an "
-	    "unrecoverable manner.",
-	    /* -11 CV_MEM_FAIL */
-	    "A memory allocation failed. "
-	    "(including an attempt to increase maxord)",
-	    /* -12 CV_RTFUNC_NULL */
-	    "nrtfn > 0 but g = NULL.",
-	    /* -13 CV_NO_SLDET */
-	    "CVodeGetNumStabLimOrderReds -- Illegal attempt "
-	    "to call without enabling SLDET.",
-	    /* -14 CV_BAD_K */
-	    "CVodeGetDky -- Illegal value for k.",
-	    /* -15 CV_BAD_T */
-	    "CVodeGetDky -- Illegal value for t.",
-	    /* -16 CV_BAD_DKY */
-	    "CVodeGetDky -- dky = NULL illegal.",
-	    /* -17 CV_PDATA_NULL */
-	    "???",
-	  };
-	    
-	SolverError_error(
-			  ERROR_ERROR_TYPE,
-			  flag,
-			  message[flag * -1],
-			  opt->Mxstep,
-			  solver->tout);
-	SolverError_error(
-			  WARNING_ERROR_TYPE,
-			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
-		     "Integration not successful. Results are not complete.");
-
-	return 0 ; /* Error - stop integration*/
-      }
-    
-    ydata = NV_DATA_S(solver->y);
-    
-    /* update cvodeData time dependent variables */    
-    for ( i=0; i<om->neq; i++ )
-      data->value[i] = ydata[i];
-    
-    if ( opt->Sensitivity ) {
-      flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
-      if ( flag != CV_SUCCESS )
-	return 0;
-      else {
-	printf("HALLO SENSI!\n");fflush(stdout);
-	printf("allocated yS for neq %d, and nsens %d\n", om->neq, om->nsens);
-	fflush(stdout);
-	printf("time %g: ", solver->t);fflush(stdout);
-	for ( j=0; j<data->nsens; j++ ) {
-	  ySdata = NV_DATA_S(solver->yS[j]);
-	  printf("%d: ", j);fflush(stdout);
-	  for ( i=0; i<data->neq; i++ ) {
-	    data->sensitivity[i][j] = ySdata[i];
-	    printf("%g ", data->sensitivity[i][j]);fflush(stdout);
-	  }
-	  printf(" fertich\n");	 fflush(stdout);  
+      return 0;
+    else {
+      for ( j=0; j<data->nsens; j++ ) {
+	ySdata = NV_DATA_S(solver->yS[j]);
+	for ( i=0; i<data->neq; i++ ) {
+	  data->sensitivity[i][j] = ySdata[i];
+          /* store results */
+	  if (opt->StoreResults);
+	    results->sensitivity[i][j][solver->iout-1] = ySdata[i]; 
 	}
       }
     }
-
-    i = IntegratorInstance_updateData(engine);
-    /* update rest of data with internal default function */
-    printf("returning %d\n", i);
-    return i;
+    
+    return 1;
 }
 
 
-/************* CVODE integrator setup functions ************/
+/************* CVODES integrator setup functions ************/
 
 
-/* creates CVODE structures and fills cvodeSolver 
+/* creates CVODES structures and fills cvodeSolver 
    return 1 => success
    return 0 => failure
 */
 int
-IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
+IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
     int i, j, flag, neq, ns;
     realtype *ydata, *abstoldata, *ySdata;
@@ -236,8 +143,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     cvodeData_t *data = engine->data;
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
-    
-    realtype pbar[data->nsens];
+
+    realtype pbar[data->nsens+1];
+    int plist[data->nsens+1];
     neq = engine->om->neq; /* number of equations */
 
      /* construct jacobian, if wanted and not yet existing */
@@ -248,37 +156,22 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* free jacobian from former runs (not necessary, frees also
          unsuccessful jacobians from former runs ) */
       if ( om->jacob != NULL) {
-	for ( i=0; i<om->neq; i++ )
-	  free(om->jacob[i]);
-	free(om->jacob);
-	om->jacob = NULL;
+        for ( i=0; i<om->neq; i++ )
+          free(om->jacob[i]);
+        free(om->jacob);
+        om->jacob = NULL;
       }
       SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-			"Jacobian matrix construction skipped.");
+                        SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+                        "Jacobian matrix construction skipped.");
       om->jacobian = opt->UseJacobian;
     }
 
     
-    /* construct sensitivity related structures */
-    /* free sensitivity from former runs (might have changed
-       for non-default cases!) */
-    if ( om->jacob_sens != NULL ) {
-      ODEModel_freeSensitivity(om);
-    }
-    if ( opt->Sensitivity ) {
-      /* reset Sensitivity option, depending on success */
-      /* this function will require additional input for
-         non-default case, via sensitivity input settings! */
-      opt->Sensitivity = ODEModel_constructSensitivity(om);
-    }
-    else {
-      om->sensitivity = opt->Sensitivity;
-    }
-    
+  
     /* CVODESolverStructures from former runs must be freed */
     if ( data->run > 1 )
-      IntegratorInstance_freeCVODESolverStructures(engine);
+      IntegratorInstance_freeCVODESSolverStructures(engine);
 
     
     /*
@@ -288,17 +181,16 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector y failed");
+                        "N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
     solver->abstol = N_VNew_Serial(neq);
     if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector abstol failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector abstol failed");
+                        "N_VNew_Serial for vector abstol failed");
       return 0; /* error */
     }
-
     
     /*
      * Initialize y, abstol vectors
@@ -325,7 +217,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     solver->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
     if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeCreate failed");
+                        "CVodeCreate failed");
     }
 
     /*
@@ -343,10 +235,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
                        CV_SV, solver->reltol, solver->abstol);
     if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeMalloc failed");
+                        "CVodeMalloc failed");
       return 0; /* error ??? not required, handled by solverError ???  */
     }
-    
     /*
      * Link the main integrator with data for right-hand side function
      */ 
@@ -387,108 +278,110 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
 
 
-    /* Sensitivity-related settings */
-    if ( opt->Sensitivity ) {
 
-      ns = data->nsens;
-      engine->solver->nsens = data->nsens;
-      /* constructParametricJacobian(om) */
+    /* construct sensitivity related structures */
+    /* free sensitivity from former runs (might have changed
+       for non-default cases!) */
+    if ( om->jacob_sens != NULL ) 
+      ODEModel_freeSensitivity(om);
+    /* this function will require additional input for
+       non-default case, via sensitivity input settings! */
+    ODEModel_constructSensitivity(om);
+    
+    ns = data->nsens;
+    engine->solver->nsens = data->nsens;
+    /* constructParametricJacobian(om) */
 
-      for ( i=0; i<ns; i++ )
-	pbar[i] = data->value[om->index_sens[i]];
 
-      solver->yS = N_VNewVectorArray_Serial(ns, neq);      
-      if (check_flag((void *)solver->yS, "N_VNewVectorArray_Serial",
-		     1, stderr))
-	return(0);
+    solver->yS = N_VNewVectorArray_Serial(ns, neq);      
+    if (check_flag((void *)solver->yS, "N_VNewVectorArray_Serial",
+		   1, stderr))
+      return(0);
 
-      /* (re)initialize sensitivities */
-      for ( j=0; j<data->nsens; j++ ) {
-	  ySdata = NV_DATA_S(solver->yS[j]);
-	  for ( i=0; i<data->neq; i++ ) 
-	    ySdata[i] = data->sensitivity[i][j];
-      }
+    /* (re)initialize sensitivities */
+    for ( j=0; j<data->nsens; j++ ) {
+      ySdata = NV_DATA_S(solver->yS[j]);
+      for ( i=0; i<data->neq; i++ ) 
+	ySdata[i] = data->sensitivity[i][j];
+    }
 
-      flag = CVodeSensMalloc(solver->cvode_mem, ns, CV_STAGGERED1, solver->yS);
-      if(check_flag(&flag, "CVodeSensMalloc", 1, stderr)) {
-	/* ERROR HANDLING CODE if failes */
-      }
+    flag = CVodeSensMalloc(solver->cvode_mem, ns, CV_STAGGERED1, solver->yS);
+    if(check_flag(&flag, "CVodeSensMalloc", 1, stderr)) {
+      /* ERROR HANDLING CODE if failes */
+    }
 
+    /* setting parameter values and R.H.S function fS */
+   
+    /* was construction of parametric matrix successfull ? */
+    if ( om->sensitivity ) {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, fS);
       if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
 	/* ERROR HANDLING CODE if failes */
-      } 
-      
-      flag = CVodeSetSensErrCon(solver->cvode_mem, TRUE);
-      if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr)) {
+      }
+    }
+    else {
+      /*!!! ???!!DOESNT WORK CURRENTLY!!??? !!!*/
+      return 0;
+      flag = CVodeSetSensRho(solver->cvode_mem, 0.0);
+      if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
 	/* ERROR HANDLING CODE if failes */
-      } 
-      
-      flag = CVodeSetSensFdata(solver->cvode_mem, data);
-      if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr))  {
-	/* ERROR HANDLING CODE if  failes */
-      }
-      
-      flag = CVodeSetSensParams(solver->cvode_mem, NULL, pbar, NULL);
-      if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
-	/* ERROR HANDLING CODE if  failes */
-      }
-      
+      }      
     }
     
+    /* plist could later be used to specify parameters for sens.analysis */
+    ASSIGN_NEW_MEMORY_BLOCK(data->p, ns, realtype, 0);
+    for ( i=0; i<ns; i++ ) {
+      plist[i] = i+1;
+      data->p[i] = data->value[om->index_sens[i]];
+      pbar[i] = abs(data->p[i]);
+    }
+
+    /* data->p is actually only required if R.H.S. cannot be supplied */     
+    flag = CVodeSetSensParams(solver->cvode_mem, data->p, pbar, plist);
+    if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
+      /* ERROR HANDLING CODE if  failes */
+    }
+    
+    flag = CVodeSetSensErrCon(solver->cvode_mem, TRUE);
+    if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr)) {
+      /* ERROR HANDLING CODE if failes */
+    } 
+      
+    flag = CVodeSetSensFdata(solver->cvode_mem, data);
+    if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr))  {
+      /* ERROR HANDLING CODE if  failes */
+    }
+      
+     
     return 1; /* OK */
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
-void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
+void IntegratorInstance_freeCVODESSolverStructures(integratorInstance_t *engine)
 {
-    /* Free the y, abstol vectors */ 
-    N_VDestroy_Serial(engine->solver->y);
-    N_VDestroy_Serial(engine->solver->abstol);
-
-    /* Free the integrator memory */
-    CVodeFree(engine->solver->cvode_mem);
-
-    /* Free yS vector */
-    if ( engine->opt->Sensitivity ) {
-      N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
-    }
+    /* Free CVODE structures */ 
+    IntegratorInstance_freeCVODESolverStructures(engine);
+    
+    /* Free sensitivity vector yS */
+    IntegratorInstance_freeSensSolverStructures(engine);
+ 
 }
 
-
+/* frees N_V vector structures, and the cvode_mem solver */
+static void IntegratorInstance_freeSensSolverStructures(integratorInstance_t *engine)
+{
+    /* Free sensitivity vector yS */
+    N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
+}
 
 /** \brief Prints some final statistics of the calls to CVODE routines
 */
 
-SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
 {
-    int flag;
-    long int nst, nfe, nsetups, nje, nni, ncfn, netf;
-
-    cvodeSettings_t *opt = engine->opt;
-    cvodeSolver_t *solver = engine->solver;
-
-    flag = CVodeGetNumSteps(solver->cvode_mem, &nst);
-    check_flag(&flag, "CVodeGetNumSteps", 1, f);
-    CVodeGetNumRhsEvals(solver->cvode_mem, &nfe);
-    check_flag(&flag, "CVodeGetNumRhsEvals", 1, f);
-    flag = CVodeGetNumLinSolvSetups(solver->cvode_mem, &nsetups);
-    check_flag(&flag, "CVodeGetNumLinSolvSetups", 1, f);
-    flag = CVDenseGetNumJacEvals(solver->cvode_mem, &nje);
-    check_flag(&flag, "CVDenseGetNumJacEvals", 1, f);
-    flag = CVodeGetNonlinSolvStats(solver->cvode_mem, &nni, &ncfn);
-    check_flag(&flag, "CVodeGetNonlinSolvStats", 1, f);
-    flag = CVodeGetNumErrTestFails(solver->cvode_mem, &netf);
-    check_flag(&flag, "CVodeGetNumErrTestFails", 1, f);
-
-    fprintf(f, "\n## Integration Parameters:\n");
-    fprintf(f, "## mxstep   = %d rel.err. = %g abs.err. = %g \n",
-	    opt->Mxstep, opt->RError, opt->Error);
-    fprintf(f, "## CVode Statistics:\n");
-    fprintf(f, "## nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
-	    nst, nfe, nsetups, nje); 
-    fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n\n",
-	    nni, ncfn, netf);
+  /* print CVODE statistics */
+  IntegratorInstance_printCVODEStatistics(engine, f);
+  /* print additional CVODES statistics ...*/
 }
 
 
@@ -551,6 +444,10 @@ static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
+  /* update parameters */
+  for ( i=0; i<data->nsens; i++ )
+    data->value[data->model->index_sens[i]] = data->p[i];
+
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
@@ -591,6 +488,10 @@ JacODE(long int N, DenseMat J, realtype t,
   cvodeData_t *data;
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
+
+  /* update parameters */
+  for ( i=0; i<data->nsens; i++ )
+    data->value[data->model->index_sens[i]] = data->p[i];
   
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
@@ -632,6 +533,10 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   
   dySdata = NV_DATA_S(ySdot);
 
+  /* update parameters */
+  for ( i=0; i<data->nsens; i++ )
+    data->value[data->model->index_sens[i]] = data->p[i];
+  
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];

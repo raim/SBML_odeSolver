@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 14:26:21 raim>
-  $Id: odeSolver.c,v 1.31 2005/10/28 12:40:11 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 17:32:01 raim>
+  $Id: odeSolver.c,v 1.32 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -131,11 +131,12 @@ SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
 */
 
 SBML_ODESOLVER_API SBMLResults_t *
-Model_odeSolver(Model_t *m, cvodeSettings_t *set) {
-  
+Model_odeSolver(Model_t *m, cvodeSettings_t *set)
+{
   odeModel_t *om;
   integratorInstance_t *ii; 
   SBMLResults_t *results;
+  int errorCode = 0;
   
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs. SBML RateRules,
@@ -167,9 +168,9 @@ Model_odeSolver(Model_t *m, cvodeSettings_t *set) {
       The function will also handle events and
       check for steady states.
   */
-  while (!IntegratorInstance_timeCourseCompleted(ii)) {
+  while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode) {
     if (!IntegratorInstance_integrateOneStep(ii))
-      IntegratorInstance_handleError(ii);
+      errorCode = IntegratorInstance_handleError(ii);
   }  
   RETURN_ON_FATALS_WITH(NULL);
 
@@ -204,6 +205,8 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   SBMLResultsMatrix_t *resM;
 
   char *local_param;
+  
+  int errorCode = 0;
 
 
   resM = SBMLResultsMatrix_allocate(vs->nrparams, vs->nrdesignpoints);
@@ -253,9 +256,9 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
       /** .... the integrator loop can be started, that invoking
 	  CVODE to move one time step and store results. The
 	  function will also handle events and check for steady states. */ 
-      while (!IntegratorInstance_timeCourseCompleted(ii)) {
+      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode) {
 	if (!IntegratorInstance_integrateOneStep(ii))
-	  IntegratorInstance_handleError(ii);
+	  errorCode = IntegratorInstance_handleError(ii);
       }
     
       RETURN_ON_FATALS_WITH(NULL);

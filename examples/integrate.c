@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:49:44 raim>
-  $Id: integrate.c,v 1.8 2005/10/26 15:53:16 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 17:33:50 raim>
+  $Id: integrate.c,v 1.9 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -84,7 +84,7 @@ main (int argc, char *argv[]){
   /* print results */
   printf("### RESULTS \n");
   SBMLResults_dump(results);
-  
+  SolverError_dumpAndClearErrors();
   /* now we can also free the result structure */
   SBMLResults_free(results);
 

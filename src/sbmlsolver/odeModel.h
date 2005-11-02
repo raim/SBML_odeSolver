@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 00:04:02 raim>
-  $Id: odeModel.h,v 1.14 2005/10/27 22:30:31 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-01 15:59:04 raim>
+  $Id: odeModel.h,v 1.15 2005/11/02 17:32:13 raimc Exp $ 
 */
 /* 
  *
@@ -57,20 +57,26 @@ extern "C" {
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *);
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNsens(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
   SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);  
   SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *);
+  SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
   SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
  
 #ifdef __cplusplus

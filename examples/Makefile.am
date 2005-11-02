@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.10 2005/10/28 11:45:48 raimc Exp $
+# $Id: Makefile.am,v 1.11 2005/11/02 17:32:13 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -31,8 +31,9 @@
 INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @CVODE_CFLAGS@
 AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
-bin_PROGRAMS = defSeries integrate batchIntegrate simpleIntInst \
-               changeIntInst ASTIndexTest printODEs analyzeJacobian
+bin_PROGRAMS = defSeries integrate sensitivity batchIntegrate \
+               simpleIntInst changeIntInst ASTIndexTest \
+               printODEs analyzeJacobian analyzeSens
 printODEs_SOURCES = printODEModel.c
 printODEs_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
@@ -54,6 +55,13 @@ integrate_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     -lstdc++ -lxerces-c -lm
+sensitivity_SOURCES = sensitivity.c
+sensitivity_LDADD   = -L../src -L/@prefix@/lib -lODES \
+                      @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                      @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                      @SBML_LDFLAGS@ @SBML_LIBS@ \
+                      @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
+                      -lstdc++ -lxerces-c -lm
 batchIntegrate_SOURCES = batch_integrate.c
 batchIntegrate_LDADD   = -L../src -L/@prefix@/lib -lODES \
                          @GRACE_LDFLAGS@ @GRACE_LIBS@ \
@@ -86,3 +94,10 @@ analyzeJacobian_LDADD   = -L../src -L/@prefix@/lib -lODES \
                           @SBML_LDFLAGS@ @SBML_LIBS@ \
                           @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                           -lstdc++ -lxerces-c -lm
+analyzeSens_SOURCES = analyzeSensitivity.c
+analyzeSens_LDADD   = -L../src -L/@prefix@/lib -lODES \
+                      @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                      @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                      @SBML_LDFLAGS@ @SBML_LIBS@ \
+                      @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
+                      -lstdc++ -lxerces-c -lm

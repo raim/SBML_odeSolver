@@ -18,7 +18,12 @@
          <specie name = "MAPK_P" boundaryCondition = "false" initialAmount = "10" compartment = "uVol"/>
          <specie name = "MAPK_PP" boundaryCondition = "false" initialAmount = "10" compartment = "uVol"/>
       </listOfSpecies>
-      <listOfReactions>
+      <listOfParameters>
+                  <parameter name = "V1" value = "2.5"/>
+                  <parameter name = "Ki" value = "9"/>
+                   <parameter name = "K1" value = "10"/>
+       </listOfParameters>
+       <listOfReactions>
          <reaction name = "J0" reversible = "false">
             <listOfReactants>
                <specieReference specie = "MKKK" stoichiometry = "1"/>
@@ -27,12 +32,9 @@
                <specieReference specie = "MKKK_P" stoichiometry = "1"/>
             </listOfProducts>
             <kineticLaw formula = "V1*MKKK/((1+(MAPK_PP/Ki)^n)*(K1+MKKK))">
-               <listOfParameters>
-                  <parameter name = "V1" value = "2.5"/>
-                  <parameter name = "Ki" value = "9"/>
-                  <parameter name = "n" value = "1"/>
-                  <parameter name = "K1" value = "10"/>
-               </listOfParameters>
+                <listOfParameters>
+                     <parameter name = "n" value = "1"/>
+                </listOfParameters>
             </kineticLaw>
          </reaction>
          <reaction name = "J1" reversible = "false">

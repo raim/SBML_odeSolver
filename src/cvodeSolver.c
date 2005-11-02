@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 19:46:33 raim>
-  $Id: cvodeSolver.c,v 1.4 2005/10/27 17:58:51 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 11:50:09 raim>
+  $Id: cvodeSolver.c,v 1.5 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -231,7 +231,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     
     /* CVODESolverStructures from former runs must be freed */
     if ( data->run > 1 )
-      IntegratorInstance_freeCVODESolverStructures(engine->solver);
+      IntegratorInstance_freeCVODESolverStructures(engine);
 
     
     /**
@@ -343,14 +343,14 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
-void IntegratorInstance_freeCVODESolverStructures(cvodeSolver_t *solver)
+void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 {
     /* Free the y, abstol vectors */ 
-    N_VDestroy_Serial(solver->y);
-    N_VDestroy_Serial(solver->abstol);
+    N_VDestroy_Serial(engine->solver->y);
+    N_VDestroy_Serial(engine->solver->abstol);
 
     /* Free the integrator memory */
-    CVodeFree(solver->cvode_mem);
+    CVodeFree(engine->solver->cvode_mem);
 }
 
 

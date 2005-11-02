@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 12:09:49 raim>
-  $Id: cvodeSolver.h,v 1.4 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 12:00:52 raim>
+  $Id: sensSolver.h,v 1.1 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -43,13 +43,13 @@
 extern "C" {
 #endif
 
-  /* CVODE SOLVER */
-  SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstance_t *, FILE *f);
+  /* CVODES SOLVER */
+  SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
 
   /* internal functions that are not part of the API (yet?) */
-  int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);
-  void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
+  int IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *);
+  void IntegratorInstance_freeCVODESSolverStructures(integratorInstance_t *);
 
 #ifdef __cplusplus
 }

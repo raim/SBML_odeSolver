@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:20:18 raim>
-  $Id: processAST.c,v 1.15 2005/10/28 09:04:12 afinney Exp $
+  Last changed Time-stamp: <2005-11-01 15:33:46 raim>
+  $Id: processAST.c,v 1.16 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -593,7 +593,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   int i, j, childnum;
   int found;
   ASTNodeType_t type;
-  ASTNode_t *fprime, *helper;
+  ASTNode_t *fprime, *helper, *simple;
   ASTNode_t *help_1, *help_2, *help_3;
   ASTNode_t *prod, *sum, *tmp;
   List_t *list;
@@ -1538,8 +1538,10 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 		      "differentiateAST: unknown ASTNode type");
     ASTNode_setName(fprime, "differentiation_failed");
   }
-  
-  return fprime;
+  /* return fprime; */
+  simple = AST_simplify(fprime);
+  ASTNode_free(fprime);
+  return simple;
 
 }
 

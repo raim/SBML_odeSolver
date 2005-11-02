@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 23:58:18 raim>
-  $Id: cvodedata.c,v 1.19 2005/10/27 22:30:31 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 17:04:05 raim>
+  $Id: cvodedata.c,v 1.20 2005/11/02 17:32:13 raimc Exp $
 */
 /* 
  *
@@ -52,72 +52,42 @@
 
 
 /* private functions */
-static void CvodeData_freeStructures(cvodeData_t * data);
-static cvodeData_t *CvodeData_allocate(int nvalues, int nevents);
-
+static void CvodeData_freeStructures(cvodeData_t *);
+static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int nconst);
+static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
 
 /* Internal Integration Data: The functions allocate and free
   cvodeData and cvodeResults required by the CVODE interface functions
   to read values and store results, respectively. */
-static cvodeData_t *CvodeData_allocate(int nvalues, int nevents){
-
+static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int nconst)
+{
   cvodeData_t * data;
 
   ASSIGN_NEW_MEMORY(data, struct cvodeData, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->trigger, nevents, int, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->value, nvalues, double, NULL);
+  data->sensitivity = NULL;
+  data->p = NULL;
   
   return data ;
 }
 
-
-
-/* initialize cvodeData from cvodeSettings and odeModel (could be
-   separated in to functions to further support modularity and
-   independence of data structures */
-int
-CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
+static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 {
-
   int i;
-
-  /* data now also depends on cvodeSettings */
-  data->opt = opt;
   
-  /* initialize values */
-  CvodeData_initializeValues(data);
-     
-  /* set current time */
-  data->currenttime = opt->TimePoints[0];
+  ASSIGN_NEW_MEMORY_BLOCK(data->sensitivity, neq, double *, 0);
+  for ( i=0; i<neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(data->sensitivity[i], nsens, double, 0);
 
-  /* update assigned parameters, in case they depend on new time */
-  for ( i=0; i<om->nass; i++ ) 
-    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+  data->nsens = nsens;
+  data->neq = neq;
 
-  /*
-    Then, check if formulas can be evaluated, and cvodeData_t *
-    contains all necessary variables:
-    evaluateAST(ASTNode_t *f, ,data) will
-    ask the user for a value, if a a variable is unknown
-  */
-  for ( i=0; i<om->neq; i++ ) 
-    evaluateAST(om->ode[i], data);
+    
 
-  /* Now we should have all variables, and can allocate the
-     results structure, where the time series will be stored ...  */
-  /* allow results only for finite integrations */
-  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
-  /* free former results */
-  if ( data->results != NULL )
-      CvodeResults_free(data->results);
-  /* create new results if required */
-  if ( opt->StoreResults ) {
-    data->results = CvodeResults_create(data, opt->PrintStep);
-    RETURN_ON_FATALS_WITH(0);
-  }
-  
   return 1;
 }
+
 
 
 /* Step I.2: */
@@ -137,7 +107,7 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
   nvalues = neq + nconst + nass;
 
   /* allocate memory for current integration data storage */
-  data = CvodeData_allocate(nvalues, nevents);
+  data = CvodeData_allocate(nvalues, nevents, nconst);
   RETURN_ON_FATALS_WITH(NULL);
 
   data->nvalues = nvalues;
@@ -187,6 +157,112 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 }
 
 
+/* initialize cvodeData from cvodeSettings and odeModel (could be
+   separated in to functions to further support modularity and
+   independence of data structures */
+int
+CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
+{
+
+  int i, j;
+
+  /* data now also depends on cvodeSettings */
+  data->opt = opt;
+  
+  /* initialize values */
+  CvodeData_initializeValues(data);
+     
+  /* set current time */
+  data->currenttime = opt->TimePoints[0];
+
+  /* update assigned parameters, in case they depend on new time */
+  for ( i=0; i<om->nass; i++ ) 
+    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+
+  /*
+    Then, check if formulas can be evaluated, and cvodeData_t *
+    contains all necessary variables:
+    evaluateAST(ASTNode_t *f, ,data) will
+    ask the user for a value, if a a variable is unknown
+  */
+  for ( i=0; i<om->neq; i++ ) 
+    evaluateAST(om->ode[i], data);
+
+  
+  /* create structures for sensitivity analysis */
+  if ( opt->Sensitivity ) {
+    /* the following can later be called with numbers from
+       sensitivity Settings inputs */
+    if ( data->sensitivity == NULL ) {
+      CvodeData_allocateSens(data, om->neq, om->nconst);
+      RETURN_ON_FATALS_WITH(0);
+    }
+    /* (re)set to 0.0 initial value */
+    for ( i=0; i<om->neq; i++ ) {
+      for ( j=0; j<om->nsens; j++ ) {
+	data->sensitivity[i][j] = 0.0;
+      }
+    }
+  }
+
+  /* Now we should have all variables, and can allocate the
+     results structure, where the time series will be stored ...  */
+  /* allow results only for finite integrations */
+  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
+  /* free former results */
+  if ( data->results != NULL )
+      CvodeResults_free(data->results);
+  /* create new results if required */
+  if ( opt->StoreResults ) {
+    data->results = CvodeResults_create(data, opt->PrintStep);
+    RETURN_ON_FATALS_WITH(0);
+    if  ( opt->Sensitivity ) {
+      CvodeResults_allocateSens(data->results, om->neq, om->nconst,
+				opt->PrintStep);
+      /* write initial values for sensitivity */
+      for ( i=0; i<data->results->neq; i++ )
+	for ( j=0; j<data->results->nsens; ++j )
+	  data->results->sensitivity[i][j][0] = data->sensitivity[i][j];
+    }
+    RETURN_ON_FATALS_WITH(0);
+  }
+
+  
+  return 1;
+}
+
+
+
+/* frees all internal stuff of cvodeData */
+static void CvodeData_freeStructures(cvodeData_t * data)
+{
+  int i;
+
+  if(data == NULL){
+    return;
+  }
+
+  /* free sensitivity structure */
+  if ( data->p != NULL )
+    free(data->p);
+  if ( data->sensitivity != NULL ) {
+    for ( i=0; i<data->neq; i++ )
+      free(data->sensitivity[i]);
+    free(data->sensitivity);
+  }
+	   
+  /* free results structure */
+  CvodeResults_free(data->results);
+
+  /* free current values array */
+  free(data->value);
+  
+  /* free event trigger flags */
+  free(data->trigger);
+
+}
+
+
 /** Frees cvodeData, as created by IntegratorInstance
 */
 
@@ -201,26 +277,24 @@ void CvodeData_free(cvodeData_t * data) {
 }
 
 
-/* frees all internal stuff of cvodeData */
-static void CvodeData_freeStructures(cvodeData_t * data) {
-
-  if(data == NULL){
-    return;
-  }
-
-  /* free results structure */
-  CvodeResults_free(data->results);
-
-  /* free current values array */
-  free(data->value);
-  
-  /* free event trigger flags */
-  free(data->trigger);
-
-}
-
-
 /********* cvodeResults will be created by integration runs *********/
+
+int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int nout)
+{
+  int i, j;
+
+  ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity, neq, double **, 0);
+  for ( i=0; i<neq; i++ ) {
+    ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity[i], nsens, double*, 0);
+    for ( j=0; j<nsens; ++j )
+      ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity[i][j], nout+1, double, 0);
+  }
+  
+  results->nsens = nsens;
+  results->neq = neq;    
+
+  return 1;
+}
 
 /* Creates cvodeResults, the structure that stores
    CVODE integration results */
@@ -229,19 +303,21 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
   int i;
   cvodeResults_t *results;
 
-  ASSIGN_NEW_MEMORY(results, struct cvodeResults, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(results->time, nout+1, double, NULL)
+  ASSIGN_NEW_MEMORY(results, struct cvodeResults, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(results->time, nout+1, double, NULL);
   
   /* The 2-D array `value' contains the time courses, that are
      calculated by ODEs (SBML species, or compartments and parameters
      defined by rate rules.
   */
-    ASSIGN_NEW_MEMORY_BLOCK(results->value, data->nvalues, double *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(results->value, data->nvalues, double *, NULL);
 
   results->nvalues = data->nvalues;    
 
   for ( i=0; i<data->nvalues; ++i )
-    ASSIGN_NEW_MEMORY_BLOCK(results->value[i], nout+1, double, NULL)
+    ASSIGN_NEW_MEMORY_BLOCK(results->value[i], nout+1, double, NULL);
+
+  results->sensitivity = NULL;
   
   return results;  
 }
@@ -265,15 +341,26 @@ SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *results, int n)
 
 
 /** Returns the value of a variable or parameter of the odeModel
-    at time step n via its variableIndex, where
-    0 <= n < CvodeResults_getNout, and the variableIndex can be retrieved
-    from the input odeModel
+    at time step timestep via its variableIndex, where
+    0 <= timestep < CvodeResults_getNout,
+    and the variableIndex can be retrieved from the input odeModel
 */
 
-SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
-						variableIndex_t *vi, int n)
+SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variableIndex_t *vi, int timestep)
 {
-  return results->value[n][vi->index];
+  return results->value[vi->index][timestep];
+}
+
+
+/** Returns the sensitivity of ODE variable y to parameter p
+    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
+
+    Must not be called, if sensitivity wasn't calculated!
+*/
+
+SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *p, int timestep)
+{
+  return results->sensitivity[y->type_index][p->type_index][timestep];
 }
 
 
@@ -282,14 +369,21 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results,
 */
 void CvodeResults_free(cvodeResults_t *results) {
 
-  int i;
+  int i, j;
   /* free CVODE results if filled */
   if(results != NULL){
-    for(i=0;i<results->nvalues;i++){
+    for( i=0; i<results->nvalues; i++ ) 
       free(results->value[i]);
-    }
     free(results->time);
     free(results->value);
+    if ( results->sensitivity != NULL ) {
+      for ( i=0; i<results->neq; i++ ) {
+	for ( j=0; j<results->nsens; ++j )
+	  free(results->sensitivity[i][j]);
+	free(results->sensitivity[i]);
+      }
+      free(results->sensitivity);
+    }
     free(results);	      
   }
 }
