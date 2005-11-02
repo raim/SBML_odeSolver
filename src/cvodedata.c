@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:04:05 raim>
-  $Id: cvodedata.c,v 1.20 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 18:49:57 raim>
+  $Id: cvodedata.c,v 1.21 2005/11/02 17:59:09 raimc Exp $
 */
 /* 
  *
@@ -358,9 +358,21 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variabl
     Must not be called, if sensitivity wasn't calculated!
 */
 
+SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int parameter, int timestep)
+{
+  return results->sensitivity[value][parameter][timestep];
+}
+
+
+/** Returns the sensitivity of ODE variable y to parameter p
+    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
+
+    Must not be called, if sensitivity wasn't calculated!
+*/
+
 SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *p, int timestep)
 {
-  return results->sensitivity[y->type_index][p->type_index][timestep];
+  return results->sensitivity[y->index][p->type_index][timestep];
 }
 
 

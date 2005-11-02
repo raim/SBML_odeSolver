@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:32:57 raim>
-  $Id: integratorInstance.c,v 1.28 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 18:55:32 raim>
+  $Id: integratorInstance.c,v 1.29 2005/11/02 17:59:09 raimc Exp $
 */
 /* 
  *
@@ -415,7 +415,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 
   results->nout = iResults->nout;
 
-  for ( i=0; i <iResults->nout; i++ ) {
+  for ( i=0; i <=results->nout; i++ ) {
     results->time[i] = iResults->time[i];
     for ( j=0; j < iResults->nvalues; j++ )
       results->value[j][i] = iResults->value[j][i];
@@ -426,7 +426,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 			      iResults->nout);
     for ( i=0; i<results->neq; i++ )
       for ( j=0; j<results->nsens; ++j )
-	for ( k=0; k<results->nout; k++ )
+	for ( k=0; k<=results->nout; k++ )
 	  results->sensitivity[i][j][k] = iResults->sensitivity[i][j][k];
   }
 

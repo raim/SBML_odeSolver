@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 16:35:34 raim>
-  $Id: cvodedata.h,v 1.18 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-02 18:51:16 raim>
+  $Id: cvodedata.h,v 1.19 2005/11/02 17:59:09 raimc Exp $
 */
 /* 
  *
@@ -181,7 +181,8 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeData_free(cvodeData_t *);
   SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
   SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *);
-
+  SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
+  SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
 #ifdef __cplusplus
 }
 #endif
