@@ -58,7 +58,7 @@ Non-standard locations of required and optional packages:
  With 
 
 	./configure --with-libsbml=LIBSBMLPATH
-	./configure --with-sundialscvode=SUNDIALSPATH
+	./configure --with-sundials=SUNDIALSPATH
 	./configure --with-grace=GRACEPATH
 	./configure --with-graphviz=GRAPHVIZPATH
 
