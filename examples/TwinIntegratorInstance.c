@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: TwinIntegratorInstance.c,v 1.2 2005/10/28 15:18:28 afinney Exp $
+  Last changed Time-stamp: <2005-11-03 11:03:51 raim>
+  $Id: TwinIntegratorInstance.c,v 1.3 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -82,7 +82,7 @@ int main (int argc, char *argv[])
     /* Setting Integration Switches: see documentation or
        example simpleIntegratorInstance.c for details on
        the passed values */
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
 
     integratorInstanceA = IntegratorInstance_create(modelA, settings);
     integratorInstanceB = IntegratorInstance_create(modelB, settings);

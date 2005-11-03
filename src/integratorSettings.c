@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:17:09 raim>
-  $Id: integratorSettings.c,v 1.12 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:11:47 raim>
+  $Id: integratorSettings.c,v 1.13 2005/11/03 10:13:51 raimc Exp $
 */
 /* 
  *
@@ -60,7 +60,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
   return CvodeSettings_createWith(Time, PrintStep,
-				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1, 1);
+				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1, 1, 0);
 }
 
 
@@ -79,6 +79,10 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 	 set->RError);
   printf("max. nr. of steps to reach next output time:       %d\n",
 	 set->Mxstep);
+  printf("Sensitivity:     %s\n", set->Sensitivity ?
+	 "1: yes " : "0: no");
+  printf("     method:     %d: %s\n",
+	 set->SensMethod, CvodeSettings_getSensMethod(set));
   printf("2) SOSlib SPECIFIC SETTINGS:\n");
   printf("Jacobian matrix: %s\n", set->UseJacobian ?
 	 "1: generate Jacobian" : "0: CVODE's internal approximation");
@@ -111,7 +115,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
     as new settings will be required for other solvers!
 */
 
-SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity)
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {
 
   cvodeSettings_t *set;
@@ -121,7 +125,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   CvodeSettings_setErrors(set, Error, RError, Mxstep);
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
 			    HaltOnEvent, SteadyState, StoreResults,
-			    Sensitivity);
+			    Sensitivity, SensMethod);
 
   /* 2. Setting Requested Time Series */
   /* Unless indefinite integration, generate a TimePoints array  */
@@ -146,7 +150,8 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
   CvodeSettings_setErrors(set, set->Error, set->RError, set->Mxstep);
   CvodeSettings_setSwitches(set, set->UseJacobian, set->Indefinitely,
 			    set->HaltOnEvent, set->SteadyState,
-			    set->StoreResults, set->Sensitivity);
+			    set->StoreResults,
+			    set->Sensitivity, set->SensMethod);
   
   /* Unless indefinite integration is chosen, generate a TimePoints array  */
   if  ( !clone->Indefinitely ) {    
@@ -204,7 +209,7 @@ SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep
     as new settings will be required for other solvers!
 */
 
-SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity)
+SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {  
   set->UseJacobian = UseJacobian;
   set->Indefinitely = Indefinitely;
@@ -212,6 +217,7 @@ SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJ
   set->SteadyState = SteadyState;
   set->StoreResults = StoreResults;
   CvodeSettings_setSensitivity(set, Sensitivity);
+  CvodeSettings_setSensMethod(set, SensMethod);
 }
 
 
@@ -333,13 +339,28 @@ SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int 
 
 
 
-/** CVODES will be used for sensitivity analysis, if i==1
+/** Activate sensitivity analysis with 1; also sets to default
+    sensitivity method `simultaneous' (setSensMethod(set, 0);
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *set, int i)
 {
   set->Sensitivity = i;
+  CvodeSettings_setSensMethod(set, 0);
 }
+
+
+/** Set method for sensitivity analysis:
+    0: simultaneous 1: staggered, 2: staggered1.    
+*/
+
+
+SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *set, int i)
+{
+  if ( 0 <= i < 3 ) set->SensMethod = i;
+  else set->SensMethod = 0;
+}
+
 
 /**** cvodeSettings get methods ****/
 
@@ -486,6 +507,19 @@ SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *set)
 SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *set)
 {
   return set->Sensitivity;
+}
+
+/** Get sensitivity method 
+*/
+
+
+SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
+{
+  char *meth[3];
+  meth[0] = "simultaneous";
+  meth[1] = "staggered";
+  meth[2] = "staggered1";
+  return meth[set->SensMethod];
 }
 
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 21:17:08 raim>
-  $Id: odeModel.c,v 1.24 2005/11/02 20:19:23 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-03 10:34:44 raim>
+  $Id: odeModel.c,v 1.25 2005/11/03 10:13:51 raimc Exp $ 
 */
 /* 
  *
@@ -441,6 +441,8 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int 
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
 {
+  /*!!! needs better solution, if sensitivity for selected params
+        will be implemented !!!*/
   return ODEModel_getSensIJEntry(om, vi1->index, vi2->type_index);
 }
 

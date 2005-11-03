@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 23:22:32 raim>
-  $Id: integratorInstance.c,v 1.33 2005/11/02 22:24:54 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 10:33:21 raim>
+  $Id: integratorInstance.c,v 1.34 2005/11/03 10:13:51 raimc Exp $
 */
 /* 
  *
@@ -280,6 +280,8 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
 
 SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *engine,  variableIndex_t *y,  variableIndex_t *p)
 {
+  /*!!! needs better solution, if sensitivity for selected params
+        will be implemented !!!*/
   return engine->data->sensitivity[y->index][p->type_index];
 }
 
@@ -349,7 +351,8 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
   if ( data->sensitivity == NULL )
     return;
 
-  printf("%g  ", data->value[p->index]);
+  printf("%g  ", data->currenttime);
+  /* printf("%g  ", data->value[p->index]); */
   for ( j=0; j<data->neq; j++ )
     printf("%g ", data->sensitivity[j][p->type_index]);
   printf("\n");
@@ -866,8 +869,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
 /**  \brief Prints some final statistics of the solver
 */
 
-SBML_ODESOLVER_API void
-IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 {
   odeModel_t *om = engine->om;
   cvodeSettings_t *opt = engine->opt;

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:52:43 raim>
-  $Id: sensSolver.c,v 1.3 2005/11/02 19:57:24 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:08:08 raim>
+  $Id: sensSolver.c,v 1.4 2005/11/03 10:13:51 raimc Exp $
 */
 /* 
  *
@@ -306,10 +306,15 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	ySdata[i] = data->sensitivity[i][j];
     }
 
-    flag = CVodeSensMalloc(solver->cvode_mem, ns, CV_STAGGERED1, solver->yS);
+    if ( opt->SensMethod == 0 ) 
+      flag =CVodeSensMalloc(solver->cvode_mem,ns,CV_SIMULTANEOUS,solver->yS);
+    else if ( opt->SensMethod == 1 )
+      flag = CVodeSensMalloc(solver->cvode_mem, ns, CV_STAGGERED, solver->yS);
+    else if ( opt->SensMethod == 2 )
+      flag = CVodeSensMalloc(solver->cvode_mem, ns, CV_STAGGERED1, solver->yS);
     if(check_flag(&flag, "CVodeSensMalloc", 1, stderr)) {
-      /* ERROR HANDLING CODE if failes */
-    }
+	/* ERROR HANDLING CODE if failes */
+      }
 
     /* setting parameter values and R.H.S function fS */
    

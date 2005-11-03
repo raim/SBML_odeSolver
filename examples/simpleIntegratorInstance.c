@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:19:02 raim>
-  $Id: simpleIntegratorInstance.c,v 1.13 2005/11/02 19:33:58 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:03:33 raim>
+  $Id: simpleIntegratorInstance.c,v 1.14 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -106,7 +106,7 @@ int doIt(void)
     CvodeSettings_setTime(set2, 1.2, 6);
     CvodeSettings_setErrors(set2, 1e-16, 1e-14, 500);
     /* switches can be set all together, same order as above */
-    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(set2, 1, 0, 0, 0, 0, 0, 0);
     
     printf("\nNOW, LET'S TRY AGAIN WITH DIFFERENT SETTINGS:\n");
     CvodeSettings_dump(set2);

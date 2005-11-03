@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: ChangingParameterIntegrator.c,v 1.5 2005/10/28 15:18:28 afinney Exp $
+  Last changed Time-stamp: <2005-11-03 11:03:20 raim>
+  $Id: ChangingParameterIntegrator.c,v 1.6 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -81,7 +81,7 @@ int doit(void)
     /* Setting Integration Switches: see documentation or
        example simpleIntegratorInstance.c for details on
        the passed values */
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
 
 
     integratorInstanceA = IntegratorInstance_create(model, settings);

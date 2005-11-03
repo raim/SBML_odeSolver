@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:26:01 raim>
-  $Id: integratorSettings.h,v 1.9 2005/10/26 15:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-03 10:52:14 raim>
+  $Id: integratorSettings.h,v 1.10 2005/11/03 10:13:51 raimc Exp $ 
 */
 /* 
  *
@@ -67,10 +67,11 @@ extern "C" {
     int Indefinitely;     /* run without a defined end time, Time field
 			     contains step duration, ignore PrintStep
 			     field*/
-    int Sensitivity;      /* use CVODES for sensitivity analysis */
     double Error;         /* absolute tolerance in Cvode integration */
     double RError;        /* relative tolerance in Cvode integration */
     int Mxstep;           /* maximum step number for CVode integration */
+    int Sensitivity;      /* use CVODES for sensitivity analysis */
+    int SensMethod;       /* flag for sensitivity analysis method */
     
     int HaltOnEvent;      /* Stops integration upon an event */
     int SteadyState;      /* Stops integration upon a steady state */
@@ -87,10 +88,10 @@ extern "C" {
   /* create and free, get and set cvodeSettings */
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create();
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep);
-  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity);
+  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *, double EndTime, int PrintStep);
   SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *, int, double);
-  SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity);
+  SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API void CvodeSettings_setErrors(cvodeSettings_t *, double Error, double RError, int Mxstep);
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
@@ -101,6 +102,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *);
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *);
@@ -119,6 +121,7 @@ extern "C" {
   SBML_ODESOLVER_API int CvodeSettings_getSteadyState(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *);
+  SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *);
 
   
 #ifdef __cplusplus

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: ChangingIntegratorInstance.c,v 1.10 2005/10/28 13:36:31 afinney Exp $
+  Last changed Time-stamp: <2005-11-03 11:02:49 raim>
+  $Id: ChangingIntegratorInstance.c,v 1.11 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -89,7 +89,7 @@ int doit(void)
     /* Setting Integration Switches: see documentation or
        example simpleIntegratorInstance.c for details on
        the passed values */
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
 
     /* Generate two independent integrator instances from the same
        odeModel and cvodeSettings */

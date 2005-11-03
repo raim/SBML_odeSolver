@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:55:50 raim>
-  $Id: sensitivity.c,v 1.3 2005/11/02 19:57:24 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:12:33 raim>
+  $Id: sensitivity.c,v 1.4 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -55,6 +55,10 @@ main (int argc, char *argv[]){
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
+  /* 0: simultaneous 1: staggered, 2: staggered1
+     see CVODES user guide for details */
+  CvodeSettings_setSensMethod(set, 0);
+  /* CvodeSettings_dump(set); */
 
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
@@ -64,8 +68,11 @@ main (int argc, char *argv[]){
   /* calling the integrator */
   ii = IntegratorInstance_create(om, set);
 
-  printf("### Printing Sensitivities for one parameter on the fly,\n");
-  printf("#%s  ", ODEModel_getVariableName(om, p));
+  printf("### Printing Sensitivities to %s (%g) on the fly:\n",
+	 ODEModel_getVariableName(om, p),
+	 IntegratorInstance_getVariableValue(ii, p));
+  
+  printf("#time  ");
   IntegratorInstance_dumpNames(ii);
 
   IntegratorInstance_dumpPSensitivities(ii, p);

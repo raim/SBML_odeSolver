@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 23:27:32 raim>
-  $Id: batch_integrate.c,v 1.16 2005/11/03 08:33:10 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:02:24 raim>
+  $Id: batch_integrate.c,v 1.17 2005/11/03 10:13:50 raimc Exp $
 */
 /* 
  *
@@ -89,7 +89,7 @@ main (int argc, char *argv[]){
   /* resetting the values we need */
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-18, 1e-10, 10000);
-  CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1, 0); 
+  CvodeSettings_setSwitches(set, 1, 0, 1, 1, 1, 0, 0); 
   CvodeSettings_setSteadyState(set, 1); 
 
   /* Setting SBML Ode Solver batch integration parameters */
