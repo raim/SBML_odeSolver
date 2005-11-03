@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 13:34:58 raim>
-  $Id: integrate.c,v 1.10 2005/11/03 12:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 13:37:53 raim>
+  $Id: integrate.c,v 1.11 2005/11/03 12:38:27 raimc Exp $
 */
 /* 
  *
@@ -58,7 +58,7 @@ main (int argc, char *argv[]){
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
   sscanf(argv[3], "%lf", &printstep);
-  sscanf(argv[4], "%s", sens);
+/*   sscanf(argv[4], "%s", sens); */
 
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -70,9 +70,9 @@ main (int argc, char *argv[]){
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
 
-  /* set sensitivity with default method */
-  if ( strcmp(sens,"y") == 0 )
-    CvodeSettings_setSensitivity(set, 1);
+/*   /\* set sensitivity with default method *\/ */
+/*   if ( strcmp(sens,"y") == 0 ) */
+/*     CvodeSettings_setSensitivity(set, 1); */
   
   /* calling the SBML ODE Solver which returns SBMLResults */  
   results = SBML_odeSolver(d, set);
