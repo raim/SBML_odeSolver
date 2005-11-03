@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 12:07:18 raim>
-  $Id: printModel.c,v 1.7 2005/11/03 11:08:21 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 12:19:02 raim>
+  $Id: printModel.c,v 1.8 2005/11/03 11:26:27 raimc Exp $
 */
 /* 
  *
@@ -684,9 +684,9 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   
   if ( Opt.PrintMessage ) {
     fprintf(stderr,
-	    "\nPrinting time course of the species concentrations");
+	    "\nPrinting time course of all variable values");
     if ( Opt.Sensitivity  && results->sensitivity != NULL )
-      fprintf(stderr, "\nand sensitivities to model constants.\n\n");
+      fprintf(stderr, "\nand sensitivities of ODE variables.\n\n");
     else
       fprintf(stderr, ".\n\n");
   }
@@ -719,7 +719,7 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
       for ( k=0; k<om->nsens; k++ ) {
 	fprintf(f, "#%s ", om->names[om->index_sens[k]]);
 	for ( j=0; j<om->neq; j++ ) {	
-	  fprintf(f, "%g ", results->sensitivity[j][k][i], om->nsens);
+	  fprintf(f, "%g ", results->sensitivity[j][k][i]);
 	}
 	fprintf(f, "\n");	
       }   

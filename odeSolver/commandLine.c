@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:58:32 raim>
-  $Id: commandLine.c,v 1.9 2005/11/03 11:04:00 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 12:24:53 raim>
+  $Id: commandLine.c,v 1.10 2005/11/03 11:26:27 raimc Exp $
 */
 /* 
  *
@@ -435,26 +435,39 @@ parseModelWithArguments (char *file)
 int integrator(integratorInstance_t *engine,
 	       int PrintMessage, int PrintOnTheFly, FILE *outfile)
 {
-  int i;
+  int i, j;
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
 
   
  /** Command-line option -f/--onthefly:
       print initial values, if on-the-fly printint is set
-  */
-  if ( PrintOnTheFly && data->run == 0 ) {
-	  fprintf(stderr, "\nPrinting results on the fly !\n");
-      fprintf(stderr, "Overruling all other print options!!\n\n");      
-      fprintf(outfile, "#t ");
-      for ( i=0; i<data->nvalues; i++ )
-        fprintf(outfile, "%s ", data->model->names[i]);
-      fprintf(outfile, "\n");
+ */
+  if ( PrintOnTheFly && data->run == 1 ) {
+    fprintf(stderr, "\nPrinting results on the fly !\n");
+    fprintf(stderr, "Overruling all other print options!!\n\n");
+    
+    fprintf(outfile, "#t ");
+    for ( i=0; i<data->nvalues; i++ )
+      fprintf(outfile, "%s ", data->model->names[i]);
+    fprintf(outfile, "\n");
 
     fprintf(outfile, "%g ", solver->t0);
     for ( i=0; i<data->nvalues; i++ )
       fprintf(outfile, "%g ", data->value[i]);
     fprintf(outfile, "\n");
+    
+    if ( Opt.Sensitivity && data->sensitivity != NULL ) {
+      for ( j=0; j<data->nsens; j++ ) {
+	fprintf(outfile, "#%s ",
+		data->model->names[data->model->index_sens[j]]);
+	for ( i=0; i<data->neq; i++ ) {	
+	  fprintf(outfile, "%g ", data->sensitivity[i][j]);
+	}
+	fprintf(outfile, "\n");
+      }
+      fprintf(outfile, "\n");
+    }
   }
   else {
     if ( PrintMessage )
@@ -485,7 +498,19 @@ int integrator(integratorInstance_t *engine,
       for ( i=0; i<engine->data->nvalues; i++ )
 	fprintf(outfile, "%g ", engine->data->value[i]);
       fprintf(outfile, "\n");
-    }
+      
+      if ( Opt.Sensitivity && data->sensitivity != NULL ) {
+	for ( j=0; j<data->nsens; j++ ) {
+	  fprintf(outfile, "#%s ",
+		  data->model->names[data->model->index_sens[j]]);
+	  for ( i=0; i<data->neq; i++ ) {	
+	    fprintf(outfile, "%g ", data->sensitivity[i][j]);
+	  }
+	  fprintf(outfile, "\n");
+	}
+	fprintf(outfile, "\n");
+      }
+    }  
     else if ( PrintMessage ) {
       const  char chars[5] = "|/-\\";
       fprintf(stderr, "\b\b\b\b\b\b");
