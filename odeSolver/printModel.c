@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 12:18:07 raim>
-  $Id: printModel.c,v 1.5 2005/10/28 11:45:48 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 12:02:17 raim>
+  $Id: printModel.c,v 1.6 2005/11/03 11:04:00 raimc Exp $
 */
 /* 
  *
@@ -666,8 +666,9 @@ printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f) {
 void
 printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   
-  int i,j;
+  int i,j, k;
   cvodeResults_t *results;
+  odeModel_t *om;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
@@ -681,33 +682,50 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   }
 #endif  
   
-  if ( Opt.PrintMessage )
+  if ( Opt.PrintMessage ) {
     fprintf(stderr,
-	    "\nPrinting time course of the species concentrations.\n\n");
+	    "\nPrinting time course of the species concentrations");
+    if ( Opt.Sensitivity  && results->sensitivity != NULL )
+      fprintf(stderr, "\nand sensitivities to model constants.\n\n");
+    else
+      fprintf(stderr, ".\n\n");
+  }
   
   results = data->results;
+  om = data->model;
   fprintf(f, "#t ");
-  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", data->model->names[i]);
+  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", om->names[i]);
 
   fprintf(f, "\n");
   fprintf(f, "##CONCENTRATIONS\n");
+  
   for ( i=0; i<=results->nout; ++i ) {
     fprintf(f, "%g ", results->time[i]);
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<om->neq; j++ ) {
       fprintf(f, "%g ", results->value[j][i]);
     }
-    for ( j=0; j<data->model->nass; j++ ) {
-      fprintf(f, "%g ", results->value[data->model->neq+j][i]);
+    for ( j=0; j<om->nass; j++ ) {
+      fprintf(f, "%g ", results->value[om->neq+j][i]);
     }
-    for ( j=0; j<data->model->nconst; j++ ) {
+    for ( j=0; j<om->nconst; j++ ) {
       fprintf(f, "%g ",
-	      results->value[data->model->neq+data->model->nass+j][i]);
+	      results->value[om->neq+om->nass+j][i]);
+    }
+    if ( Opt.Sensitivity && results->sensitivity != NULL ) {
+      fprintf(f, "\n");
+      for ( k=0; k<om->nsens; k++ ) {
+	fprintf(f, "#%s ", om->names[om->index_sens[k]]);
+	for ( j=0; j<om->neq; j++ ) {	
+	  fprintf(f, "%g ", results->sensitivity[j][k][i], om->nsens);
+	}
+	fprintf(f, "\n");	
+      }   
     }
     fprintf(f, "\n");
   }
   fprintf(f, "##CONCENTRATIONS\n");
   fprintf(f, "#t ");
-  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", data->model->names[i]);
+  for(i=0;i<data->nvalues;i++) fprintf(f, "%s ", om->names[i]);
   fprintf(f, "\n\n");
   
   fflush(f);
@@ -1091,7 +1109,9 @@ printXMGConcentrationTimeCourse(cvodeData_t *data){
   minY = 0.0;
 
   fprintf(stderr, "Printing results to XMGrace!\n");
-
+  if ( Opt.Sensitivity  && results->sensitivity != NULL )
+    fprintf(stderr, "SORRY: sensitivities can not be printed to XMGrace\n");
+  
   results = data->results;
   
   if ( openXMGrace(data) > 0 ){

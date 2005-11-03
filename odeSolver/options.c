@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 15:54:31 raim>
-  $Id: options.c,v 1.1 2005/10/26 14:27:42 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:45:27 raim>
+  $Id: options.c,v 1.2 2005/11/03 11:04:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,25 +15,26 @@
 #include "options.h"
 
 static struct option const long_options[] =
-{ {"modelgraph",    no_argument,       0, 'g'},
+{ {"all",           no_argument,       0, 'a'},
   {"determinant",   no_argument,       0, 'd'},
   {"printmodel",    no_argument,       0, 'e'},
   {"onthefly",      no_argument,       0, 'f'},
-  {"printsbml",     no_argument,       0, 'o'},
-  {"matrixgraph",   no_argument,       0, 'm'},
+  {"modelgraph",    no_argument,       0, 'g'},
   {"help",          no_argument,       0, 'h'},
   {"interactive",   no_argument,       0, 'i'},
   {"jacobian",      no_argument,       0, 'j'},
-  {"jacobianTime",  no_argument,       0, 'y'},
-  {"all",           no_argument,       0, 'a'},
-  {"rates",         no_argument,       0, 'r'},
   {"reactions",     no_argument,       0, 'k'},
-  {"event",         no_argument,       0, 'n'},
-  {"steadyState",   no_argument,       0, 's'},
-  {"validate",      no_argument,       0, 'v'},
   {"message",       no_argument,       0, 'l'},
+  {"matrixgraph",   no_argument,       0, 'm'},
+  {"event",         no_argument,       0, 'n'},
+  {"printsbml",     no_argument,       0, 'o'},
+  {"rates",         no_argument,       0, 'r'},
+  {"steadyState",   no_argument,       0, 's'},
+  {"sensitivity",   no_argument,       0, 't'},
+  {"validate",      no_argument,       0, 'v'},
   {"write",         no_argument,       0, 'w'},
   {"xmgrace",       no_argument,       0, 'x'},
+  {"jacobianTime",  no_argument,       0, 'y'},
   {"error",         required_argument, 0,   0},
   {"rerror",        required_argument, 0,   0},
   {"mxstep",        required_argument, 0,   0},
@@ -94,6 +95,7 @@ initializeOptions (void)
   Opt.PrintOnTheFly   = 0;
   Opt.PrintMessage    = 0;
   Opt.Wheel           = 1;
+  Opt.Sensitivity     = 0;
   Opt.SteadyState     = 0;
   Opt.Validate        = 0;
   Opt.Write           = 0;
@@ -284,6 +286,9 @@ processOptions (int argc, char *argv[])
     case 's':
       Opt.SteadyState = 1;
       break;
+    case 't':
+      Opt.Sensitivity = 1;
+      break;
     case 'v':
       Opt.Validate = 1;
       break;	      
@@ -349,10 +354,11 @@ usage (int status)
     "                       internal approximation (default: jacobian)\n");
   fprintf(stderr,
     " -s, --steadyState     Abort integration at steady states\n"
+    " -t, --sensitivity     activate sensitivity analysis (default: no)\n"
     " -n, --event           Do not abort on event detection, but keep\n"
-    "                       integrating. ACCURACY DEPENDS ON --printstep!!\n"
-    "     --param <Str>     Choose a parameter to vary during batch\n"
-	  "                       integration, from 0 to value in 50 steps\n");
+    "                       integrating. ACCURACY DEPENDS ON --printstep!!\n");
+/*     "     --param <Str>     Choose a parameter to vary during batch\n" */
+/*     "                       integration, from 0 to value in 50 steps\n"); */
   fprintf(stderr,
     "     --printstep <Int> Time steps of output, or\n"
     "                       (now set to: %g)\n"

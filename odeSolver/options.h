@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-08-01 21:10:05 raim>
-  $Id: options.h,v 1.1 2005/10/26 14:27:42 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 11:24:14 raim>
+  $Id: options.h,v 1.2 2005/11/03 11:04:00 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -11,7 +11,8 @@ typedef struct _Options {
   char GvFormat[64];    /* output format for graph drawings */
   char ModelFile[256];  /* model file name */
   char ModelPath[256];  /* path to the model file */
-  char Parameter[64];   /* Paramter for variation in batch process */
+  char Parameter[64];   /* Paramter for variation in batch process
+			   or variable for sensitivity analysis*/
   char Schema11[64];    /* name of schema L1v1 file */
   char Schema12[64];    /* name of schema L1v2 file */
   char Schema21[64];    /* name of schema L1v3 file */
@@ -28,14 +29,12 @@ typedef struct _Options {
 			   as determined by the jacobian matrix */
   int HaltOnEvent;      /* stop integration if event is detected */
   int InterActive;      /* Start program in interactive mode */
-  int Jacobian;         /* Do not use jacobian matrix for integration,
-			   print jacobian expressions if used together
-			   with 'PrintModel' Option '-e' */
+  int Jacobian;         /* Do not use jacobian matrix for integration */
+  int Sensitivity;      /* Activate Sensitivity Analysis */
   int PrintAll;         /* Print all given results instead of only one */
   int PrintJacobian;    /* Print out time course of the jacobian matrix */
   int PrintReactions;   /* Print out time course of the reaction rates */
-  int PrintModel;       /* Print out model, ODEs and jacobian expressions,
-			   if used with 'Jacobian' option '-j' */
+  int PrintModel;       /* Print out model, ODEs and jacobian expressions */
   int PrintODEsToSBML;  /* Construct ODE model and print out SBML */
   int PrintOnTheFly;    /* Print species concentration during integration */
   int Wheel;            /* Print progress wheel */
