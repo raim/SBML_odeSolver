@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:54:04 raim>
-  $Id: sbmlResults.h,v 1.8 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 13:31:54 raim>
+  $Id: sbmlResults.h,v 1.9 2005/11/03 12:36:24 raimc Exp $
 */
 /* 
  *
@@ -48,10 +48,11 @@ extern "C" {
   */
   typedef struct timeCourse timeCourse_t ;
   struct timeCourse {
-    int timepoints;  /* number of timepoints, including initial
-			conditions */
-    char *name;      /* variable name */
-    double *values;  /* variable time course */
+    int timepoints;       /* number of timepoints, including initial
+			     conditions */
+    char *name;           /* variable name */
+    double *values;       /* variable time course */
+    double **sensitivity; /* sensitivity time courses */
   } ;
 
   /* A simple structure containing num_val timeCourses */
@@ -80,7 +81,12 @@ extern "C" {
     timeCourseArray_t *parameters;    /* time courses for all non-constant
 					 global parameters */
     /* flux time series */
-    timeCourseArray_t *fluxes;   
+    timeCourseArray_t *fluxes;
+
+    /* constant IDs for which sensitivities have been calculated */
+    int nsens;
+    char **param;
+    
   } ;
 
 
@@ -92,14 +98,18 @@ extern "C" {
     int j;
   } ;
 
-  SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *);
-  SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(const char *, SBMLResults_t *);
+  SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *);  
+  SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(SBMLResults_t *, const char *);
+  SBML_ODESOLVER_API int SBMLResults_getNout(SBMLResults_t *);
+  SBML_ODESOLVER_API int SBMLResults_getNumSens(SBMLResults_t *);
+  SBML_ODESOLVER_API const char *SBMLResults_getSensParam(SBMLResults_t *, int);
   SBML_ODESOLVER_API timeCourse_t *Compartment_getTimeCourse(Compartment_t *, SBMLResults_t *);
   SBML_ODESOLVER_API timeCourse_t *Species_getTimeCourse(Species_t *, SBMLResults_t *);
   SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *, SBMLResults_t *);
   SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *);
   SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *);
   SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *, int);
+  SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *, int, int);
   SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *);

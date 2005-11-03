@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 23:20:43 raim>
-  $Id: odeSolver.c,v 1.33 2005/11/02 22:24:22 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 13:32:38 raim>
+  $Id: odeSolver.c,v 1.34 2005/11/03 12:36:24 raimc Exp $
 */
 /* 
  *
@@ -50,6 +50,7 @@
 
 static int globalizeParameter(Model_t *, char *id, char *rid);
 static int localizeParameter(Model_t *, char *id, char *rid);
+static int SBMLResults_createSens(SBMLResults_t *, cvodeData_t *);
 
 /** Solves the timeCourses for a SBML model, passed via its
     containint SBMLDocument and according to passed integration
@@ -557,10 +558,9 @@ int VarySettings_addParameterSet(varySettings_t *vs,
     and reaction fluxes)
 */
 
-SBML_ODESOLVER_API SBMLResults_t *
-SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
+SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
 
-  int i, j, k;
+  int i, j, k, flag;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;
@@ -578,7 +578,7 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   else if ( cv_results == NULL ) 
     return NULL;
 
-  sbml_results = SBMLResults_create(m, cv_results->nout+1);    
+  sbml_results = SBMLResults_create(m, cv_results->nout+1);
 
   /* Allocating temporary kinetic law ASTs, for evaluation of fluxes */
 
@@ -647,9 +647,46 @@ SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
   for ( i=0; i<Model_getNumReactions(m); i++ ) 
     ASTNode_free(kls[i]);
   free(kls);
+
+  /* filling sensitivities */
+  flag = 0;
+  if ( cv_results->nsens > 0 )
+    flag = SBMLResults_createSens(sbml_results, data);
+  if ( flag == 0)
+    sbml_results->nsens = 0;
+ 
   
   return(sbml_results);
 }
 
+static int SBMLResults_createSens(SBMLResults_t *Sres,
+				  cvodeData_t *data)
+{
+  int i, j, k;
+  odeModel_t *om = data->model;
+  cvodeResults_t *res = data->results;
+  timeCourse_t *tc;
+
+  Sres->nsens = res->nsens;
+  
+  ASSIGN_NEW_MEMORY_BLOCK(Sres->param, res->nsens, char *, 0);  
+  for ( i=0; i<res->nsens; i++ ) {
+    ASSIGN_NEW_MEMORY_BLOCK(Sres->param[i],
+			    strlen(om->names[om->index_sens[i]]+1), char, 0);
+    sprintf(Sres->param[i], om->names[om->index_sens[i]]);
+  }
+  for ( i=0; i<res->neq; i++ ) {
+    tc = SBMLResults_getTimeCourse(Sres, om->names[i]);
+    ASSIGN_NEW_MEMORY_BLOCK(tc->sensitivity, res->nsens, double *, 0);
+    for ( j=0; j<res->nsens; j++ ) {
+      ASSIGN_NEW_MEMORY_BLOCK(tc->sensitivity[j], res->nout, double, 0);
+      for ( k=0; k<res->nout; k++ )
+	tc->sensitivity[j][k] = res->sensitivity[i][j][k];
+      /* printf("Hallo sens fuer %s / %s \n", om->names[i], */
+/* 	     om->names[om->index_sens[j]]); */ 
+    }    
+  }
+  return 1;
+}
 
 /* End of file */

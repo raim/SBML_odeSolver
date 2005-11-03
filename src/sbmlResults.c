@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:21:42 raim>
-  $Id: sbmlResults.c,v 1.13 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 13:34:14 raim>
+  $Id: sbmlResults.c,v 1.14 2005/11/03 12:36:24 raimc Exp $
 */
 /* 
  *
@@ -147,10 +147,39 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
 /** Returns the timeCourse for the integration time points
 */
 
-
 SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *results)
 {
   return results->time;
+}
+
+
+/** Returns the number of time points, including initial time
+*/
+
+SBML_ODESOLVER_API int SBMLResults_getNout(SBMLResults_t *res)
+{
+  return res->time->timepoints;
+}
+
+
+/** Returns the number of model constants for which
+    sensitivities have been calculated
+*/
+
+SBML_ODESOLVER_API int SBMLResults_getNumSens(SBMLResults_t *res)
+{
+  return res->nsens;
+}
+
+
+/** Returns the name (SBML ID) of the ith constants for which
+    sensitivities have been calculated, where
+    0 <= i < SBMLResults_getNumSens
+*/
+
+SBML_ODESOLVER_API const char *SBMLResults_getSensParam(SBMLResults_t *res, int i)
+{
+  return res->param[i];
 }
 
 
@@ -188,7 +217,7 @@ SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *p, SBMLRes
     or a reaction flux with the corresponding SBML ID.
 */
 
-SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(const char *id, SBMLResults_t *results)
+SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(SBMLResults_t *results, const char *id)
 {
   timeCourse_t *tc;
   tc = TimeCourseArray_getTimeCourse(id, results->species);
@@ -243,6 +272,16 @@ SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
 SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
 {
   return tc->values[i];
+}
+
+/**  Returns the sensitivity to ith constant at jth time step, where
+     0 <= i < SBMLResults_getNumSens, and
+     0 <= j < TimeCourse_getNumValues
+*/
+
+SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *tc, int i, int j)
+{
+  return tc->sensitivity[i][j];
 }
 
 

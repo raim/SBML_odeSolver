@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:33:50 raim>
-  $Id: integrate.c,v 1.9 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 13:34:58 raim>
+  $Id: integrate.c,v 1.10 2005/11/03 12:36:24 raimc Exp $
 */
 /* 
  *
@@ -42,6 +42,7 @@ int
 main (int argc, char *argv[]){
   int i, j;
   char model[256];
+  char sens[256];
   double time = 0.0;
   double printstep;
   
@@ -57,6 +58,7 @@ main (int argc, char *argv[]){
   sscanf(argv[1], "%s", model);
   sscanf(argv[2], "%lf", &time);
   sscanf(argv[3], "%lf", &printstep);
+  sscanf(argv[4], "%s", sens);
 
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -67,6 +69,10 @@ main (int argc, char *argv[]){
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
+
+  /* set sensitivity with default method */
+  if ( strcmp(sens,"y") == 0 )
+    CvodeSettings_setSensitivity(set, 1);
   
   /* calling the SBML ODE Solver which returns SBMLResults */  
   results = SBML_odeSolver(d, set);
@@ -82,7 +88,7 @@ main (int argc, char *argv[]){
   SBMLDocument_free(d);
 
   /* print results */
-  printf("### RESULTS \n");
+  printf("### RESULTS \n");  
   SBMLResults_dump(results);
   SolverError_dumpAndClearErrors();
   /* now we can also free the result structure */
