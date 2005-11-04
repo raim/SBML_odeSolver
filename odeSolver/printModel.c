@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 12:19:02 raim>
-  $Id: printModel.c,v 1.8 2005/11/03 11:26:27 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 12:51:04 raim>
+  $Id: printModel.c,v 1.9 2005/11/04 12:28:38 raimc Exp $
 */
 /* 
  *
@@ -693,45 +693,71 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   
   results = data->results;
   om = data->model;
-  fprintf(f, "#t ");
-  for(i=0;i<(om->neq+om->nass);i++) fprintf(f, "%s ", om->names[i]);
-
-  fprintf(f, "\n");
-  if ( Opt.Sensitivity  && results->sensitivity != NULL )
-    fprintf(f, "##CONCENTRATIONS AND SENSITIVITIES\n");
-  else 
-    fprintf(f, "##CONCENTRATIONS\n");
   
-  for ( i=0; i<=results->nout; ++i ) {
-    fprintf(f, "%g ", results->time[i]);
-    for ( j=0; j<om->neq; j++ ) {
-      fprintf(f, "%g ", results->value[j][i]);
+  if ( Opt.Sensitivity  && results->sensitivity != NULL ) {
+    fprintf(f, "#t ");
+    for( j=0; j<om->neq; j++ ) {
+      fprintf(f, "%s ", om->names[j]);
+      for ( k=0; k<om->nsens; k++ )
+	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
     }
-    for ( j=0; j<om->nass; j++ ) {
-      fprintf(f, "%g ", results->value[om->neq+j][i]);
-    }
-/*     for ( j=0; j<om->nconst; j++ ) { */
-/*       fprintf(f, "%g ", */
-/* 	      results->value[om->neq+om->nass+j][i]); */
-/*     } */
-    if ( Opt.Sensitivity && results->sensitivity != NULL ) {
+    for( ; j<data->nvalues; j++ ) 
+      fprintf(f, "%s ", om->names[j]);
+
+    fprintf(f, "\n");
+    fprintf(f, "##CONCENTRATIONS AND SENSITIVITIES\n");
+    for ( i=0; i<=results->nout; ++i ) {
+      fprintf(f, "%g ", results->time[i]);      
+      for ( j=0; j<om->neq; j++ ) {
+	fprintf(f, "%g ", results->value[j][i]);
+        for ( k=0; k<om->nsens; k++ ) 
+	  fprintf(f, "%g ", results->value[j][i]+
+		  results->sensitivity[j][k][i]);	
+      }
+      
+      for ( j=0; j<om->nass; j++ )
+	fprintf(f, "%g ", results->value[om->neq+j][i]);
+
+      for ( j=0; j<om->nconst; j++ )
+	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
       fprintf(f, "\n");
-      for ( k=0; k<om->nsens; k++ ) {
-	fprintf(f, "#%s ", om->names[om->index_sens[k]]);
-	for ( j=0; j<om->neq; j++ ) {	
-	  fprintf(f, "%g ", results->sensitivity[j][k][i]);
-	}
-	fprintf(f, "\n");	
-      }   
     }
     fprintf(f, "\n");
-  }
-  if ( Opt.Sensitivity  && results->sensitivity != NULL )
     fprintf(f, "##CONCENTRATIONS AND SENSITIVITIES\n");
-  else 
+    fprintf(f, "#t ");
+    for( j=0; j<om->neq; j++ ) {
+      fprintf(f, "%s ", om->names[j]);
+      for ( k=0; k<om->nsens; k++ )
+	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
+    }
+    for( ; j<data->nvalues; j++ ) 
+      fprintf(f, "%s ", om->names[j]);
+  }
+  else {
+    fprintf(f, "#t ");
+    for( i=0; i<data->nvalues; i++) fprintf(f, "%s ", om->names[i]);
+    fprintf(f, "\n");    
     fprintf(f, "##CONCENTRATIONS\n");
-  fprintf(f, "#t ");
-  for(i=0;i<(om->neq+om->nass);i++) fprintf(f, "%s ", om->names[i]);
+    for ( i=0; i<=results->nout; ++i ) {
+      fprintf(f, "%g ", results->time[i]);
+      
+      for ( j=0; j<om->neq; j++ ) 
+	fprintf(f, "%g ", results->value[j][i]);
+
+      for ( j=0; j<om->nass; j++ ) 
+	fprintf(f, "%g ", results->value[om->neq+j][i]);
+      
+      for ( j=0; j<om->nconst; j++ )
+	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
+
+      fprintf(f, "\n");
+    }
+    fprintf(f, "##CONCENTRATIONS\n");
+    fprintf(f, "#t ");
+    for( i=0; i<data->nvalues; i++ ) fprintf(f, "%s ", om->names[i]);
+    fprintf(f, "\n");
+  }
+  
   fprintf(f, "\n\n");
   
   fflush(f);
