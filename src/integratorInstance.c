@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:07:39 raim>
-  $Id: integratorInstance.c,v 1.37 2005/11/04 16:23:44 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 19:35:26 raim>
+  $Id: integratorInstance.c,v 1.38 2005/11/04 19:31:44 raimc Exp $
 */
 /* 
  *
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 
 #include <cvodes.h>
+#include <kinsol.h>
 #include <cvdense.h>
 #include <nvector_serial.h>
 
@@ -857,10 +858,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
       IntegratorInstance_reset(engine);
       return IntegratorInstance_integrate(engine);
     }
-    /* else */
-/*       SolverError_dumpAndClearErrors(); */
   }
-
   return errorCode;
 }
 
@@ -874,8 +872,6 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
   cvodeSettings_t *opt = engine->opt;
 
   /* if (om->algebraic) IntegratorInstance_printIDAStatistics(engine, f); */
-  /* if (opt->Sensitivity)
-     IntegratorInstance_printCVODEStatistics(engine, f); */
     
   if (!om->neq)
     fprintf(f, "## No statistics available for models without ODEs.\n");

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.18 2005/11/02 17:32:13 raimc Exp $
+# $Id: Makefile.am,v 1.19 2005/11/04 19:31:44 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -49,6 +49,7 @@ libODES_a_SOURCES = ASTIndexNameNode.cpp \
 		    drawGraph.c \
 		    cvodeSolver.c \
 		    sensSolver.c \
+		    nullSolver.c \
 		    integratorInstance.c \
 		    integratorSettings.c \
 		    modelSimplify.c \
@@ -68,6 +69,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/exportdefs.h \
 		     sbmlsolver/cvodeSolver.h \
 		     sbmlsolver/sensSolver.h \
+		     sbmlsolver/nullSolver.h \
 		     sbmlsolver/integratorInstance.h \
 		     sbmlsolver/integratorSettings.h \
 		     sbmlsolver/modelSimplify.h \

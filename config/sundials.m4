@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.4 2005/11/02 17:32:13 raimc Exp $
+dnl $Id: sundials.m4,v 1.5 2005/11/04 19:31:44 raimc Exp $
 
 dnl
 dnl look for SUNDAILS CVODE Library headers in some standard set of directories
@@ -27,7 +27,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
       CVODE_LDFLAGS="-L$ac_dir/lib"
-      CVODE_LIBS="-lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+      CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -54,7 +54,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS_CVODE],
   else
     CVODE_CFLAGS="-I$with_sundials/include"
     CVODE_LDFLAGS="-L$with_sundials/lib"
-    CVODE_LIBS="-lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+    CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
   fi
   dnl check if SUNDIALS CVODE Library is functional
   AC_MSG_CHECKING([correct functioning of SUNDIALS CVODE])
