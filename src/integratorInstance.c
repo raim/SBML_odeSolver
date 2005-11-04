@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 10:35:55 raim>
-  $Id: integratorInstance.c,v 1.35 2005/11/04 10:39:14 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 11:47:05 raim>
+  $Id: integratorInstance.c,v 1.36 2005/11/04 12:27:55 raimc Exp $
 */
 /* 
  *
@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include  <cvode.h>
+#include  <cvodes.h>
 
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 14:55:59 raim>
-  $Id: cvodeSolver.c,v 1.7 2005/11/04 10:39:14 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 11:46:47 raim>
+  $Id: cvodeSolver.c,v 1.8 2005/11/04 12:27:55 raimc Exp $
 */
 /* 
  *
@@ -38,7 +38,7 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "cvode.h"    
+#include "cvodes.h"    
 #include "cvdense.h"
 #include "nvector_serial.h"  
 
