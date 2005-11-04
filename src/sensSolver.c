@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:16:02 raim>
-  $Id: sensSolver.c,v 1.7 2005/11/04 16:23:44 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:25:33 raim>
+  $Id: sensSolver.c,v 1.8 2005/11/04 19:29:00 raimc Exp $
 */
 /* 
  *
@@ -91,7 +91,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
     flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     
     if ( flag != CV_SUCCESS )
-      return 0;
+      return 0; /* !!! CVODES specific error handling !!! */    
     else {
       for ( j=0; j<data->nsens; j++ ) {
 	ySdata = NV_DATA_S(solver->yS[j]);
