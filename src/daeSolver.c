@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 14:55:59 raim>
-  $Id: cvodeSolver.c,v 1.7 2005/11/04 10:39:14 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 15:33:12 raim>
+  $Id: daeSolver.c,v 1.1 2005/11/04 10:39:14 raimc Exp $
 */
 /* 
  *
@@ -30,16 +30,15 @@
  *     Rainer Machne
  *
  * Contributor(s):
- *     Andrew M. Finney
- *     Christoph Flamm
+ *
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "cvode.h"    
-#include "cvdense.h"
+#include "ida.h"    
+#include "idadense.h"
 #include "nvector_serial.h"  
 
 #include "sbmlsolver/cvodedata.h"
@@ -48,38 +47,29 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/cvodeSolver.h"
+#include "sbmlsolver/daeSolver.h"
 
 static int
 check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
 
-/**
- * CVode solver: function computing the ODE rhs for a given value
- * of the independent variable t and state vector y.
- */
+/* Prototypes of functions called by IDA */
+
+int fRes(realtype tres, N_Vector yy, N_Vector yp,
+	 N_Vector resval, void *rdata);
+
+int JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
+           N_Vector resvec, realtype cj, void *jdata, DenseMat JJ,
+           N_Vector tempv1, N_Vector tempv2, N_Vector tempv3);
+
+
 static void
-f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
+IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *);
 
-/**
- * CVode solver: function computing the dense Jacobian J of the ODE system
- */
-static void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
-
-
-
-/** The Hot Stuff!
-   Calls CVODE to move the current simulation one time step; produces
-   appropriate error messages on failures and returns 1 if the
-   integration can continue, 0 otherwise.  The function also checks
-   for events and steady states and stores results if requested by
-   cvodeSettings.  It also handles models without ODEs (only
-   assignment rules or constant parameters).
+/* The Hot Stuff! */
+/** 
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *engine)
+SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engine)
 {
     int i, flag;
     realtype *ydata = NULL;
@@ -91,24 +81,24 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     odeModel_t *om = engine->om;
     
     /* !!!! calling CVODE !!!! */
-    flag = CVode(solver->cvode_mem, solver->tout,
-		 solver->y, &(solver->t), CV_NORMAL);
+    flag = IDASolver(solver->cvode_mem, solver->tout, &(solver->t),
+		     solver->y, solver->dy, IDA_NORMAL);
 
-    if ( flag != CV_SUCCESS )
+    if ( flag != IDA_SUCCESS )
       {
 	char *message[] =
 	  {
-	    /*  0 CV_SUCCESS */
+	    /*  0 IDA_SUCCESS */
 	    "Success",
 	    /**/
-	    /*  1 CV_ROOT_RETURN */
+	    /*  1 IDA_ROOT_RETURN */
 	    /*   "CVode succeeded, and found one or more roots" */
-	    /*  2 CV_TSTOP_RETURN */
+	    /*  2 IDA_TSTOP_RETURN */
 	    /*   "CVode succeeded and returned at tstop" */
 	    /**/
-	    /* -1 CV_MEM_NULL -1 (old CVODE_NO_MEM) */
+	    /* -1 IDA_MEM_NULL -1 (old CVODE_NO_MEM) */
 	    "The cvode_mem argument was NULL",
-	    /* -2 CV_ILL_INPUT */
+	    /* -2 IDA_ILL_INPUT */
 	    "One of the inputs to CVode is illegal. This "
 	    "includes the situation when a component of the "
 	    "error weight vectors becomes < 0 during "
@@ -120,46 +110,46 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	    "if the linear solver's init routine failed. In "
 	    "any case, the user should see the printed "
 	    "error message for more details.",
-	    /* -3 CV_NO_MALLOC */
+	    /* -3 IDA_NO_MALLOC */
 	    "cvode_mem was not allocated",
-	    /* -4 CV_TOO_MUCH_WORK */
+	    /* -4 IDA_TOO_MUCH_WORK */
 	    "The solver took %g internal steps but could not "
 	    "compute variable values for time %g",
-	    /* -5 CV_TOO_MUCH_ACC */
+	    /* -5 IDA_TOO_MUCH_ACC */
 	    "The solver could not satisfy the accuracy " 
 	    "requested for some internal step.",
-	    /* -6 CV_ERR_FAILURE */
+	    /* -6 IDA_ERR_FAILURE */
 	    "Error test failures occurred too many times "
 	    "during one internal time step or "
 	    "occurred with |h| = hmin.",
-	    /* -7 CV_CONV_FAILURE */
+	    /* -7 IDA_CONV_FAILURE */
 	    "Convergence test failures occurred too many "
 	    "times during one internal time step or occurred "
 	    "with |h| = hmin.",
-	    /* -8 CV_LINIT_FAIL */
+	    /* -8 IDA_LINIT_FAIL */
 	    "CVode -- Initial Setup: "
 	    "The linear solver's init routine failed.",
-	    /* -9 CV_LSETUP_FAIL */
+	    /* -9 IDA_LSETUP_FAIL */
 	    "The linear solver's setup routine failed in an "
 	    "unrecoverable manner.",
-	    /* -10 CV_LSOLVE_FAIL */
+	    /* -10 IDA_LSOLVE_FAIL */
 	    "The linear solver's solve routine failed in an "
 	    "unrecoverable manner.",
-	    /* -11 CV_MEM_FAIL */
+	    /* -11 IDA_MEM_FAIL */
 	    "A memory allocation failed. "
 	    "(including an attempt to increase maxord)",
-	    /* -12 CV_RTFUNC_NULL */
+	    /* -12 IDA_RTFUNC_NULL */
 	    "nrtfn > 0 but g = NULL.",
-	    /* -13 CV_NO_SLDET */
+	    /* -13 IDA_NO_SLDET */
 	    "CVodeGetNumStabLimOrderReds -- Illegal attempt "
 	    "to call without enabling SLDET.",
-	    /* -14 CV_BAD_K */
+	    /* -14 IDA_BAD_K */
 	    "CVodeGetDky -- Illegal value for k.",
-	    /* -15 CV_BAD_T */
+	    /* -15 IDA_BAD_T */
 	    "CVodeGetDky -- Illegal value for t.",
-	    /* -16 CV_BAD_DKY */
+	    /* -16 IDA_BAD_DKY */
 	    "CVodeGetDky -- dky = NULL illegal.",
-	    /* -17 CV_PDATA_NULL */
+	    /* -17 IDA_PDATA_NULL */
 	    "???",
 	  };
 	    
@@ -167,7 +157,6 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 			  ERROR_ERROR_TYPE,
 			  flag,
 			  message[flag * -1],
-			  opt->Mxstep,
 			  solver->tout);
 	SolverError_error(
 			  WARNING_ERROR_TYPE,
@@ -186,21 +175,22 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     /* update rest of data with internal default function */
     return IntegratorInstance_updateData(engine);
+
 }
 
 
-/************* CVODE integrator setup functions ************/
+/************* CVODES integrator setup functions ************/
 
 
-/* creates CVODE structures and fills cvodeSolver 
+/* creates CVODES structures and fills cvodeSolver 
    return 1 => success
    return 0 => failure
 */
 int
-IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
+IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
 {
-    int i, flag, neq;
-    realtype *ydata, *abstoldata;
+    int i, j, flag, neq;
+    realtype *ydata, *abstoldata, *dydata;
 
     odeModel_t *om = engine->om;
     cvodeData_t *data = engine->data;
@@ -217,197 +207,163 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* free jacobian from former runs (not necessary, frees also
          unsuccessful jacobians from former runs ) */
       if ( om->jacob != NULL) {
-	for ( i=0; i<om->neq; i++ )
-	  free(om->jacob[i]);
-	free(om->jacob);
-	om->jacob = NULL;
+        for ( i=0; i<om->neq; i++ )
+          free(om->jacob[i]);
+        free(om->jacob);
+        om->jacob = NULL;
       }
       SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-			"Jacobian matrix construction skipped.");
+                        SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+                        "Jacobian matrix construction skipped.");
       om->jacobian = opt->UseJacobian;
     }
 
     
+  
     /* CVODESolverStructures from former runs must be freed */
     if ( data->run > 1 )
-      IntegratorInstance_freeCVODESolverStructures(engine);
+      IntegratorInstance_freeIdaSolverStructures(engine);
 
     
-    /**
+    /*
      * Allocate y, abstol vectors
      */
     solver->y = N_VNew_Serial(neq);
     if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector y failed");
+                        "N_VNew_Serial for vector y failed");
+      return 0; /* error */
+    }
+    solver->dy = N_VNew_Serial(neq);
+    if (check_flag((void *)solver->dy, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector y failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                        "N_VNew_Serial for vector dy failed");
       return 0; /* error */
     }
     solver->abstol = N_VNew_Serial(neq);
     if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector abstol failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector abstol failed");
+                        "N_VNew_Serial for vector abstol failed");
       return 0; /* error */
     }
-
     
-    /**
+    /*
      * Initialize y, abstol vectors
      */
     ydata      = NV_DATA_S(solver->y);
     abstoldata = NV_DATA_S(solver->abstol);
+    dydata     = NV_DATA_S(solver->dy);
+    
     for ( i=0; i<neq; i++ ) {
       /* Set initial value vector components of y and y' */
       ydata[i] = data->value[i];
       /* Set absolute tolerance vector components,
          currently the same absolute error is used for all y */ 
-      abstoldata[i] = opt->Error;       
+      abstoldata[i] = opt->Error;
+      dydata[i] = evaluateAST(om->ode[i], data);
     }
-
-    /* set sensitivity structure to NULL */
-    solver->yS = NULL;
     
     /* scalar relative tolerance: the same for all y */
     solver->reltol = opt->RError;
 
-    /**
-     * Call CVodeCreate to create the solver memory:
+    /*
+     * Call IDACreate to create the solver memory:
      *
-     * CV_BDF     specifies the Backward Differentiation Formula
-     * CV_NEWTON  specifies a Newton iteration
      */
-    solver->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
-    if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
+    solver->cvode_mem = IDACreate();
+    if (check_flag((void *)(solver->cvode_mem), "IDACreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeCreate failed");
+                        "IDACreate failed");
     }
 
-    /**
+    /*
      * Call CVodeMalloc to initialize the integrator memory:
      *
      * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
-     * f          user's right hand side function in y'=f(t,y)
+     * fRes         user's right hand side function
      * t0         initial value of time
-     * y          the initial dependent variable vector
-     * CV_SV      specifies scalar relative and vector absolute tolerances
+     * y          the dependent variable vector
+     * dy         the ODE value vector
+     * IDA_SV     specifies scalar relative and vector absolute tolerances
      * reltol     the scalar relative tolerance
      * abstol     pointer to the absolute tolerance vector
      */
-    flag = CVodeMalloc(solver->cvode_mem, f, solver->t0, solver->y,
-                       CV_SV, solver->reltol, solver->abstol);
-    if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
+    flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
+		     solver->dy, IDA_SV, solver->reltol, abstol);
+    if (check_flag(&flag, "IDAMalloc", 1, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeMalloc failed");
+                        "IDAMalloc failed");
       return 0; /* error ??? not required, handled by solverError ???  */
     }
-
-    /**
+    /* 
      * Link the main integrator with data for right-hand side function
      */ 
-    flag = CVodeSetFdata(solver->cvode_mem, engine->data);
-    if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
-      /* ERROR HANDLING CODE if CVodeSetFdata failes */
+    flag = IDASetRdata(solver->cvode_mem, engine->data);
+    if (check_flag(&flag, "SetFdata", 1, stderr)) {
+      /* ERROR HANDLING CODE if IDASetFdata failes */
     }
     
-    /**
+    /*
      * Link the main integrator with the CVDENSE linear solver
      */
     flag = CVDense(solver->cvode_mem, neq);
     if (check_flag(&flag, "CVDense", 1, stderr)) {
-      /* ERROR HANDLING CODE if CVDense failes */
+      /* ERROR HANDLING CODE if CVDense fails */
     }
 
-    /**
-     * Set the routine used by the CVDENSE linear solver
+    /*
+     * Set the routine used by the IDADense linear solver
      * to approximate the Jacobian matrix to ...
      */
     if ( opt->UseJacobian == 1 ) {
-      /* ... user-supplied routine Jac */
-      flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
+      /* ... user-supplied routine JacRes : put JacRes instead of NULL
+        when working */
+      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, data);
     }
     else {
-      /* ... the internal default difference quotient routine CVDenseDQJac */
-      flag = CVDenseSetJacFn(solver->cvode_mem, NULL, NULL);
+      /* ... the internal default difference quotient routine IDADenseDQJac */
+      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);
     }
     
-    if ( check_flag(&flag, "CVDenseSetJacFn", 1, stderr) ) {
-      /* ERROR HANDLING CODE if CVDenseSetJacFn failes */
+    if ( check_flag(&flag, "IDADenseSetJacFn", 1, stderr) ) {
+      /* ERROR HANDLING CODE if IDADenseSetJacFn failes */
     }
-
-    /**
-     * Set maximum number of internal steps to be taken
-     * by the solver in its attempt to reach tout
-     */
-    CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
-
+     
     return 1; /* OK */
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
-void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
+void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *engine)
 {
-    /* Free the y, abstol vectors */ 
-    N_VDestroy_Serial(engine->solver->y);
-    N_VDestroy_Serial(engine->solver->abstol);
-
-    /* Free the integrator memory */
-    CVodeFree(engine->solver->cvode_mem);
-
-    /* Free sensitivity vector yS */
-    if (engine->solver->yS != NULL)
-      N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
-
-    /* Free IDA vector dy */
-    if (engine->solver->dy != NULL)
-      N_VDestroy_Serial(engine->solver->dy);
-      
+    /* Free CVODE structures: the same for both */ 
+    IntegratorInstance_freeCVODESolverStructures(engine);
 }
 
+/* frees only sensitivity structure, not used at the moment  */
+static void IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
+{
+    /* Free sensitivity vector yS */
+    N_VDestroySerial(engine->solver->dy);
+}
 
-
-/** Prints some final statistics of the calls to CVODE routines, that
-    are located in CVODE's iopt array.
+/** \brief Prints some final statistics of the calls to CVODE routines
 */
 
-SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API void IntegratorInstance_printIDAStatistics(integratorInstance_t *engine, FILE *f)
 {
-    int flag;
-    long int nst, nfe, nsetups, nje, nni, ncfn, netf;
-
-    cvodeSettings_t *opt = engine->opt;
-    cvodeSolver_t *solver = engine->solver;
-
-    flag = CVodeGetNumSteps(solver->cvode_mem, &nst);
-    check_flag(&flag, "CVodeGetNumSteps", 1, f);
-    CVodeGetNumRhsEvals(solver->cvode_mem, &nfe);
-    check_flag(&flag, "CVodeGetNumRhsEvals", 1, f);
-    flag = CVodeGetNumLinSolvSetups(solver->cvode_mem, &nsetups);
-    check_flag(&flag, "CVodeGetNumLinSolvSetups", 1, f);
-    flag = CVDenseGetNumJacEvals(solver->cvode_mem, &nje);
-    check_flag(&flag, "CVDenseGetNumJacEvals", 1, f);
-    flag = CVodeGetNonlinSolvStats(solver->cvode_mem, &nni, &ncfn);
-    check_flag(&flag, "CVodeGetNonlinSolvStats", 1, f);
-    flag = CVodeGetNumErrTestFails(solver->cvode_mem, &netf);
-    check_flag(&flag, "CVodeGetNumErrTestFails", 1, f);
-
-    fprintf(f, "\n## Integration Parameters:\n");
-    fprintf(f, "## mxstep   = %d rel.err. = %g abs.err. = %g \n",
-	    opt->Mxstep, opt->RError, opt->Error);
-    fprintf(f, "## CVode Statistics:\n");
-    fprintf(f, "## nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
-	    nst, nfe, nsetups, nje); 
-    fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n\n",
-	    nni, ncfn, netf);
+  /* print IDA statistics */
+  IntegratorInstance_printCVODEStatistics(engine, f);
+  /* print additional IDA statistics ...*/
 }
 
 
 /*
  * check return values of SUNDIALS functions
  */
-static int
-check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
+static int check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
 {
 
   int *errflag;
@@ -439,30 +395,23 @@ check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
 /***************** Functions Called by the CVODE Solver ******************/
 
 /**
-   f routine. Compute f(t,y).
-   This function is called by CVODE's integration routines every time
-   needed.
-   It evaluates the ODEs with the current variable values, as supplied
-   by CVODE's N_VIth(y,i) vector containing the values of all variables.
-   These values are first written back to CvodeData.
-   Then every ODE is passed to processAST, together with the cvodeData_t *,
-   and this function calculates the current value of the ODE.
-   The returned value is written back to CVODE's N_VIth(ydot,i) vector that
-   contains the values of the ODEs.
-   The the cvodeData_t * is updated again with CVODE's internal values for
-   all variables.
+   fRes routine. Compute the system residual function.
+   This function is called by IDA's integration routines every time
+   needed. 
 */
 
-static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
+static int
+fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
 {
   
   int i;
-  realtype *ydata, *dydata;
+  realtype *ydata, *dydata, *resdata;
   cvodeData_t *data;
   data   = (cvodeData_t *) f_data;
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
-
+  resdata  = NV_DATA_S(r);
+  
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
@@ -475,26 +424,32 @@ static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /* update time  */
   data->currenttime = t;
 
-  /* evaluate ODEs */
+  /* evaluate residual functions:
+     for available ODEs: 0 = dY/dt - dY/dt
+     for algebraicRules: 0 = algebraic rule */
   for ( i=0; i<data->model->neq; i++ ) {
-    dydata[i] = evaluateAST(data->model->ode[i],data);
-  } 
-
+    resdata[i] = evaluateAST(data->model->ode[i],data) - dydata[i];
+  }
+  for ( i=data->model->neq; i<data->model->nalg; i++ ) {
+    resdata[i] = evaluateAST(data->model->algebraic[i],data);
+  }
+  return 0;
 }
 
-/**
-   Jacobian routine. Compute J(t,y).
-   This function is (optionally) called by CVODE's integration routines
+
+/*
+   Jacobian residual routine. Compute J(t,y).
+   This function is (optionally) called by IDA's integration routines
    every time needed.
    Very similar to the f routine, it evaluates the Jacobian matrix
-   equations with CVODE's current values and writes the results
-   back to CVODE's internal vector DENSE_ELEM(J,i,j).
+   equations with IDA's current values and writes the results
+   back to IDA's internal vector DENSE_ELEM(J,i,j).
 */
 
 static void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
+JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
+           N_Vector resvec, realtype cj, void *jac_data, DenseMat J,
+           N_Vector tempv1, N_Vector tempv2, N_Vector tempv3)
 {
   
   int i, j;
@@ -502,6 +457,10 @@ JacODE(long int N, DenseMat J, realtype t,
   cvodeData_t *data;
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
+
+  /* update parameters */
+  for ( i=0; i<data->nsens; i++ )
+    data->value[data->model->index_sens[i]] = data->p[i];
   
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
@@ -519,9 +478,16 @@ JacODE(long int N, DenseMat J, realtype t,
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
+      if ( i == j)
+	DENSE_ELEM(J, i, j) -= cj;
      }
   }
-  
+  for ( i=data->model->neq; i<data->model->nalg; i++ ) {
+    for ( j=data->model->neq; j<data->model->nalg; j++ ) {
+      DENSE_ELEM(J,i,j) = 1.; /* algebraic jacobian here!! */
+     }
+  }
+  return 0;
 }
 
 

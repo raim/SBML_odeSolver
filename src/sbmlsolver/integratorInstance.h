@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 21:40:21 raim>
-  $Id: integratorInstance.h,v 1.18 2005/11/02 20:48:56 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-03 14:06:21 raim>
+  $Id: integratorInstance.h,v 1.19 2005/11/04 10:39:15 raimc Exp $ 
 */
 /* 
  *
@@ -64,7 +64,9 @@ extern "C" {
     void *cvode_mem;
     /* CVODES specific data */
     int nsens;
-    N_Vector *yS;    
+    N_Vector *yS;
+    /* IDA specific data */
+    N_Vector dy;
   };
 
 

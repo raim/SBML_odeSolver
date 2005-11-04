@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 15:23:30 raim>
-  $Id: variableIndex.h,v 1.8 2005/11/04 10:39:15 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-03 14:54:35 raim>
+  $Id: daeSolver.h,v 1.1 2005/11/04 10:39:15 raimc Exp $
 */
 /* 
  *
@@ -27,29 +27,34 @@
  *
  * The original code contained here was initially developed by:
  *
- *     Andrew Finney
+ *     Rainer Machne
  *
  * Contributor(s):
- *     Rainer Machne
+ *     Andrew Finney
  */
 
-#ifndef _VARIABLEINDEX_H_
-#define _VARIABLEINDEX_H_
+#ifndef _DAESOLVER_H_
+#define _DAESOLVER_H_
 
-typedef enum variableType
-  {
-    ODE_VARIABLE,
-    ASSIGNMENT_VARIABLE,
-    CONSTANT,
-    ALGEBRAIC_VARIABLE
-  } variableType_t; 	 
- 
-struct variableIndex
-{
-  variableType_t type;
-  int type_index;
-  int index ;
-} ;
+#include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/integratorInstance.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  /* IDA SOLVER */
+  SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_printIDAStatistics(integratorInstance_t *, FILE *f);
+
+  /* internal functions that are not part of the API (yet?) */
+  int IntegratorInstance_createIDASolverStructures(integratorInstance_t *);
+  void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
-/* _VARIABLEINDEX_H_ */
+
+/* End of file */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 10:34:44 raim>
-  $Id: odeModel.c,v 1.25 2005/11/03 10:13:51 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-04 11:08:56 raim>
+  $Id: odeModel.c,v 1.26 2005/11/04 10:39:14 raimc Exp $ 
 */
 /* 
  *
@@ -49,7 +49,7 @@
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
-				    int nass, int nevents);
+				    int nass, int nevents, int nalg);
 
 
 /** \brief Create internal model odeModel from an SBML representation
@@ -98,18 +98,20 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 static odeModel_t *
 ODEModel_fillStructures(Model_t *ode)
 {
-  int i, j, found, neq, nconst, nass, nevents, nvalues;
+  int i, j, found, neq, nalg, nconst, nass, nevents, nvalues;
   Compartment_t *c;
   Parameter_t *p;
   Species_t *s;
   Rule_t *rl;
   AssignmentRule_t *ar;
+  AlgebraicRule_t *alr;
   RateRule_t *rr;
   SBMLTypeCode_t type;  
   ASTNode_t *math;  
   odeModel_t *om;
 
   neq     = 0;
+  nalg    = 0;
   nconst  = 0;
   nass    = 0;
   nvalues = 0;
@@ -128,20 +130,27 @@ ODEModel_fillStructures(Model_t *ode)
       neq++;
     if ( type == SBML_ASSIGNMENT_RULE )
       nass++;
+    if ( type == SBML_ALGEBRAIC_RULE ) {
+      nalg++;
+      
+    }
   }
-
+   
   nvalues = Model_getNumCompartments(ode) + Model_getNumSpecies(ode) +
     Model_getNumParameters(ode);
 
-  nconst = nvalues - nass - neq;
+  nconst = nvalues - nass - neq - nalg;
 
   nevents = Model_getNumEvents(ode);
   
-  om = ODEModel_allocate(neq, nconst, nass, nevents);
+  om = ODEModel_allocate(neq, nconst, nass, nevents, nalg);
 
   RETURN_ON_FATALS_WITH(NULL);
   
   om->neq = neq;
+  om->nalg = nalg; /* this causes crash at the moment, because
+		      ODEs have been constructed for that
+		      should be defined by alg. rules */
   om->nconst = nconst;
   om->nass = nass;
 
@@ -154,6 +163,7 @@ ODEModel_fillStructures(Model_t *ode)
 
   neq  = 0;
   nass = 0;
+  nalg = 0;
   
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
     rl = Model_getRule(ode,j);
@@ -173,23 +183,36 @@ ODEModel_fillStructures(Model_t *ode)
       ASSIGN_NEW_MEMORY_BLOCK(om->names[om->neq+nass],
 			      strlen(AssignmentRule_getVariable(ar))+1,
 			      char, NULL);
-      sprintf(om->names[om->neq+nass], AssignmentRule_getVariable(ar));
+      sprintf(om->names[om->neq + nass], AssignmentRule_getVariable(ar));
       nass++;      
+    }
+    else if ( type == SBML_ALGEBRAIC_RULE ) {
+      
+      alr = (AlgebraicRule_t *)rl;
+      /* find variables defined by algebraic rules here! */
+      ASSIGN_NEW_MEMORY_BLOCK(om->names[nvalues + nalg],
+			      strlen("tmp")+3,
+			      char, NULL);
+      sprintf(om->names[om->neq+om->nass+om->nconst+ nalg], "tmp%d", nalg);
+      printf("tmp%d \n", nalg);
+      nalg++;
     }
   }
 
+  
+
   /* filling constants, i.e. all values in the model, that are not
-     defined by and assignment or rate rule */
+     defined by an assignment or rate rule */
   
   nconst = 0;
   for ( i=0; i<Model_getNumCompartments(ode); i++ ) {
     found = 0;
     c = Model_getCompartment(ode, i);
-    for ( j=0; j<neq+nass; j++ ) {
-      if ( strcmp(Compartment_getId(c), om->names[j]) == 0 ) {
+    
+    for ( j=0; j<neq+nass; j++ ) 
+      if ( strcmp(Compartment_getId(c), om->names[j]) == 0 ) 
 	found ++;
-      }
-    }
+    
     if ( !found ) {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Compartment_getId(c))+1, char, NULL);
@@ -200,11 +223,11 @@ ODEModel_fillStructures(Model_t *ode)
   for ( i=0; i<Model_getNumSpecies(ode); i++ ) {
     found = 0;
     s = Model_getSpecies(ode, i);
-    for ( j=0; j<neq+nass; j++ ) {
-      if ( strcmp(Species_getId(s), om->names[j]) == 0 ) {
+    
+    for ( j=0; j<neq+nass; j++ ) 
+      if ( strcmp(Species_getId(s), om->names[j]) == 0 ) 
 	found ++;
-      }
-    }
+
     if ( !found ) {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Species_getId(s))+1, char, NULL);
@@ -215,11 +238,10 @@ ODEModel_fillStructures(Model_t *ode)
   for ( i=0; i<Model_getNumParameters(ode); i++ ) {
     found = 0;
     p = Model_getParameter(ode, i);
-    for ( j=0; j<neq+nass; j++ ) {
-      if ( strcmp(Parameter_getId(p), om->names[j]) == 0 ) {
+    for ( j=0; j<neq+nass; j++ ) 
+      if ( strcmp(Parameter_getId(p), om->names[j]) == 0 ) 
 	found ++;
-      }
-    }
+
     if ( !found ) {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Parameter_getId(p))+1, char, NULL);
@@ -234,7 +256,12 @@ ODEModel_fillStructures(Model_t *ode)
      for evaluation during the integration routines!! */
   neq = 0;
   nass = 0;
+  nalg = 0;
   
+/*   ODEModel_dumpNames(om); */
+/*   printf("\n\nHallo %d %d %d %d\n\n\n", om->neq,om->nass,om->nalg,om->nconst); */
+/*   fflush(stdout); */
+
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
     rl = Model_getRule(ode, j);
     type = SBase_getTypeCode((SBase_t *)rl);
@@ -251,6 +278,12 @@ ODEModel_fillStructures(Model_t *ode)
       om->assignment[nass] = math;
       nass++;      
     }
+    else if ( type == SBML_ALGEBRAIC_RULE ) {
+      alr = (AlgebraicRule_t *)rl;
+      math = indexAST(Rule_getMath(rl), nvalues, om->names); 
+      om->algebraic[nalg] = math;
+      nalg++;
+    }
   }  
   
 
@@ -264,15 +297,16 @@ ODEModel_fillStructures(Model_t *ode)
 /* allocates memory for a new odeModel structure and returns
    a pointer to it */ 
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
-				     int nass, int nevents)
+				     int nass, int nalg, int nevents)
 {
   int i;
   odeModel_t *data;
 
   ASSIGN_NEW_MEMORY(data, odeModel_t, NULL)
-  ASSIGN_NEW_MEMORY_BLOCK(data->names, neq+nass+nconst, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->names, neq+nalg+nass+nconst, char *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->algebraic, nalg, ASTNode_t *, NULL)
     
   return data ;
 }
@@ -303,8 +337,10 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     return om;
 }
 
+
 /** \brief Create internal model odeModel_t from SBMLDocument
 */
+
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
 {
   Model_t *m;
@@ -328,6 +364,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
   return om;
 }
 
+
 /** \brief Construct Sensitivity R.H.S. for ODEModel.
     
 */
@@ -350,7 +387,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 
   ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
 
-  /* default case, these values should be passed for other cases! */
+  /* !!! default case, these values should be passed for other cases !!! */
   for ( i=0; i<om->nsens; i++ ) 
     om->index_sens[i] = om->neq + om->nass + i;
 
@@ -391,8 +428,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 }
 
 
-/** \brief Free Sensitivity R.H.S. for ODEModel.
-    
+/** \brief Free Sensitivity R.H.S. for ODEModel.    
 */
 
 SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
@@ -402,8 +438,7 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
   /* free parametric matrix, if it has been constructed */
   if ( om->jacob_sens != NULL )
     {
-      for ( i=0; i<om->neq; i++ ) 
-      {
+      for ( i=0; i<om->neq; i++ ) {
           for ( j=0; j<om->nsens; j++ ) 
 	          ASTNode_free(om->jacob_sens[i][j]);
           free(om->jacob_sens[i]);
@@ -446,6 +481,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variab
   return ODEModel_getSensIJEntry(om, vi1->index, vi2->type_index);
 }
 
+
 /** \brief Returns the variableIndex for the jth parameter for
     which sensitivity analysis was requested, where
     0 < j < ODEModel_getNsens;
@@ -461,7 +497,8 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *
   else
     return NULL;
 }
-  
+
+
 /** \brief Construct Jacobian Matrix for ODEModel.
     
    Once an ODE system has been constructed from an SBML model, this
@@ -521,6 +558,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   return om->jacobian;
 }
 
+
 /**  \brief Returns the ith/jth entry of the jacobian matrix
      
     Returns NULL if either the jacobian has not been constructed yet,
@@ -536,6 +574,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, 
     return NULL;  
   return (const ASTNode_t *) om->jacob[i][j];
 }
+
 
 /** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the jacobian matrix.
     
@@ -567,6 +606,7 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
     return NULL; 
 }
 
+
 /** \brief Frees the odeModel structures
 */
 
@@ -592,6 +632,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
     ASTNode_free(om->assignment[i]);
   free(om->assignment);
   
+  /* free algebraic rules */
+  for ( i=0; i<om->nalg; i++ ) 
+    ASTNode_free(om->algebraic[i]);
+  free(om->algebraic);
+  
   /* free Jacobian matrix, if it has been constructed */
   if ( om->jacob != NULL ) 
   {
@@ -604,9 +649,7 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
       free(om->jacob);
   }
 
-
   ODEModel_freeSensitivity(om);
-
 
   /* free simplified ODE model */
   if ( om->simple != NULL ) 
@@ -627,7 +670,7 @@ static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
 {
     int i, nvalues;
 
-    nvalues = om->neq + om->nass + om->nconst;
+    nvalues = om->neq + om->nass + om->nconst + om->nalg;
     
     for ( i=0; i<nvalues && strcmp(symbol, om->names[i]); i++ );
     
@@ -655,7 +698,7 @@ SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbo
 
 SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
 {
-  return om->neq + om->nass + om->nconst;
+  return om->neq + om->nass + om->nconst + om->nalg ;
 }
 
 
@@ -705,12 +748,15 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *o
 	  vi->type = ASSIGNMENT_VARIABLE;
 	  vi->type_index = i - om->neq;
 	}
-	else {
+	else if( i < om->neq + om->nass + om->nconst) {
 	  vi->type = CONSTANT;
 	  vi->type_index = i - om->neq - om->nass;
-	}	  	  
+	}
+	else {
+	  vi->type = ALGEBRAIC_VARIABLE;
+	  vi->type_index = i - om->neq - om->nass - om->nconst;
+	}
       }
-
     return vi;
 }
 
@@ -754,6 +800,15 @@ SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *om)
   return om->neq;
 }
 
+
+/** \brief Returns the number variables that are defined by
+    an algebraic rule
+*/
+
+SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *om)
+{
+  return om->nalg;
+}
 
 /** \brief Returns the number parameters for which sensitivity
     analysis might be requested.
@@ -881,7 +936,7 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om)
 {
   int i;
-  for ( i=0; i<(om->neq+om->nass+om->nconst); i++ )
+  for ( i=0; i<(om->neq+om->nass+om->nconst+om->nalg); i++ )
     printf("%s ", om->names[i]);
   printf("\n");
 }

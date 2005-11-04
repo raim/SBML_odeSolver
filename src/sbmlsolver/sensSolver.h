@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 12:00:52 raim>
-  $Id: sensSolver.h,v 1.1 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-03 14:54:53 raim>
+  $Id: sensSolver.h,v 1.2 2005/11/04 10:39:15 raimc Exp $
 */
 /* 
  *
@@ -33,8 +33,8 @@
  *     Andrew Finney
  */
 
-#ifndef _CVODESOLVER_H_
-#define _CVODESOLVER_H_
+#ifndef _SENSSOLVER_H_
+#define _SENSSOLVER_H_
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorInstance.h"

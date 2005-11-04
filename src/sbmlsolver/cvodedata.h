@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 21:40:40 raim>
-  $Id: cvodedata.h,v 1.21 2005/11/02 20:48:56 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 10:31:08 raim>
+  $Id: cvodedata.h,v 1.22 2005/11/04 10:39:15 raimc Exp $
 */
 /* 
  *
@@ -49,48 +49,6 @@
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/odeModel.h"
 
-
-struct odeModel
-{
-  SBMLDocument_t *d; /* only if directly created from file */
-  Model_t *m;
-  Model_t *simple;
-
-  /* All names, i.e. ODE variables, assigned parameters, and constant
-     parameters */
-  char **names; 
-
-  /* number of ODEs (neq), assigned parameters (nass), and constant
-     parameters (nconst) */
-  int neq;
-  int nass;
-  int nconst;  
-
-  /* Assigned variables: stores species, compartments and parameters,
-     that are set by an assignment rule */
-  ASTNode_t **assignment;
-
-  /* The main data: number, names, and equation ASTs
-     of the ODEs. The value array is used to write and read the
-     current value of the ODE variables during simulation. */
-  ASTNode_t **ode; 
-
-  /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
-  /* neq x neq */
-  ASTNode_t ***jacob;
-  /* was the model the jacobian constructed ? */
-  int jacobian;
-
-  /* forward sensitivity analysis */
-  /* neq x num_param */
-  int nsens;    /* number of parameters for sens. analysis */
-  int *index_sens; /* indexes of parameters in char **names, char *value*/
-  ASTNode_t ***jacob_sens; /*  (d[Y]/dt)/dP  */
-  int sensitivity;  /* a flag for success */
-
-  /* adjoint */
-
-};
 
 /* CvodeSettings Set; */
 

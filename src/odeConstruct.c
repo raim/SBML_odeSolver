@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:18:14 raim>
-  $Id: odeConstruct.c,v 1.15 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 11:08:42 raim>
+  $Id: odeConstruct.c,v 1.16 2005/11/04 10:39:14 raimc Exp $
 */
 /* 
  *
@@ -78,6 +78,9 @@ Model_reduceToOdes(Model_t *m) {
      create rate rules from reactions */
   Model_copyOdes(m, ode);
 
+  /* !!! supress ODE construction for algebraic rule
+         defined variables !!! */
+  
   /* C.3: Create ODEs from reactions */
   errors = Model_createOdes(m, ode);
 
@@ -100,7 +103,7 @@ Model_reduceToOdes(Model_t *m) {
   Model_copyEvents(m, ode);
 
   /* C.4.b: Copy AlgebraicRules to new model and create error */
-  Model_copyAlgebraicRules(m, ode);  
+  Model_copyAlgebraicRules(m, ode);
 
   /* C.4.c: Copy Assignment Rules to new model */
   Model_copyAssignmentRules(m, ode);
@@ -205,9 +208,8 @@ Model_copyInits(Model_t *old)
 /* C.2: Copy predefined ODEs (RateRules) from `m' to `ode'
    identifies all predefined ODEs in `m' (RateRules) and
    adds them as RateRules to the model `ode' */
-static void
-Model_copyOdes(Model_t *m, Model_t*ode ) {
-  
+static void Model_copyOdes(Model_t *m, Model_t*ode )
+{  
   Rule_t *rl;
   RateRule_t *rr, *rl_new;
   SBMLTypeCode_t type;
@@ -237,9 +239,8 @@ Model_copyOdes(Model_t *m, Model_t*ode ) {
 /* C.3: Create ODEs from reactions
    for each species in model `m' and ODE is constructed from its
    reactions (in `m") and added as a RateRule to `ode' */
-
-static int Model_createOdes(Model_t *m, Model_t*ode ) {
-
+static int Model_createOdes(Model_t *m, Model_t*ode )
+{
   Species_t *s;
   Rule_t *rl;
   RateRule_t *rr, *rl_new;
@@ -317,9 +318,7 @@ static int Model_createOdes(Model_t *m, Model_t*ode ) {
     }
   }
   return errors;
-
 }
-
 
 
 /** C.3.a: Creates and ODE for a species from its reactions
@@ -328,8 +327,9 @@ static int Model_createOdes(Model_t *m, Model_t*ode ) {
     or modifier. It directly constructs an Abstract Syntax Tree (AST)
     and returns a pointer to it.
 */
-SBML_ODESOLVER_API ASTNode_t *
-Species_odeFromReactions(Species_t *s, Model_t *m){
+
+SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
+{
 
   int j, k, errors;
   Reaction_t *r;
@@ -516,7 +516,8 @@ Species_odeFromReactions(Species_t *s, Model_t *m){
       but are not defined as constant or boundarySpecies, set ODE to 0.
     */
     ode = ASTNode_create();
-    ASTNode_setInteger(ode, 0);
+    ASTNode_setInteger(ode, 0); /*!!! change for DAE models should be defined
+				      by algebraic rule!*/
   }
 
   simple = AST_simplify(ode);
