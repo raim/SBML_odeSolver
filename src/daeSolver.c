@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 15:33:12 raim>
-  $Id: daeSolver.c,v 1.1 2005/11/04 10:39:14 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 13:25:41 raim>
+  $Id: daeSolver.c,v 1.2 2005/11/04 12:29:38 raimc Exp $
 */
 /* 
  *
@@ -427,12 +427,12 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
   /* evaluate residual functions:
      for available ODEs: 0 = dY/dt - dY/dt
      for algebraicRules: 0 = algebraic rule */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
     resdata[i] = evaluateAST(data->model->ode[i],data) - dydata[i];
-  }
-  for ( i=data->model->neq; i<data->model->nalg; i++ ) {
+
+  for ( i=0 ; i<data->model->nalg; i++ ) 
     resdata[i] = evaluateAST(data->model->algebraic[i],data);
-  }
+
   return 0;
 }
 
@@ -482,11 +482,11 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
 	DENSE_ELEM(J, i, j) -= cj;
      }
   }
-  for ( i=data->model->neq; i<data->model->nalg; i++ ) {
-    for ( j=data->model->neq; j<data->model->nalg; j++ ) {
+  
+  for ( i=0; i<data->model->nalg; i++ ) 
+    for ( j=0; j<data->model->nalg; j++ ) 
       DENSE_ELEM(J,i,j) = 1.; /* algebraic jacobian here!! */
-     }
-  }
+
   return 0;
 }
 
