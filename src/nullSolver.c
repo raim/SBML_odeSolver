@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 20:25:22 raim>
-  $Id: nullSolver.c,v 1.1 2005/11/04 19:31:44 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 20:44:34 raim>
+  $Id: nullSolver.c,v 1.2 2005/11/04 19:45:16 raimc Exp $
 */
 /* 
  *
@@ -81,6 +81,7 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
     /* !!!! calling KINSOL !!!! */
     flag = KINSol(solver->cvode_mem, solver->y,
 		  KIN_LINESEARCH, solver->abstol, solver->abstol);
+    /* !!! should use different scalings !!!*/
     printf("THX KINSOL\n");
 
     if ( flag != KIN_SUCCESS )
@@ -179,7 +180,7 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
     
 
     /*
-     * Initialize y, abstol vectors
+     * Initialize y, scale and constraint vectors
      */
     ydata       = NV_DATA_S(solver->y);    
     scale       = NV_DATA_S(solver->abstol);    
@@ -189,7 +190,10 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
        */
       ydata[i]  = data->value[i];
       scale[i]  = 0.01; /* !!!good scaling factors required!!! */
-      constr[i] = 1; /* does not fit to kin_guide instructions */
+      constr[i] = 1; /* !!!does not fit to kin_guide instructions,
+		      where 1 is claimed to been y>0, while
+		     2 should mean y >= 0. Two gives however an error
+		     message !!!*/
 
     }
     /*
@@ -347,6 +351,7 @@ static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
     JvData[i] = 0.0;
     for ( j=0; j<data->model->neq; j++ )
        JvData[j] += evaluateAST(data->model->jacob[i][j], data) * vdata[j];
+    /*!!! not sure whether this is correct, needs checking !!!*/
   }
   *new_u = TRUE;      
   return 0;
