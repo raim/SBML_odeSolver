@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 20:44:34 raim>
-  $Id: nullSolver.c,v 1.2 2005/11/04 19:45:16 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 22:39:56 raim>
+  $Id: nullSolver.c,v 1.3 2005/11/04 21:40:55 raimc Exp $
 */
 /* 
  *
@@ -80,8 +80,10 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
     
     /* !!!! calling KINSOL !!!! */
     flag = KINSol(solver->cvode_mem, solver->y,
-		  KIN_LINESEARCH, solver->abstol, solver->abstol);
-    /* !!! should use different scalings !!!*/
+		  KIN_LINESEARCH, 
+		  solver->abstol, solver->abstol);
+    /* !!! should use different scalings, first is D*y second
+       is D*f(y) !!!*/
     printf("THX KINSOL\n");
 
     if ( flag != KIN_SUCCESS )
@@ -97,7 +99,8 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
     /* update cvodeData with foun steady state values */    
     for ( i=0; i<om->neq; i++ ) {
       data->value[i] = ydata[i];
-      printf("HALLO NULLSTELLE: %g\n", data->value[i]);
+      printf("HALLO NULLSTELLE: y: %g  f(y): %g\n",
+	     data->value[i], evaluateAST(data->model->ode[i], data));
     }
     /* IntegratorInstance_freeKINSolverStructures(engine); */
     return 1/* IntegratorInstance_updateData(engine) */; /* correct ?*/
@@ -160,7 +163,21 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
                         "N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
+
+    /* scaling factor for y, diagonal elements of a matrix Du,
+       such that Du*u vector has all components roughly of the
+       same magnitude as y close to a solution */
+    solver->abstol = N_VNew_Serial(neq);
+    if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector y failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                        "N_VNew_Serial for scaling vector abstol failed");
+      return 0; /* error */
+    }
     
+    /* scaling factor for f(y), diagonal elements of a matrix Df,
+       such that Df*f(u) vector has all components of roughly the
+       same magnitude as y (?)not too close(?) to a solution  */
     solver->abstol = N_VNew_Serial(neq);
     if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
@@ -189,8 +206,8 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
       /* Set initial value vector components of y and scaling factor
        */
       ydata[i]  = data->value[i];
-      scale[i]  = 0.01; /* !!!good scaling factors required!!! */
-      constr[i] = 1; /* !!!does not fit to kin_guide instructions,
+      scale[i]  = 0.138; /* !!!good scaling factors required!!! */
+      constr[i] = 0; /* !!!does not fit to kin_guide instructions,
 		      where 1 is claimed to been y>0, while
 		     2 should mean y >= 0. Two gives however an error
 		     message !!!*/
@@ -240,7 +257,7 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
    }
     
    /* Call KINSpgmr to specify the linear solver KINSPGMR  */
-    flag = KINSpgmr(solver->cvode_mem, 15);
+    flag = KINSpgmr(solver->cvode_mem, 100);
     if (check_flag(&flag, "KINSpgmr", 1, stderr)) {
       /* ERROR HANDLING CODE if KINSetFdata failes */
       return 0;
@@ -252,7 +269,7 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
      */
     if ( opt->UseJacobian == 1 ) {
       /* ... user-supplied routine JacV when working */
-      flag = KINSpgmrSetJacTimesVecFn(solver->cvode_mem, JacV, data);
+      /* flag = KINSpgmrSetJacTimesVecFn(solver->cvode_mem, JacV, data); */
     }
     else {
       /* ... the internal default difference quotient routine KINDenseDQJac */
