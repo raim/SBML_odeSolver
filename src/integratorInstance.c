@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 11:47:05 raim>
-  $Id: integratorInstance.c,v 1.36 2005/11/04 12:27:55 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:07:39 raim>
+  $Id: integratorInstance.c,v 1.37 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -40,7 +40,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include  <cvodes.h>
+#include <cvodes.h>
+#include <cvdense.h>
+#include <nvector_serial.h>
 
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"
@@ -360,10 +362,10 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
 }
 
 
-/** Gets a pointer cvodeData of the integratorInstance, which contains
-    the current values of all variables. This structure can only be used 
-    for evaluation of formulas with evaluateAST after integration.
-    Ownership stays with the integratorInstance.
+/** Returns a pointer cvodeData of the integratorInstance, which contains
+    the current values of all variables. This structure is `read-only'
+    and can be used for evaluation of formulas with evaluateAST after
+    integration. Ownership stays with the integratorInstance.
 */
 
 SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *engine)
@@ -717,16 +719,12 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
   if ( vi->index < engine->om->neq ) {
     /* if (om->algebraic) ?? */
-    if ( !engine->opt->Sensitivity ) {
-      IntegratorInstance_freeCVODESolverStructures(engine);
-      engine->solver->t0 = engine->solver->t;
+    IntegratorInstance_freeCVODESolverStructures(engine);
+    engine->solver->t0 = engine->solver->t;
+    if ( !engine->opt->Sensitivity )       
       IntegratorInstance_createCVODESolverStructures(engine);
-    }
-    else {
-      IntegratorInstance_freeCVODESSolverStructures(engine);
-      engine->solver->t0 = engine->solver->t;
+    else 
       IntegratorInstance_createCVODESSolverStructures(engine);
-    }
   }
     
 }	

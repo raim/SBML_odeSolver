@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 14:54:53 raim>
-  $Id: sensSolver.h,v 1.2 2005/11/04 10:39:15 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 16:50:55 raim>
+  $Id: sensSolver.h,v 1.3 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -37,7 +37,6 @@
 #define _SENSSOLVER_H_
 
 #include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/integratorInstance.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +48,6 @@ extern "C" {
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *);
-  void IntegratorInstance_freeCVODESSolverStructures(integratorInstance_t *);
 
 #ifdef __cplusplus
 }

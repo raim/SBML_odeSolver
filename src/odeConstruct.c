@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 11:08:42 raim>
-  $Id: odeConstruct.c,v 1.16 2005/11/04 10:39:14 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 16:01:58 raim>
+  $Id: odeConstruct.c,v 1.17 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -410,8 +410,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 
 	}
 	else {
-	  SolverError_error(
-			    ERROR_ERROR_TYPE,
+	  SolverError_error(ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
 			    "The model has no kinetic law for reaction %s",
 			    Reaction_getId(r));
@@ -461,8 +460,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 
 	}
 	else {
-	  SolverError_error(
-			    ERROR_ERROR_TYPE,
+	  SolverError_error(ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_NO_KINETIC_LAW_FOUND_FOR_REACTION,
 			    "The model has no kinetic law for reaction %s",
 			    Reaction_getId(r));

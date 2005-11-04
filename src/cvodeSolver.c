@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 11:46:47 raim>
-  $Id: cvodeSolver.c,v 1.8 2005/11/04 12:27:55 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:16:44 raim>
+  $Id: cvodeSolver.c,v 1.9 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -49,24 +49,6 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
-
-static int
-check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
-
-/**
- * CVode solver: function computing the ODE rhs for a given value
- * of the independent variable t and state vector y.
- */
-static void
-f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
-
-/**
- * CVode solver: function computing the dense Jacobian J of the ODE system
- */
-static void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
 
 
 
@@ -282,6 +264,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeCreate failed");
+      return 0; /* error */
     }
 
     /**
@@ -309,6 +292,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     flag = CVodeSetFdata(solver->cvode_mem, engine->data);
     if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
       /* ERROR HANDLING CODE if CVodeSetFdata failes */
+       return 0; /* error */
     }
     
     /**
@@ -317,6 +301,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     flag = CVDense(solver->cvode_mem, neq);
     if (check_flag(&flag, "CVDense", 1, stderr)) {
       /* ERROR HANDLING CODE if CVDense failes */
+      return 0; /* error */
     }
 
     /**
@@ -333,6 +318,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
     
     if ( check_flag(&flag, "CVDenseSetJacFn", 1, stderr) ) {
+      return 0; /* error */
       /* ERROR HANDLING CODE if CVDenseSetJacFn failes */
     }
 
@@ -398,7 +384,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstan
     fprintf(f, "## CVode Statistics:\n");
     fprintf(f, "## nst = %-6ld nfe  = %-6ld nsetups = %-6ld nje = %ld\n",
 	    nst, nfe, nsetups, nje); 
-    fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n\n",
+    fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n",
 	    nni, ncfn, netf);
 }
 
@@ -406,8 +392,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstan
 /*
  * check return values of SUNDIALS functions
  */
-static int
-check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
+int check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
 {
 
   int *errflag;
@@ -453,7 +438,7 @@ check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
    all variables.
 */
 
-static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
+void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 {
   
   int i;
@@ -463,22 +448,27 @@ static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
+  /* !!! update parameters: is p modified by CVODES??? !!! */
+  /* !!! is only required if fS could not be generated !!! */
+  if ( data->p != NULL )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->model->index_sens[i]] = data->p[i];
+
   /* update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
-  }
+
   /* update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) {
+  for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
-  }
+
   /* update time  */
   data->currenttime = t;
 
   /* evaluate ODEs */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
     dydata[i] = evaluateAST(data->model->ode[i],data);
-  } 
 
 }
 
@@ -491,7 +481,7 @@ static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-static void
+void
 JacODE(long int N, DenseMat J, realtype t,
        N_Vector y, N_Vector fy, void *jac_data,
        N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
@@ -503,25 +493,28 @@ JacODE(long int N, DenseMat J, realtype t,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   
+  /* !!! update parameters: is p modified by CVODES??? !!! */
+  /* !!! is only required if fS could not be generated !!! */
+  if ( data->p != NULL )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->model->index_sens[i]] = data->p[i];
+
   /* update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
-  }
+
   /* update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) {
+  for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
-  }
+
   /* update time */
   data->currenttime = t;
 
   /* evaluate Jacobian*/
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
+    for ( j=0; j<data->model->neq; j++ ) 
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
-     }
-  }
-  
 }
 
 

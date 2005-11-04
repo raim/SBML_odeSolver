@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 12:09:49 raim>
-  $Id: cvodeSolver.h,v 1.4 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:01:29 raim>
+  $Id: cvodeSolver.h,v 1.5 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -37,7 +37,6 @@
 #define _CVODESOLVER_H_
 
 #include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/integratorInstance.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +49,12 @@ extern "C" {
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
-
+  int check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
+  void f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
+  void JacODE(long int N, DenseMat J, realtype t,
+	      N_Vector y, N_Vector fy, void *jac_data,
+	      N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
+  
 #ifdef __cplusplus
 }
 #endif

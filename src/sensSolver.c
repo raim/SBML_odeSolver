@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 12:08:27 raim>
-  $Id: sensSolver.c,v 1.6 2005/11/04 12:27:55 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:16:02 raim>
+  $Id: sensSolver.c,v 1.7 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -47,26 +47,9 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/cvodeSolver.h"
+#include "sbmlsolver/sensSolver.h"
 
-static int
-check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
-
-/*
- * CVode solver: function computing the ODE rhs for a given value
- * of the independent variable t and state vector y.
- */
-static void
-f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
-
-/*
- * CVode solver: function computing the dense Jacobian J of the ODE system
- */
-static void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
 
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
@@ -75,8 +58,6 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
                int iS, N_Vector yS, N_Vector ySdot, 
                void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
-static void
-IntegratorInstance_freeSensSolverStructures(integratorInstance_t *);
 
 /* The Hot Stuff! */
 /** \brief Calls CVODES to move the current simulation, including
@@ -106,7 +87,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
       return 0;
     RETURN_ON_FATALS_WITH(0);
     
-    /* getting sensitivity */
+    /* getting sensitivities */
     flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     
     if ( flag != CV_SUCCESS )
@@ -147,18 +128,23 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /* realtype pbar[data->nsens+1]; */
     int plist[data->nsens+1];
+    realtype pbar[data->nsens+1];
 
-    /*** creating CVODE structures ***/
+    /*
+     * creating CVODE structures
+     */
     if (!IntegratorInstance_createCVODESolverStructures(engine))
       return 0;
 
-    /*** adding sensitivity specific structures ***/
+    /*****  adding sensitivity specific structures ******/
 
-    /* construct sensitivity related structures */
-    /* free sensitivity from former runs (might have changed
-       for non-default cases!) */
+    /*
+     * construct sensitivity related structures
+     */
+    /* free sensitivity from former runs (changed for non-default cases!) */
     if ( om->jacob_sens != NULL ) 
       ODEModel_freeSensitivity(om);
+    
     /* this function will require additional input for
        non-default case, via sensitivity input settings! */
     ODEModel_constructSensitivity(om);
@@ -170,13 +156,18 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 		   1, stderr))
       return(0);
 
-    /* (re)initialize sensitivities */
+    /*
+     * (re)initialize ySdata sensitivities
+     */
     for ( j=0; j<data->nsens; j++ ) {
       ySdata = NV_DATA_S(solver->yS[j]);
       for ( i=0; i<data->neq; i++ ) 
 	ySdata[i] = data->sensitivity[i][j];
     }
 
+    /*
+     * set method
+     */
     if ( opt->SensMethod == 0 ) 
       flag =CVodeSensMalloc(solver->cvode_mem,data->nsens,
 			    CV_SIMULTANEOUS,solver->yS);
@@ -187,210 +178,103 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,
 			     CV_STAGGERED1, solver->yS);
     if(check_flag(&flag, "CVodeSensMalloc", 1, stderr)) {
-	/* ERROR HANDLING CODE if failes */
-      }
+      return 0;
+      /* ERROR HANDLING CODE if failes */
+    }
 
-    /* setting parameter values and R.H.S function fS */
-   
+    /***** set parameter values or R.H.S function fS *****/
+    /* NOTES: */
+    /* !!! plist could later be used to specify requested parameters
+       for sens.analysis !!! */
+    /* !!! data->p is only required if R.H.S. fS cannot be supplied !!! */
+    
     /* was construction of parametric matrix successfull ? */
     if ( om->sensitivity ) {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, fS);
       if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
+	return 0;
 	/* ERROR HANDLING CODE if failes */
+      }
+      data->p = NULL;
+      flag = CVodeSetSensParams(solver->cvode_mem, NULL, NULL, NULL);
+      if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
+	return 0;
+	/* ERROR HANDLING CODE if  failes */
       }
     }
     else {
       /*!!! ??? DOESNT WORK CURRENTLY ??? !!!*/
-      return 0;
-      flag = CVodeSetSensRho(solver->cvode_mem, 0.0);
+      /* SIGSEV: ... at ./cvodes.c:6501  pbari = pbar[is];*/
+      /* return 0; */
+      ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
+      for ( i=0; i<data->nsens; i++ ) {
+	plist[i] = i+1;
+	data->p[i] = data->value[om->index_sens[i]];
+/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/
+      }
+      flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, plist);
+      if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
+	return 0;
+	/* ERROR HANDLING CODE if  failes */
+      }
+      flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
       if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
-	/* ERROR HANDLING CODE if failes */
-      }      
-    }
-    
-    /* plist could later be used to specify requested parameters
-       for sens.analysis */
-    ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
-    for ( i=0; i<data->nsens; i++ ) {
-      plist[i] = i+1;
-      data->p[i] = data->value[om->index_sens[i]];
-      /* pbar[i] = abs(data->p[i]); */ /*??? WHAT IS PBAR ???*/ 
+	/* ERROR HANDLING CODE if  failes */
+	return 0;
+      }
     }
 
-    /* data->p is actually only required if R.H.S. cannot be supplied */     
-    flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, plist);
-    if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
-      /* ERROR HANDLING CODE if  failes */
-    }
-    
+    /* difference FALSE/TRUE ? */
     flag = CVodeSetSensErrCon(solver->cvode_mem, TRUE);
     if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr)) {
+      return 0;
       /* ERROR HANDLING CODE if failes */
     } 
       
     flag = CVodeSetSensFdata(solver->cvode_mem, data);
     if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr))  {
+      return 0;
       /* ERROR HANDLING CODE if  failes */
-    }
-      
+    }      
      
     return 1; /* OK */
 }
 
-/* frees N_V vector structures, and the cvode_mem solver */
-void IntegratorInstance_freeCVODESSolverStructures(integratorInstance_t *engine)
-{
-    /* Free CVODE structures: the same for both */ 
-    IntegratorInstance_freeCVODESolverStructures(engine);
-}
-
-/* frees only sensitivity structure, not used at the moment  */
-static void IntegratorInstance_freeSensSolverStructures(integratorInstance_t *engine)
-{
-    /* Free sensitivity vector yS */
-    N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
-}
 
 /** \brief Prints some final statistics of the calls to CVODE routines
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
 {
+  int flag;
+  long int nfSe, nfeS, nsetupsS, nniS, ncfnS, netfS;
+  cvodeSolver_t *solver = engine->solver;
+
   /* print CVODE statistics */
   IntegratorInstance_printCVODEStatistics(engine, f);
-  /* print additional CVODES statistics ...*/
-}
+  /* print additional CVODES statistics ..TODO...*/
+  flag = CVodeGetNumSensRhsEvals(solver->cvode_mem, &nfSe);
+  check_flag(&flag, "CVodeGetNumSensRhsEvals", 1, f);
+  flag = CVodeGetNumRhsEvalsSens(solver->cvode_mem, &nfeS);
+  check_flag(&flag, "CVodeGetNumRhsEvalsSens", 1, f);
+  flag = CVodeGetNumSensLinSolvSetups(solver->cvode_mem, &nsetupsS);
+  check_flag(&flag, "CVodeGetNumSensLinSolvSetups", 1, f);
+  flag = CVodeGetNumSensErrTestFails(solver->cvode_mem, &netfS);
+  check_flag(&flag, "CVodeGetNumSensErrTestFails", 1, f);
+  flag = CVodeGetNumSensNonlinSolvIters(solver->cvode_mem, &nniS);
+  check_flag(&flag, "CVodeGetNumSensNonlinSolvIters", 1, f);
+  flag = CVodeGetNumSensNonlinSolvConvFails(solver->cvode_mem, &ncfnS);
+  check_flag(&flag, "CVodeGetNumSensNonlinSolvConvFails", 1, f);
 
-
-/*
- * check return values of SUNDIALS functions
- */
-static int check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
-{
-
-  int *errflag;
-
-  /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
-  if (opt == 0 && flagvalue == NULL) {
-    fprintf(f, "\n## SUNDIALS_ERROR: %s() failed - returned NULL pointer\n",
-            funcname);
-    return(1); }
-
-  /* Check if flag < 0 */
-  else if (opt == 1) {
-    errflag = (int *) flagvalue;
-    if (*errflag < 0) {
-      fprintf(f, "\n## SUNDIALS_ERROR: %s() failed with flag = %d\n",
-              funcname, *errflag);
-      return(1); }}
-
-  /* Check if function returned NULL pointer - no memory allocated */
-  else if (opt == 2 && flagvalue == NULL) {
-    fprintf(f, "\n## MEMORY_ERROR: %s() failed - returned NULL pointer\n",
-            funcname);
-    return(1); }
-
-  return(0);
-}
-
-
-/***************** Functions Called by the CVODES Solver ******************/
-
-/**
-   f routine. Compute f(t,y).
-   This function is called by CVODE's integration routines every time
-   needed.
-   It evaluates the ODEs with the current variable values, as supplied
-   by CVODE's N_VIth(y,i) vector containing the values of all variables.
-   These values are first written back to CvodeData.
-   Then every ODE is passed to processAST, together with the cvodeData_t *,
-   and this function calculates the current value of the ODE.
-   The returned value is written back to CVODE's N_VIth(ydot,i) vector that
-   contains the values of the ODEs.
-   The the cvodeData_t * is updated again with CVODE's internal values for
-   all variables.
-*/
-
-static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
-{
-  
-  int i;
-  realtype *ydata, *dydata;
-  cvodeData_t *data;
-  data   = (cvodeData_t *) f_data;
-  ydata  = NV_DATA_S(y);
-  dydata = NV_DATA_S(ydot);
-
-  /* !!! update parameters: is p modified by CVODES??? !!! */
-  for ( i=0; i<data->nsens; i++ )
-    data->value[data->model->index_sens[i]] = data->p[i];
-
-  /* update ODE variables from CVODES */
-  for ( i=0; i<data->model->neq; i++ ) {
-    data->value[i] = ydata[i];
-  }
-  /* update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) {
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
-  }
-  /* update time  */
-  data->currenttime = t;
-
-  /* evaluate ODEs */
-  for ( i=0; i<data->model->neq; i++ ) {
-    dydata[i] = evaluateAST(data->model->ode[i],data);
-  } 
+  fprintf(f, "## CVode Statistics:\n");
+  fprintf(f, "## nfSe    = %5ld    nfeS     = %5ld\n", nfSe, nfeS);
+  fprintf(f, "## netfs   = %5ld    nsetupsS = %5ld\n", netfS, nsetupsS);
+  fprintf(f, "## nniS    = %5ld    ncfnS    = %5ld\n", nniS, ncfnS);    
 
 }
 
 
-/*
-   Jacobian routine. Compute J(t,y).
-   This function is (optionally) called by CVODE's integration routines
-   every time needed.
-   Very similar to the f routine, it evaluates the Jacobian matrix
-   equations with CVODE's current values and writes the results
-   back to CVODE's internal vector DENSE_ELEM(J,i,j).
-*/
-
-static void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
-{
-  
-  int i, j;
-  realtype *ydata;
-  cvodeData_t *data;
-  data  = (cvodeData_t *) jac_data;
-  ydata = NV_DATA_S(y);
-
-  /* !!! update parameters: is p modified by CVODES??? !!! */
-  for ( i=0; i<data->nsens; i++ )
-    data->value[data->model->index_sens[i]] = data->p[i];
-  
-  /* update ODE variables from CVODES */
-  for ( i=0; i<data->model->neq; i++ ) {
-    data->value[i] = ydata[i];
-  }
-  /* update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) {
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
-  }
-  /* update time */
-  data->currenttime = t;
-
-  /* evaluate Jacobian*/
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
-      DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
-     }
-  }
-  
-}
-
+/************* Additional Function for Sensitivity Analysis **************/
 
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
@@ -411,8 +295,10 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   dySdata = NV_DATA_S(ySdot);
 
   /* !!! update parameters: is p modified by CVODES??? !!! */
-  for ( i=0; i<data->nsens; i++ )
-    data->value[data->model->index_sens[i]] = data->p[i];
+  /* !!! is only required if fS could not be generated !!! */
+   if ( data->p != NULL )
+     for ( i=0; i<data->nsens; i++ )
+       data->value[data->model->index_sens[i]] = data->p[i];
   
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 12:24:53 raim>
-  $Id: commandLine.c,v 1.10 2005/11/03 11:26:27 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 17:21:51 raim>
+  $Id: commandLine.c,v 1.11 2005/11/04 16:23:44 raimc Exp $
 */
 /* 
  *
@@ -317,9 +317,6 @@ odeSolver (int argc, char *argv[])
 
     endTime = clock();
 
-    printf("#execution time %f\n",
-	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC);
-
     /** Finally, print out the results
 	in the format specified by commanline option,
     */
@@ -394,6 +391,11 @@ odeSolver (int argc, char *argv[])
 	      __FILE__, __LINE__, sbmlFilename);
       }
     }
+  /* Print some final statistics   */
+  if ( Opt.PrintMessage )
+    IntegratorInstance_printStatistics(ii, stdout);   
+  printf("\n## execution time %f\n",
+	 ((double)(endTime-startTime))/CLOCKS_PER_SEC);
 
     
     /* thx and good bye. */
@@ -523,11 +525,6 @@ int integrator(integratorInstance_t *engine,
     fprintf(stderr,
 	    "finished. Results stored.\n");
   }
-  
-
-  /* Print some final statistics   */
-  if ( PrintMessage && data->model->neq )
-    IntegratorInstance_printStatistics(engine, outfile);   
 
   return 0;
 
