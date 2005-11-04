@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="MAPK_cascade">
+    <listOfCompartments>
+      <compartment id="compartment" size="1"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="E1" compartment="compartment" initialAmount="3e-05"/>
+      <species id="E2" compartment="compartment" initialAmount="0.0003"/>
+      <species id="KKK" compartment="compartment" initialAmount="0.003"/>
+      <species id="P_KKK" compartment="compartment" initialAmount="0"/>
+      <species id="KK" compartment="compartment" initialAmount="1.2"/>
+      <species id="P_KK" compartment="compartment" initialAmount="0"/>
+      <species id="PP_KK" compartment="compartment" initialAmount="0"/>
+      <species id="K" compartment="compartment" initialAmount="1.2"/>
+      <species id="P_K" compartment="compartment" initialAmount="0"/>
+      <species id="PP_K" compartment="compartment" initialAmount="0"/>
+      <species id="KPase" compartment="compartment" initialAmount="0.12"/>
+      <species id="KKPase" compartment="compartment" initialAmount="0.0003"/>
+      <species id="E1_KKK" compartment="compartment" initialAmount="0"/>
+      <species id="E2_P_KKK" compartment="compartment" initialAmount="0"/>
+      <species id="P_KKK_KK" compartment="compartment" initialAmount="0"/>
+      <species id="P_KKK_P_KK" compartment="compartment" initialAmount="0"/>
+      <species id="PP_KK_K" compartment="compartment" initialAmount="0"/>
+      <species id="PP_KK_P_K" compartment="compartment" initialAmount="0"/>
+      <species id="KKPase_PP_KK" compartment="compartment" initialAmount="0"/>
+      <species id="KKPase_P_KK" compartment="compartment" initialAmount="0"/>
+      <species id="KPase_PP_K" compartment="compartment" initialAmount="0"/>
+      <species id="KPase_P_K" compartment="compartment" initialAmount="0"/>
+    </listOfSpecies>
+    <listOfReactions>
+      <reaction id="r1a">
+        <listOfReactants>
+          <speciesReference species="KKK"/>
+          <speciesReference species="E1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="E1_KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a1 </ci>
+                <ci> E1 </ci>
+                <ci> KKK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d1 </ci>
+                <ci> E1_KKK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a1" value="1000"/>
+            <parameter id="d1" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r1b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="E1_KKK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="E1"/>
+          <speciesReference species="P_KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k2 </ci>
+              <ci> E1_KKK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k2" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r2a">
+        <listOfReactants>
+          <speciesReference species="P_KKK"/>
+          <speciesReference species="E2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="E2_P_KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a2 </ci>
+                <ci> E2 </ci>
+                <ci> P_KKK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d2 </ci>
+                <ci> E2_P_KKK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a2" value="1000"/>
+            <parameter id="d2" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r2b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="E2_P_KKK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="E2"/>
+          <speciesReference species="KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k2 </ci>
+              <ci> E2_P_KKK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k2" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r3a">
+        <listOfReactants>
+          <speciesReference species="KK"/>
+          <speciesReference species="P_KKK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_KKK_KK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a3 </ci>
+                <ci> KK </ci>
+                <ci> P_KKK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d3 </ci>
+                <ci> P_KKK_KK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a3" value="1000"/>
+            <parameter id="d3" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r3b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="P_KKK_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_KK"/>
+          <speciesReference species="P_KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k3 </ci>
+              <ci> P_KKK_KK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k3" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r4a">
+        <listOfReactants>
+          <speciesReference species="P_KK"/>
+          <speciesReference species="KKPase"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="KKPase_P_KK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a4 </ci>
+                <ci> P_KK </ci>
+                <ci> KKPase </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d4 </ci>
+                <ci> KKPase_P_KK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a4" value="1000"/>
+            <parameter id="d4" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r4b">
+        <listOfReactants>
+          <speciesReference species="KKPase_P_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="KK"/>
+          <speciesReference species="KKPase"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k4 </ci>
+              <ci> KKPase_P_KK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k4" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r5a">
+        <listOfReactants>
+          <speciesReference species="P_KK"/>
+          <speciesReference species="P_KKK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_KKK_P_KK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a5 </ci>
+                <ci> P_KK </ci>
+                <ci> P_KKK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d5 </ci>
+                <ci> P_KKK_P_KK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a5" value="1000"/>
+            <parameter id="d5" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r5b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="P_KKK_P_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="PP_KK"/>
+          <speciesReference species="P_KKK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k5 </ci>
+              <ci> P_KKK_P_KK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k5" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r6a">
+        <listOfReactants>
+          <speciesReference species="PP_KK"/>
+          <speciesReference species="KKPase"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="KKPase_PP_KK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a6 </ci>
+                <ci> PP_KK </ci>
+                <ci> KKPase </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d6 </ci>
+                <ci> KKPase_PP_KK </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a6" value="1000"/>
+            <parameter id="d6" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r6b">
+        <listOfReactants>
+          <speciesReference species="KKPase_PP_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_KK"/>
+          <speciesReference species="KKPase"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k6 </ci>
+              <ci> KKPase_PP_KK </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k6" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r7a">
+        <listOfReactants>
+          <speciesReference species="K"/>
+          <speciesReference species="PP_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="PP_KK_K"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a7 </ci>
+                <ci> K </ci>
+                <ci> PP_KK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d7 </ci>
+                <ci> PP_KK_K </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a7" value="1000"/>
+            <parameter id="d7" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r7b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="PP_KK_K"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_K"/>
+          <speciesReference species="PP_KK"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k7 </ci>
+              <ci> PP_KK_K </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k7" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r8a">
+        <listOfReactants>
+          <speciesReference species="P_K"/>
+          <speciesReference species="KPase"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="KPase_P_K"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a8 </ci>
+                <ci> P_K </ci>
+                <ci> KPase </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d8 </ci>
+                <ci> KPase_P_K </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a8" value="1000"/>
+            <parameter id="d8" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r8b">
+        <listOfReactants>
+          <speciesReference species="KPase_P_K"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="K"/>
+          <speciesReference species="KPase"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k8 </ci>
+              <ci> KPase_P_K </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k8" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r9a">
+        <listOfReactants>
+          <speciesReference species="P_K"/>
+          <speciesReference species="PP_KK"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="PP_KK_P_K"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a9 </ci>
+                <ci> P_K </ci>
+                <ci> PP_KK </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d9 </ci>
+                <ci> PP_KK_P_K </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a9" value="1000"/>
+            <parameter id="d9" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r9b" reversible="false">
+        <listOfReactants>
+          <speciesReference species="PP_KK_P_K"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="PP_KK"/>
+          <speciesReference species="PP_K"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k9 </ci>
+              <ci> PP_KK_P_K </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k9" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r10a">
+        <listOfReactants>
+          <speciesReference species="PP_K"/>
+          <speciesReference species="KPase"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="KPase_PP_K"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <minus/>
+              <apply>
+                <times/>
+                <ci> a10 </ci>
+                <ci> PP_K </ci>
+                <ci> KPase </ci>
+              </apply>
+              <apply>
+                <times/>
+                <ci> d10 </ci>
+                <ci> KPase_PP_K </ci>
+              </apply>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="a10" value="1000"/>
+            <parameter id="d10" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="r10b">
+        <listOfReactants>
+          <speciesReference species="KPase_PP_K"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="P_K"/>
+          <speciesReference species="KPase"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> k10 </ci>
+              <ci> KPase_PP_K </ci>
+            </apply>
+          </math>
+          <listOfParameters>
+            <parameter id="k10" value="150"/>
+          </listOfParameters>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>
