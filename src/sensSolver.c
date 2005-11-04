@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:08:08 raim>
-  $Id: sensSolver.c,v 1.4 2005/11/03 10:13:51 raimc Exp $
+  Last changed Time-stamp: <2005-11-04 11:45:06 raim>
+  $Id: sensSolver.c,v 1.5 2005/11/04 10:46:07 raimc Exp $
 */
 /* 
  *
@@ -145,7 +145,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
 
-    realtype pbar[data->nsens+1];
+    /* realtype pbar[data->nsens+1]; */
     int plist[data->nsens+1];
     neq = engine->om->neq; /* number of equations */
 
@@ -339,11 +339,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     for ( i=0; i<ns; i++ ) {
       plist[i] = i+1;
       data->p[i] = data->value[om->index_sens[i]];
-      pbar[i] = abs(data->p[i]);
+      /* pbar[i] = abs(data->p[i]); */ /*??? WHAT IS PBAR ???*/ 
     }
 
     /* data->p is actually only required if R.H.S. cannot be supplied */     
-    flag = CVodeSetSensParams(solver->cvode_mem, data->p, pbar, plist);
+    flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, plist);
     if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
       /* ERROR HANDLING CODE if  failes */
     }
@@ -446,11 +446,11 @@ static void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
-  /* update parameters */
+  /* !!! update parameters: is p modified by CVODES??? !!! */
   for ( i=0; i<data->nsens; i++ )
     data->value[data->model->index_sens[i]] = data->p[i];
 
-  /* update ODE variables from CVODE */
+  /* update ODE variables from CVODES */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
   }
@@ -491,11 +491,11 @@ JacODE(long int N, DenseMat J, realtype t,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
 
-  /* update parameters */
+  /* !!! update parameters: is p modified by CVODES??? !!! */
   for ( i=0; i<data->nsens; i++ )
     data->value[data->model->index_sens[i]] = data->p[i];
   
-  /* update ODE variables from CVODE */
+  /* update ODE variables from CVODES */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
   }
