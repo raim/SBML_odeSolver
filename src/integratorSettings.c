@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:11:47 raim>
-  $Id: integratorSettings.c,v 1.13 2005/11/03 10:13:51 raimc Exp $
+  Last changed Time-stamp: <2005-11-07 13:14:54 raim>
+  $Id: integratorSettings.c,v 1.14 2005/11/07 13:53:05 raimc Exp $
 */
 /* 
  *
@@ -60,7 +60,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
   return CvodeSettings_createWith(Time, PrintStep,
-				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1, 1, 0);
+				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1, 0, 0);
 }
 
 
