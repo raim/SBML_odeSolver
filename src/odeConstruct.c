@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 16:01:58 raim>
-  $Id: odeConstruct.c,v 1.17 2005/11/04 16:23:44 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 11:30:35 raim>
+  $Id: odeConstruct.c,v 1.18 2005/11/08 10:32:53 raimc Exp $
 */
 /* 
  *
@@ -188,7 +188,7 @@ Model_copyInits(Model_t *old)
 				      Compartment_getSize(c));
     }
     if ( Species_isSetName(s) ) {
-      Species_setName(s, Species_getName(s));
+      Species_setName(s_new, Species_getName(s));
     }
     Model_addSpecies(new, s_new);
   }
