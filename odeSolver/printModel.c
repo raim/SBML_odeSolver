@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 11:42:40 raim>
-  $Id: printModel.c,v 1.12 2005/11/08 10:49:40 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 12:35:42 raim>
+  $Id: printModel.c,v 1.13 2005/11/08 11:36:29 raimc Exp $
 */
 /* 
  *
@@ -68,14 +68,14 @@
 static void grace_error(const char *msg);
 static int printXMGConcentrationTimeCourse(cvodeData_t *data);
 static int printXMGOdeTimeCourse(cvodeData_t *data);
+static int printXMGReactionTimeCourse(cvodeData_t *data);
 static int printXMGJacobianTimeCourse(cvodeData_t *data);
 static int printXMGLegend(cvodeData_t *data, int nvalues);
 static int openXMGrace(cvodeData_t *data);
 static int closeXMGrace(cvodeData_t *data, char *name);
 #endif
 
-void
-printModel(Model_t *m, FILE *f)
+void printModel(Model_t *m, FILE *f)
 {
   fprintf(f, "\n");
   fprintf(f, "Model Statistics:\n");
@@ -94,8 +94,7 @@ printModel(Model_t *m, FILE *f)
 }
 
 
-void
-printSpecies(Model_t *m, FILE *f)
+void printSpecies(Model_t *m, FILE *f)
 {
   int i, j;
   Species_t *s;  
@@ -152,8 +151,7 @@ printSpecies(Model_t *m, FILE *f)
   }  
 }
 
-void
-printReactions(Model_t *m, FILE *f)
+void printReactions(Model_t *m, FILE *f)
 {
   
   int i,j,k;
@@ -347,9 +345,8 @@ printReactions(Model_t *m, FILE *f)
 }
 
 
-void
-printODEsToSBML(Model_t *ode, FILE *f){
-      
+void printODEsToSBML(Model_t *ode, FILE *f)
+{      
   SBMLDocument_t *d;
   char *model;
   d = SBMLDocument_create();
@@ -360,9 +357,8 @@ printODEsToSBML(Model_t *ode, FILE *f){
 }
 
 
-void
-printODEs(odeModel_t *model, FILE *f){
-  
+void printODEs(odeModel_t *model, FILE *f)
+{  
   int i, nvalues;
   char *formel;
 
@@ -399,9 +395,8 @@ printODEs(odeModel_t *model, FILE *f){
   return;
 }
 
-void 
-printJacobian(odeModel_t *om, FILE *f){
-    
+void printJacobian(odeModel_t *om, FILE *f)
+{    
   int i, j;
   if ( om == NULL ) {
     fprintf(stderr, "No odeModel available.\n");
@@ -431,8 +426,8 @@ printJacobian(odeModel_t *om, FILE *f){
 
 /* The following functions print results of integration */
 
-void
-printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f) {
+void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f)
+{
   int i,j;
   cvodeResults_t *results;
 
@@ -461,9 +456,8 @@ printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f) {
 }
 
 
-void 
-printJacobianTimeCourse(cvodeData_t *data, FILE *f){
-
+void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
+{
   int i, j, k;
   cvodeResults_t *results;
 
@@ -529,9 +523,8 @@ printJacobianTimeCourse(cvodeData_t *data, FILE *f){
   
 }
 
-void
-printOdeTimeCourse(cvodeData_t *data, FILE *f){
-  
+void printOdeTimeCourse(cvodeData_t *data, FILE *f)
+{  
   int i,j;
   cvodeResults_t *results;
 
@@ -588,9 +581,8 @@ printOdeTimeCourse(cvodeData_t *data, FILE *f){
   
 }
 
-void
-printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f) {
-
+void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
+{
   int i, j;
   cvodeResults_t *results;
   Reaction_t *r;
@@ -604,10 +596,10 @@ printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f) {
 
 #if USE_GRACE
   if ( Opt.Xmgrace == 1 ) {
-    fprintf(stderr, "Sorry, kinetic law timecourse can only be\n");
-    fprintf(stderr, "printed to outfile (default: stdout)\n");
+    printXMGReactionTimeCourse(data);
+    return;
   }
-#endif
+#endif  
   
   results = data->results;
   if ( Opt.PrintMessage )
@@ -653,12 +645,20 @@ printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f) {
   free(kls);
   fprintf(f, "\n");
   fflush(f);
-
+  
+#if !USE_GRACE
+  if ( Opt.Xmgrace == 1 ) {
+    fprintf(stderr,
+	    "odeSolver has been compiled without XMGRACE functionality.\n");
+    fprintf(stderr,
+	    "The requested data have been printed to stdout instead.\n");
+  }
+#endif
+  
 }
 
-void
-printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
-  
+void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
+{  
   int i,j, k;
   cvodeResults_t *results;
   odeModel_t *om;
@@ -779,8 +779,8 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
   the integrated system and prints a phase diagram to XMGrace.
 */
 
-void
-printPhase(cvodeData_t *data) {
+void printPhase(cvodeData_t *data)
+{
 
 #if !USE_GRACE
 
@@ -922,15 +922,128 @@ printPhase(cvodeData_t *data) {
 
 #if USE_GRACE
 
+
+/*
+  This function prints the time course of reaction fluxes
+  to XMGrace
+*/
+
+static int printXMGReactionTimeCourse ( cvodeData_t *data )
+{
+
+  int i, j, k, n;
+  double maxY, minY, result;
+  
+  Model_t *m;
+  Reaction_t *r;
+  KineticLaw_t *kl;
+  ASTNode_t **kls;
+  
+  odeModel_t *om = data->model;
+  cvodeResults_t *results = data->results;
+
+  maxY = 0.0;
+  minY = 0.0;
+
+  fprintf(stderr,
+	  "Printing time development of reaction fluxes to XMGrace!\n");
+
+
+  if ( om->m == NULL ) {
+    fprintf(stderr, "Error: No reaction model availabe\n");
+    return 1;
+  }
+  else m = om->m;
+
+  if ( openXMGrace(data) > 0 ) {
+    fprintf(stderr,  "Error: Couldn't open XMGrace\n");
+    return 1;
+  }
+  
+  GracePrintf("yaxis label \"%s\"", "flux [substance/time]");
+  if ( Model_isSetName(m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getName(m),
+		"reaction flux time courses");
+  else if  ( Model_isSetId(m) )
+    GracePrintf("subtitle \"%s, %s\"", Model_getId(m),
+		"reaction flux time courses");
+  else 
+    GracePrintf("subtitle \"model has no name, %s/id\"",
+		"reaction flux time courses");
+
+
+  /* print legend */  
+  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+    r = Model_getReaction(m, i);
+    if ( Reaction_isSetName(r) )
+      GracePrintf("g0.s%d legend  \"%s: %s \"\n", i+1,
+		  Reaction_getId(r), Reaction_getName(r));
+    else
+      GracePrintf("g0.s%d legend  \"%s \"\n", i+1, Reaction_getId(r));      
+  }  
+  GracePrintf("legend 1.155, 0.85");
+  GracePrintf("legend font 8");
+  GracePrintf("legend char size 0.6");
+
+  if(!(kls = (ASTNode_t **)calloc(Model_getNumReactions(m),
+				  sizeof(ASTNode_t *)))) 
+    fprintf(stderr, "failed!\n");
+  
+  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+    r = Model_getReaction(m, i);
+    kl = Reaction_getKineticLaw(r);
+    kls[i] = copyAST(KineticLaw_getMath(kl));
+    AST_replaceNameByParameters(kls[i], KineticLaw_getListOfParameters(kl));
+    AST_replaceConstants(m, kls[i]);
+  }
+  
+  /* evaluate flux for each time point and print to XMGrace */
+  
+  for ( i=0; i<=results->nout; i++ ) {  
+    n = 1;
+    /* set time and variable values to values at time[k] */
+    data->currenttime = results->time[i];
+    for ( j=0; j<data->model->neq; j++ )
+      data->value[j] = results->value[j][i];
+
+    /* evaluate kinetic law expressions */
+    for ( j=0; j<Model_getNumReactions(m); j++ ) {
+      result = evaluateAST(kls[j], data);
+      if ( result > maxY ) {
+	maxY = result;
+	GracePrintf("world ymax %g", 1.25*maxY);
+      }
+      if ( result < minY ) {
+	minY = result;
+	GracePrintf("world ymin %g", 1.25*minY);
+      }
+      GracePrintf("g0.s%d point %g, %g",
+		  n, results->time[i], result);
+      n++;
+    }
+  }
+
+  GracePrintf("yaxis tick major %g", 1.25*(fabs(maxY)+fabs(minY))/10);
+  GracePrintf("redraw");
+  closeXMGrace(data, "flux");
+
+  /* free temporary ASTNodes */
+  for ( i=0; i<Model_getNumReactions(m); i++ ) 
+    ASTNode_free(kls[i]);
+  free(kls);
+
+  return 0;
+  
+}
+
+
 /*
   This function prints the values of the Jacobian Matrix
   for each simulated time point to XMGrace
 */
 
-static int
-printXMGJacobianTimeCourse ( cvodeData_t *data ) {
-
-
+static int printXMGJacobianTimeCourse ( cvodeData_t *data )
+{
   int i, j, k, n;
   double maxY;
   double minY; 
@@ -1027,10 +1140,8 @@ printXMGJacobianTimeCourse ( cvodeData_t *data ) {
   for each simulated time point to XMGrace
 */
 
-static int
-printXMGOdeTimeCourse(cvodeData_t *data){
-  
-  
+static int printXMGOdeTimeCourse(cvodeData_t *data)
+{  
   int i, j, n;
   double maxY;
   double minY; 
@@ -1115,9 +1226,8 @@ printXMGOdeTimeCourse(cvodeData_t *data){
   This function prints integration results to XMGrace
 */
 
-static int
-printXMGConcentrationTimeCourse(cvodeData_t *data){
-
+static int printXMGConcentrationTimeCourse(cvodeData_t *data)
+{
   int i,j,n;
   double maxY;
   double minY;
@@ -1174,9 +1284,8 @@ printXMGConcentrationTimeCourse(cvodeData_t *data){
 }
 
 
-static int
-printXMGLegend(cvodeData_t *data, int nvalues) {
-
+static int printXMGLegend(cvodeData_t *data, int nvalues)
+{
   int i, found;
   odeModel_t *om = data->model;
   Model_t *m = om->simple;
@@ -1223,9 +1332,8 @@ printXMGLegend(cvodeData_t *data, int nvalues) {
 
 /* Opens XMGrace */
 
-static int
-openXMGrace(cvodeData_t *data){
-
+static int openXMGrace(cvodeData_t *data)
+{
   double maxY;
 
   /* Open XMGrace */
@@ -1276,9 +1384,8 @@ openXMGrace(cvodeData_t *data){
 /* Closes the pipe to Grace and saves a grace data file
    when option -w/--write was given */
 
-static int
-closeXMGrace(cvodeData_t *data, char *safename) {
-
+static int closeXMGrace(cvodeData_t *data, char *safename)
+{
   if ( Opt.Write ) {
     fprintf(stderr, "Saving XMGrace file as \"%s_%s_t%g.agr\"\n",
 	    Opt.ModelFile,
@@ -1294,8 +1401,8 @@ closeXMGrace(cvodeData_t *data, char *safename) {
   return(0);
 }
 
-static void
-grace_error(const char *msg) {
+static void grace_error(const char *msg)
+{
   fprintf(stderr, "library message: \"%s\"\n", msg);  
 }
 
