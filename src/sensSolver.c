@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 17:25:33 raim>
-  $Id: sensSolver.c,v 1.8 2005/11/04 19:29:00 raimc Exp $
+  $Id: sensSolver.c,v 1.9 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -127,8 +127,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     cvodeSettings_t *opt = engine->opt;
 
     /* realtype pbar[data->nsens+1]; */
-    int plist[data->nsens+1];
-    realtype pbar[data->nsens+1];
+    /*int *plist; removed by AMF 8/11/05
+    realtype *pbar;
+
+    ASSIGN_NEW_MEMORY_BLOCK(plist, data->nsens+1, int, 0)
+    ASSIGN_NEW_MEMORY_BLOCK(pbar, data->nsens+1, realtype, 0)*/
 
     /*
      * creating CVODE structures
@@ -206,22 +209,23 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       /*!!! ??? DOESNT WORK CURRENTLY ??? !!!*/
       /* SIGSEV: ... at ./cvodes.c:6501  pbari = pbar[is];*/
       /* return 0; */
+    /* removed by AMF 08/11/05
       ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
       for ( i=0; i<data->nsens; i++ ) {
 	plist[i] = i+1;
 	data->p[i] = data->value[om->index_sens[i]];
-/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/
-      }
+/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
+ /*     }
       flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, plist);
       if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
 	return 0;
 	/* ERROR HANDLING CODE if  failes */
-      }
+      /*}
       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
-      if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
+      /* if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
 	/* ERROR HANDLING CODE if  failes */
-	return 0;
-      }
+	/* return 0; */ 
+    /*  } */
     }
 
     /* difference FALSE/TRUE ? */

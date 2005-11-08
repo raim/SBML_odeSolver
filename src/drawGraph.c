@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-28 13:29:25 raim>
-  $Id: drawGraph.c,v 1.16 2005/10/28 11:45:48 raimc Exp $
+  $Id: drawGraph.c,v 1.17 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -43,7 +43,9 @@
 
 /* System specific definitions,
    created by configure script */
+#ifndef WIN32
 #include "config.h"
+#endif
 
 /* own header files */
 #include "sbmlsolver/cvodedata.h"
@@ -248,9 +250,10 @@ drawJacobyTxt(cvodeData_t *data, char *file) {
 
   int i, j;
   char filename[WORDSIZE];
-  sprintf(name, "%s.dot", file);
-  FILE *f = fopen(filename, "w");
-  
+  FILE *f;
+
+  sprintf(filename, "%s.dot", file);
+  f = fopen(filename, "w");
   fprintf(f ,"digraph jacoby {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(data->model->m) )
@@ -571,8 +574,10 @@ drawModelTxt(Model_t *m, char *file) {
   int i,j;
   int reversible;
   char filename[WORDSIZE];
-  sprintf(name, "%s.dot", file);
-  FILE *f = fopen(filename, "w");
+  FILE *f;
+  
+  sprintf(filename, "%s.dot", file);
+  f = fopen(filename, "w");
 
   fprintf(f ,"digraph reactionnetwork {\n");
   fprintf(f ,"label=\"%s\";\n",

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 19:35:26 raim>
-  $Id: integratorInstance.c,v 1.38 2005/11/04 19:31:44 raimc Exp $
+  $Id: integratorInstance.c,v 1.39 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -829,12 +829,16 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)
 {
+  cvodeData_t *data;
+  cvodeSettings_t *opt;
+  int errorCode;
+
   if ( SolverError_getNum(ERROR_ERROR_TYPE) == 0 )
     return SolverError_getLastCode(WARNING_ERROR_TYPE);
   
-  int errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE);
-  cvodeData_t *data = engine->data;
-  cvodeSettings_t *opt = engine->opt;
+  errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE);
+  data = engine->data;
+  opt = engine->opt;
 
   /* if (om->algebraic) ?? */
   /* if (opt->Sensitivity) ?? */

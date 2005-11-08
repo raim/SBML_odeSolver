@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-07 15:21:43 raim>
-  $Id: nullSolver.c,v 1.4 2005/11/08 09:13:23 raimc Exp $
+  $Id: nullSolver.c,v 1.5 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -38,6 +38,7 @@
 
 /* Header Files for CVODE */
 #include "kinsol.h"
+#include "kinspgmr.h"
 #include "cvdense.h"
 #include "nvector_serial.h"  
 

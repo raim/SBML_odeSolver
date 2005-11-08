@@ -119,28 +119,31 @@
 				RelativePath="..\sundials\shared\source\band.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvband.c">
+				RelativePath="..\sundials\cvodes\source\cvband.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvbandpre.c">
+				RelativePath="..\sundials\cvodes\source\cvbandpre.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvbbdpre.c">
+				RelativePath="..\sundials\cvodes\source\cvbbdpre.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvdense.c">
+				RelativePath="..\sundials\cvodes\source\cvdense.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvdiag.c">
+				RelativePath="..\sundials\cvodes\source\cvdiag.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvode.c">
+				RelativePath="..\sundials\cvodes\source\cvodea.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvodeio.c">
+				RelativePath="..\sundials\cvodes\source\cvodes.c">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvspgmr.c">
+				RelativePath="..\sundials\cvodes\source\cvodesio.c">
+			</File>
+			<File
+				RelativePath="..\sundials\cvodes\source\cvspgmr.c">
 			</File>
 			<File
 				RelativePath="..\sundials\shared\source\dense.c">
@@ -178,46 +181,52 @@
 				RelativePath="..\sundials\shared\include\band.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvband.h">
+				RelativePath="..\sundials\cvodes\include\cvband.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvband_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvband_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvbandpre.h">
+				RelativePath="..\sundials\cvodes\include\cvbandpre.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvbandpre_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvbandpre_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvbbdpre.h">
+				RelativePath="..\sundials\cvodes\include\cvbbdpre.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvbbdpre_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvbbdpre_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvdense.h">
+				RelativePath="..\sundials\cvodes\include\cvdense.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvdense_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvdense_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvdiag.h">
+				RelativePath="..\sundials\cvodes\include\cvdiag.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvdiag_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvdiag_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvode.h">
+				RelativePath="..\sundials\cvodes\include\cvodea.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvode_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvodea_impl.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\include\cvspgmr.h">
+				RelativePath="..\sundials\cvodes\include\cvodes.h">
 			</File>
 			<File
-				RelativePath="..\sundials\cvode\source\cvspgmr_impl.h">
+				RelativePath="..\sundials\cvodes\source\cvodes_impl.h">
+			</File>
+			<File
+				RelativePath="..\sundials\cvodes\include\cvspgmr.h">
+			</File>
+			<File
+				RelativePath="..\sundials\cvodes\source\cvspgmr_impl.h">
 			</File>
 			<File
 				RelativePath="..\sundials\shared\include\dense.h">

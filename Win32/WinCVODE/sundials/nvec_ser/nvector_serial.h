@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.1 $
- * $Date: 2005/10/27 13:45:31 $
+ * $Revision: 1.2 $
+ * $Date: 2005/11/08 16:48:42 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban,
  *                and Aaron Collier @ LLNL
@@ -194,7 +194,7 @@ N_Vector N_VMake_Serial(long int vec_length, realtype *v_data);
  * -----------------------------------------------------------------
  */
 
-N_Vector *N_VNewVectorArray_Serial(int count, long int vec_length);
+WINCVODE_API N_Vector *N_VNewVectorArray_Serial(int count, long int vec_length);
 
 /*
  * -----------------------------------------------------------------
@@ -216,7 +216,7 @@ N_Vector *N_VNewVectorArrayEmpty_Serial(int count, long int vec_length);
  * -----------------------------------------------------------------
  */
 
-void N_VDestroyVectorArray_Serial(N_Vector *vs, int count);
+WINCVODE_API void N_VDestroyVectorArray_Serial(N_Vector *vs, int count);
 
 /*
  * -----------------------------------------------------------------

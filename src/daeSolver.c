@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 13:25:41 raim>
-  $Id: daeSolver.c,v 1.2 2005/11/04 12:29:38 raimc Exp $
+  $Id: daeSolver.c,v 1.3 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -39,6 +39,7 @@
 /* Header Files for CVODE */
 #include "ida.h"    
 #include "idadense.h"
+#include "cvdense.h"
 #include "nvector_serial.h"  
 
 #include "sbmlsolver/cvodedata.h"
@@ -47,6 +48,7 @@
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
+#include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/daeSolver.h"
 
 static int
@@ -81,8 +83,8 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
     odeModel_t *om = engine->om;
     
     /* !!!! calling CVODE !!!! */
-    flag = IDASolver(solver->cvode_mem, solver->tout, &(solver->t),
-		     solver->y, solver->dy, IDA_NORMAL);
+    flag = -1; //IDASolver(solver->cvode_mem, solver->tout, &(solver->t),
+		      //solver->y, solver->dy, IDA_NORMAL);
 
     if ( flag != IDA_SUCCESS )
       {

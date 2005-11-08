@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.1 $
- * $Date: 2005/10/27 13:36:53 $
+ * $Revision: 1.2 $
+ * $Date: 2005/11/08 16:48:42 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban
  *                and Dan Shumaker @ LLNL
@@ -24,6 +24,7 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "WinCVODE.h"
 #include "sundialstypes.h"
 #include "nvector.h"
 
@@ -298,7 +299,7 @@ typedef void (*CVQuadRhsFn)(realtype t, N_Vector y, N_Vector yQdot,
  * -----------------------------------------------------------------
  */
 
-void *CVodeCreate(int lmm, int iter);
+WINCVODE_API void *CVodeCreate(int lmm, int iter);
 
 /*
  * -----------------------------------------------------------------
@@ -406,10 +407,10 @@ void *CVodeCreate(int lmm, int iter);
  */
 
 int CVodeSetErrFile(void *cvode_mem, FILE *errfp);
-int CVodeSetFdata(void *cvode_mem, void *f_data);
+WINCVODE_API int CVodeSetFdata(void *cvode_mem, void *f_data);
 int CVodeSetEwtFn(void *cvode_mem, CVEwtFn efun, void *e_data);
 int CVodeSetMaxOrd(void *cvode_mem, int maxord);
-int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps);
+WINCVODE_API int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps);
 int CVodeSetMaxHnilWarns(void *cvode_mem, int mxhnil);
 int CVodeSetStabLimDet(void *cvode_mem, booleantype stldet);
 int CVodeSetInitStep(void *cvode_mem, realtype hin);
@@ -470,7 +471,7 @@ int CVodeSetTolerances(void *cvode_mem,
  * -----------------------------------------------------------------
  */
 
-int CVodeMalloc(void *cvode_mem, CVRhsFn f,
+WINCVODE_API int CVodeMalloc(void *cvode_mem, CVRhsFn f,
                 realtype t0, N_Vector y0,
                 int itol, realtype reltol, void *abstol);
 
@@ -696,12 +697,12 @@ int CVodeQuadReInit(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
  */
 
 int CVodeSetSensRhsFn(void *cvode_mem, CVSensRhsFn fS);
-int CVodeSetSensRhs1Fn(void *cvode_mem, CVSensRhs1Fn fS);
-int CVodeSetSensFdata(void *cvode_mem, void *fS_data);
+WINCVODE_API int CVodeSetSensRhs1Fn(void *cvode_mem, CVSensRhs1Fn fS);
+WINCVODE_API int CVodeSetSensFdata(void *cvode_mem, void *fS_data);
 int CVodeSetSensRho(void *cvode_mem, realtype rho);
-int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS);
+WINCVODE_API int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS);
 int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS);
-int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist);
+WINCVODE_API int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist);
 int CVodeSetSensTolerances(void *cvode_mem, int itolS,
                            realtype reltolS, void *abstolS);
 
@@ -731,7 +732,7 @@ int CVodeSetSensTolerances(void *cvode_mem, int itolS,
  * -----------------------------------------------------------------
  */
 
-int CVodeSensMalloc(void *cvode_mem, int Ns, int ism, N_Vector *yS0);
+WINCVODE_API int CVodeSensMalloc(void *cvode_mem, int Ns, int ism, N_Vector *yS0);
     
 /*
  * -----------------------------------------------------------------
@@ -863,7 +864,7 @@ int CVodeSensToggle(void *cvode_mem, booleantype sensi);
  * -----------------------------------------------------------------
  */
 
-int CVode(void *cvode_mem, realtype tout, N_Vector yout,
+WINCVODE_API int CVode(void *cvode_mem, realtype tout, N_Vector yout,
           realtype *tret, int itask);
 
 /*
@@ -962,10 +963,10 @@ int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky);
  */
 
 int CVodeGetWorkSpace(void *cvode_mem, long int *lenrw, long int *leniw);
-int CVodeGetNumSteps(void *cvode_mem, long int *nsteps);
-int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevals);
-int CVodeGetNumLinSolvSetups(void *cvode_mem, long int *nlinsetups);
-int CVodeGetNumErrTestFails(void *cvode_mem, long int *netfails);
+WINCVODE_API int CVodeGetNumSteps(void *cvode_mem, long int *nsteps);
+WINCVODE_API int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevals);
+WINCVODE_API int CVodeGetNumLinSolvSetups(void *cvode_mem, long int *nlinsetups);
+WINCVODE_API int CVodeGetNumErrTestFails(void *cvode_mem, long int *netfails);
 int CVodeGetLastOrder(void *cvode_mem, int *qlast);
 int CVodeGetCurrentOrder(void *cvode_mem, int *qcur);
 int CVodeGetNumStabLimOrderReds(void *cvode_mem, long int *nslred);
@@ -1016,7 +1017,7 @@ int CVodeGetNumNonlinSolvConvFails(void *cvode_mem, long int *nncfails);
  * -----------------------------------------------------------------
  */
 
-int CVodeGetNonlinSolvStats(void *cvode_mem, long int *nniters,
+WINCVODE_API int CVodeGetNonlinSolvStats(void *cvode_mem, long int *nniters,
                             long int *nncfails);
 
 /*
@@ -1100,7 +1101,7 @@ int CVodeGetQuadStats(void *cvode_mem, long int *nfQevals,
  * -----------------------------------------------------------------
  */
 
-int CVodeGetSens(void *cvode_mem, realtype t, N_Vector *ySout);
+WINCVODE_API int CVodeGetSens(void *cvode_mem, realtype t, N_Vector *ySout);
 int CVodeGetSens1(void *cvode_mem, realtype t, int is, N_Vector ySout);
 int CVodeGetSensDky(void *cvode_mem, realtype t, int k,
                     N_Vector *dkyA);
@@ -1130,10 +1131,10 @@ int CVodeGetSensDky1(void *cvode_mem, realtype t, int k,
  * -----------------------------------------------------------------
  */
 
-int CVodeGetNumSensRhsEvals(void *cvode_mem, long int *nfSevals);
-int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS);
-int CVodeGetNumSensErrTestFails(void *cvode_mem, long int *nSetfails);
-int CVodeGetNumSensLinSolvSetups(void *cvode_mem, long int *nlinsetupsS);
+WINCVODE_API int CVodeGetNumSensRhsEvals(void *cvode_mem, long int *nfSevals);
+WINCVODE_API int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS);
+WINCVODE_API int CVodeGetNumSensErrTestFails(void *cvode_mem, long int *nSetfails);
+WINCVODE_API int CVodeGetNumSensLinSolvSetups(void *cvode_mem, long int *nlinsetupsS);
 int CVodeGetSensErrWeights(void *cvode_mem, N_Vector_S *eSweight);
 
 /*
@@ -1171,8 +1172,8 @@ int CVodeGetSensStats(void *cvode_mem, long int *nfSevals, long int *nfevalsS,
  * -----------------------------------------------------------------
  */
 
-int CVodeGetNumSensNonlinSolvIters(void *cvode_mem, long int *nSniters);
-int CVodeGetNumSensNonlinSolvConvFails(void *cvode_mem, long int *nSncfails);
+WINCVODE_API int CVodeGetNumSensNonlinSolvIters(void *cvode_mem, long int *nSniters);
+WINCVODE_API int CVodeGetNumSensNonlinSolvConvFails(void *cvode_mem, long int *nSncfails);
 int CVodeGetNumStgrSensNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters);
 int CVodeGetNumStgrSensNonlinSolvConvFails(void *cvode_mem, 
                                            long int *nSTGR1ncfails);
@@ -1197,7 +1198,7 @@ int CVodeGetSensNonlinSolvStats(void *cvode_mem, long int *nSniters,
  * -----------------------------------------------------------------
  */
 
-void CVodeFree(void *cvode_mem);
+WINCVODE_API void CVodeFree(void *cvode_mem);
 
 /*
  * -----------------------------------------------------------------

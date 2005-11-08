@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-08 10:43:40 raim>
-  $Id: processAST.c,v 1.17 2005/11/08 10:02:46 raimc Exp $
+  $Id: processAST.c,v 1.18 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -42,7 +42,9 @@
 
 /* System specific definitions,
    created by configure script */
+#ifndef WIN32
 #include "config.h"
+#endif
 
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/processAST.h"

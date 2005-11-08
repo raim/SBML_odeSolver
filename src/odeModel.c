@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-08 10:57:29 raim>
-  $Id: odeModel.c,v 1.27 2005/11/08 10:02:46 raimc Exp $ 
+  $Id: odeModel.c,v 1.28 2005/11/08 16:48:42 afinney Exp $ 
 */
 /* 
  *
@@ -46,6 +46,7 @@
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/modelSimplify.h"
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 17:21:51 raim>
-  $Id: commandLine.c,v 1.11 2005/11/04 16:23:44 raimc Exp $
+  $Id: commandLine.c,v 1.12 2005/11/08 16:48:42 afinney Exp $
 */
 /* 
  *
@@ -415,6 +415,9 @@ odeSolver (int argc, char *argv[])
     
     xfree(sbmlFilename);   
     SBMLDocument_free(d);
+
+    printf("#integration execution time %f\n",
+	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC);
   }
 
   return(EXIT_SUCCESS);

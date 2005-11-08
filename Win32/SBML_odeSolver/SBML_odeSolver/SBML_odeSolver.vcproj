@@ -162,6 +162,9 @@
 				RelativePath="..\..\..\src\sbmlResults.c">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sensSolver.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\solverError.c">
 			</File>
 			<File
@@ -179,6 +182,9 @@
 				RelativePath="..\..\..\src\sbmlsolver\cvodedata.h">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\daeSolver.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\exportdefs.h">
 			</File>
 			<File
@@ -189,6 +195,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\modelSimplify.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\nullSolver.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeConstruct.h">
@@ -210,6 +219,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\sbmlResults.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\sensSolver.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\solverError.h">
