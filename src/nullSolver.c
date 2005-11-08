@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 22:39:56 raim>
-  $Id: nullSolver.c,v 1.3 2005/11/04 21:40:55 raimc Exp $
+  Last changed Time-stamp: <2005-11-07 15:21:43 raim>
+  $Id: nullSolver.c,v 1.4 2005/11/08 09:13:23 raimc Exp $
 */
 /* 
  *
@@ -99,8 +99,9 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
     /* update cvodeData with foun steady state values */    
     for ( i=0; i<om->neq; i++ ) {
       data->value[i] = ydata[i];
-      printf("HALLO NULLSTELLE: y: %g  f(y): %g\n",
-	     data->value[i], evaluateAST(data->model->ode[i], data));
+      printf("%s = %g,  f(%s): %g\n",
+	     om->names[i], data->value[i], om->names[i],
+	     evaluateAST(data->model->ode[i], data));
     }
     /* IntegratorInstance_freeKINSolverStructures(engine); */
     return 1/* IntegratorInstance_updateData(engine) */; /* correct ?*/

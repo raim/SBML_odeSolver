@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 20:26:30 raim>
-  $Id: findRoot.c,v 1.1 2005/11/04 19:31:44 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 10:12:50 raim>
+  $Id: findRoot.c,v 1.2 2005/11/08 09:13:24 raimc Exp $
 */
 /* 
  *
@@ -66,6 +66,9 @@ main (int argc, char *argv[]){
 
   om = ODEModel_create(m);
   ii = IntegratorInstance_create(om, set);
+  /**!!! the KINSOL implementation in SOSlib is experimental,
+         and can't be used in software but feel free to experiment.
+	 Source code is in src/nullSolver.c !!!**/
   IntegratorInstance_nullSolver(ii);
   
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
