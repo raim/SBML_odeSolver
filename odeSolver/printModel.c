@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 11:31:55 raim>
-  $Id: printModel.c,v 1.11 2005/11/08 10:33:29 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 11:42:40 raim>
+  $Id: printModel.c,v 1.12 2005/11/08 10:49:40 raimc Exp $
 */
 /* 
  *
@@ -65,20 +65,13 @@
 /* Header Files for XMGrace */
 #include <grace_np.h>
 /* functions */
-static void
-grace_error(const char *msg);
-static int
-printXMGConcentrationTimeCourse(cvodeData_t *data);
-static int
-printXMGOdeTimeCourse(cvodeData_t *data);
-static int
-printXMGJacobianTimeCourse(cvodeData_t *data);
-static int
-printXMGLegend(cvodeData_t *data);
-static int
-openXMGrace(cvodeData_t *data);
-static int
-closeXMGrace(cvodeData_t *data, char *name);
+static void grace_error(const char *msg);
+static int printXMGConcentrationTimeCourse(cvodeData_t *data);
+static int printXMGOdeTimeCourse(cvodeData_t *data);
+static int printXMGJacobianTimeCourse(cvodeData_t *data);
+static int printXMGLegend(cvodeData_t *data, int nvalues);
+static int openXMGrace(cvodeData_t *data);
+static int closeXMGrace(cvodeData_t *data, char *name);
 #endif
 
 void
@@ -932,7 +925,6 @@ printPhase(cvodeData_t *data) {
 /*
   This function prints the values of the Jacobian Matrix
   for each simulated time point to XMGrace
-  using subfunctions openXMGrace(), and printXMGLegend().
 */
 
 static int
@@ -1033,7 +1025,6 @@ printXMGJacobianTimeCourse ( cvodeData_t *data ) {
 /*
   This function prints the values of the ODEs
   for each simulated time point to XMGrace
-  using subfunctions openXMGrace(), and printXMGLegend().
 */
 
 static int
@@ -1074,15 +1065,12 @@ printXMGOdeTimeCourse(cvodeData_t *data){
 		  "ODEs time course");
 
   /* print legend */  
-  n = 1;  
-  for ( i=0; i<data->model->neq; i++ ) {
-      GracePrintf("g0.s%d legend  \"%s\"\n",
-		  n, data->model->names[i]);
-      n++;
-  }  
-  GracePrintf("legend 1.155, 0.85");
-  GracePrintf("legend font 8");
-  GracePrintf("legend char size 0.6");
+  if ( printXMGLegend(data, data->model->neq) > 0 ){
+    fprintf(stderr,
+	    "Warning: Couldn't print legend\n");
+    return 1;
+  }
+
 
   /* evaluate ODE at each time point and print to XMGrace */
 
@@ -1125,7 +1113,6 @@ printXMGOdeTimeCourse(cvodeData_t *data){
 
 /*
   This function prints integration results to XMGrace
-  using subfunctions openXMGrace(), and printXMGLegend().
 */
 
 static int
@@ -1151,7 +1138,7 @@ printXMGConcentrationTimeCourse(cvodeData_t *data){
 	    "Error: Couldn't open XMGrace\n");
     return 1;     
   }
-  if ( printXMGLegend(data) > 0 ){
+  if ( printXMGLegend(data, data->nvalues-data->model->nconst) > 0 ){
     fprintf(stderr,
 	    "Warning: Couldn't print legend\n");
     return 1;
@@ -1188,7 +1175,7 @@ printXMGConcentrationTimeCourse(cvodeData_t *data){
 
 
 static int
-printXMGLegend(cvodeData_t *data){
+printXMGLegend(cvodeData_t *data, int nvalues) {
 
   int i, found;
   odeModel_t *om = data->model;
@@ -1198,7 +1185,7 @@ printXMGLegend(cvodeData_t *data){
   Compartment_t *c;
 
   
-  for ( i=0; i<data->nvalues - om->nconst; i++ ) {
+  for ( i=0; i<nvalues; i++ ) {
     found = 0;
     if ( (s = Model_getSpeciesById(m, om->names[i])) != NULL ) {
       if ( Species_isSetName(s) ) {
@@ -1255,11 +1242,11 @@ openXMGrace(cvodeData_t *data){
 	"with g%d" might become useful, when printing multiple
 	graphs into one XMGrace subprocess.
       */
-     /*  GracePrintf("with g%d", data->results->xmgrace); */
+      /* GracePrintf("with g%d", data->results->xmgrace); */
       GracePrintf("world xmax %g", data->currenttime);
       GracePrintf("world ymax %g", 1.25*maxY);
       GracePrintf("xaxis tick major %g", data->currenttime/10);
-      /*     GracePrintf("xaxis tick minor %d", (int) data->currenttime/100); */
+      /* GracePrintf("xaxis tick minor %d", (int) data->currenttime/100); */
       GracePrintf("yaxis tick major %g", (1.25*maxY)/12.5 );
       GracePrintf("xaxis label font 4");
       GracePrintf("xaxis label \"time\"");
@@ -1286,9 +1273,8 @@ openXMGrace(cvodeData_t *data){
   return 0;
 }
 
-/** Closes the pipe to Grace and
-    saves a grace data file when option -w/--write
-    was given */
+/* Closes the pipe to Grace and saves a grace data file
+   when option -w/--write was given */
 
 static int
 closeXMGrace(cvodeData_t *data, char *safename) {

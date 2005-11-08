@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:39:03 raim>
-  $Id: printModel.h,v 1.2 2005/10/26 15:41:56 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 11:44:21 raim>
+  $Id: printModel.h,v 1.3 2005/11/08 10:49:40 raimc Exp $
 */
 /* 
  *
@@ -37,21 +37,20 @@
 #define _PRINTMODEL_H_
 
 /* print model structures to file */
-void printModel(Model_t *m, FILE *f);
-void printSpecies(Model_t *m, FILE *f);
-void printReactions(Model_t *m, FILE *f);
-void printODEs(odeModel_t *om, FILE *f);
-void printODEsToSBML(Model_t *ode, FILE *f);
-void printJacobian(odeModel_t *om, FILE *f);
+void printModel(Model_t *, FILE *);
+void printSpecies(Model_t *, FILE *);
+void printReactions(Model_t *, FILE *);
+void printODEs(odeModel_t *, FILE *);
+void printODEsToSBML(Model_t *ode, FILE *);
+void printJacobian(odeModel_t *, FILE *);
 /* print results of simulation to file */
-void printConcentrationTimeCourse(cvodeData_t *data, FILE *f);
-void printOdeTimeCourse(cvodeData_t *data, FILE *f);
-void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f);
-void printJacobianTimeCourse(cvodeData_t *data, FILE *f);
-void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t* det, FILE *f);
+void printConcentrationTimeCourse(cvodeData_t *, FILE *);
+void printOdeTimeCourse(cvodeData_t *, FILE *);
+void printReactionTimeCourse(cvodeData_t *, Model_t *, FILE *);
+void printJacobianTimeCourse(cvodeData_t *, FILE *);
+void printDeterminantTimeCourse(cvodeData_t *, ASTNode_t *, FILE *);
 
-void
-printPhase(cvodeData_t *data);
+void printPhase(cvodeData_t *);
 
 #endif
 /* End of file */
