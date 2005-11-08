@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 14:31:39 raim>
-  $Id: analyzeJacobian.c,v 1.2 2005/10/28 12:40:11 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 10:55:14 raim>
+  $Id: analyzeJacobian.c,v 1.3 2005/11/08 10:02:03 raimc Exp $
 */
 /* 
  *
@@ -157,6 +157,7 @@ int main(void)
        /* note that this cvodeData MUST NOT be freed, it stays with and
          will be freed together with integratorInstance */
       IntegratorInstance_free(iI);
+      CvodeSettings_free(set);
     }
     else {
       SolverError_dumpAndClearErrors();
