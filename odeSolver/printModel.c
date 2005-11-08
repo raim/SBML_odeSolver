@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 12:51:04 raim>
-  $Id: printModel.c,v 1.9 2005/11/04 12:28:38 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 11:08:17 raim>
+  $Id: printModel.c,v 1.10 2005/11/08 10:09:18 raimc Exp $
 */
 /* 
  *
@@ -699,7 +699,7 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
     for( j=0; j<om->neq; j++ ) {
       fprintf(f, "%s ", om->names[j]);
       for ( k=0; k<om->nsens; k++ )
-	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
+	fprintf(f, "+d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
     }
     for( ; j<data->nvalues; j++ ) 
       fprintf(f, "%s ", om->names[j]);
@@ -728,7 +728,7 @@ printConcentrationTimeCourse(cvodeData_t *data, FILE *f){
     for( j=0; j<om->neq; j++ ) {
       fprintf(f, "%s ", om->names[j]);
       for ( k=0; k<om->nsens; k++ )
-	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
+	fprintf(f, "+d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
     }
     for( ; j<data->nvalues; j++ ) 
       fprintf(f, "%s ", om->names[j]);
