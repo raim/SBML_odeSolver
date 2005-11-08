@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 11:08:17 raim>
-  $Id: printModel.c,v 1.10 2005/11/08 10:09:18 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 11:31:55 raim>
+  $Id: printModel.c,v 1.11 2005/11/08 10:33:29 raimc Exp $
 */
 /* 
  *
@@ -1190,10 +1190,39 @@ printXMGConcentrationTimeCourse(cvodeData_t *data){
 static int
 printXMGLegend(cvodeData_t *data){
 
-  int i;
+  int i, found;
+  odeModel_t *om = data->model;
+  Model_t *m = om->simple;
+  Species_t *s;
+  Parameter_t *p;
+  Compartment_t *c;
+
   
-  for ( i=0; i<data->nvalues-data->model->nconst; i++ ) {
-    GracePrintf("g0.s%d legend  \"%s\"\n", i+1, data->model->names[i]);
+  for ( i=0; i<data->nvalues - om->nconst; i++ ) {
+    found = 0;
+    if ( (s = Model_getSpeciesById(m, om->names[i])) != NULL ) {
+      if ( Species_isSetName(s) ) {
+	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
+		    om->names[i], Species_getName(s));
+	found++;
+      }
+    }
+    else if ( (c = Model_getCompartmentById(m, om->names[i])) ) {
+      if ( Compartment_isSetName(c) ) {
+	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
+		    om->names[i], Compartment_getName(c));
+	found++;
+      }
+    }
+    else if ( (p = Model_getParameterById(m, om->names[i])) ) {
+      if ( Parameter_isSetName(p) ) {
+	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
+		    om->names[i], Parameter_getName(p));
+	found++;
+      }
+    }
+    if ( found == 0 )
+      GracePrintf("g0.s%d legend  \"%s\"\n", i+1, om->names[i]);
   }
 
 
