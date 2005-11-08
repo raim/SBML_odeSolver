@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 11:08:56 raim>
-  $Id: odeModel.c,v 1.26 2005/11/04 10:39:14 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-08 10:57:29 raim>
+  $Id: odeModel.c,v 1.27 2005/11/08 10:02:46 raimc Exp $ 
 */
 /* 
  *
@@ -372,7 +372,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 {
   int i, j, k, failed, nvalues;
-  ASTNode_t *fprime, *simple, *index;
+  ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names;
 
   failed = 0;
@@ -392,9 +392,16 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
     om->index_sens[i] = om->neq + om->nass + i;
 
   for ( i=0; i<om->neq; i++ ) {
+    ode = copyAST(om->ode[i]);
+    /* assignment rule replacement: reverse to satisfy
+       SBML specifications that variables defined by
+       an assignment rule can appear in rules declared afterwards */
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
+    
     for ( j=0; j<om->nsens; j++ ) {
       /* differentiate d(dYi/dt) / dPj */
-      fprime = differentiateAST(om->ode[i], om->names[om->index_sens[j]]);
+      fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
       simple =  AST_simplify(fprime);
       ASTNode_free(fprime);
       index = indexAST(simple, nvalues, om->names);
@@ -408,8 +415,9 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 	if ( strcmp(ASTNode_getName(List_get(names,k)),
 		    "differentiation_failed") == 0 ) 
 	  failed++;
-      List_free(names);
+      List_free(names);      
     }
+    ASTNode_free(ode);
   }
 
   if ( failed != 0 ) {
@@ -510,51 +518,59 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 {  
   int i, j, k, failed, nvalues;
-  ASTNode_t *fprime, *simple, *index;
+  ASTNode_t *fprime, *simple, *index, *ode;
   List_t *names;
 
-  /* Calculate Jacobian */
-
+  if ( om == NULL )
+    return 0;
+  
+  /******************** Calculate Jacobian ************************/
+  
   failed = 0;
   nvalues = om->neq + om->nass + om->nconst;
   
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0)
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0);
   for ( i=0; i<om->neq; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0)
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0);
       
-  if ( om != NULL ) {
-    for ( i=0; i<om->neq; i++ ) {
-      for ( j=0; j<om->neq; j++ ) {
-	fprime = differentiateAST(om->ode[i], om->names[j]);
-	simple =  AST_simplify(fprime);
-	ASTNode_free(fprime);
-	index = indexAST(simple, nvalues, om->names);
-	ASTNode_free(simple);
-	om->jacob[i][j] = index;
-	/* check if the AST contains a failure notice */
-	names = ASTNode_getListOfNodes(index ,
-				       (ASTNodePredicate) ASTNode_isName);
+  for ( i=0; i<om->neq; i++ ) {
+    ode = copyAST(om->ode[i]);
+    /* assignment rule replacement: reverse to satisfy
+       SBML specifications that variables defined by
+       an assignment rule can appear in rules declared afterwards */
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
+    
+    for ( j=0; j<om->neq; j++ ) {
+      fprime = differentiateAST(om->ode[i], om->names[j]);
+      simple =  AST_simplify(fprime);
+      ASTNode_free(fprime);
+      index = indexAST(simple, nvalues, om->names);
+      ASTNode_free(simple);
+      om->jacob[i][j] = index;
+      /* check if the AST contains a failure notice */
+      names = ASTNode_getListOfNodes(index ,
+				     (ASTNodePredicate) ASTNode_isName);
 
-	for ( k=0; k<List_size(names); k++ ) 
-	  if ( strcmp(ASTNode_getName(List_get(names,k)),
-		      "differentiation_failed") == 0 ) 
-	    failed++;
-	List_free(names);
-      }      
+      for ( k=0; k<List_size(names); k++ ) 
+	if ( strcmp(ASTNode_getName(List_get(names,k)),
+		    "differentiation_failed") == 0 ) 
+	  failed++;
+      List_free(names);
     }
-
-    if ( failed != 0 ) {
-       SolverError_error(
-            WARNING_ERROR_TYPE,
-         SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-	    "%d entries of the Jacobian matrix could not be constructed, "
-            "due to failure of differentiation. Cvode will use internal "
-            "approximation of the Jacobian instead.", failed);
-      om->jacobian = 0;
-    }
-    else 
-      om->jacobian = 1;
+    ASTNode_free(ode);
   }
+  if ( failed != 0 ) {
+    SolverError_error(WARNING_ERROR_TYPE,
+	  SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+		"%d entries of the Jacobian matrix could not be constructed, "
+		"due to failure of differentiation. Cvode will use internal "
+		"approximation of the Jacobian instead.", failed);
+    om->jacobian = 0;
+  }
+  else 
+    om->jacobian = 1;
+    
   return om->jacobian;
 }
 

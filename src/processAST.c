@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-01 15:33:46 raim>
-  $Id: processAST.c,v 1.16 2005/11/02 17:32:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 10:43:40 raim>
+  $Id: processAST.c,v 1.17 2005/11/08 10:02:46 raimc Exp $
 */
 /* 
  *
@@ -87,10 +87,12 @@ setUserDefinedFunction(double(*udf)(char*, int, double*))
 
 /* ------------------------------------------------------------------------ */
 
-/* Copies the passed constant AST, and returns the copy. */
-ASTNode_t *
-copyAST(const ASTNode_t *f) {
+/** Copies the passed constant AST, including potential
+    SOSlib ASTNodeIndex, and returns the copy.
+*/
 
+ASTNode_t *copyAST(const ASTNode_t *f)
+{
   int i;
   ASTNode_t *copy;
 
@@ -107,6 +109,11 @@ copyAST(const ASTNode_t *f) {
   }  
   /* variables */
   else if ( ASTNode_isName(f) ) {
+    if ( ASTNode_isSetIndex((ASTNode_t *)f) ) {
+        ASTNode_free(copy);
+	copy = ASTNode_createIndexName();
+	ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
+    }
     ASTNode_setName(copy, ASTNode_getName(f));
   }
   /* constants */
@@ -129,9 +136,8 @@ copyAST(const ASTNode_t *f) {
 
 /* takes an AST and a string array and converts AST_NAME to
    AST_IndexName, which holds the name and the index in the array */
-ASTNode_t *
-indexAST(const ASTNode_t *f, int nvalues, char **names) {
-
+ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
+{
   int i, found;
   ASTNode_t *index;
 

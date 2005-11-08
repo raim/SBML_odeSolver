@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:17:36 raim>
-  $Id: modelSimplify.c,v 1.9 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-11-08 10:26:01 raim>
+  $Id: modelSimplify.c,v 1.10 2005/11/08 10:02:46 raimc Exp $
 */
 /* 
  *
@@ -118,15 +118,13 @@ AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp) {
   }
 }
 
-/** Replaces an assigned variable 'name' by the full
-    assignment in the passed mathematical expression
-    math.
+/** Replaces an assigned variable 'name' in the passed mathematical expression
+    math by the mathemtical expression in `formula'; can be used to
+    replace assignment rules!
 */
 
-SBML_ODESOLVER_API void
-AST_replaceNameByFormula(ASTNode_t *math, const char *name,
-			 const ASTNode_t *formula) {
-
+SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula)
+{
   int i, j;  
   ASTNode_t *old;
   List_t *names;
