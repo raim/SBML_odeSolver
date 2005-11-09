@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 19:35:26 raim>
-  $Id: integratorInstance.c,v 1.39 2005/11/08 16:48:42 afinney Exp $
+  $Id: integratorInstance.c,v 1.40 2005/11/09 11:15:49 afinney Exp $
 */
 /* 
  *
@@ -598,12 +598,13 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 			    "Aborting simulation.",
 			    i, SBML_formulaToString(trigger),
 			    data->currenttime);
+    /* removed AMF 08/11/05
 	else 
 	  SolverError_error(WARNING_ERROR_TYPE,
 			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
 			    "Event Trigger %d (%s) fired at time %g. ",
 			    i, SBML_formulaToString(trigger),
-			    data->currenttime);
+			    data->currenttime); */
 	fired++;
 	data->trigger[i] = 1;      
 	for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
