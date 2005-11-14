@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 17:25:33 raim>
-  $Id: sensSolver.c,v 1.9 2005/11/08 16:48:42 afinney Exp $
+  $Id: sensSolver.c,v 1.10 2005/11/14 10:12:25 afinney Exp $
 */
 /* 
  *
@@ -98,7 +98,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
 	for ( i=0; i<data->neq; i++ ) {
 	  data->sensitivity[i][j] = ySdata[i];
           /* store results */
-	  if (opt->StoreResults);
+	  if (opt->StoreResults)
 	    results->sensitivity[i][j][solver->iout-1] = ySdata[i]; 
 	}
       }

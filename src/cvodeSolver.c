@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 17:16:44 raim>
-  $Id: cvodeSolver.c,v 1.9 2005/11/04 16:23:44 raimc Exp $
+  $Id: cvodeSolver.c,v 1.10 2005/11/14 10:12:25 afinney Exp $
 */
 /* 
  *
@@ -105,7 +105,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	    /* -3 CV_NO_MALLOC */
 	    "cvode_mem was not allocated",
 	    /* -4 CV_TOO_MUCH_WORK */
-	    "The solver took %g internal steps but could not "
+	    "The solver took %d internal steps but could not "
 	    "compute variable values for time %g",
 	    /* -5 CV_TOO_MUCH_ACC */
 	    "The solver could not satisfy the accuracy " 
