@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.14 2005/11/02 17:32:13 raimc Exp $
+# $Id: Makefile.am,v 1.15 2005/11/15 11:55:24 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -33,7 +33,7 @@ if MAKE_BINDINGS
 else
    SUBDIRS = src odeSolver
 endif
-CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas
+CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas -ansi -std=iso9899:1990
 EXTRA_DIST = odeSolver/*.c \
              odeSolver/*.h \
              odeSolver/Makefile.am \
