@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 15:20:14 raim>
-  $Id: sensitivity.c,v 1.5 2005/11/04 16:23:43 raimc Exp $
+  Last changed Time-stamp: <2005-11-15 14:35:59 raim>
+  $Id: sensitivity.c,v 1.6 2005/11/15 13:40:15 raimc Exp $
 */
 /* 
  *
@@ -52,7 +52,7 @@ main (int argc, char *argv[]){
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, 300.0, 10);
-  CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
+  CvodeSettings_setErrors(set, 1e-13, 1e-9, 1e6);
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
   /* 0: simultaneous 1: staggered, 2: staggered1
@@ -78,7 +78,10 @@ main (int argc, char *argv[]){
   IntegratorInstance_dumpPSensitivities(ii, p);
   while( !IntegratorInstance_timeCourseCompleted(ii) ) {
 
-    IntegratorInstance_integrateOneStep(ii);
+    if ( !IntegratorInstance_integrateOneStep(ii) ) {
+      SolverError_dump();
+      break; 
+    }
     IntegratorInstance_dumpPSensitivities(ii, p);
     
   }

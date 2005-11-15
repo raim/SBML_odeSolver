@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:16:44 raim>
-  $Id: cvodeSolver.c,v 1.10 2005/11/14 10:12:25 afinney Exp $
+  Last changed Time-stamp: <2005-11-15 14:39:20 raim>
+  $Id: cvodeSolver.c,v 1.11 2005/11/15 13:40:15 raimc Exp $
 */
 /* 
  *
@@ -154,7 +154,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	SolverError_error(
 			  WARNING_ERROR_TYPE,
 			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
-			  "Integration not successful. Results are not complete.");
+		      "Integration not successful. Results are not complete.");
 
 	return 0 ; /* Error - stop integration*/
       }
@@ -448,9 +448,9 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
-  /* !!! update parameters: is p modified by CVODES??? !!! */
-  /* !!! is only required if fS could not be generated !!! */
-  if ( data->p != NULL )
+  /* update parameters: p is modified by CVODES,
+     if fS could not be generated  */
+  if ( data->p != NULL && data->opt->Sensitivity  )
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p[i];
 
@@ -493,9 +493,9 @@ JacODE(long int N, DenseMat J, realtype t,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   
-  /* !!! update parameters: is p modified by CVODES??? !!! */
-  /* !!! is only required if fS could not be generated !!! */
-  if ( data->p != NULL )
+  /* update parameters: p is modified by CVODES,
+     if fS could not be generated  */
+  if ( data->p != NULL && data->opt->Sensitivity )
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p[i];
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:25:33 raim>
-  $Id: sensSolver.c,v 1.10 2005/11/14 10:12:25 afinney Exp $
+  Last changed Time-stamp: <2005-11-15 14:36:16 raim>
+  $Id: sensSolver.c,v 1.11 2005/11/15 13:40:15 raimc Exp $
 */
 /* 
  *
@@ -189,7 +189,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* NOTES: */
     /* !!! plist could later be used to specify requested parameters
        for sens.analysis !!! */
-    /* !!! data->p is only required if R.H.S. fS cannot be supplied !!! */
     
     /* was construction of parametric matrix successfull ? */
     if ( om->sensitivity ) {
@@ -198,34 +197,31 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	return 0;
 	/* ERROR HANDLING CODE if failes */
       }
+      flag = CVodeSetSensFdata(solver->cvode_mem, data);
+      if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr))  {
+	return 0;
+	/* ERROR HANDLING CODE if  failes */
+      }  
       data->p = NULL;
-      flag = CVodeSetSensParams(solver->cvode_mem, NULL, NULL, NULL);
+    }
+    else {
+      ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
+      for ( i=0; i<data->nsens; i++ ) {
+        /* data->p is only required if R.H.S. fS cannot be supplied */
+	/* plist[i] = i+1; */
+	data->p[i] = data->value[om->index_sens[i]];
+/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
+      }
+      flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
       if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
 	return 0;
 	/* ERROR HANDLING CODE if  failes */
       }
-    }
-    else {
-      /*!!! ??? DOESNT WORK CURRENTLY ??? !!!*/
-      /* SIGSEV: ... at ./cvodes.c:6501  pbari = pbar[is];*/
-      /* return 0; */
-    /* removed by AMF 08/11/05
-      ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
-      for ( i=0; i<data->nsens; i++ ) {
-	plist[i] = i+1;
-	data->p[i] = data->value[om->index_sens[i]];
-/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
- /*     }
-      flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, plist);
-      if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
-	return 0;
-	/* ERROR HANDLING CODE if  failes */
-      /*}
       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
-      /* if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
+      if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
 	/* ERROR HANDLING CODE if  failes */
-	/* return 0; */ 
-    /*  } */
+	return 0;
+      }
     }
 
     /* difference FALSE/TRUE ? */
@@ -234,13 +230,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       return 0;
       /* ERROR HANDLING CODE if failes */
     } 
-      
-    flag = CVodeSetSensFdata(solver->cvode_mem, data);
-    if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr))  {
-      return 0;
-      /* ERROR HANDLING CODE if  failes */
-    }      
-     
+    
     return 1; /* OK */
 }
 
@@ -298,12 +288,7 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   
   dySdata = NV_DATA_S(ySdot);
 
-  /* !!! update parameters: is p modified by CVODES??? !!! */
-  /* !!! is only required if fS could not be generated !!! */
-   if ( data->p != NULL )
-     for ( i=0; i<data->nsens; i++ )
-       data->value[data->model->index_sens[i]] = data->p[i];
-  
+
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
