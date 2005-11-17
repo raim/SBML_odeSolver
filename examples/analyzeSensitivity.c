@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 20:59:50 raim>
-  $Id: analyzeSensitivity.c,v 1.2 2005/11/02 20:00:28 raimc Exp $
+  Last changed Time-stamp: <2005-11-17 13:27:42 raim>
+  $Id: analyzeSensitivity.c,v 1.3 2005/11/17 13:01:50 raimc Exp $
 */
 /* 
  *
@@ -42,7 +42,7 @@
 #include "sbmlsolver/solverError.h"
 
 
-static printParametric(odeModel_t *odeModel, cvodeData_t *data)
+static printSensiMatrix(odeModel_t *odeModel, cvodeData_t *data)
 {
 
   int i, j;
@@ -135,8 +135,8 @@ int main(void)
       printf("\n\n");      
       
       printf("Sensitivity: parametric matrix with initial conditions:\n");
-      printParametric(odeModel, data);
-        /* we must free this cvodeData structure */ 
+      printSensiMatrix(odeModel, data);
+      /* we must free this cvodeData structure */ 
       CvodeData_free(data);
       
       printf("Thx and good bye!\n");

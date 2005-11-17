@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:42:46 raim>
-  $Id: drawGraph.h,v 1.5 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-11-17 13:55:39 raim>
+  $Id: drawGraph.h,v 1.6 2005/11/17 13:01:50 raimc Exp $
 */
 #ifndef _DRAWGRAPH_H_
 #define _DRAWGRAPH_H_
@@ -14,6 +14,7 @@ extern "C" {
   /* Drawing the model with GraphViz */
   SBML_ODESOLVER_API int drawModel(Model_t *, char *, char*);
   SBML_ODESOLVER_API int drawJacoby(cvodeData_t *, char *, char*);
+  SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *, char *, char*, double);
   
 #ifdef __cplusplus
 }

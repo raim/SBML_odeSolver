@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-15 14:35:59 raim>
-  $Id: sensitivity.c,v 1.6 2005/11/15 13:40:15 raimc Exp $
+  Last changed Time-stamp: <2005-11-17 13:59:29 raim>
+  $Id: sensitivity.c,v 1.7 2005/11/17 13:01:50 raimc Exp $
 */
 /* 
  *
@@ -123,6 +123,7 @@ main (int argc, char *argv[]){
     printf("\n");
   }
 
+  drawSensitivity(ii->data, "sensitivity", "ps", 0.9);
   p = ODEModel_getVariableIndex(om, "V1");
   printf("\nWhat do sensitivities mean? Let's try out!\n\n");
   printf("... add 1 to %s:  %g + 1 = ",

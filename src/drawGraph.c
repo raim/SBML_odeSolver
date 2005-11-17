@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 13:29:25 raim>
-  $Id: drawGraph.c,v 1.17 2005/11/08 16:48:42 afinney Exp $
+  Last changed Time-stamp: <2005-11-17 13:56:01 raim>
+  $Id: drawGraph.c,v 1.18 2005/11/17 13:01:49 raimc Exp $
 */
 /* 
  *
@@ -62,10 +62,9 @@
 #include <gvrender.h>
 #endif
 #else
-static int
-drawJacobyTxt(cvodeData_t *data, char *file);
-static int
-drawModelTxt(Model_t *m, char *file);
+static int drawSensitivityTxt(cvodeData_t *data, char *file, double);
+static int drawJacobyTxt(cvodeData_t *data, char *file);
+static int drawModelTxt(Model_t *m, char *file);
 #endif
 
 #define WORDSIZE 10000
@@ -300,6 +299,281 @@ drawJacobyTxt(cvodeData_t *data, char *file) {
 }
 
 #endif
+
+
+/**
+
+*/
+
+SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *format, double threshold) {
+
+#if !USE_GRAPHVIZ
+
+  SolverError_error(WARNING_ERROR_TYPE,
+		    SOLVER_ERROR_NO_GRAPHVIZ,
+		 "odeSolver has been compiled without GRAPHIZ functionality. ",
+		 "Graphs are printed to stdout in the graphviz' .dot format.");
+
+  drawSensitivityTxt(data, file, threshold);
+
+#else
+
+  int i, j;
+  GVC_t *gvc;
+  Agraph_t *g;
+  Agnode_t *r;
+  Agnode_t *s;  
+  Agedge_t *e;
+  Agsym_t *a;
+  char name[WORDSIZE];
+  char label[WORDSIZE];  
+  char *output[3];
+  char *command = "dot";
+  char *formatopt;
+  char *outfile;
+  odeModel_t *om;
+  double *highest;
+  double *lowest;
+
+  om = data->model;
+  
+
+  /* setting name of outfile */
+  ASSIGN_NEW_MEMORY_BLOCK(outfile, strlen(file)+ strlen(format)+7, char, 0);
+  sprintf(outfile, "-o%s_s.%s", file, format);
+  
+  /* setting output format */
+  ASSIGN_NEW_MEMORY_BLOCK(formatopt, strlen(format)+3, char, 0);
+  sprintf(formatopt, "-T%s", format); 
+
+  /* construct command-line */
+  output[0] = command;
+  output[1] = formatopt;
+  output[2] = outfile;
+  output[3] = NULL;
+    
+  /* set up renderer context */
+  gvc = (GVC_t *) gvContext();
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION < 4
+  dotneato_initialize(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  parse_args(gvc, 3, output);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvParseArgs(gvc, 3, output);
+#endif
+
+  g = agopen("G", AGDIGRAPH);
+
+  /* avoid overlapping nodes, for graph embedding by neato */
+  a = agraphattr(g, "overlap", "");
+  agxset(g, a->index, "scale");
+
+  /* set graph label */
+  if ( Model_isSetName(om->m) )
+    sprintf(label, "%s at time %g",  Model_getName(om->m),
+	    data->currenttime);
+  else if ( Model_isSetId(om->m) )
+    sprintf(label, "%s at time %g",  Model_getId(om->m),
+	    data->currenttime);
+  else
+    sprintf(label, "label=\"at time %g\";\n", data->currenttime);
+
+  a = agraphattr(g, "label", "");
+  agxset(g, a->index, label);
+  
+  /*
+    Set edges from species A to species B if the
+    corresponding entry in the jacobian ((d[B]/dt)/d[A])
+    is not '0'. Set edge color 'red' and arrowhead 'tee'
+    if negative.
+  */
+  ASSIGN_NEW_MEMORY_BLOCK(highest, data->nsens, double, 0);  
+  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);  
+  for ( j=0; j<data->nsens; j++ ) {
+    highest[j] = 0;
+    lowest[j] = 0;
+    for ( i=0; i<om->neq; i++ ) {
+      if ( data->sensitivity[i][j] > highest[j] )
+	highest[j] = data->sensitivity[i][j];
+      if ( data->sensitivity[i][j] < lowest[j] )
+	lowest[j] = data->sensitivity[i][j];
+    }
+  }
+
+  for ( i=0; i<om->neq; i++ ) {
+    for ( j=0; j<data->nsens; j++ ) {
+      if ( (data->sensitivity[i][j] > threshold*highest[j]) ||
+	   (data->sensitivity[i][j] < threshold*lowest[j]) ) {
+	
+	sprintf(name, "%s", om->names[om->index_sens[j]]);
+	r = agnode(g,name);
+	agset(r, "label", om->names[om->index_sens[j]]);
+
+	sprintf(label, "%s.htm", om->names[om->index_sens[j]]);
+	a = agnodeattr(g, "URL", "");
+	agxset(r, a->index, label);
+	
+	sprintf(name,"%s", om->names[i]);
+	s = agnode(g,name);
+	agset(s, "label", om->names[i]);
+
+	sprintf(label, "%s.htm", om->names[i]);	
+	a = agnodeattr(g, "URL", "");
+	agxset(s, a->index, label);
+	
+	e = agedge(g,r,s);
+
+	a = agedgeattr(g, "label", "");
+	sprintf(name, "%g",  data->sensitivity[i][j]); 
+	agxset (e, a->index, name);
+
+
+	
+	if ( data->sensitivity[i][j] < 0 ) {
+	  a = agedgeattr(g, "arrowhead", "");
+	  agxset(e, a->index, "tee");
+	  a = agedgeattr(g, "color", "");
+	  agxset(e, a->index, "red"); 	    
+	}	
+      }
+    }
+  }
+  
+  /* Compute a layout */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  gvBindContext(gvc, g);
+  dot_layout(g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_layout(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvLayoutJobs(gvc, g);
+#endif
+  
+  /* Write the graph according to -T and -o options */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  dotneato_write(gvc);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  emit_jobs(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvRenderJobs(gvc, g);
+#endif
+  
+  /* Clean out layout data */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  dot_cleanup(g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  gvlayout_cleanup(gvc, g);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6 || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeLayout(gvc, g);
+#endif
+  
+  /* Free graph structures */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  dot_cleanup(g);
+#endif
+  agclose(g);
+
+  /* Clean up output file and errors */
+#if GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION <= 2
+  gvFREEcontext(gvc);
+  dotneato_eof(gvc);
+#elif GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION == 4
+  dotneato_terminate(gvc);
+#elif (GRAPHVIZ_MAJOR_VERSION == 2 && GRAPHVIZ_MINOR_VERSION >= 6) || GRAPHVIZ_MAJOR_VERSION >= 3
+  gvFreeContext(gvc);
+#endif
+
+  xfree(formatopt);
+  xfree(outfile);
+
+#endif
+
+  return 1;
+}
+
+#if !USE_GRAPHVIZ
+
+static int
+drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
+
+  int i, j;
+  char filename[WORDSIZE];
+  FILE *f;
+  odeModel_t *om;
+  double *highest;
+  double *lowest;
+  
+  om = data->model;
+
+  sprintf(filename, "%s.dot", file);
+  f = fopen(filename, "w");
+  fprintf(f ,"digraph jacoby {\n");
+  fprintf(f ,"overlap=scale;\n");
+  if ( Model_isSetName(om->m) )
+    fprintf(f ,"label=\"%s at time %g\";\n", Model_getName(om->m),
+	    data->currenttime);
+  else if ( Model_isSetId(om->m) )
+    fprintf(f ,"label=\"%s at time %g\";\n", Model_getId(om->m),
+	    data->currenttime);
+  else
+    fprintf(f ,"label=\"at time %g\";\n", data->currenttime);
+
+
+  /*
+    Set edges from species A to species B if the
+    corresponding entry in the jacobian ((d[B]/dt)/d[A])
+    is not '0'. Set edge color 'red' and arrowhead 'tee'
+    if negative.
+  */
+
+  ASSIGN_NEW_MEMORY_BLOCK(highest, data->nsens, double, 0);  
+  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);  
+  for ( j=0; j<data->nsens; j++ ) {
+    highest[j] = 0;
+    lowest[j] = 0;
+    for ( i=0; i<om->neq; i++ ) {
+      if ( data->sensitivity[i][j] > highest[j] )
+	highest[j] = data->sensitivity[i][j];
+      if ( data->sensitivity[i][j] < lowest[j] )
+	lowest[j] = data->sensitivity[i][j];
+    }
+  }
+  
+  for ( i=0; i<om->neq; i++ ) {
+    for ( j=0; j<data->nsens; j++ ) {
+      if ( (data->sensitivity[i][j] > threshold*highest[j]) ||
+	   (data->sensitivity[i][j] < threshold*lowest[j]) ) {
+	
+	fprintf(f ,"%s->%s [label=\"%g\" ",
+		om->names[om->index_sens[j]],
+		om->names[i],
+		data->sensitivity[i][j]);
+	
+	if ( data->sensitivity[i][j] < 0 ) {
+	  fprintf(f ,"arrowhead=tee color=red];\n");
+	}
+	else {
+	  fprintf(f ,"];\n");
+	}
+      }
+    }
+  }
+  for ( i=0; i<om->neq; i++ ) {
+    fprintf(f ,"%s [label=\"%s\"];", om->names[i],
+	    om->names[i]);
+  }
+  for ( i=0; i<data->nsens; i++ ) {
+    fprintf(f ,"%s [label=\"%s\"];", om->names[om->index_sens[i]],
+	    om->names[om->index_sens[i]]);
+  }  
+  fprintf(f, "}\n");
+  return 1;
+}
+
+#endif
+
+
+
 
 
 /**
