@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:52:30 raim>
-  $Id: processAST.h,v 1.7 2005/10/28 09:04:12 afinney Exp $
+  Last changed Time-stamp: <2005-11-17 16:55:19 raim>
+  $Id: processAST.h,v 1.8 2005/11/17 15:57:44 raimc Exp $
 */
 /* 
  *
@@ -43,8 +43,8 @@
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/exportdefs.h"
 
-#define SQR(x) ((x)*(x))
-#define SQRT(x) pow((x),(.5))
+#define MySQR(x) ((x)*(x))
+#define MySQRT(x) pow((x),(.5))
 /* Helper Macros to get the second or the third child
    of an Abstract Syntax Tree */
 #define child(x,y)  ASTNode_getChild(x,y)

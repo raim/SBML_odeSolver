@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 10:43:40 raim>
-  $Id: processAST.c,v 1.18 2005/11/08 16:48:42 afinney Exp $
+  Last changed Time-stamp: <2005-11-17 16:56:36 raim>
+  $Id: processAST.c,v 1.19 2005/11/17 15:57:43 raimc Exp $
 */
 /* 
  *
@@ -389,22 +389,22 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       break;
     case AST_FUNCTION_ARCCSC:
       /* arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
-      result = atan( 1. / SQRT( (evaluateAST(child(n,0),data)-1.)*
+      result = atan( 1. / MySQRT( (evaluateAST(child(n,0),data)-1.)*
 				(evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCCSCH:
       /* arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
-      result = log((1.+SQRT((1+SQR(evaluateAST(child(n,0),data))))) /
+      result = log((1.+MySQRT((1+MySQR(evaluateAST(child(n,0),data))))) /
 		   evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCSEC:
       /* arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
-      result = atan( SQRT( (evaluateAST(child(n,0),data)-1.)*
-			   (evaluateAST(child(n,0),data)+1.) ) );
+      result = atan( MySQRT( (evaluateAST(child(n,0),data)-1.)*
+			    (evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCSECH:
       /* arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
-      result = log((1.+pow((1-SQR(evaluateAST(child(n,0),data))),0.5))/
+      result = log((1.+pow((1-MySQR(evaluateAST(child(n,0),data))),0.5))/
 		   evaluateAST(child(n,0),data));      
       break;
     case AST_FUNCTION_ARCSIN:
