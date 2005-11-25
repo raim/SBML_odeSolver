@@ -1,0 +1,62 @@
+Subject: SOSlib todo (fwd)
+
+DOKU:
+
+finish documentation
+
+start userguide (os.tex as template)
+
+update website
+
+start SOSlib/methods Wiki
+
+sourceforge: emaillists, file release
+
+CODE:
+
+dont replace compartment=1 , instead
+optimizeFormulae before an integration run: 
+replace constant params and
+e.g. remove compartment=1 divisions, if not requested for s.a.
+OR
+no division: ode in amount/time, divide by compartment for data->values
+
+bestSolution -> options to ODEModel creation: amount/conc., w/o lOfParameters!
+
+switch sensSolver calls, call sensSolver from cvodeSolver!
+
+use CVODE/S reinit function in create/set/reset?
+
+SENS errors control: separate error values, TRUE/FALSE error control
+
+drawSensitivity: better way? combine with jacobian?
+
+external data function:
+- incorporate interpolation function
+- write example
+(- differentiation for sens.analysis?
+not possible/needed because not constant?)
+
+
+output: print default SBML units if not given;
+
+
+
+Next Release:
+
+getOdeFromReactions:
+pass optional listOfParameters 
+that will be filled with globalized kL parameters
+
+
+sens. for selected params
+
+odeSolver: sens@XMGrace
+--sensitivity SPECIESID
+--parameter PARAMID
+
+better sens. error control, pbar etc.
+
+IDA/IDAS, analog to CVODES
+
+simple Stoch solver
