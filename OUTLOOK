@@ -1,7 +1,8 @@
 Subject: SOSlib todo (fwd)
 
-DOKU:
 
+
+DOKU:
 
 1.6.0:
 
@@ -15,14 +16,17 @@ start SOSlib/methods Wiki
 
 sourceforge: emaillists, file release
 
+
+
 CODE:
 
 1.6.0:
+
 dont replace compartment=1 , instead
 optimizeFormulae before an integration run: 
 replace constant params and
 e.g. remove compartment=1 divisions, if not requested for s.a.
-OR
+AND/OR
 no division: ode in amount/time, divide by compartment for data->values
 
 bestSolution -> options to ODEModel creation: amount/conc., w/o lOfParameters!
@@ -33,6 +37,7 @@ pass optional listOfParameters to be filled with globalized kL parameters
 switch sensSolver calls, call sensSolver from cvodeSolver!
 
 SENS errors control: separate error values, TRUE/FALSE error control
+
 
 1.6.1:
 
@@ -56,11 +61,18 @@ odeSolver: sensitivities@XMGrace
 
 better sens. error control, pbar etc.
 
+
 1.6.2:
+
 adjoint sensitivities
+
 IDA/IDAS, analog to CVODES
 
-1.7:
-simple Stoch solver
+
+1.6.3:
+
+exact event detection
+
+simple stochastic solver
 
 parameter identification
