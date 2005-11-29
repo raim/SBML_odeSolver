@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 13:25:41 raim>
-  $Id: daeSolver.c,v 1.3 2005/11/08 16:48:42 afinney Exp $
+  Last changed Time-stamp: <2005-11-16 18:32:30 raim>
+  $Id: daeSolver.c,v 1.4 2005/11/29 18:30:42 raimc Exp $
 */
 /* 
  *
@@ -191,7 +191,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 int
 IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq;
+    int i, j, flag, neq, nalg;
     realtype *ydata, *abstoldata, *dydata;
 
     odeModel_t *om = engine->om;
@@ -199,7 +199,8 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
 
-    neq = engine->om->neq; /* number of equations */
+    neq = engine->om->neq;   /* number of ODEs */
+    nalg = engine->om->nalg; /* number of algebraic constraints */
 
      /* construct jacobian, if wanted and not yet existing */
     if ( opt->UseJacobian && om->jacob == NULL ) 
@@ -220,7 +221,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
       om->jacobian = opt->UseJacobian;
     }
 
-    
+    /* construct algebraic `Jacobian' (or do that in constructJacobian */
   
     /* CVODESolverStructures from former runs must be freed */
     if ( data->run > 1 )
@@ -230,21 +231,21 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     /*
      * Allocate y, abstol vectors
      */
-    solver->y = N_VNew_Serial(neq);
+    solver->y = N_VNew_Serial(neq + nalg);
     if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
                         "N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
-    solver->dy = N_VNew_Serial(neq);
+    solver->dy = N_VNew_Serial(neq + nalg);
     if (check_flag((void *)solver->dy, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
                         "N_VNew_Serial for vector dy failed");
       return 0; /* error */
     }
-    solver->abstol = N_VNew_Serial(neq);
+    solver->abstol = N_VNew_Serial(neq + nalg);
     if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector abstol failed */
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
@@ -267,6 +268,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
       abstoldata[i] = opt->Error;
       dydata[i] = evaluateAST(om->ode[i], data);
     }
+    /* set initial value vector components for algebraic rule variables  */
     
     /* scalar relative tolerance: the same for all y */
     solver->reltol = opt->RError;
@@ -282,7 +284,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     }
 
     /*
-     * Call CVodeMalloc to initialize the integrator memory:
+     * Call IDAMalloc to initialize the integrator memory:
      *
      * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
      * fRes         user's right hand side function
@@ -309,9 +311,9 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     }
     
     /*
-     * Link the main integrator with the CVDENSE linear solver
+     * Link the main integrator with the IDADENSE linear solver
      */
-    flag = CVDense(solver->cvode_mem, neq);
+    flag = IDADense(solver->cvode_mem, neq);
     if (check_flag(&flag, "CVDense", 1, stderr)) {
       /* ERROR HANDLING CODE if CVDense fails */
     }
@@ -418,6 +420,9 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
   }
+  /* update algebraic constraint defined variables */
+
+  
   /* update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) {
     data->value[data->model->neq+i] =
@@ -460,14 +465,12 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
 
-  /* update parameters */
-  for ( i=0; i<data->nsens; i++ )
-    data->value[data->model->index_sens[i]] = data->p[i];
-  
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
   }
+  /* update algebraic constraint defined variables */
+
   /* update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) {
     data->value[data->model->neq+i] =
@@ -480,7 +483,7 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
   for ( i=0; i<data->model->neq; i++ ) {
     for ( j=0; j<data->model->neq; j++ ) {
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
-      if ( i == j)
+      if ( i == j )
 	DENSE_ELEM(J, i, j) -= cj;
      }
   }
