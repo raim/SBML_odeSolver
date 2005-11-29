@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-17 16:55:51 raim>
-  $Id: integratorInstance.c,v 1.41 2005/11/17 15:57:43 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 20:50:11 raim>
+  $Id: integratorInstance.c,v 1.42 2005/11/29 20:00:22 raimc Exp $
 */
 /* 
  *
@@ -717,18 +717,51 @@ IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
-  engine->data->value[vi->index] = value;
 
-  if ( vi->index < engine->om->neq ) {
+  int i, j;
+  ASTNode_t *tmp;
+  odeModel_t *om;
+  cvodeData_t *data;
+  cvodeSettings_t *opt;
+  cvodeSolver_t *solver;
+
+  om = engine->om;
+  opt = engine->opt;
+  data = engine->data;
+  solver = engine->solver;
+
+  data->value[vi->index] = value;
+
+  if ( vi->index < om->neq ) {
     /* if (om->algebraic) ?? */
     IntegratorInstance_freeCVODESolverStructures(engine);
-    engine->solver->t0 = engine->solver->t;
-    if ( !engine->opt->Sensitivity )       
+    solver->t0 = solver->t;
+    if ( !opt->Sensitivity )       
       IntegratorInstance_createCVODESolverStructures(engine);
     else 
       IntegratorInstance_createCVODESSolverStructures(engine);
   }
-    
+  else if ( vi->index >= om->neq+om->nass ) {
+    /* optimize ODEs for evaluation */
+    /*!!! will need adaptation to selected sens.analysis !!!*/
+    for ( i=0; i<om->neq; i++ ) {
+      if ( !opt->Sensitivity ) {
+	/* optimize each ODE: replace nconst and simplifyAST */
+	tmp = copyAST(om->ode[i]);
+	for ( j=0; j<om->nconst; j++ ) {
+	  AST_replaceNameByValue(tmp,
+				 om->names[om->neq+om->nass+j],
+				 data->value[om->neq+om->nass+j]);
+	}
+	
+ 	data->ode[i] = simplifyAST(tmp);
+	ASTNode_free(tmp);
+      }
+      else {
+	data->ode[i] = copyAST(om->ode[i]);
+      }
+    }
+  }
 }	
 
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 19:21:24 raim>
-  $Id: cvodeSolver.c,v 1.12 2005/11/29 18:28:27 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 20:58:41 raim>
+  $Id: cvodeSolver.c,v 1.13 2005/11/29 20:00:22 raimc Exp $
 */
 /* 
  *
@@ -194,7 +194,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /* optimize ODEs for evaluation */
     /*!!! will need adaptation to selected sens.analysis !!!*/
     for ( i=0; i<om->neq; i++ ) {
-      if ( opt->Sensitivity ) {
+      if ( !opt->Sensitivity ) {
 	/* optimize each ODE: replace nconst and simplifyAST */
 	tmp = copyAST(om->ode[i]);
 	for ( j=0; j<om->nconst; j++ ) {
@@ -202,7 +202,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 				 om->names[om->neq+om->nass+j],
 				 data->value[om->neq+om->nass+j]);
 	}
-	
  	data->ode[i] = simplifyAST(tmp);
 	ASTNode_free(tmp);
       }
@@ -211,7 +210,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      }
     }
 
-    /*!!! should use simplified ASTs !!!*/
+    /*!!! should use simplified ASTs for construction !!!*/
     /* construct jacobian, if wanted and not yet existing */
     if ( opt->UseJacobian && om->jacob == NULL ) 
       /* reset UseJacobian option, depending on success */
