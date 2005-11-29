@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.13 2005/11/15 13:40:48 raimc Exp $
+# $Id: Makefile.am,v 1.14 2005/11/29 20:00:49 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -33,6 +33,7 @@ AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity batchIntegrate \
                simpleIntInst changeIntInst ASTIndexTest sense \
+               parameterScan \
                printODEs analyzeJacobian analyzeSens \
 	       root
 printODEs_SOURCES = printODEModel.c
@@ -102,6 +103,13 @@ analyzeSens_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       @SBML_LDFLAGS@ @SBML_LIBS@ \
                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                       -lstdc++ -lxerces-c -lm
+parameterScan_SOURCES = ParameterScanner.c
+parameterScan_LDADD   = -L../src -L/@prefix@/lib -lODES \
+                        @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                        @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                        @SBML_LDFLAGS@ @SBML_LIBS@ \
+                        @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
+                        -lstdc++ -lxerces-c -lm
 sense_SOURCES = Sense.c
 sense_LDADD   = -L../src -L/@prefix@/lib -lODES \
                 @GRACE_LDFLAGS@ @GRACE_LIBS@ \
