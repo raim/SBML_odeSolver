@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 18:49:57 raim>
-  $Id: cvodedata.c,v 1.21 2005/11/02 17:59:09 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 17:47:15 raim>
+  $Id: cvodedata.c,v 1.22 2005/11/29 18:28:27 raimc Exp $
 */
 /* 
  *
@@ -53,19 +53,24 @@
 
 /* private functions */
 static void CvodeData_freeStructures(cvodeData_t *);
-static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int nconst);
+static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq);
 static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
 
 /* Internal Integration Data: The functions allocate and free
   cvodeData and cvodeResults required by the CVODE interface functions
   to read values and store results, respectively. */
-static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int nconst)
+static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
 {
   cvodeData_t * data;
 
   ASSIGN_NEW_MEMORY(data, struct cvodeData, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->trigger, nevents, int, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->value, nvalues, double, NULL);
+  /* initialize memory for optimized ODEs */
+  ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL);
+
+  data->neq = neq;
+  
   data->sensitivity = NULL;
   data->p = NULL;
   
@@ -82,8 +87,6 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 
   data->nsens = nsens;
   data->neq = neq;
-
-    
 
   return 1;
 }
@@ -107,7 +110,7 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
   nvalues = neq + nconst + nass;
 
   /* allocate memory for current integration data storage */
-  data = CvodeData_allocate(nvalues, nevents, nconst);
+  data = CvodeData_allocate(nvalues, nevents, neq);
   RETURN_ON_FATALS_WITH(NULL);
 
   data->nvalues = nvalues;
@@ -154,6 +157,7 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
     data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
   /* set current time to 0 */
   data->currenttime = 0.0;
+
 }
 
 
@@ -259,7 +263,11 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   
   /* free event trigger flags */
   free(data->trigger);
-
+  
+  /* free ODEs */
+  for ( i=0; i<data->neq; i++ )
+    ASTNode_free(data->ode[i]);
+  free(data->ode);
 }
 
 

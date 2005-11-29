@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 10:31:08 raim>
-  $Id: cvodedata.h,v 1.23 2005/11/09 11:15:50 afinney Exp $
+  Last changed Time-stamp: <2005-11-29 17:46:19 raim>
+  $Id: cvodedata.h,v 1.24 2005/11/29 18:28:53 raimc Exp $
 */
 /* 
  *
@@ -62,7 +62,8 @@ struct cvodeResults {
 		      in case the integration is prematurely stopped. */
   double *time;    /* time steps */
 
-  int nvalues;     /* number of variables for which results exist */
+  /* number of variables for which results exist */
+  int nvalues;     
   /* the following arrays represent the time series of all variables
      and parameters of the model */
   double **value;
@@ -86,7 +87,11 @@ struct cvodeData {
 
   odeModel_t *model;
   
-
+  /* ODEs f(x) and values x. The ODEs are usually optimized versions
+     of the same array in odeModel */
+  int neq;
+  ASTNode_t **ode;
+  
   /* The value array is used to write and read the
      current values of all variables and parameters of the
      system (of which there are `nvalues') */
@@ -97,7 +102,7 @@ struct cvodeData {
   float currenttime;
 
   /* current sensitivities: d[Y(t)]/dP */
-  int neq, nsens;
+  int nsens;
   double **sensitivity;
   /* required by sens. analysis,
      if no r.h.s function fS is available */

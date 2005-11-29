@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-15 14:39:20 raim>
-  $Id: cvodeSolver.c,v 1.11 2005/11/15 13:40:15 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 19:21:24 raim>
+  $Id: cvodeSolver.c,v 1.12 2005/11/29 18:28:27 raimc Exp $
 */
 /* 
  *
@@ -49,7 +49,6 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
-
 
 
 /** The Hot Stuff!
@@ -181,9 +180,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-    int i, flag, neq;
+    int i, j, flag, neq;
     realtype *ydata, *abstoldata;
 
+    ASTNode_t *tmp;
     odeModel_t *om = engine->om;
     cvodeData_t *data = engine->data;
     cvodeSolver_t *solver = engine->solver;
@@ -191,7 +191,28 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
-     /* construct jacobian, if wanted and not yet existing */
+    /* optimize ODEs for evaluation */
+    /*!!! will need adaptation to selected sens.analysis !!!*/
+    for ( i=0; i<om->neq; i++ ) {
+      if ( opt->Sensitivity ) {
+	/* optimize each ODE: replace nconst and simplifyAST */
+	tmp = copyAST(om->ode[i]);
+	for ( j=0; j<om->nconst; j++ ) {
+	  AST_replaceNameByValue(tmp,
+				 om->names[om->neq+om->nass+j],
+				 data->value[om->neq+om->nass+j]);
+	}
+	
+ 	data->ode[i] = simplifyAST(tmp);
+	ASTNode_free(tmp);
+      }
+      else {
+	data->ode[i] = copyAST(om->ode[i]);
+     }
+    }
+
+    /*!!! should use simplified ASTs !!!*/
+    /* construct jacobian, if wanted and not yet existing */
     if ( opt->UseJacobian && om->jacob == NULL ) 
       /* reset UseJacobian option, depending on success */
       opt->UseJacobian = ODEModel_constructJacobian(om);
@@ -209,6 +230,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 			"Jacobian matrix construction skipped.");
       om->jacobian = opt->UseJacobian;
     }
+
 
     
     /* CVODESolverStructures from former runs must be freed */
@@ -468,7 +490,7 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 
   /* evaluate ODEs */
   for ( i=0; i<data->model->neq; i++ ) 
-    dydata[i] = evaluateAST(data->model->ode[i],data);
+    dydata[i] = evaluateAST(data->ode[i],data);
 
 }
 
