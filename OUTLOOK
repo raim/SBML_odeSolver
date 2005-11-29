@@ -22,16 +22,10 @@ CODE:
 
 1.6.0:
 
-dont replace compartment=1 , instead
-optimizeFormulae before an integration run: 
-replace constant params and
-e.g. remove compartment=1 divisions, if not requested for s.a.
-AND/OR
-no division: ode in amount/time, divide by compartment for data->values
-
+odeConstruct: ode optionally in amount/time?
 bestSolution -> options to ODEModel creation: amount/conc., w/o lOfParameters!
 
-getOdeFromReactions:
+getOdeFromReactions: globalize it!
 pass optional listOfParameters to be filled with globalized kL parameters
 
 switch sensSolver calls, call sensSolver from cvodeSolver!
