@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-17 16:56:36 raim>
-  $Id: processAST.c,v 1.19 2005/11/17 15:57:43 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 19:27:07 raim>
+  $Id: processAST.c,v 1.20 2005/11/29 18:27:29 raimc Exp $
 */
 /* 
  *
@@ -1760,6 +1760,11 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   }
   /* variables */
   else if ( ASTNode_isName(f) ) {
+    if ( ASTNode_isSetIndex((ASTNode_t *)f) ) {
+      ASTNode_free(simple);
+      simple = ASTNode_createIndexName();
+      ASTNode_setIndex(simple, ASTNode_getIndex((ASTNode_t *)f));
+    } 
     ASTNode_setName(simple, ASTNode_getName(f));
   }
   /* --------------- operators with possible simplifications -------------- */
