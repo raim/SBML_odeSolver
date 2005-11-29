@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 11:30:35 raim>
-  $Id: odeConstruct.c,v 1.18 2005/11/08 10:32:53 raimc Exp $
+  Last changed Time-stamp: <2005-11-29 19:09:02 raim>
+  $Id: odeConstruct.c,v 1.19 2005/11/29 18:27:57 raimc Exp $
 */
 /* 
  *
@@ -393,7 +393,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 	     before adding to ODE */
 	  AST_replaceNameByParameters(reactant,
 				      KineticLaw_getListOfParameters(kl));
-	  /** Add reactant expression to ODE  */
+	  /* Add reactant expression to ODE  */
 	  if ( ode == NULL ) {
 	    ode = ASTNode_create();
 	    ASTNode_setCharacter(ode,'-');
@@ -444,8 +444,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 	     before adding to ODE */
 	  AST_replaceNameByParameters(reactant,
 				      KineticLaw_getListOfParameters(kl));
-	  /** Add reactant expression to ODE
-	   */
+	  /* Add reactant expression to ODE  */
 	  if ( ode == NULL ) {
 	    ode = reactant;
 	  }
@@ -470,10 +469,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
     }
   }
 
-  /* Divide ODE by Name of the species' compartment, if the
-     compartment is set variable, by the size if the compartment is
-     constant (but not if Volume is constant AND 1),
-
+  /* Divide ODE by Name of the species' compartment.
      If formula is empty skip division by compartment and set formula
      to 0.  The latter case can happen, if a species is neither
      constant nor a boundary condition but appears only as a modifier
@@ -483,19 +479,6 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
     for ( j=0; j<Model_getNumCompartments(m); j++ ) {
       c = Model_getCompartment(m,j);
       if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
-	if ( Compartment_getConstant(c) ) {
-	  if ( Compartment_getSize(c) != 1 ) {
-	    tmp = copyAST(ode);
-	    ASTNode_free(ode);
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode, '/');
-	    ASTNode_addChild(ode, tmp);
-	    ASTNode_addChild(ode, ASTNode_create());
-	    ASTNode_setReal(ASTNode_getChild(ode,1),
-			    Compartment_getSize(c));
-	  }
-	}
-	else if ( !(Compartment_getConstant(c)) ) {
 	  tmp = copyAST(ode);
 	  ASTNode_free(ode);
 	  ode = ASTNode_create();
@@ -504,7 +487,6 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 	  ASTNode_addChild(ode, ASTNode_create());
 	  ASTNode_setName(ASTNode_getChild(ode,1),
 			  Compartment_getId(c));
-	}
       }
     }	 
   }
