@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2005/11/08 16:48:42 $
+ * $Revision: 1.3 $
+ * $Date: 2005/11/30 11:31:16 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban
  *                and Dan Shumaker @ LLNL
@@ -699,7 +699,7 @@ int CVodeQuadReInit(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
 int CVodeSetSensRhsFn(void *cvode_mem, CVSensRhsFn fS);
 WINCVODE_API int CVodeSetSensRhs1Fn(void *cvode_mem, CVSensRhs1Fn fS);
 WINCVODE_API int CVodeSetSensFdata(void *cvode_mem, void *fS_data);
-int CVodeSetSensRho(void *cvode_mem, realtype rho);
+WINCVODE_API int CVodeSetSensRho(void *cvode_mem, realtype rho);
 WINCVODE_API int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS);
 int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS);
 WINCVODE_API int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist);
