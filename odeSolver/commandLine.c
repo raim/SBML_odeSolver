@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 17:21:51 raim>
-  $Id: commandLine.c,v 1.12 2005/11/08 16:48:42 afinney Exp $
+  $Id: commandLine.c,v 1.13 2005/11/30 11:56:44 afinney Exp $
 */
 /* 
  *
@@ -83,6 +83,8 @@ odeSolver (int argc, char *argv[])
   integratorInstance_t *ii;
   cvodeSettings_t *set;
   clock_t startTime, endTime ;
+
+  startTime = clock();
 
   /* read command-line arguments */
   decodeCML(argc, argv);
@@ -308,14 +310,10 @@ odeSolver (int argc, char *argv[])
 	check for steady states.
     */    
     
-    startTime = clock();
-
     integrator(ii, Opt.PrintMessage, Opt.PrintOnTheFly, outfile);
     
     SolverError_dump();
     RETURN_ON_FATALS_WITH(EXIT_FAILURE);
-
-    endTime = clock();
 
     /** Finally, print out the results
 	in the format specified by commanline option,
@@ -391,6 +389,10 @@ odeSolver (int argc, char *argv[])
 	      __FILE__, __LINE__, sbmlFilename);
       }
     }
+
+  endTime = clock();
+
+    
   /* Print some final statistics   */
   if ( Opt.PrintMessage )
     IntegratorInstance_printStatistics(ii, stdout);   
