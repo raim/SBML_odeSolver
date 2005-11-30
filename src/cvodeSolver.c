@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 20:58:41 raim>
-  $Id: cvodeSolver.c,v 1.13 2005/11/29 20:00:22 raimc Exp $
+  Last changed Time-stamp: <2005-11-30 20:09:07 raim>
+  $Id: cvodeSolver.c,v 1.14 2005/11/30 19:14:07 raimc Exp $
 */
 /* 
  *
@@ -159,14 +159,25 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       }
     
     ydata = NV_DATA_S(solver->y);
-
     
     /* update cvodeData time dependent variables */    
     for ( i=0; i<om->neq; i++ )
       data->value[i] = ydata[i];
 
     /* update rest of data with internal default function */
-    return IntegratorInstance_updateData(engine);
+    flag = IntegratorInstance_updateData(engine);
+    if ( flag != 1 )
+      return 0;
+
+    /*  calling CVODE: the same call can be used for CVODES  */
+    if ( opt->Sensitivity ) {
+      flag = IntegratorInstance_cvodesOneStep(engine);
+      if ( flag != 1 )
+	return 0;
+    }
+
+    return 1; /* OK */
+    
 }
 
 
@@ -190,25 +201,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     cvodeSettings_t *opt = engine->opt;
 
     neq = engine->om->neq; /* number of equations */
-
-    /* optimize ODEs for evaluation */
-    /*!!! will need adaptation to selected sens.analysis !!!*/
-    for ( i=0; i<om->neq; i++ ) {
-      if ( !opt->Sensitivity ) {
-	/* optimize each ODE: replace nconst and simplifyAST */
-	tmp = copyAST(om->ode[i]);
-	for ( j=0; j<om->nconst; j++ ) {
-	  AST_replaceNameByValue(tmp,
-				 om->names[om->neq+om->nass+j],
-				 data->value[om->neq+om->nass+j]);
-	}
- 	data->ode[i] = simplifyAST(tmp);
-	ASTNode_free(tmp);
-      }
-      else {
-	data->ode[i] = copyAST(om->ode[i]);
-     }
-    }
 
     /*!!! should use simplified ASTs for construction !!!*/
     /* construct jacobian, if wanted and not yet existing */
@@ -347,9 +339,40 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      * Set maximum number of internal steps to be taken
      * by the solver in its attempt to reach tout
      */
+    
     CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
 
-    return 1; /* OK */
+    if ( opt->Sensitivity ) {
+      flag = IntegratorInstance_createCVODESSolverStructures(engine);
+      if ( flag == 0 ) {
+	return 0;/* error */
+	/* ERROR HANDLING CODE if SensSolver construction failed */
+      }
+    }
+    
+    /* set ODEs for evaluation */
+    /*!!! will need adaptation to selected sens.analysis !!!*/
+    for ( i=0; i<om->neq; i++ ) {
+      /* optimize ODEs if no sensitivities are requested,
+         or if the construction of the parametric matrix was
+         successfull */
+      if ( !opt->Sensitivity || om->sensitivity ) {
+	/* optimize each ODE: replace nconst and simplifyAST */
+	tmp = copyAST(om->ode[i]);
+	for ( j=0; j<om->nconst; j++ ) {
+	  AST_replaceNameByValue(tmp,
+				 om->names[om->neq+om->nass+j],
+				 data->value[om->neq+om->nass+j]);
+	}
+ 	data->ode[i] = simplifyAST(tmp);
+	ASTNode_free(tmp);
+      }
+      else {
+	data->ode[i] = copyAST(om->ode[i]);
+     }
+    }
+
+    return 1; /* 1 == OK */
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
@@ -407,6 +430,9 @@ SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstan
 	    nst, nfe, nsetups, nje); 
     fprintf(f, "## nni = %-6ld ncfn = %-6ld netf = %ld\n",
 	    nni, ncfn, netf);
+    
+    if (opt->Sensitivity)
+      IntegratorInstance_printCVODESStatistics(engine, f);
 }
 
 

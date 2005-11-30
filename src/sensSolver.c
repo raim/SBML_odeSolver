@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-15 14:36:16 raim>
-  $Id: sensSolver.c,v 1.11 2005/11/15 13:40:15 raimc Exp $
+  Last changed Time-stamp: <2005-11-30 17:49:02 raim>
+  $Id: sensSolver.c,v 1.12 2005/11/30 19:14:07 raimc Exp $
 */
 /* 
  *
@@ -81,11 +81,6 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
     cvodeSettings_t *opt = engine->opt;
     cvodeResults_t *results = engine->results;
     
-    /*  calling CVODE: the same call can be used for CVODES  */
-    flag = IntegratorInstance_cvodeOneStep(engine);
-    if ( flag != 1 )
-      return 0;
-    RETURN_ON_FATALS_WITH(0);
     
     /* getting sensitivities */
     flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
@@ -98,7 +93,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
 	for ( i=0; i<data->neq; i++ ) {
 	  data->sensitivity[i][j] = ySdata[i];
           /* store results */
-	  if (opt->StoreResults)
+	  if ( opt->StoreResults )
 	    results->sensitivity[i][j][solver->iout-1] = ySdata[i]; 
 	}
       }
@@ -133,11 +128,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     ASSIGN_NEW_MEMORY_BLOCK(plist, data->nsens+1, int, 0)
     ASSIGN_NEW_MEMORY_BLOCK(pbar, data->nsens+1, realtype, 0)*/
 
-    /*
-     * creating CVODE structures
-     */
-    if (!IntegratorInstance_createCVODESolverStructures(engine))
-      return 0;
 
     /*****  adding sensitivity specific structures ******/
 
@@ -244,8 +234,6 @@ SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInsta
   long int nfSe, nfeS, nsetupsS, nniS, ncfnS, netfS;
   cvodeSolver_t *solver = engine->solver;
 
-  /* print CVODE statistics */
-  IntegratorInstance_printCVODEStatistics(engine, f);
   /* print additional CVODES statistics ..TODO...*/
   flag = CVodeGetNumSensRhsEvals(solver->cvode_mem, &nfSe);
   check_flag(&flag, "CVodeGetNumSensRhsEvals", 1, f);

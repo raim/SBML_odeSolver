@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:21:51 raim>
-  $Id: commandLine.c,v 1.13 2005/11/30 11:56:44 afinney Exp $
+  Last changed Time-stamp: <2005-11-30 19:52:40 raim>
+  $Id: commandLine.c,v 1.14 2005/11/30 19:14:07 raimc Exp $
 */
 /* 
  *
@@ -300,7 +300,7 @@ odeSolver (int argc, char *argv[])
 
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);
-    
+   
     SolverError_dump();
     SolverError_haltOnErrors();
 
@@ -394,10 +394,11 @@ odeSolver (int argc, char *argv[])
 
     
   /* Print some final statistics   */
-  if ( Opt.PrintMessage )
-    IntegratorInstance_printStatistics(ii, stdout);   
-  printf("\n## execution time %f\n",
-	 ((double)(endTime-startTime))/CLOCKS_PER_SEC);
+  if ( Opt.PrintMessage ) {
+    IntegratorInstance_printStatistics(ii, stdout);
+    printf("## execution time %f\n",
+	   ((double)(endTime-startTime))/CLOCKS_PER_SEC);
+  }
 
     
     /* thx and good bye. */
@@ -418,8 +419,8 @@ odeSolver (int argc, char *argv[])
     xfree(sbmlFilename);   
     SBMLDocument_free(d);
 
-    printf("#integration execution time %f\n",
-	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC);
+/*     printf("#integration execution time %f\n", */
+/* 	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC); */
   }
 
   return(EXIT_SUCCESS);
@@ -445,7 +446,6 @@ int integrator(integratorInstance_t *engine,
   int i, j;
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
-
   
  /** Command-line option -f/--onthefly:
       print initial values, if on-the-fly printint is set

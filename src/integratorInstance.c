@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 20:50:11 raim>
-  $Id: integratorInstance.c,v 1.42 2005/11/29 20:00:22 raimc Exp $
+  Last changed Time-stamp: <2005-11-30 19:46:52 raim>
+  $Id: integratorInstance.c,v 1.43 2005/11/30 19:14:07 raimc Exp $
 */
 /* 
  *
@@ -695,12 +695,8 @@ IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
     return 1;
 
   /* CVODE SOLVER */
-  if (om->neq) {
-    if ( opt->Sensitivity )
-      return IntegratorInstance_createCVODESSolverStructures(engine);
-    else
-      return IntegratorInstance_createCVODESolverStructures(engine);
-  }
+  if (om->neq) 
+    return IntegratorInstance_createCVODESolverStructures(engine);
     
 }
 
@@ -736,16 +732,13 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
     /* if (om->algebraic) ?? */
     IntegratorInstance_freeCVODESolverStructures(engine);
     solver->t0 = solver->t;
-    if ( !opt->Sensitivity )       
-      IntegratorInstance_createCVODESolverStructures(engine);
-    else 
-      IntegratorInstance_createCVODESSolverStructures(engine);
+    IntegratorInstance_createCVODESolverStructures(engine);
   }
   else if ( vi->index >= om->neq+om->nass ) {
     /* optimize ODEs for evaluation */
     /*!!! will need adaptation to selected sens.analysis !!!*/
     for ( i=0; i<om->neq; i++ ) {
-      if ( !opt->Sensitivity ) {
+      if ( !opt->Sensitivity  || om->sensitivity ) {
 	/* optimize each ODE: replace nconst and simplifyAST */
 	tmp = copyAST(om->ode[i]);
 	for ( j=0; j<om->nconst; j++ ) {
@@ -788,12 +781,9 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     if ( engine->om->neq == 0 ) 
       flag = IntegratorInstance_simpleOneStep(engine);      
     /* call CVODE Solver */
-    else {
-      if (engine->opt->Sensitivity)
-	flag = IntegratorInstance_cvodesOneStep(engine);
-      else
-	flag = IntegratorInstance_cvodeOneStep(engine);
-    }
+    else 
+      flag = IntegratorInstance_cvodeOneStep(engine);
+    
     
     /* upcoming solvers */
     /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
@@ -913,11 +903,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
     
   if (!om->neq)
     fprintf(f, "## No statistics available for models without ODEs.\n");
-  else {
-    if (opt->Sensitivity)
-      IntegratorInstance_printCVODESStatistics(engine, f);
-    else
-      IntegratorInstance_printCVODEStatistics(engine, f);
-  }
+  else 
+    IntegratorInstance_printCVODEStatistics(engine, f);
 }
 

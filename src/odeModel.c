@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 10:57:29 raim>
-  $Id: odeModel.c,v 1.28 2005/11/08 16:48:42 afinney Exp $ 
+  Last changed Time-stamp: <2005-11-30 17:47:09 raim>
+  $Id: odeModel.c,v 1.29 2005/11/30 19:14:07 raimc Exp $ 
 */
 /* 
  *
@@ -409,7 +409,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
       ASTNode_free(simple);
       om->jacob_sens[i][j] = index;
       /* check if the AST contains a failure notice */
-      names = ASTNode_getListOfNodes(index ,
+      names = ASTNode_getListOfNodes(index,
 				     (ASTNodePredicate) ASTNode_isName);
 
       for ( k=0; k<List_size(names); k++ ) 
