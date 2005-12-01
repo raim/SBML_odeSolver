@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:03:33 raim>
-  $Id: simpleIntegratorInstance.c,v 1.14 2005/11/03 10:13:50 raimc Exp $
+  Last changed Time-stamp: <2005-11-30 21:02:47 raim>
+  $Id: simpleIntegratorInstance.c,v 1.15 2005/12/01 19:01:06 raimc Exp $
 */
 /* 
  *
@@ -67,6 +67,7 @@ int doIt(void)
     CvodeSettings_setErrors(settings, 1e-20, 1e-14, 500);
     
     /* Setting Integration Switches */
+    CvodeSettings_setMethod(settings, 1, 12);
     CvodeSettings_setJacobian(settings, 1);
     CvodeSettings_setIndefinitely(settings, 1);
     CvodeSettings_setHaltOnEvent(settings, 0);
