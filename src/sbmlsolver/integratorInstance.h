@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 14:06:21 raim>
-  $Id: integratorInstance.h,v 1.19 2005/11/04 10:39:15 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-01 17:46:13 raim>
+  $Id: integratorInstance.h,v 1.20 2005/12/01 19:03:31 raimc Exp $ 
 */
 /* 
  *
@@ -60,7 +60,7 @@ extern "C" {
     int iout, nout;
     /* these data are only used by the CVODE solver specific functions */
     realtype reltol, atol1;
-    N_Vector y, abstol;
+    N_Vector y, abstol, senstol;
     void *cvode_mem;
     /* CVODES specific data */
     int nsens;

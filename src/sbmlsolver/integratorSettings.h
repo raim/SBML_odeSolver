@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 10:52:14 raim>
-  $Id: integratorSettings.h,v 1.10 2005/11/03 10:13:51 raimc Exp $ 
+  Last changed Time-stamp: <2005-11-30 20:51:23 raim>
+  $Id: integratorSettings.h,v 1.11 2005/12/01 19:03:31 raimc Exp $ 
 */
 /* 
  *
@@ -70,6 +70,9 @@ extern "C" {
     double Error;         /* absolute tolerance in Cvode integration */
     double RError;        /* relative tolerance in Cvode integration */
     int Mxstep;           /* maximum step number for CVode integration */
+    int CvodeMethod;      /* set ADAMS-MOULTON or BDF nonlinear solver */
+    int IterMethod;       /* set type of nonlinear solver iteration */
+    int MaxOrder;         /* set max. order of ADAMS or BDF method */
     int Sensitivity;      /* use CVODES for sensitivity analysis */
     int SensMethod;       /* flag for sensitivity analysis method */
     
@@ -96,6 +99,9 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *, int, int);
+  SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *, int);
@@ -114,6 +120,9 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeSettings_getError(cvodeSettings_t *);
   SBML_ODESOLVER_API double CvodeSettings_getRError(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *);
+  SBML_ODESOLVER_API char *CvodeSettings_getMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *);
 
   SBML_ODESOLVER_API int CvodeSettings_getJacobian(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getIndefinitely(cvodeSettings_t *);

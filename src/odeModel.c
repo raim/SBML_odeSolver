@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 17:47:09 raim>
-  $Id: odeModel.c,v 1.29 2005/11/30 19:14:07 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-01 19:49:04 raim>
+  $Id: odeModel.c,v 1.30 2005/12/01 19:03:31 raimc Exp $ 
 */
 /* 
  *
@@ -260,7 +260,8 @@ ODEModel_fillStructures(Model_t *ode)
   nalg = 0;
   
 /*   ODEModel_dumpNames(om); */
-/*   printf("\n\nHallo %d %d %d %d\n\n\n", om->neq,om->nass,om->nalg,om->nconst); */
+/*   printf("\n\nHallo %d %d %d %d\n\n\n",
+     om->neq,om->nass,om->nalg,om->nconst); */
 /*   fflush(stdout); */
 
   for ( j=0; j<Model_getNumRules(ode); j++ ) {
@@ -379,18 +380,19 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   failed = 0;
   nvalues = om->neq + om->nass + om->nconst;
 
-  /* default case, value should be passed for other cases! */
+  om->sensitivity = 0;
+  om->jacob_sens = NULL;
   om->nsens = om->nconst;
 
+  ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
+  /*!!! non-default case:
+    these values should be passed for other cases !!!*/
+  for ( i=0; i<om->nsens; i++ )
+    om->index_sens[i] = om->neq + om->nass + i;
+ 
   ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
   for ( i=0; i<om->neq; i++ )
     ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
-
-  ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
-
-  /* !!! default case, these values should be passed for other cases !!! */
-  for ( i=0; i<om->nsens; i++ ) 
-    om->index_sens[i] = om->neq + om->nass + i;
 
   for ( i=0; i<om->neq; i++ ) {
     ode = copyAST(om->ode[i]);
@@ -443,7 +445,9 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 {
   int i, j;
-  
+
+  /* free parameter index */
+  free(om->index_sens);
   /* free parametric matrix, if it has been constructed */
   if ( om->jacob_sens != NULL )
     {
@@ -452,8 +456,7 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 	          ASTNode_free(om->jacob_sens[i][j]);
           free(om->jacob_sens[i]);
       }
-      free(om->jacob_sens);
-      free(om->index_sens);
+      free(om->jacob_sens);      
   }
 }
 
@@ -743,15 +746,17 @@ SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *om,
 
 SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *om, int i)
 {
-    variableIndex_t *vi = NULL;
+    variableIndex_t *vi;
 
     if ( i > ODEModel_getNumValues(om) )
     {
-        VariableIndex_free(vi);
+        /* VariableIndex_free(vi); */
         SolverError_error(
             ERROR_ERROR_TYPE,
             SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-            "No such variable is in the model");
+            "No such variable in the model");
+	return NULL;
+	
     }
     else
       {

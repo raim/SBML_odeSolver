@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-07 13:14:54 raim>
-  $Id: integratorSettings.c,v 1.14 2005/11/07 13:53:05 raimc Exp $
+  Last changed Time-stamp: <2005-11-30 21:07:38 raim>
+  $Id: integratorSettings.c,v 1.15 2005/12/01 19:03:31 raimc Exp $
 */
 /* 
  *
@@ -60,7 +60,8 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
   return CvodeSettings_createWith(Time, PrintStep,
-				  1e-18, 1e-10, 10000, 1, 0, 0, 0, 1, 0, 0);
+				  1e-18, 1e-10, 10000, 
+				  1, 0, 0, 0, 1, 0, 0);
 }
 
 
@@ -73,15 +74,20 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
   printf("\n");
   printf("SOSlib INTEGRATION SETTINGS\n");
   printf("1) CVODE SPECIFIC SETTINGS:\n");
-  printf("absolute error tolerance for each output time:     %g\n",
+  printf("absolute error tolerance for each output time:   %g\n",
 	 set->Error);
-  printf("relative error tolerance for each output time:     %g\n",
+  printf("relative error tolerance for each output time:   %g\n",
 	 set->RError);
-  printf("max. nr. of steps to reach next output time:       %d\n",
+  printf("max. nr. of steps to reach next output time:     %d\n",
 	 set->Mxstep);
-  printf("Sensitivity:     %s\n", set->Sensitivity ?
-	 "1: yes " : "0: no");
-  printf("     method:     %d: %s\n",
+  printf("Nonlinear solver method:                         %d: %s\n"
+	 "          Maximum Order:                         %d\n",
+	 set->CvodeMethod, CvodeSettings_getMethod(set), set->MaxOrder);
+  printf("Iteration method:                                %d: %s\n",
+	 set->IterMethod, CvodeSettings_getIterMethod(set));
+  printf("Sensitivity:                                     %s\n",
+	 set->Sensitivity ? "1: yes " : "0: no");
+  printf("     method:                                     %d: %s\n",
 	 set->SensMethod, CvodeSettings_getSensMethod(set));
   printf("2) SOSlib SPECIFIC SETTINGS:\n");
   printf("Jacobian matrix: %s\n", set->UseJacobian ?
@@ -123,6 +129,10 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
 
   /* 1. Setting SBML ODE Solver integration parameters */
   CvodeSettings_setErrors(set, Error, RError, Mxstep);
+  /* set non-linear solver defaults (BDF, Newton, max.order 5*/
+  set->CvodeMethod = 0;
+  set->IterMethod = 0;
+  set->MaxOrder = 5;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
 			    HaltOnEvent, SteadyState, StoreResults,
 			    Sensitivity, SensMethod);
@@ -201,6 +211,46 @@ SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *set, double REr
 SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep)
 {
   set->Mxstep = Mxstep;  
+}
+
+
+/** Set method non-linear solver methods, and its max.order
+    0: BDF 1: Adams-Moulton,
+    Default method is BDF
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *set, int i, int j)
+{
+  /* i == 0: default BDF method
+     i == 1: Adams-Moulton method */
+  if ( 0 <= i < 2 ) {
+    set->CvodeMethod = i;
+    set->MaxOrder = j;
+  }
+}
+
+
+/** Set method for CVODE integration
+    0: NEWTON; 1: FUNCTIONAL,
+    Default method is NEWTON
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *set, int i)
+{
+  /* i == 0: default NEWTON iteration
+     i == 1: FUNCTIONAL iteraction */
+  if ( 0 <= i < 1 ) set->IterMethod = i;
+  else set->IterMethod = 0;
+}
+
+
+/** Sets maximum order of BDF or Adams-Moulton method, respectively
+   default: 5
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxOrder)
+{
+  set->MaxOrder = MaxOrder;  
 }
 
 
@@ -445,6 +495,36 @@ SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *set)
 }
 
 
+/** Get non-linear solver method (BDF or ADAMS-MOULTON)
+*/
+
+SBML_ODESOLVER_API char *CvodeSettings_getMethod(cvodeSettings_t *set)
+{
+  char *meth[2];
+  meth[0] = "BDF";
+  meth[1] = "ADAMS-MOULTON";
+  return meth[set->CvodeMethod];
+}
+
+/** Get maximum order of non-linear solver method
+*/
+
+SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *set)
+{
+  return set->MaxOrder;
+}
+
+/** Get non-linear solver iteration type (NEWTON or FUNCTIONAL)
+*/
+
+SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *set)
+{
+  char *meth[2];
+  meth[0] = "NEWTON";
+  meth[1] = "FUNCTIONAL";
+  return meth[set->IterMethod];
+}
+
 /** Returns 1, if the automatically generated
     or 0 if CVODE's internal approximation
     of the jacobian matrix will be used by CVODE 
@@ -499,7 +579,6 @@ SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *set)
 }
 
 
-
 /** Returns 1, if sensitivity analysis is requested and CVODES
     will be used.
 */
@@ -509,9 +588,9 @@ SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *set)
   return set->Sensitivity;
 }
 
+
 /** Get sensitivity method 
 */
-
 
 SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
 {

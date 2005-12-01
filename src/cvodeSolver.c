@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 20:09:07 raim>
-  $Id: cvodeSolver.c,v 1.14 2005/11/30 19:14:07 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 18:18:26 raim>
+  $Id: cvodeSolver.c,v 1.15 2005/12/01 19:03:30 raimc Exp $
 */
 /* 
  *
@@ -170,14 +170,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       return 0;
 
     /*  calling CVODE: the same call can be used for CVODES  */
-    if ( opt->Sensitivity ) {
-      flag = IntegratorInstance_cvodesOneStep(engine);
-      if ( flag != 1 )
-	return 0;
-    }
-
-    return 1; /* OK */
-    
+    if ( opt->Sensitivity ) 
+      return IntegratorInstance_cvodesOneStep(engine);
+    else
+      return 1; /* OK */    
 }
 
 
@@ -191,7 +187,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq;
+    int i, j, flag, neq, method, iteration, maxorder;
     realtype *ydata, *abstoldata;
 
     ASTNode_t *tmp;
@@ -211,8 +207,11 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* free jacobian from former runs (not necessary, frees also
          unsuccessful jacobians from former runs ) */
       if ( om->jacob != NULL) {
-	for ( i=0; i<om->neq; i++ )
+	for ( i=0; i<om->neq; i++ ) {
+	  for ( j=0; j<om->neq; j++ )
+	    ASTNode_free(om->jacob[i][j]);
 	  free(om->jacob[i]);
+	}
 	free(om->jacob);
 	om->jacob = NULL;
       }
@@ -263,17 +262,29 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     /* set sensitivity structure to NULL */
     solver->yS = NULL;
+    solver->senstol = NULL;
     
     /* scalar relative tolerance: the same for all y */
     solver->reltol = opt->RError;
 
     /**
-     * Call CVodeCreate to create the solver memory:
+     * Call CVodeCreate to create the non-linear solver memory:
      *
-     * CV_BDF     specifies the Backward Differentiation Formula
-     * CV_NEWTON  specifies a Newton iteration
+     * CV_BDF         Backward Differentiation Formula method
+     * CV_ADAMS       Adams-Moulton method
+     * CV_NEWTON      Newton iteration method
+     * CV_FUNCTIONAL  functional iteration method
      */
-    solver->cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+    if ( opt->CvodeMethod == 0 )
+      method = CV_BDF;
+    else
+      method = CV_ADAMS;
+    if ( opt->IterMethod == 0 )
+      iteration = CV_NEWTON;
+    else
+      iteration = CV_FUNCTIONAL;
+    
+    solver->cvode_mem = CVodeCreate(method, iteration);
     if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
 			"CVodeCreate failed");
@@ -351,7 +362,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
     
     /* set ODEs for evaluation */
-    /*!!! will need adaptation to selected sens.analysis !!!*/
+    /*!!! will need adaptation to selected sens.analysis !!!*/    
     for ( i=0; i<om->neq; i++ ) {
       /* optimize ODEs if no sensitivities are requested,
          or if the construction of the parametric matrix was
@@ -364,10 +375,15 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 				 om->names[om->neq+om->nass+j],
 				 data->value[om->neq+om->nass+j]);
 	}
+	if ( data->ode[i] != NULL )
+	  ASTNode_free(data->ode[i]);
+	    
  	data->ode[i] = simplifyAST(tmp);
 	ASTNode_free(tmp);
       }
       else {
+	if ( data->ode[i] != NULL )
+	  ASTNode_free(data->ode[i]);
 	data->ode[i] = copyAST(om->ode[i]);
      }
     }
@@ -388,6 +404,10 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
     /* Free sensitivity vector yS */
     if (engine->solver->yS != NULL)
       N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
+
+    /* Free sensitivity vector yS */
+    if (engine->solver->senstol != NULL)
+      N_VDestroy_Serial(engine->solver->senstol);
 
     /* Free IDA vector dy */
     if (engine->solver->dy != NULL)

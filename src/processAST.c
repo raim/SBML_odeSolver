@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 19:27:07 raim>
-  $Id: processAST.c,v 1.20 2005/11/29 18:27:29 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 14:25:02 raim>
+  $Id: processAST.c,v 1.21 2005/12/01 19:03:31 raimc Exp $
 */
 /* 
  *
@@ -153,14 +153,21 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
   }
   else if ( ASTNode_isReal(f) ) {
     ASTNode_setReal(index, ASTNode_getReal(f));
-  }  
+  }
+  /* copy existing indexes */
+/*   else if ( ASTNode_isSetIndex(f) ) { */
+/*     ASTNode_free(index); */
+/*     index = ASTNode_createIndexName(); */
+/*     ASTNode_setName(index, ASTNode_getName(f)); */
+/*     ASTNode_setIndex(index, ASTNode_getIndex(f));     */
+/*   } */
   /* writing indexed name nodes */
   else if ( ASTNode_isName(f) ) {
     found = 0;
     for ( i=0; i<nvalues; i++ ) {
       if ( strcmp(ASTNode_getName(f), names[i]) == 0 ) {
         ASTNode_free(index);
-	index = ASTNode_createIndexName();
+	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
 	ASTNode_setIndex(index, i);
 	ASTNode_setName(index, ASTNode_getName(f));
 	found++;
@@ -1745,7 +1752,6 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
 
   /* new ASTNode */
   simple = ASTNode_create();
-
   
   type = ASTNode_getType(f);
 
@@ -1764,7 +1770,7 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
       ASTNode_free(simple);
       simple = ASTNode_createIndexName();
       ASTNode_setIndex(simple, ASTNode_getIndex((ASTNode_t *)f));
-    } 
+     } 
     ASTNode_setName(simple, ASTNode_getName(f));
   }
   /* --------------- operators with possible simplifications -------------- */

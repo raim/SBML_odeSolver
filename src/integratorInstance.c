@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 19:46:52 raim>
-  $Id: integratorInstance.c,v 1.43 2005/11/30 19:14:07 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 13:03:19 raim>
+  $Id: integratorInstance.c,v 1.44 2005/12/01 19:03:31 raimc Exp $
 */
 /* 
  *
@@ -746,11 +746,14 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 				 om->names[om->neq+om->nass+j],
 				 data->value[om->neq+om->nass+j]);
 	}
-	
+	if ( data->ode[i] != NULL )
+	  ASTNode_free(data->ode[i]);	
  	data->ode[i] = simplifyAST(tmp);
 	ASTNode_free(tmp);
       }
       else {
+	if ( data->ode[i] != NULL )
+	  ASTNode_free(data->ode[i]);
 	data->ode[i] = copyAST(om->ode[i]);
       }
     }
@@ -766,11 +769,7 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 {
-    int flag;
-    
-    /* will be set to 1 by successful solvers */
-    flag = 0;
-    
+     
     /* switch between solvers, the called functions are
      required to update ODE variables, that is data->values
      with index i:  0 <= i < neq
@@ -779,17 +778,12 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     
     /* for models without ODEs, we just need to increase the time */
     if ( engine->om->neq == 0 ) 
-      flag = IntegratorInstance_simpleOneStep(engine);      
+      return IntegratorInstance_simpleOneStep(engine);
     /* call CVODE Solver */
     else 
-      flag = IntegratorInstance_cvodeOneStep(engine);
-    
-    
+      return IntegratorInstance_cvodeOneStep(engine);
     /* upcoming solvers */
     /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
-    /* if (opt->Sensitivity)  IntegratorInstance_cvodesOneStep(engine); */
-    
-    return flag; /* continue integration if flag == 1*/
 }
 
 

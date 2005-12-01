@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 17:49:02 raim>
-  $Id: sensSolver.c,v 1.12 2005/11/30 19:14:07 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 19:49:34 raim>
+  $Id: sensSolver.c,v 1.13 2005/12/01 19:03:31 raimc Exp $
 */
 /* 
  *
@@ -114,7 +114,7 @@ int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
     int i, j, flag, neq, ns;
-    realtype *ydata, *abstoldata, *ySdata;
+    realtype *ydata, *abstoldata, *ySdata, *senstoldata;
 
     odeModel_t *om = engine->om;
     cvodeData_t *data = engine->data;
@@ -135,12 +135,27 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
      * construct sensitivity related structures
      */
     /* free sensitivity from former runs (changed for non-default cases!) */
-    if ( om->jacob_sens != NULL ) 
-      ODEModel_freeSensitivity(om);
-    
-    /* this function will require additional input for
-       non-default case, via sensitivity input settings! */
-    ODEModel_constructSensitivity(om);
+    ODEModel_freeSensitivity(om);
+
+    /* if jacobian matrix has been constructed successfully,
+       construct sensitivity matrix dx/dp, sets om->sensitivity
+       to 1 if successful, 0 otherwise */
+    /*!!! this function will require additional input for
+       non-default case, via sensitivity input settings! !!!*/
+
+    if ( om->jacobian ) 
+      ODEModel_constructSensitivity(om);
+    else {
+      om->sensitivity = 0;
+      om->jacob_sens = NULL;
+      om->nsens = om->nconst;
+
+      ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
+      /*!!! non-default case:
+	these values should be passed for other cases !!!*/
+      for ( i=0; i<om->nsens; i++ )
+	om->index_sens[i] = om->neq + om->nass + i;
+    }
     
     engine->solver->nsens = data->nsens;
 
@@ -152,7 +167,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /*
      * (re)initialize ySdata sensitivities
      */
+    /* absolute tolerance for sensitivity error control */
+    solver->senstol = N_VNew_Serial(data->nsens);
+    abstoldata = NV_DATA_S(solver->senstol);
     for ( j=0; j<data->nsens; j++ ) {
+      abstoldata[j] = 1e-4;
       ySdata = NV_DATA_S(solver->yS[j]);
       for ( i=0; i<data->neq; i++ ) 
 	ySdata[i] = data->sensitivity[i][j];
@@ -163,7 +182,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
      */
     if ( opt->SensMethod == 0 ) 
       flag =CVodeSensMalloc(solver->cvode_mem,data->nsens,
-			    CV_SIMULTANEOUS,solver->yS);
+			    CV_SIMULTANEOUS, solver->yS);
     else if ( opt->SensMethod == 1 )
       flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,
 			     CV_STAGGERED, solver->yS);
@@ -180,8 +199,9 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* !!! plist could later be used to specify requested parameters
        for sens.analysis !!! */
     
-    /* was construction of parametric matrix successfull ? */
-    if ( om->sensitivity ) {
+    /* was construction of Jacobian and
+       parametric matrix successfull ? */
+    if ( om->sensitivity && om->jacobian ) {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, fS);
       if (check_flag(&flag, "CVodeSetSensRhs1Fn", 1, stderr)) {
 	return 0;
@@ -199,8 +219,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       for ( i=0; i<data->nsens; i++ ) {
         /* data->p is only required if R.H.S. fS cannot be supplied */
 	/* plist[i] = i+1; */
-	data->p[i] = data->value[om->index_sens[i]];
-/* 	pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
+	data->p[i] = data->value[om->index_sens[i]]; 
+	/* pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
       }
       flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
       if (check_flag(&flag, "CVodeSetSensParams", 1, stderr))  {
@@ -213,9 +233,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	return 0;
       }
     }
-
+/*     CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
+/* 			   solver->reltol, &solver->senstol); */
+    
     /* difference FALSE/TRUE ? */
-    flag = CVodeSetSensErrCon(solver->cvode_mem, TRUE);
+    flag = CVodeSetSensErrCon(solver->cvode_mem, FALSE);
     if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr)) {
       return 0;
       /* ERROR HANDLING CODE if failes */
