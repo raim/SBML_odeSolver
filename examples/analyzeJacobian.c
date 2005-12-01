@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 10:55:14 raim>
-  $Id: analyzeJacobian.c,v 1.3 2005/11/08 10:02:03 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 18:13:32 raim>
+  $Id: analyzeJacobian.c,v 1.4 2005/12/01 18:59:54 raimc Exp $
 */
 /* 
  *
@@ -127,14 +127,14 @@ int main(void)
       f = ODEModel_getOde(odeModel, vi);
       formula = SBML_formulaToString(f);
       
-      printf("The ODE d[%s]/dt = \n%s \n\n",
+      printf("The ODE d%s/dt = \n%s \n\n",
 	     ODEModel_getVariableName(odeModel, vi),
 	     formula);
       free(formula);      
 
       f = ODEModel_getJacobianEntry(odeModel, vi, vj);
       formula = SBML_formulaToString(f); 
-      printf("The jacobian entry (d[%s]/dt)/d[%s] = \n%s \n\n",
+      printf("The jacobian entry (d%s/dt)/d%s = \n%s \n\n",
 	     ODEModel_getVariableName(odeModel, vi),
 	     ODEModel_getVariableName(odeModel, vj),
 	     formula);
@@ -151,7 +151,7 @@ int main(void)
       printf("Take a look at jacobian interaction graph in");
       printf("file jacobian_jm.jpg that has just been constructed.\n");
       printf("If you have compiled w/o graphviz, you just have a textfile");
-      printf("jacobian.dot\n");
+      printf(" jacobian.dot\n");
       printf("Thx and good bye!\n");
       
        /* note that this cvodeData MUST NOT be freed, it stays with and
