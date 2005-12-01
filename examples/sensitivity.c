@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-17 13:59:29 raim>
-  $Id: sensitivity.c,v 1.7 2005/11/17 13:01:50 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 19:58:14 raim>
+  $Id: sensitivity.c,v 1.8 2005/12/01 19:01:32 raimc Exp $
 */
 /* 
  *
@@ -52,19 +52,19 @@ main (int argc, char *argv[]){
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, 300.0, 10);
-  CvodeSettings_setErrors(set, 1e-13, 1e-9, 1e6);
+  CvodeSettings_setErrors(set, 1e-9, 1e-4, 1e9);
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
   /* 0: simultaneous 1: staggered, 2: staggered1
      see CVODES user guide for details */
   CvodeSettings_setSensMethod(set, 0);
+  CvodeSettings_setJacobian(set, 1); /* for testing only */
   /* CvodeSettings_dump(set); */
-
+  
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
-  y = ODEModel_getVariableIndex(om, "MAPK_P");
+  /* get a parameter for which we will check sensitivities */
   p = ODEModel_getVariableIndex(om, "K1");
-  
   /* calling the integrator */
   ii = IntegratorInstance_create(om, set);
 
@@ -76,19 +76,16 @@ main (int argc, char *argv[]){
   IntegratorInstance_dumpNames(ii);
 
   IntegratorInstance_dumpPSensitivities(ii, p);
-  while( !IntegratorInstance_timeCourseCompleted(ii) ) {
 
-    if ( !IntegratorInstance_integrateOneStep(ii) ) {
-      SolverError_dump();
-      break; 
-    }
-    IntegratorInstance_dumpPSensitivities(ii, p);
-    
+  while( !IntegratorInstance_timeCourseCompleted(ii) ) {
+     if ( !IntegratorInstance_integrateOneStep(ii) ) {
+      break;
+     }
+     IntegratorInstance_dumpPSensitivities(ii, p);
   }
-  printf("\n");
+
   VariableIndex_free(p);
   
-  /* IntegratorInstance_integrate(ii); */
   
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
     printf("Integration not sucessful!\n");
@@ -97,6 +94,7 @@ main (int argc, char *argv[]){
   }
 
 
+  y = ODEModel_getVariableIndex(om, "MAPK_P"); 
   printf("\nLet's look at a specific ODE variable:\n");
   /* print sensitivities again, but now from stored results */
   printf("### RESULTS for Sensitivity Analysis for one ODE variable\n");
@@ -123,12 +121,13 @@ main (int argc, char *argv[]){
     printf("\n");
   }
 
-  drawSensitivity(ii->data, "sensitivity", "ps", 0.9);
+ /*  drawSensitivity(ii->data, "sensitivity", "ps", 0.9); */
   p = ODEModel_getVariableIndex(om, "V1");
   printf("\nWhat do sensitivities mean? Let's try out!\n\n");
   printf("... add 1 to %s:  %g + 1 = ",
 	 ODEModel_getVariableName(om, p),
 	 IntegratorInstance_getVariableValue(ii, p));
+  
   
   CvodeSettings_setSensitivity(set, 0);
   IntegratorInstance_reset(ii);
@@ -139,7 +138,7 @@ main (int argc, char *argv[]){
   printf("... and integrate again:\n\n");
 
   CvodeResults_free(results);
-  IntegratorInstance_integrate(ii);
+  IntegratorInstance_integrate(ii); 
   results = IntegratorInstance_createResults(ii);
 
   /* and print changed results */
@@ -160,7 +159,6 @@ main (int argc, char *argv[]){
   CvodeSettings_free(set);
   CvodeResults_free(results);
   ODEModel_free(om);
-
 
   return (EXIT_SUCCESS);  
 }
