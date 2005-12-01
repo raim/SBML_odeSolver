@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 19:52:40 raim>
-  $Id: commandLine.c,v 1.14 2005/11/30 19:14:07 raimc Exp $
+  Last changed Time-stamp: <2005-12-01 15:28:35 raim>
+  $Id: commandLine.c,v 1.15 2005/12/01 19:02:34 raimc Exp $
 */
 /* 
  *
@@ -411,7 +411,6 @@ odeSolver (int argc, char *argv[])
 
     SolverError_dump();
     SolverError_clear();
-
     IntegratorInstance_free(ii);
     CvodeSettings_free(set);
     ODEModel_free(om);
@@ -492,8 +491,8 @@ int integrator(integratorInstance_t *engine,
   while (!IntegratorInstance_timeCourseCompleted(engine)) {
 
     if (!IntegratorInstance_integrateOneStep(engine)) {
+      /* SolverError_dump(); */
       return IntegratorInstance_handleError(engine);
-      SolverError_dump();
     }
           
     /* print immediately if PrintOnTheFly was set
