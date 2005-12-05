@@ -27,8 +27,9 @@ bestSolution -> options to ODEModel creation: amount/conc., w/o lOfParameters!
 
 getOdeFromReactions: globalize it!
 pass optional listOfParameters to be filled with globalized kL parameters
+pass optional listOfRules and convert kineticLaws to parameter and rule!!
+-> will greatly increase efficiency for big models
 
-switch sensSolver calls, call sensSolver from cvodeSolver!
 
 SENS errors control: separate error values, TRUE/FALSE error control
 
