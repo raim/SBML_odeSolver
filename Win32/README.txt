@@ -7,10 +7,13 @@ SBML_odeSolver for Microsoft Visual C++ 7.1
 Last change: 9th June 2005 
 
 This directory is an attempt to create a framework for building
-SBML_odeSolver in the MSVC 7.1 environment.
+SBML_odeSolver in the MSVC 7.1 environment.  
 
-Instructions
-------------
+The binary directory at this level just contains binary components that
+are combined with elements compiled from the source to create a binary release.
+
+Instructions to build from SOSlib from scratch using this CVS checkout
+----------------------------------------------------------------------
 
 a) SBML_odeSolver requires the CVS version of
 libSBML checkout the latest version of libSBML and download a
@@ -65,9 +68,7 @@ d) create the directory <SBML_odeSolver>\Win32\bin and then
 build the various dlls and the solver executable in the following sequence:
 
 <libSBML>\win32\libsbml.vcproj
-<SBML_odeSolver>\Win32\WinCVODE\WinCVODE\WinCVODE.vcproj
-<SBML_odeSolver>\Win32\SBML_odeSolver\SBML_odeSolver\SBML_odeSolver.vcproj
-<SBML_odeSolver>\Win32\SBML_odeSolverApp\SBML_odeSolverApp\SBML_odeSolverApp.vcproj
+<SBML_odeSolver>\Win32\CompleteSOSLib\CompleteSOSLib.sln
 
 e) To run the solver add the following directories to the PATH
 
@@ -86,3 +87,4 @@ f) the solver can then be invoked as SBML_odeSolverApp.exe using command line ar
 g) developers wishing to develop other programs that use the SBML_odeSolver dll should use the SBML_odeSolver
 libraries and dlls contained in <SBML_odeSolver>\win32\bin combined with the header files in
 <SBML_odeSolver>\src\sbmlsolver.  Please read the TODO.txt file.
+

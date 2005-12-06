@@ -35,7 +35,7 @@
 				Outputs="$(TargetFileName)"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="SBML_odeSolverD.lib libSBMLD.lib"
+				AdditionalDependencies="$(OutDir)\SBML_odeSolverD.lib libSBMLD.lib"
 				OutputFile="$(OutDir)\SBML_odeSolverAppD.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
