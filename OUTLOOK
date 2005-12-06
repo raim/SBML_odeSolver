@@ -20,23 +20,51 @@ sourceforge: emaillists, file release
 
 CODE:
 
-1.6.0:
+1.6.1: Performance Optimization
 
-odeConstruct: ode optionally in amount/time?
-bestSolution -> options to ODEModel creation: amount/conc., w/o lOfParameters!
+Problem:  no reference
+Solution: create benchmarking test suite, with defined settings
+          and scripts
+	  
+Problem:  BDF/Adams-Moulton, Newton/Functional iteration
+          behaviour differences not exactly known
+Solution: Use a bench marking test suite to systematically compare
+	  
 
-getOdeFromReactions: globalize it!
-pass optional listOfParameters to be filled with globalized kL parameters
-pass optional listOfRules and convert kineticLaws to parameter and rule!!
--> will greatly increase efficiency for big models
+Problem:  kineticLaw parameters are replaced and can't be used for
+          sensitivity analysis
+Solution: globalize it! pass optional listOfParameters to be filled with
+          globalized kL parameters, and add to ode model
+
+Problem:  each kinetic law appears as the same formula in many ODEs,
+          while it could also be evaluated only once per function f
+          calls
+Solution: pass optional listOfRules/listOfParameters to odeFromReactions
+          and convert kineticLaws to parameter and rule!
+          Then add the new rules/parameters to the ode model
+
+Problem:  Constant Parameters need to stay in the formulae, for later
+          setting with IntegratorInstance_setVariable, as well as for
+          arbitrary sensitivity analysis
+Solution: pass a OptimizeFlag to odeConstruct, which causes replacment
+          of all constant parameters and sets a
+          `NoSensitivityAnalysisPossible' flag for the integratorInstance
 
 
-SENS errors control: separate error values, TRUE/FALSE error control
+Problem:  each IntegratorInstance_setVariableValue frees and creates
+          solver structures, if a ODE variable is set
+Solution: use CvodeReInit in integrateOneStep, when a flag sets
+	  the solverstructures invalid, this flag can be set e.g. by
+	  IntegratorInstance_setVariableValue (by Andrew)
+			      
+Problem:  sensitivity analysis behaviour should be interfaced in more
+          detail      
+Solution: SENS errors control: separate error values,
+          TRUE/FALSE error control
+	  set good pbar values
 
 
-1.6.1:
-
-use CVODE/S reinit function in create/set/reset?
+1.6.1: New Features
 
 drawSensitivity: better way? combine with jacobian?
 
@@ -54,19 +82,18 @@ sens. for selected params
 
 odeSolver: sensitivities@XMGrace 
 
-better sens. error control, pbar etc.
 
 
-1.6.2:
+1.6.2: New Features
 
 adjoint sensitivities
 
 IDA/IDAS, analog to CVODES
 
-
-1.6.3:
-
 exact event detection
+
+
+1.6.3: New Features
 
 simple stochastic solver
 
