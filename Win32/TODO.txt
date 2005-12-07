@@ -1,12 +1,11 @@
 Work remaining on SBML_odeSolver for Microsoft Visual C++ 7.1
 =============================================================
 
-a) At the moment the SBML_odeSolver dll only exports one function
-which implements the functionality of SBML_odeSolverApp.exe
-To enable the reuse of SBML_odeSolver more functions need to be exported
-
-b) Find a way to avoid including the CVODE code within the project.
+Find a way to avoid including the CVODE code within the project.
 Its included at the moment because its patched to export functions to
 SBML_odeSolver.
 
- 
+Create a proper installer 
+
+Clean up headers so that its possible to create a useable library release rather than
+just an .exe release.
