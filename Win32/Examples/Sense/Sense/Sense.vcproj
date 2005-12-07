@@ -75,7 +75,15 @@
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+				CommandLine="copy  $(OutDir)\..\binary\*.*  $(OutDir)\..\release
+copy $(OutDir)\SBML_odeSolver.dll $(OutDir)\..\release
+copy  $(OutDir)\Sense.exe $(OutDir)\..\release
+copy  $(OutDir)\WinCVODE.dll $(OutDir)\..\release
+copy  $(OutDir)\SBML_odeSolverApp.exe $(OutDir)\..\release
+copy  $(OutDir)\ParameterScanner.exe $(OutDir)\..\release
+copy $(OutDir)\..\README_FOR_RELEASE.txt $(OutDir)\..\release\README.txt"
+				Outputs="$(OutDir)\..\release\README.txt"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="SBML_odeSolver.lib"
