@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 14:25:02 raim>
-  $Id: processAST.c,v 1.21 2005/12/01 19:03:31 raimc Exp $
+  Last changed Time-stamp: <2005-12-06 13:50:07 raim>
+  $Id: processAST.c,v 1.22 2005/12/07 22:23:16 raimc Exp $
 */
 /* 
  *
@@ -278,6 +278,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       }
       if ( found == 0 ) {
 	if ( strcmp(ASTNode_getName(n),"time") == 0 ||
+	     strcmp(ASTNode_getName(n),"Time") == 0 ||
 	     strcmp(ASTNode_getName(n),"TIME") == 0 ) {
 	  result = (double) data->currenttime;
 	  found++;

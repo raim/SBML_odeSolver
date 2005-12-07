@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 19:09:02 raim>
-  $Id: odeConstruct.c,v 1.19 2005/11/29 18:27:57 raimc Exp $
+  Last changed Time-stamp: <2005-12-06 13:13:53 raim>
+  $Id: odeConstruct.c,v 1.20 2005/12/07 22:23:16 raimc Exp $
 */
 /* 
  *
@@ -479,6 +479,19 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
     for ( j=0; j<Model_getNumCompartments(m); j++ ) {
       c = Model_getCompartment(m,j);
       if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
+	if ( Compartment_getConstant(c) ) {
+	  if ( Compartment_getSize(c) != 1 ) {
+	    tmp = copyAST(ode);
+	    ASTNode_free(ode);
+	    ode = ASTNode_create();
+	    ASTNode_setCharacter(ode, '/');
+	    ASTNode_addChild(ode, tmp);
+	    ASTNode_addChild(ode, ASTNode_create());
+	    ASTNode_setReal(ASTNode_getChild(ode,1),
+			    Compartment_getSize(c));
+	  }
+	}
+	else if ( !(Compartment_getConstant(c)) ) {
 	  tmp = copyAST(ode);
 	  ASTNode_free(ode);
 	  ode = ASTNode_create();
@@ -487,7 +500,17 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 	  ASTNode_addChild(ode, ASTNode_create());
 	  ASTNode_setName(ASTNode_getChild(ode,1),
 			  Compartment_getId(c));
+	}
       }
+      /*       tmp = copyAST(ode); */
+      /* 	  ASTNode_free(ode); */
+      /* 	  ode = ASTNode_create(); */
+      /* 	  ASTNode_setCharacter(ode, '/'); */
+      /* 	  ASTNode_addChild(ode, tmp); */
+      /* 	  ASTNode_addChild(ode, ASTNode_create()); */
+      /* 	  ASTNode_setName(ASTNode_getChild(ode,1), */
+      /* 			  Compartment_getId(c)); */
+      /*  } */
     }	 
   }
   else {
