@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.16 2005/12/06 14:15:44 raimc Exp $
+# $Id: Makefile.am,v 1.17 2005/12/08 12:15:02 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -37,7 +37,8 @@ CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas -ansi -std=iso9899:1990
 EXTRA_DIST = odeSolver/*.c \
              odeSolver/*.h \
              odeSolver/Makefile.am \
-             Perlen/AddLegend.pl \
+             scripts/*.pl \
+             scripts/*.awk \
              sbml/*.xsd \
              Test/MAPK.xml Test/simple.sh \
              doc/os_v1-5.pdf \
