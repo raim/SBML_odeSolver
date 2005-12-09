@@ -1,4 +1,4 @@
-dnl $Id: grace.m4,v 1.1 2005/05/30 19:49:14 raimc Exp $
+dnl $Id: grace.m4,v 1.2 2005/12/09 18:14:10 raimc Exp $
 
 dnl
 dnl look for GRACE Library headers in some standard set of directories
@@ -62,8 +62,8 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   if test $with_grace = yes; then
     AC_GRACE_PATH
   else
-    GRACE_CFLAGS="-I$with_grace/grace"
-    GRACE_LDFLAGS="-L$with_grace"
+    GRACE_CFLAGS="-I$with_grace/include"
+    GRACE_LDFLAGS="-L$with_grace/lib"
     if test $HOST_TYPE = darwin; then
       GRACE_RPATH=
     else
