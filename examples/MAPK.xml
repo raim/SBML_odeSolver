@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns = "http://www.sbml.org/sbml/level1" level = "1" version = "1">
-<!-- This model has been slightly modified from a model obtained from http://sbml.org/models/.
-      It has been published in
-      Kholodenko BN. Negative feedback and ultrasensitivity can bring about oscillations in the 
-      mitogen-activated protein kinase cascades. Eur. J. Biochem. 267: 1583-1588 (2000).-->
+<!-- This model has been slightly modified for testing purposes 
+     from a model obtained from http://sbml.org/models/.
+     The model has been published in
+     Kholodenko BN. Negative feedback and ultrasensitivity can bring 
+     about oscillations in the mitogen-activated protein kinase cascades. 
+     Eur. J. Biochem. 267: 1583-1588 (2000). -->
    <model name = "oscillating_MAPK">
       <listOfCompartments>
          <compartment name = "uVol" volume = "1"/>
