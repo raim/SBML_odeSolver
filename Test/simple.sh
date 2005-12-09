@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2005-10-26 16:17:37 raim>
-# $Id: simple.sh,v 1.7 2005/10/26 14:27:42 raimc Exp $
+# Last changed Time-stamp: <2005-12-09 19:23:06 raim>
+# $Id: simple.sh,v 1.8 2005/12/09 19:00:42 raimc Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
@@ -52,7 +52,7 @@ done
 shift $(($OPTIND - 1))
 
 # get model file or set to default model
-XML=${1-MAPK.xml}
+XML=${1-../examples/MAPK.xml}
 GR=$(basename $XML .xml).gr
 
 set -e
