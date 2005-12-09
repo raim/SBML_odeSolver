@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.19 2005/12/09 17:14:16 raimc Exp $
+# $Id: Makefile.am,v 1.20 2005/12/09 18:59:51 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -42,25 +42,19 @@ EXTRA_DIST = SOSlib.doxy \
              scripts/*.pl \
              scripts/*.awk \
              sbml/*.xsd \
-             Test/MAPK.xml Test/simple.sh \
-             doc/soslib_userguide.pdf \
+	     doc/soslib_userguide.pdf \
              doc/soslib_api.pdf \
-             doc/Makefile.am \
-             doc/Makefile.in \
-             doc/SBML_odeSolver.1.in \
-	     examples/integrate.c \
-             examples/batch_integrate.c \
-	     examples/sensitivity.c \
-             examples/definedTimeSeries.c \
-             examples/printODEModel.c \
-             examples/analyzeJacobian.c \
-             examples/ASTIndexTest.c \
-             examples/ChangingIntegratorInstance.c \
-	     examples/simpleIntegratorInstance.c \
-	     examples/basic-model1-forward-l2.xml \
+             Test/simple.sh \
+	     Test/testsuite/README \
+             Test/testsuite/odeSolver-wrapper.bsh \
+             Test/testsuite/odeSolver-wrapper-once.pl \
+             Test/testsuite/workingtests.txt \
+             examples/README \
+	     examples/MAPK.xml \
+             examples/basic-model1-forward-l2.xml \
+	     examples/*.c \
              examples/Makefile.am \
              examples/Makefile.batch \
 	     examples/Makefile.in \
-             examples/Makefile.integrate \
-             examples/README
+             examples/Makefile.integrate 
 
