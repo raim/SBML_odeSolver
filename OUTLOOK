@@ -22,8 +22,8 @@ CODE:
 
 1.6.1: Performance Optimization
 
-Problem:  no reference
-Solution: create benchmarking test suite, with defined settings
+Problem:  no reference for performance
+Solution: create SOSlib Benchmarking Test Suite, with defined settings
           and scripts
 	  
 Problem:  BDF/Adams-Moulton, Newton/Functional iteration

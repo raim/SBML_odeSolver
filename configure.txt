@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot build build_cpu build_vendor build_os host host_cpu host_vendor host_os TestDataDirectory HOST_TYPE SHAREDLIBEXT CFLAGS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CC ac_ct_CC CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP RANLIB ac_ct_RANLIB MAKE AR SWIG PERL USE_SBML OLD_LIBSBML SBML_CFLAGS SBML_LDFLAGS SBML_RPATH SBML_LIBS USE_SUNDIALS_CVODE CVODE_CFLAGS CVODE_LDFLAGS CVODE_LIBS USE_GRACE GRACE_CFLAGS GRACE_LDFLAGS GRACE_RPATH GRACE_LIBS DOT USE_GRAPHVIZ GRAPHVIZ_CFLAGS GRAPHVIZ_LDFLAGS GRAPHVIZ_RPATH GRAPHVIZ_LIBS MAKE_BINDINGS_TRUE MAKE_BINDINGS_FALSE EGREP LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar build build_cpu build_vendor build_os host host_cpu host_vendor host_os TestDataDirectory HOST_TYPE SHAREDLIBEXT CFLAGS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CC ac_ct_CC CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP RANLIB ac_ct_RANLIB MAKE AR SWIG PERL USE_SBML OLD_LIBSBML SBML_CFLAGS SBML_LDFLAGS SBML_RPATH SBML_LIBS USE_SUNDIALS_CVODE CVODE_CFLAGS CVODE_LDFLAGS CVODE_LIBS USE_GRACE GRACE_CFLAGS GRACE_LDFLAGS GRACE_RPATH GRACE_LIBS DOT USE_GRAPHVIZ GRAPHVIZ_CFLAGS GRAPHVIZ_LDFLAGS GRAPHVIZ_RPATH GRAPHVIZ_LIBS MAKE_BINDINGS_TRUE MAKE_BINDINGS_FALSE EGREP LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -868,8 +868,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-libsbml=PREFIX   Use SBML Library
-  --with-sundialscvode=PREFIX
-                          Use SUNDIALS CVODE Library
+  --with-sundials=PREFIX  Use SUNDIALS CVODE Library
   --with-grace=PREFIX     Use GRACE Library
   --with-graphviz=PREFIX  Use GRAPHVIZ Library
   --with-bindings  build perl bindings
@@ -1363,7 +1362,7 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
           ac_config_headers="$ac_config_headers src/sbmlsolver/config.h"
 
 
-am__api_version="1.8"
+am__api_version="1.9"
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
 # incompatible versions:
@@ -1515,13 +1514,21 @@ echo "$as_me: WARNING: \`missing' script is too old or missing" >&2;}
 fi
 
 if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
-  # Keeping the `.' argument allows $(mkdir_p) to be used without
-  # argument.  Indeed, we sometimes output rules like
+  # We used to keeping the `.' as first argument, in order to
+  # allow $(mkdir_p) to be used without argument.  As in
   #   $(mkdir_p) $(somedir)
-  # where $(somedir) is conditionally defined.
-  # (`test -n '$(somedir)' && $(mkdir_p) $(somedir)' is a more
-  # expensive solution, as it forces Make to start a sub-shell.)
-  mkdir_p='mkdir -p -- .'
+  # where $(somedir) is conditionally defined.  However this is wrong
+  # for two reasons:
+  #  1. if the package is installed by a user who cannot write `.'
+  #     make install will fail,
+  #  2. the above comment should most certainly read
+  #     $(mkdir_p) $(DESTDIR)$(somedir)
+  #     so it does not work when $(somedir) is undefined and
+  #     $(DESTDIR) is not.
+  #  To support the latter case, we have to write
+  #     test -z "$(somedir)" || $(mkdir_p) $(DESTDIR)$(somedir),
+  #  so the `.' trick is pointless.
+  mkdir_p='mkdir -p --'
 else
   # On NextStep and OpenStep, the `mkdir' command does not
   # recognize any option.  It will interpret all options as
@@ -1665,9 +1672,6 @@ AUTOHEADER=${AUTOHEADER-"${am_missing_run}autoheader"}
 
 MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
-
-AMTAR=${AMTAR-"${am_missing_run}tar"}
-
 install_sh=${install_sh-"$am_aux_dir/install-sh"}
 
 # Installed binaries are usually stripped using `strip' when the user
@@ -1760,6 +1764,13 @@ INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
 
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
+# Always define AMTAR for backward compatibility.
+
+AMTAR=${AMTAR-"${am_missing_run}tar"}
+
+am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+
+
 
 
 
@@ -2541,9 +2552,14 @@ else
        grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
-      # (even with -Werror).  So we grep stderr for any message
-      # that says an option was ignored.
-      if grep 'ignoring option' conftest.err >/dev/null 2>&1; then :; else
+      # or remarks (even with -Werror).  So we grep stderr for any message
+      # that says an option was ignored or not supported.
+      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      #   icc: Command line warning: ignoring option '-M'; no argument required
+      # The diagnosis changed in icc 8.0:
+      #   icc: Command line remark: option '-MP' not supported
+      if (grep 'ignoring option' conftest.err ||
+          grep 'not supported' conftest.err) >/dev/null 2>&1; then :; else
         am_cv_CXX_dependencies_compiler_type=$depmode
         break
       fi
@@ -3374,9 +3390,14 @@ else
        grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
-      # (even with -Werror).  So we grep stderr for any message
-      # that says an option was ignored.
-      if grep 'ignoring option' conftest.err >/dev/null 2>&1; then :; else
+      # or remarks (even with -Werror).  So we grep stderr for any message
+      # that says an option was ignored or not supported.
+      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      #   icc: Command line warning: ignoring option '-M'; no argument required
+      # The diagnosis changed in icc 8.0:
+      #   icc: Command line remark: option '-MP' not supported
+      if (grep 'ignoring option' conftest.err ||
+          grep 'not supported' conftest.err) >/dev/null 2>&1; then :; else
         am_cv_CC_dependencies_compiler_type=$depmode
         break
       fi
@@ -4290,17 +4311,17 @@ _ACEOF
 
 
 
-# Check whether --with-sundialscvode or --without-sundialscvode was given.
-if test "${with_sundialscvode+set}" = set; then
-  withval="$with_sundialscvode"
-  with_sundialscvode=$withval
+# Check whether --with-sundials or --without-sundials was given.
+if test "${with_sundials+set}" = set; then
+  withval="$with_sundials"
+  with_sundials=$withval
 else
-  with_sundialscvode=yes
+  with_sundials=yes
 fi;
     CVODE_CFLAGS=
   CVODE_LDFLAGS=
   CVODE_LIBS=
-  if test $with_sundialscvode = yes; then
+  if test $with_sundials = yes; then
      echo "$as_me:$LINENO: checking for SUNDIALS Library headers" >&5
 echo $ECHO_N "checking for SUNDIALS Library headers... $ECHO_C" >&6
   for ac_dir in                 \
@@ -4312,7 +4333,7 @@ echo $ECHO_N "checking for SUNDIALS Library headers... $ECHO_C" >&6
     /opt/sundails               \
     ;                           \
   do
-    if test -r "$ac_dir/include/cvode.h"; then
+    if test -r "$ac_dir/include/cvodes.h"; then
       ac_SUNDIALS_path=$ac_dir
       CVODE_CFLAGS="-I$ac_dir/include"
       echo "$as_me:$LINENO: result: yes" >&5
@@ -4325,9 +4346,9 @@ echo "${ECHO_T}yes" >&6
 echo $ECHO_N "checking for SUNDIALS Library... $ECHO_C" >&6
   ac_dir=$ac_SUNDIALS_path
   for ac_extension in a so sl dylib; do
-    if test -r $ac_dir/lib/libsundials_cvode.$ac_extension; then
+    if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
       CVODE_LDFLAGS="-L$ac_dir/lib"
-      CVODE_LIBS="-lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+      CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
       break
@@ -4335,9 +4356,9 @@ echo "${ECHO_T}yes" >&6
   done
 
   else
-    CVODE_CFLAGS="-I$with_sundialscvode/include"
-    CVODE_LDFLAGS="-L$with_sundialscvode/lib"
-    CVODE_LIBS="-lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+    CVODE_CFLAGS="-I$with_sundials/include"
+    CVODE_LDFLAGS="-L$with_sundials/lib"
+    CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
   fi
     echo "$as_me:$LINENO: checking correct functioning of SUNDIALS CVODE" >&5
 echo $ECHO_N "checking correct functioning of SUNDIALS CVODE... $ECHO_C" >&6
@@ -4347,9 +4368,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    sundials_cvode_save_CFLAGS="$CFLAGS"
-  sundials_cvode_save_LDFLAGS="$LDFLAGS"
-  sundials_cvode_save_LIBS="$LIBS"
+    sundials_save_CFLAGS="$CFLAGS"
+  sundials_save_LDFLAGS="$LDFLAGS"
+  sundials_save_LIBS="$LIBS"
     CFLAGS="$CFLAGS $CVODE_CFLAGS"
   LDFLAGS="$LDFLAGS $CVODE_LDFLAGS"
   LIBS="$LIBS $CVODE_LIBS -lm"
@@ -4390,25 +4411,25 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  sundials_cvode_functional=yes
+  sundials_functional=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-sundials_cvode_functional=no
+sundials_functional=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 
-  if test $sundials_cvode_functional = yes; then
-    echo "$as_me:$LINENO: result: $sundials_cvode_functional" >&5
-echo "${ECHO_T}$sundials_cvode_functional" >&6
+  if test $sundials_functional = yes; then
+    echo "$as_me:$LINENO: result: $sundials_functional" >&5
+echo "${ECHO_T}$sundials_functional" >&6
   else
-    echo "$as_me:$LINENO: result: $sundials_cvode_functional:
+    echo "$as_me:$LINENO: result: $sundials_functional:
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS" >&5
-echo "${ECHO_T}$sundials_cvode_functional:
+echo "${ECHO_T}$sundials_functional:
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS" >&6
@@ -4416,9 +4437,9 @@ echo "${ECHO_T}$sundials_cvode_functional:
 echo "$as_me: error: Can not link to SUNDIALS CVODE Library" >&2;}
    { (exit 1); exit 1; }; }
   fi
-    CFLAGS=$sundials_cvode_save_CFLAGS
-  LDFLAGS=$sundials_cvode_save_LDFLAGS
-  LIBS=$sundials_cvode_save_LIBS
+    CFLAGS=$sundials_save_CFLAGS
+  LDFLAGS=$sundials_save_LDFLAGS
+  LIBS=$sundials_save_LIBS
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -6686,7 +6707,6 @@ s,@AUTOCONF@,$AUTOCONF,;t t
 s,@AUTOMAKE@,$AUTOMAKE,;t t
 s,@AUTOHEADER@,$AUTOHEADER,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
-s,@AMTAR@,$AMTAR,;t t
 s,@install_sh@,$install_sh,;t t
 s,@STRIP@,$STRIP,;t t
 s,@ac_ct_STRIP@,$ac_ct_STRIP,;t t
@@ -6695,6 +6715,9 @@ s,@mkdir_p@,$mkdir_p,;t t
 s,@AWK@,$AWK,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@am__leading_dot@,$am__leading_dot,;t t
+s,@AMTAR@,$AMTAR,;t t
+s,@am__tar@,$am__tar,;t t
+s,@am__untar@,$am__untar,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
@@ -7383,27 +7406,21 @@ echo X"$mf" |
   else
     continue
   fi
-  grep '^DEP_FILES *= *[^ #]' < "$mf" > /dev/null || continue
-  # Extract the definition of DEP_FILES from the Makefile without
-  # running `make'.
+  # Extract the definition of DEPDIR, am__include, and am__quote
+  # from the Makefile without running `make'.
   DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
   test -z "$DEPDIR" && continue
+  am__include=`sed -n 's/^am__include = //p' < "$mf"`
+  test -z "am__include" && continue
+  am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
   # When using ansi2knr, U may be empty or an underscore; expand it
   U=`sed -n 's/^U = //p' < "$mf"`
-  test -d "$dirpart/$DEPDIR" || mkdir "$dirpart/$DEPDIR"
-  # We invoke sed twice because it is the simplest approach to
-  # changing $(DEPDIR) to its actual value in the expansion.
-  for file in `sed -n '
-    /^DEP_FILES = .*\\\\$/ {
-      s/^DEP_FILES = //
-      :loop
-	s/\\\\$//
-	p
-	n
-	/\\\\$/ b loop
-      p
-    }
-    /^DEP_FILES = / s/^DEP_FILES = //p' < "$mf" | \
+  # Find all dependency output files, they are included files with
+  # $(DEPDIR) in their names.  We invoke sed twice because it is the
+  # simplest approach to changing $(DEPDIR) to its actual value in the
+  # expansion.
+  for file in `sed -n "
+    s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
        sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
     # Make sure the directory exists.
     test -f "$dirpart/$file" && continue
@@ -7490,16 +7507,10 @@ else
   yes_libsbml="no"
 fi
 
-if test $sundials_cvode_functional != no; then
-  yes_libsundialscvode="yes"
+if test $sundials_functional != no; then
+  yes_libsundials="yes"
 else
-  yes_libsundialscvode="no"
-fi
-
-if test $cvode_functional != no; then
-  yes_libcvode="yes"
-else
-  yes_libcvode="no"
+  yes_libsundials="no"
 fi
 
 if test $grace_functional != no; then
@@ -7532,8 +7543,8 @@ if test $yes_libsbml = yes; then
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
-echo "SUNDIALS CVODE Library = $yes_libsundialscvode"
-if test $yes_libsundialscvode = yes; then
+echo "SUNDIALS Library         = $yes_libsundials"
+if test $yes_libsundials       = yes; then
   echo "       CFLAGS          = $CVODE_CFLAGS"
   echo "       LDFLAGS         = $CVODE_LDFLAGS"
   echo "       LIBS            = $CVODE_LIBS"

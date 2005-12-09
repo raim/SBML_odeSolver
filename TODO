@@ -1,8 +1,9 @@
-- example for UsrDefFnct: 
-	- interpolation from external data file
-	- callBack Fnct
+* example for UsrDefFnct: 
+	* interpolation from external data file
+	* callBack Fnct
 
 * general accuracy / performance:
+        * generate SOSlib Benchmarking Test Suite
         * adapt printout accuracy to CVODE errors
 	* check usage of double, float, long float etc.
 	* choose CVODE error tolerances automatically for each ODE??
@@ -11,8 +12,8 @@
 * Function Definition Replacement:
 	* implement in evaulate/differentiateAST
 
-* transfer to SUNDIALS
-	* CVODES for sensitivity analysis
+* SUNDIALS interface
+        * use more/better options!
 	* use of parallel capabilities
 	* KINSOL for steady state detection
 	* daeSolver IDA
