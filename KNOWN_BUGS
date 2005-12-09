@@ -1,22 +1,3 @@
-29.11.2005
-no Jacobian is printed with option -e; probably needs to call
-constructJacobian first
-
-
-7.11.2005
-with Schoeberl2002_final.xml (incorrect param. version)
-fS crashes for jacobian entry jacob[0][0] after cvode error:
-CVode-- At t = 0 and h = 2.06085e-44, the corrector
-convergence failed repeatedly or with |h| = hmin.
-
-3.11. 2005
-CVODES: currently crashes, when internal DQ method is used instead
-of the parametric `jacobian' matrix (when ODEModel_constructSensitivity
-differentiation fails)
-
 SBMLDocument_free() in main() causes a segmentation fault,
 when the sbml file is read from a remote computer
 and constructODEs(m) has been called ???  
-
-jacobian and determinant expressions are (printed out) incomplete
-for larger equations 

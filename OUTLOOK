@@ -4,19 +4,9 @@ Subject: SOSlib todo (fwd)
 
 DOKU:
 
-1.6.0:
-
-start doxygen documentation
-
-start userguide (os.tex as template)
-
-update website
+optimize usage of Doxygen
 
 start SOSlib/methods Wiki
-
-sourceforge: emaillists, file release
-
-
 
 CODE:
 
@@ -75,12 +65,13 @@ external data function:
 not possible/needed because not constant?)
 
 output: print default SBML units if not given;
+
 more output options: amount/concentration/relative/total, sensitivities,
                      selected species/parameters
 
-sens. for selected params
+sensitivity analysis for selected params
 
-odeSolver: sensitivities@XMGrace 
+odeSolver: print sensitivities to XMGrace 
 
 
 

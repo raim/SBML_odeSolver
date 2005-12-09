@@ -2,7 +2,7 @@
 	* interpolation from external data file
 	* callBack Fnct
 
-* general accuracy / performance:
+* general accuracy / performance: see file OUTLOOK
         * generate SOSlib Benchmarking Test Suite
         * adapt printout accuracy to CVODE errors
 	* check usage of double, float, long float etc.
@@ -10,7 +10,7 @@
 	* choose other solvers from the CVODE package
 
 * Function Definition Replacement:
-	* implement in evaulate/differentiateAST
+	* implement in evaluate/differentiateAST
 
 * SUNDIALS interface
         * use more/better options!

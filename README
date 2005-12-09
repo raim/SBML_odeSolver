@@ -2,7 +2,8 @@
 		              SOSlib
                    The SBML ODE SOLVER LIBRARY
 
-       For more information about the SBML ODE Solver Library, 
+       For more information about the SBML ODE Solver Library,
+       
                                see:
            http://www.tbi.univie.ac.at/~raim/odeSolver/
          		or send email to:
@@ -45,7 +46,7 @@ for more information on program and output control via command-line options.
 ARCHITECTURE
 
 Currently, the SOSlib has been tested on Fedora Linux, 
-MasOS X/Darwin and Windows. It is written in pure ANSI C and
+MasOS X/Darwin and Windows. It is written in pure ISO C and
 should thus also run on other systems. 
 We would highly appreciate any reports! 
 
@@ -66,14 +67,14 @@ which is represented by a `kinetic law' in SBML. The `kinetic law' differs
 from a usual rate law, in that it describes change of amount instead of 
 concentrations.
 
-The SOSlib then constructs a set of ordinary differential equations
-(ODEs) for the rate of change of all chemical species' concentrations
-(d[X]/dt) from the reactions where the species appear as reactants or
-products. ODEs will not be constructed for species concentrations that are 
-already defined by SBML assignment or rate rules. 
-A Jacobian matrix of the resulting ODE system, i.e. the derivatives of the 
-rates towards all other concentrations (that are defined by an ODE), 
-is constructed, if all equations are differentiable (i.e. continuous).
+The SOSlib then constructs a set of ordinary differential equations (ODEs)
+for the rate of change of all chemical species' concentrations (d[x]/dt =
+f(x)) from the reactions where the species appear as reactants or
+products. ODEs will not be constructed for species concentrations that are
+already defined by SBML assignment or rate rules.  A Jacobian matrix of the
+resulting ODE system, i.e. the derivatives of the rates towards all other
+concentrations (that are defined by an ODE), is constructed, if all
+equations are differentiable (i.e. continuous).
 
 The ODE system is constructed as another SBML model, which can also be
 printed out when option -o or --printsbml is given.
@@ -94,7 +95,7 @@ CVODE uses the generated Jacobian matrix or an internal approximation, if one
 or more ODEs contain discontinuous expressions, or the user has chosen so.
 
 The results can be printed to the calling terminal (stdout), to a file or 
-to XMGRACE.
+to XMGRACE, if the optional grace module has been installed.
 
 Additionally the reaction network can be drawn as a bipartite graph, using
 the optional module based on GRAPHVIZ graph drawing algorithms and its

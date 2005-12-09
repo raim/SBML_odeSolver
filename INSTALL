@@ -1,4 +1,5 @@
-		INSTALLATION OF THE SBML_odeSolver
+		INSTALLATION OF THE SBML ODE Solver Library
+		               SOSlib
 	
 Below you find very short installation instructions specific
 for the SBML_odeSolver and also the generic installation
@@ -31,8 +32,20 @@ SHORT INSTALLATION INFORMATION:
                         Version: 5.1.18 or higher
 		      
 
-2) COMPILE AND INSTALL SBML_odeSolver
+2B) COMPILE AND INSTALL SOSlib with GNU TOOLS
 
+ NOTES FOR INSTALLATION WINDOWS:
+ Please note that there are also precompiled Windows binaries
+ available, and detailed instructions to use these or how
+ to build SOSlib from source under Windows in the folder
+ Win32 or online at
+ http://www.tbi.univie.ac.at/~raim/odeSolver/new/doc/installWin.html
+
+ NOTES FOR INSTALLATION FROM CVS VERSION:
+ If you have checked out from our sourceforge CVS please
+ run ./autogen.sh to generate a configure script.
+
+ INSTALLATION:
  In general compilation and installation of the package 
  follows the usual procedure for GNU software.
  After unpacking the tool, change to the main directory
@@ -67,22 +80,6 @@ Non-standard locations of required and optional packages:
  Note that for CVODE you will usually need to give the
  path this way, as it is only locally installed to the
  directory where you compiled/built it (see below).
-
-
-LibSBML VERSION OLDER THAN 2.2.0
-
- After the running ./configure , please edit the file
- `config.h' in the source directory (`src/config.h':
- 
- The line
- 
-	#define OLD_LIBSBML 0
- 
- has to be changed manually to:
-
-	#define OLD_LIBSBML 1
-
- ... or just get the newest version of libSBML (see URLs above).
 
 
 In the following you find generic installation instructions as given

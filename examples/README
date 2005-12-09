@@ -1,5 +1,5 @@
 	Example use of the SBML_odeSolver as a library
-
+	
 1 Compilation of example programs:
 
 After compiling the odeSolver source code (see INSTALL file
@@ -13,6 +13,10 @@ of the available interface functions.
 
 2 Usage of example programs:
 
+  PLEASE FIND A MORE DETAILED USAGE DESCRIPTION ONLINE AT
+  http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
+
+  
 ./integrate MAPK.xml 1000 100
 
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
