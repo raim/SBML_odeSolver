@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.18 2005/12/09 15:03:29 raimc Exp $
+# $Id: Makefile.am,v 1.19 2005/12/09 17:14:16 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -43,7 +43,8 @@ EXTRA_DIST = SOSlib.doxy \
              scripts/*.awk \
              sbml/*.xsd \
              Test/MAPK.xml Test/simple.sh \
-             doc/os_v1-5.pdf \
+             doc/soslib_userguide.pdf \
+             doc/soslib_api.pdf \
              doc/Makefile.am \
              doc/Makefile.in \
              doc/SBML_odeSolver.1.in \
