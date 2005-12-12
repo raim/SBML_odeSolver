@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 16:19:53 raim>
-  $Id: processAST.c,v 1.24 2005/12/12 15:21:25 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 16:30:43 raim>
+  $Id: processAST.c,v 1.25 2005/12/12 15:31:43 raimc Exp $
 */
 /* 
  *
@@ -1555,9 +1555,12 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       break;
     }
   }
-  else if ( ASTNode_isLogical(f) || ASTNode_isRelational(f) ) { /* redundant */
-    ASTNode_free(fprime);
-    fprime = copyAST(f);
+  else if ( ASTNode_isLogical(f) || ASTNode_isRelational(f) ) {
+    SolverError_error(WARNING_ERROR_TYPE,
+      SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LOGICAL_OR_RELATIONAL,
+		      "differentiateAST: logical and relational not "
+		      "possible");
+    ASTNode_setName(fprime, "differentiation_failed");
   }
   else if ( ASTNode_isUnknown(fprime) ) {
     SolverError_error(WARNING_ERROR_TYPE,
