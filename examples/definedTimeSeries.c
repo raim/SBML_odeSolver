@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:51:40 raim>
-  $Id: definedTimeSeries.c,v 1.7 2005/10/26 15:53:16 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 15:31:15 raim>
+  $Id: definedTimeSeries.c,v 1.8 2005/12/12 14:40:53 raimc Exp $
 */
 /* 
  *
@@ -41,18 +41,28 @@
 int
 main (int argc, char *argv[]){
   int i, j;
-  char model[256];
-  
+  char *model;
+
+  /* libSBML types */
   SBMLDocument_t *d;
   SBMLReader_t *sr;
+
+  /* SOSlib types */
   SBMLResults_t *results;
   timeCourse_t *tc;
   cvodeSettings_t *set;
 
-  double printstep = 6;
-  double endtime = 25;
-   
-  sscanf(argv[1], "%s", model);
+  double printstep;
+  double endtime;
+  
+  /* parsing command-line arguments */
+  if (argc < 2 ) {
+    fprintf(stderr,
+	    "usage %s sbml-model-file simulation-time time-steps\n",
+            argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  model = argv[1];   
 
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -61,16 +71,20 @@ main (int argc, char *argv[]){
   
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
-  CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
+  /* setting endtime to 25 and printstep number to 6 */  
+  printstep = 6;
+  endtime = 25;
   CvodeSettings_setTime(set, endtime, printstep);
  
-  /* writing predefined output times */
+  /* writing predefined output times:
+     IMPORTANT: can not exceed the set printstep number !!
+                and first time must equal 0 !! */
   CvodeSettings_setTimeStep(set, 1, 0.5);
-  for ( i=2; i<=printstep; i++ ) 
+  for ( i=2; i<=CvodeSettings_getPrintsteps(set); i++ ) 
     CvodeSettings_setTimeStep(set, i, (i-1)*(i-1));
 
- /* printing integration settings */
-  CvodeSettings_dump(set);
+  /* printing integration settings */
+  /* CvodeSettings_dump(set); */
   
   /* calling the SBML ODE Solver, and retrieving SBMLResults */  
   results = SBML_odeSolver(d, set);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:02:24 raim>
-  $Id: batch_integrate.c,v 1.17 2005/11/03 10:13:50 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 15:25:35 raim>
+  $Id: batch_integrate.c,v 1.18 2005/12/12 14:40:53 raimc Exp $
 */
 /* 
  *
@@ -42,33 +42,41 @@
 int
 main (int argc, char *argv[]){
   int i, j;
-  char model[256];
-  char parameter[256];
-  char *reaction;
+  char *model, *parameter, *reaction;
   double start, end, steps, value;
-  double time = 0.0;
-  double printstep = 1.0;
+  double time ;
+  double printstep;
+
+  /* libSBML types */
   SBMLDocument_t *d;
   SBMLReader_t *sr;
 
-  /* required SOSlib structures, that will be created
-     during and must be freed at the end of this program  */
+  /* SOSlib types */
   cvodeSettings_t *set;
   varySettings_t *vs;
   SBMLResultsMatrix_t *resM;
   SBMLResults_t *results;
-   
-  sscanf(argv[1], "%s", model);
-  sscanf(argv[2], "%lf", &time);
-  sscanf(argv[3], "%lf", &printstep);
-  sscanf(argv[4], "%lf", &start);
-  sscanf(argv[5], "%lf", &end);
-  sscanf(argv[6], "%lf", &steps);
-  strcpy(parameter, argv[7]);
+ 
+  /* parsing command-line arguments */
+  if (argc < 8 ) {
+    fprintf(stderr,
+	    "usage %s sbml-model-file simulation-time time-steps"
+	    " start-value end-value step-number parameter-id"
+	    " [optional reaction-id]\n",
+            argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  model = argv[1];
+  time = atof(argv[2]);
+  printstep = atoi(argv[3]);
+  
+  parameter = argv[7];
+  start = atof(argv[4]);
+  end = atof(argv[5]);
+  steps = atoi(argv[6]);
   
   if ( argc > 8 ) {
-    ASSIGN_NEW_MEMORY_BLOCK(reaction, strlen(argv[8])+1, char, 0);
-    sprintf(reaction, argv[8]);
+      reaction = argv[8];
   }
   else{
     reaction = NULL;
@@ -82,8 +90,6 @@ main (int argc, char *argv[]){
   d = SBMLReader_readSBML(sr, model);
   SBMLReader_free(sr);  
 
-
-  /* Setting SBML ODE Solver integration parameters */
   /* Setting SBML ODE Solver integration parameters with default values */
   set = CvodeSettings_create();
   /* resetting the values we need */
@@ -97,9 +103,6 @@ main (int argc, char *argv[]){
   VarySettings_addParameter(vs, parameter, reaction, start, end);
   VarySettings_dump(vs);
 
-  if ( reaction != NULL )
-    free(reaction);
-
   /* calling the SBML ODE Solver Batch function,
      and retrieving SBMLResults */
   resM = SBML_odeSolverBatch(d, set, vs);
@@ -110,7 +113,6 @@ main (int argc, char *argv[]){
   }
     /* we don't need these anymore */
   CvodeSettings_free(set);  
-  /* printf("%s", writeSBMLToString(d)); */
   SBMLDocument_free(d);
   VarySettings_free(vs);
 
@@ -125,7 +127,7 @@ main (int argc, char *argv[]){
     }
   }
 
-  SolverError_dumpAndClearErrors();
+  /* SolverError_dumpAndClearErrors(); */
   SBMLResultsMatrix_free(resM);
   return (EXIT_SUCCESS);  
 }

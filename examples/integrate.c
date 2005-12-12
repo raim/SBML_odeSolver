@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 13:37:53 raim>
-  $Id: integrate.c,v 1.11 2005/11/03 12:38:27 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 15:25:41 raim>
+  $Id: integrate.c,v 1.12 2005/12/12 14:40:53 raimc Exp $
 */
 /* 
  *
@@ -41,24 +41,28 @@
 int
 main (int argc, char *argv[]){
   int i, j;
-  char model[256];
-  char sens[256];
-  double time = 0.0;
+  char *model;
+  double time;
   double printstep;
-  
+  /* libSBML types */
   SBMLDocument_t *d;
   SBMLReader_t *sr;
   Model_t *m;
-  
+  /* SOSlib types */
   SBMLResults_t *results;
   timeCourse_t *tc;
   cvodeSettings_t *set;
 
-   
-  sscanf(argv[1], "%s", model);
-  sscanf(argv[2], "%lf", &time);
-  sscanf(argv[3], "%lf", &printstep);
-/*   sscanf(argv[4], "%s", sens); */
+  /* parsing command-line arguments */
+  if (argc < 4 ) {
+    fprintf(stderr,
+	    "usage %s sbml-model-file simulation-time time-steps\n",
+            argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  model = argv[1];
+  time = atof(argv[2]);
+  printstep = atoi(argv[3]); 
 
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -70,10 +74,6 @@ main (int argc, char *argv[]){
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
 
-/*   /\* set sensitivity with default method *\/ */
-/*   if ( strcmp(sens,"y") == 0 ) */
-/*     CvodeSettings_setSensitivity(set, 1); */
-  
   /* calling the SBML ODE Solver which returns SBMLResults */  
   results = SBML_odeSolver(d, set);
   
