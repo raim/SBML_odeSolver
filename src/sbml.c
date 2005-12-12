@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:21:05 raim>
-  $Id: sbml.c,v 1.10 2005/10/26 15:32:12 raimc Exp $
+  Last changed Time-stamp: <2005-12-10 16:20:48 raim>
+  $Id: sbml.c,v 1.11 2005/12/12 16:47:48 raimc Exp $
 */
 /* 
  *
@@ -39,7 +39,7 @@
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include <sbml/xml/ParseMessage.h>
+/* #include <sbml/xml/ParseMessage.h> */
 
 /* own header files */
 #include "sbmlsolver/sbml.h"
@@ -91,7 +91,7 @@ parseModel(char *file, int printMessage, int validate, char *schemaPath,
     }
     
     if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
-      /*  SBMLDocument_checkConsistency(d);  */ /* causes memory losses */
+       SBMLDocument_checkConsistency(d); /* causes memory losses */
 
     /* check for warnings and errors */
     for (i =0 ; i != SBMLDocument_getNumWarnings(d); i++)
