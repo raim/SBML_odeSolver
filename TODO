@@ -1,3 +1,6 @@
+* cross-check AST processing with MathML definitions
+  at http://www.w3.org/TR/MathML2/appendixc.html
+
 * example for UsrDefFnct: 
 	* interpolation from external data file
 	* callBack Fnct
