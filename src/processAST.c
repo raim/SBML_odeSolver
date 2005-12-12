@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 16:30:43 raim>
-  $Id: processAST.c,v 1.25 2005/12/12 15:31:43 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 17:34:16 raim>
+  $Id: processAST.c,v 1.26 2005/12/12 16:39:07 raimc Exp $
 */
 /* 
  *
@@ -547,40 +547,69 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       }
       break;
     case AST_LOGICAL_XOR:
-      /*!!! check if defined for more than three childs !!!*/
+      /* true if an odd number of children is true */
       true = 0;
       for ( i=0; i<childnum; i++ ) {
 	true += evaluateAST(child(n,i),data);
       }
-      if ( true == 1 || true == 3 ) {
+      if ( true % 2 != 0 ) {
 	result = 1.0;
       }
       else {
 	result = 0.0;
       }
       break;
-      
-    case AST_RELATIONAL_EQ :
-      result = (double) ((evaluateAST(child(n,0),data)) ==
-			 (evaluateAST(child(n,1),data)));
+    /*!!! check n-ary definitions for relational operators !!!*/
+    case AST_RELATIONAL_EQ:
+      /* n-ary: all children must be equal */
+      result = 1.0;
+      for ( i=1; i<childnum; i++ ) {
+	if ( (evaluateAST(child(n,0),data)) !=
+	     (evaluateAST(child(n,i),data)) ) {
+	  result = 0.0;
+	}
+      }
       break;
     case AST_RELATIONAL_GEQ:
-      result = (double) ((evaluateAST(child(n,0),data)) >=
-			 (evaluateAST(child(n,1),data)));
+      /* n-ary: each child must be greater than or equal to the following */
+      result = 1.0;
+      for ( i=0; i<childnum-1; i++ ) {
+	if ( (evaluateAST(child(n,i),data)) <
+	     (evaluateAST(child(n,i+1),data)) ) {
+	  result = 0.0;
+	}
+      }
       break;
     case AST_RELATIONAL_GT:
-      result = (double) ((evaluateAST(child(n,0),data)) >
-			 (evaluateAST(child(n,1),data)));
+      /* n-ary: each child must be greater than the following */
+      result = 1.0;
+      for ( i=0; i<childnum-1; i++ ) {
+	if ( (evaluateAST(child(n,i),data)) <=
+	     (evaluateAST(child(n,i+1),data)) ) {
+	  result = 0.0;
+	}
+      }
       break;
     case AST_RELATIONAL_LEQ:
-      result = (double) ((evaluateAST(child(n,0),data)) <=
-			 (evaluateAST(child(n,1),data)));
+      /* n-ary: each child must be lower than or equal to the following */
+      result = 1.0;
+      for ( i=0; i<childnum-1; i++ ) {
+	if ( (evaluateAST(child(n,i),data)) >
+	     (evaluateAST(child(n,i+1),data)) ) {
+	  result = 0.0;
+	}
+      }
       break;
     case AST_RELATIONAL_LT :
-      result = (double) ((evaluateAST(child(n,0),data)) <
-			 (evaluateAST(child(n,1),data)));
+      /* n-ary: each child must be lower the following */
+      result = 1.0;
+      for ( i=0; i<childnum-1; i++ ) {
+	if ( (evaluateAST(child(n,i),data)) >=
+	     (evaluateAST(child(n,i+1),data)) ) {
+	  result = 0.0;
+	}
+      }
       break;
-
     default:
       result = 0;
       break;
