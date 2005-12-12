@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 14:19:43 raim>
-  $Id: processAST.c,v 1.23 2005/12/12 13:42:04 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 16:19:53 raim>
+  $Id: processAST.c,v 1.24 2005/12/12 15:21:25 raimc Exp $
 */
 /* 
  *
@@ -689,20 +689,29 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       }
       break;
     case AST_TIMES:
-      /* f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */
-      ASTNode_setType(fprime, AST_PLUS);    
+      /* catch cases with operand number != 2 */
+      if ( ASTNode_getNumChildren(f) != 2 ) {
+	helper = simplifyAST(f); /* decomposes the n-ary operator */
+	ASTNode_free(fprime);
+	fprime = differentiateAST(helper, x);
+	ASTNode_free(helper);
+      }
+      else {
+	/* f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */
+	ASTNode_setType(fprime, AST_PLUS);    
 
-      ASTNode_addChild(fprime, ASTNode_create());
-      help_1 = ASTNode_getChild(fprime, 0);
-      ASTNode_setType (help_1, AST_TIMES);
-      ASTNode_addChild(help_1, differentiateAST(ASTNode_getChild(f, 0), x));
-      ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f, 1)));
+	ASTNode_addChild(fprime, ASTNode_create());
+	help_1 = ASTNode_getChild(fprime, 0);
+	ASTNode_setType (help_1, AST_TIMES);
+	ASTNode_addChild(help_1, differentiateAST(ASTNode_getChild(f, 0), x));
+	ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f, 1)));
 
-      ASTNode_addChild(fprime, ASTNode_create());
-      help_1 = ASTNode_getChild(fprime, 1);
-      ASTNode_setType (help_1, AST_TIMES);
-      ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f, 0)));
-      ASTNode_addChild(help_1, differentiateAST(ASTNode_getChild(f, 1), x));
+	ASTNode_addChild(fprime, ASTNode_create());
+	help_1 = ASTNode_getChild(fprime, 1);
+	ASTNode_setType (help_1, AST_TIMES);
+	ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f, 0)));
+	ASTNode_addChild(help_1, differentiateAST(ASTNode_getChild(f, 1), x));
+      }
       break;
     case AST_DIVIDE:
       /* f(x)=a(x)/b(x) => f'(x) = a'/b - a/b^2*b' */    
@@ -1808,7 +1817,9 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
 	ASTNode_setType(simple, AST_PLUS);		  
       else if ( type == AST_TIMES ) 
 	ASTNode_setType(simple, AST_TIMES);
+      /* copy/simplify left child ... */
       ASTNode_addChild(simple, simplifyAST(ASTNode_getChild(f,0)));
+      /* ... and move other child down */
       helper = ASTNode_create();
       ASTNode_setType(helper, type);
       for ( i=1; i<childnum; i++ )
