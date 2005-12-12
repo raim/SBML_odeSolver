@@ -13,11 +13,12 @@ of the available interface functions.
 
 2 Usage of example programs:
 
-  PLEASE FIND A MORE DETAILED USAGE DESCRIPTION ONLINE AT
+  See extra documentation for ParameterScanner and Sense applications
+  in file README_App.txt or online at
   http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 
   
-./integrate MAPK.xml 1000 100
+./integrate MAPK.xml 1000 10
 
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
 1000 in 100 steps, and will print out the time course of species
@@ -25,13 +26,16 @@ concentrations (and other variable parameters or compartments, if a model
 includes such), and reaction fluxes in 100 time steps (producing 101 time
 points, including the initial conditions).
 
-./batchIntegrate MAPK.xml 1000 2 0 10 5 V2 J1
+./batchIntegrate MAPK.xml 1000 2 0 1 5 V2 J1
 
-will do the same integration as above, with only 2 time steps, 
-but 6 integration runs, varying the initial
-concentration of the paramer `V1' in reaction `J0 from 0 to 10 in 5 steps. 
+will do the same integration as above, with 2 time steps to time 1000,
+but in 6 different integration runs, varying the initial
+concentration of the paramer with Id `V2' in reaction with Id `J1' 
+from 0 to 1 in 5 steps. 
 It will then print out one timecourse after the other. 
-The last argument can be a species, a compartment or a global parameter.
+Parameter variation can be done for species, compartments, global and local
+parameters, where for the latter the reaction Id must be given as in the 
+example above.
 
 
 ./defSeries MAPK.xml
@@ -56,7 +60,7 @@ semantic test suite).
 ./simpleIntInst
 
 exemplifies how to set up integration options and run the integration
-with two different setings.
+with two different settings.
 
 
 ./changeIntInst
@@ -71,3 +75,8 @@ values in the other integrator instance.
 
 exemplifies how to construct the jacobian matrix of a derived ODE system
 and how to interface evaluate the ODE model and its jacobian.
+
+./analyzeSens
+
+exemplifies how to construct and interface the parametric matrix 
+for sensitivity analysis
