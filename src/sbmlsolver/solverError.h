@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-02 17:14:37 raim>
-  $Id: solverError.h,v 1.11 2005/11/02 17:32:13 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-12 16:28:39 raim>
+  $Id: solverError.h,v 1.12 2005/12/12 15:34:33 raimc Exp $ 
 */
 /* 
  *
@@ -93,6 +93,7 @@ typedef enum errorCode
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_DELAY = 20114,
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_FACTORIAL = 20115,
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_PIECEWISE = 20117,
+    SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LOGICAL_OR_RELATIONAL = 20118,
     
     /* 2X2XX - Result Writing Failures */
     SOLVER_ERROR_CVODE_RESULTS_FAILED = 20201,
