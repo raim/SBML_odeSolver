@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-06 13:50:07 raim>
-  $Id: processAST.c,v 1.22 2005/12/07 22:23:16 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 14:19:43 raim>
+  $Id: processAST.c,v 1.23 2005/12/12 13:42:04 raimc Exp $
 */
 /* 
  *
@@ -327,10 +327,9 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       break;
 
     case AST_PLUS:
-      if(childnum<2)
-	result = (evaluateAST(child(n,0),data));
-      else
-	result = evaluateAST(child(n,0),data) + evaluateAST(child(n,1),data);
+      result = 0.0;
+      for( i=0; i<childnum; i++) 
+	result += evaluateAST(child(n,i),data);   
       break;      
     case AST_MINUS:
       if(childnum<2)
@@ -339,7 +338,9 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	result = evaluateAST(child(n,0),data) - evaluateAST(child(n,1),data);
       break;
     case AST_TIMES:
-      result = evaluateAST(child(n,0),data) * evaluateAST(child(n,1),data) ;
+      result = 1.0;
+      for( i=0; i<childnum; i++) 
+	result *= evaluateAST(child(n,i),data);
       break;
     case AST_DIVIDE:
       result = evaluateAST(child(n,0),data) / evaluateAST(child(n,1),data);
@@ -546,6 +547,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       }
       break;
     case AST_LOGICAL_XOR:
+      /*!!! check if defined for more than three childs !!!*/
       true = 0;
       for ( i=0; i<childnum; i++ ) {
 	true += evaluateAST(child(n,i),data);
@@ -687,7 +689,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       }
       break;
     case AST_TIMES:
-      /* f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */    
+      /* f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */
       ASTNode_setType(fprime, AST_PLUS);    
 
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1555,7 +1557,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
     ASTNode_setName(fprime, "differentiation_failed");
   }
   /* return fprime; */
-  simple = AST_simplify(fprime);
+  simple = simplifyAST(fprime);
   ASTNode_free(fprime);
   return simple;
 
@@ -1672,22 +1674,12 @@ determinantNAST(ASTNode_t ***A, int N) {
      } 
   }
 
-  simple =  AST_simplify(det);
+  simple =  simplifyAST(det);
   ASTNode_free(det);
   return simple;
   
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* Helper function for simplifyAST().
-   obsolete... */
-
-ASTNode_t *
-AST_simplify(ASTNode_t *f) {
-
-  return simplifyAST(f);
-}
 
 /* ------------------------------------------------------------------------ */
 
@@ -1746,7 +1738,7 @@ ASTNode_cutRoot(ASTNode_t *old) {
 
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   
-  int i;
+  int i, childnum;
   int simplify;
   ASTNode_t *simple, *left, *right, *helper;
   ASTNodeType_t type;
@@ -1775,7 +1767,7 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
     ASTNode_setName(simple, ASTNode_getName(f));
   }
   /* --------------- operators with possible simplifications -------------- */
-  /* unary minus */
+  /* special operator: unary minus */
   else if ( ASTNode_isUMinus(f) ) {
     left = simplifyAST(ASTNode_getLeftChild(f));
     if ( zero(left) ) {        /* -0 = 0 */
@@ -1791,199 +1783,237 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
       ASTNode_addChild(simple, left);
     }
   }
-  /* binary operators */
+  /* general operators */
   else if ( ASTNode_isOperator(f) || type==AST_FUNCTION_POWER) {
-    left  = simplifyAST(ASTNode_getLeftChild(f));
-    right = simplifyAST(ASTNode_getRightChild(f));
-    /* default: simplification */
-    simplify = 1; /* set flag */
-    switch(type) {
-    case AST_PLUS:
-      if ( zero(right) ) {      /* x+0 = x */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( zero(left) ) {  /* 0+x = x */
-	ASTNode_free(left);
-	ASTNode_free(simple);
-	simple = right;
-      }
-      else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) {
-	ASTNode_setType (simple, AST_MINUS);  /* -x + -y */
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_PLUS);
-	ASTNode_addChild(helper, ASTNode_cutRoot(left));
-	ASTNode_addChild(helper, ASTNode_cutRoot(right));
-      }
-      else if ( ASTNode_isUMinus(left) ) {    /* -x + y */
-	ASTNode_setType (simple, AST_MINUS);
-	ASTNode_addChild(simple, right);
-	ASTNode_addChild(simple, ASTNode_cutRoot(left));
-      }
-      else if ( ASTNode_isUMinus(right) ) {   /* x + -y */
-	ASTNode_setType (simple, AST_MINUS);
-	ASTNode_addChild(simple, left);
-	ASTNode_addChild(simple, ASTNode_cutRoot(right));
-      }
-      else {
-	simplify = 0;
-      }
-      break;
-      /* binary minus */
-    case AST_MINUS:
-      if ( zero(right) ) {     /* x-0 = x */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( zero(left) ) { /* 0-x =-x */
-	ASTNode_free(left);
-	ASTNode_setType (simple, type);
-	ASTNode_addChild(simple, right);
-      }
-      else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
-	ASTNode_setType (simple, AST_MINUS);  /* -x - -y */
-	ASTNode_addChild(simple, ASTNode_cutRoot(right));
-	ASTNode_addChild(simple, ASTNode_cutRoot(left));
-      }
-      else if ( ASTNode_isUMinus(left) ) {    /* -x - y */
-	ASTNode_setType (simple, AST_MINUS); 
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_PLUS);
-	ASTNode_addChild(helper, ASTNode_cutRoot(left));
-	ASTNode_addChild(helper, right);
-      }
-      else if ( ASTNode_isUMinus(right) ) {   /* x - -y */
-	ASTNode_setType (simple, AST_PLUS);
-	ASTNode_addChild(simple, left);
-	ASTNode_addChild(simple, ASTNode_cutRoot(right));
-      }
-      else {
-	simplify = 0;
-      }
-      break;
-    case AST_TIMES:
-      if ( zero(right) ) {     /* x*0 = 0 */
-	ASTNode_free(left);
-	ASTNode_free(simple);
-	simple = right;
-      }
-      else if ( zero(left) ) { /* 0*x = 0 */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( one(right) ) { /* x*1 = x */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( one(left) ) {  /* 1*x = x */
-	ASTNode_free(left);
-	ASTNode_free(simple);
-	simple = right;
-      }
-      else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
-	ASTNode_setType (simple, AST_TIMES);  /* -x * -y */
-	ASTNode_addChild(simple, ASTNode_cutRoot(left));
-	ASTNode_addChild(simple, ASTNode_cutRoot(right));
-      }
-      else if ( ASTNode_isUMinus(left) ) {    /* -x * y */
-	ASTNode_setType (simple, AST_MINUS); 
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_TIMES);
-	ASTNode_addChild(helper, ASTNode_cutRoot(left));
-	ASTNode_addChild(helper, right);
-      }
-      else if ( ASTNode_isUMinus(right) ) {   /* x * -y */
-	ASTNode_setType (simple, AST_MINUS); 
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_TIMES);
-	ASTNode_addChild(helper, left);
-	ASTNode_addChild(helper, ASTNode_cutRoot(right));
-      }
-       else {
-	simplify = 0;
-      }
-      break;
-    case AST_DIVIDE:
-      if ( zero(left) ) {      /* 0/x = 0 */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( one(right) ) { /* x/1 = x */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
-	ASTNode_setType (simple, AST_DIVIDE); /* -x / -y */
-	ASTNode_addChild(simple, ASTNode_cutRoot(left));
-	ASTNode_addChild(simple, ASTNode_cutRoot(right));
-      }
-      else if ( ASTNode_isUMinus(left) ) {    /* -x / y */
-	ASTNode_setType (simple, AST_MINUS); 
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_DIVIDE);
-	ASTNode_addChild(helper, ASTNode_cutRoot(left));
-	ASTNode_addChild(helper, right);
-      }
-      else if ( ASTNode_isUMinus(right) ) {   /* x / -y */
-	ASTNode_setType (simple, AST_MINUS); 
-	ASTNode_addChild(simple, ASTNode_create());
-	helper = ASTNode_getChild(simple, 0);
-	ASTNode_setType (helper, AST_DIVIDE);
-	ASTNode_addChild(helper, left);
-	ASTNode_addChild(helper, ASTNode_cutRoot(right));
-      }
-      else {
-	simplify = 0;
-      }
-      break;
-    case AST_POWER:
-    case AST_FUNCTION_POWER:
-      if ( zero(right) ) {     /* x^0 = 1 */
-	ASTNode_free(left);
-	ASTNode_free(right);
-	ASTNode_setReal(simple, 1.0);      
-      }
-      else if ( one(right) ) { /* x^1 = x */
-	ASTNode_free(right);
-	ASTNode_free(simple);
-	simple = left;
-      }
-      else if ( zero(left) ) { /* 0^x = 0 */
-	ASTNode_free(left);
-	ASTNode_free(right);
-	ASTNode_setReal(simple, 0.0);      
-      }
-      else if ( one(left) ) {  /* 1^x = 1 */
-	ASTNode_free(left);
-	ASTNode_free(right);
-	ASTNode_setReal(simple, 1.0);      
-      }
-      else {
-	simplify = 0;
-      }
-      break;
-    default:
-      SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_AST_UNKNOWN_FAILURE,
-                        "simplifyAST: unknown failure for operator type");
-      break;
+    childnum = ASTNode_getNumChildren(f);  
+    /* zero operands: set to neutral element */
+    if ( childnum == 0 ) {
+      if ( type == AST_PLUS ) 
+	ASTNode_setInteger(simple, 0);
+      else if ( type == AST_TIMES )
+	ASTNode_setInteger(simple, 1);
     }
-    /* after all no simplification */
-    if (!simplify) {
-      ASTNode_setType (simple, type);
-      ASTNode_addChild(simple, left);
-      ASTNode_addChild(simple, right);
+    /* one operand: set node to operand */
+    else if ( childnum == 1 ) {
+      ASTNode_free(simple);
+      if ( type == AST_PLUS ) 
+	simple = simplifyAST(ASTNode_getChild(f, 0));
+      else if ( type == AST_TIMES )
+	simple = simplifyAST(ASTNode_getChild(f, 0));
+    }
+    /* >2 operands: recursively decompose
+                    into tree with 2 operands */
+    else if ( childnum > 2 ) {
+      if ( type == AST_PLUS ) 
+	ASTNode_setType(simple, AST_PLUS);		  
+      else if ( type == AST_TIMES ) 
+	ASTNode_setType(simple, AST_TIMES);
+      ASTNode_addChild(simple, simplifyAST(ASTNode_getChild(f,0)));
+      helper = ASTNode_create();
+      ASTNode_setType(helper, type);
+      for ( i=1; i<childnum; i++ )
+	ASTNode_addChild(helper, simplifyAST(ASTNode_getChild(f,i)));
+      ASTNode_addChild(simple, simplifyAST(helper));
+      ASTNode_free(helper);
+    }
+    /* 2 operands: remove 0s and 1s and unary minuses */
+    else {    
+      left  = simplifyAST(ASTNode_getLeftChild(f));
+      right = simplifyAST(ASTNode_getRightChild(f));
+      /* default: simplification */
+      simplify = 1; /* set flag */
+      switch(type) {
+	/* binary plus x + y */
+      case AST_PLUS:
+	if ( zero(right) ) {      /* x+0 = x */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( zero(left) ) {  /* 0+x = x */
+	  ASTNode_free(left);
+	  ASTNode_free(simple);
+	  simple = right;
+	}
+	else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) {
+	  ASTNode_setType (simple, AST_MINUS);  /* -x + -y */
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_PLUS);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(left));
+	  ASTNode_addChild(helper, ASTNode_cutRoot(right));
+	}
+	else if ( ASTNode_isUMinus(left) ) {    /* -x + y */
+	  ASTNode_setType (simple, AST_MINUS);
+	  ASTNode_addChild(simple, right);
+	  ASTNode_addChild(simple, ASTNode_cutRoot(left));
+	}
+	else if ( ASTNode_isUMinus(right) ) {   /* x + -y */
+	  ASTNode_setType (simple, AST_MINUS);
+	  ASTNode_addChild(simple, left);
+	  ASTNode_addChild(simple, ASTNode_cutRoot(right));
+	}
+	else {
+	  simplify = 0;
+	}
+	break;
+	/* binary minus x - y */
+      case AST_MINUS:
+	if ( zero(right) ) {     /* x-0 = x */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( zero(left) ) { /* 0-x =-x */
+	  ASTNode_free(left);
+	  ASTNode_setType (simple, type);
+	  ASTNode_addChild(simple, right);
+	}
+	else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
+	  ASTNode_setType (simple, AST_MINUS);  /* -x - -y */
+	  ASTNode_addChild(simple, ASTNode_cutRoot(right));
+	  ASTNode_addChild(simple, ASTNode_cutRoot(left));
+	}
+	else if ( ASTNode_isUMinus(left) ) {    /* -x - y */
+	  ASTNode_setType (simple, AST_MINUS); 
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_PLUS);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(left));
+	  ASTNode_addChild(helper, right);
+	}
+	else if ( ASTNode_isUMinus(right) ) {   /* x - -y */
+	  ASTNode_setType (simple, AST_PLUS);
+	  ASTNode_addChild(simple, left);
+	  ASTNode_addChild(simple, ASTNode_cutRoot(right));
+	}
+	else {
+	  simplify = 0;
+	}
+	break;
+	/* binary times x * y */
+      case AST_TIMES:
+	if ( zero(right) ) {     /* x*0 = 0 */
+	  ASTNode_free(left);
+	  ASTNode_free(simple);
+	  simple = right;
+	}
+	else if ( zero(left) ) { /* 0*x = 0 */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( one(right) ) { /* x*1 = x */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( one(left) ) {  /* 1*x = x */
+	  ASTNode_free(left);
+	  ASTNode_free(simple);
+	  simple = right;
+	}
+	else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
+	  ASTNode_setType (simple, AST_TIMES);  /* -x * -y */
+	  ASTNode_addChild(simple, ASTNode_cutRoot(left));
+	  ASTNode_addChild(simple, ASTNode_cutRoot(right));
+	}
+	else if ( ASTNode_isUMinus(left) ) {    /* -x * y */
+	  ASTNode_setType (simple, AST_MINUS); 
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_TIMES);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(left));
+	  ASTNode_addChild(helper, right);
+	}
+	else if ( ASTNode_isUMinus(right) ) {   /* x * -y */
+	  ASTNode_setType (simple, AST_MINUS); 
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_TIMES);
+	  ASTNode_addChild(helper, left);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(right));
+	}
+	else {
+	  simplify = 0;
+	}
+	break;
+	/* binary divide x / y */
+      case AST_DIVIDE:
+	if ( zero(left) ) {      /* 0/x = 0 */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( one(right) ) { /* x/1 = x */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( ASTNode_isUMinus(left) && ASTNode_isUMinus(right) ) { 
+	  ASTNode_setType (simple, AST_DIVIDE); /* -x / -y */
+	  ASTNode_addChild(simple, ASTNode_cutRoot(left));
+	  ASTNode_addChild(simple, ASTNode_cutRoot(right));
+	}
+	else if ( ASTNode_isUMinus(left) ) {    /* -x / y */
+	  ASTNode_setType (simple, AST_MINUS); 
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_DIVIDE);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(left));
+	  ASTNode_addChild(helper, right);
+	}
+	else if ( ASTNode_isUMinus(right) ) {   /* x / -y */
+	  ASTNode_setType (simple, AST_MINUS); 
+	  ASTNode_addChild(simple, ASTNode_create());
+	  helper = ASTNode_getChild(simple, 0);
+	  ASTNode_setType (helper, AST_DIVIDE);
+	  ASTNode_addChild(helper, left);
+	  ASTNode_addChild(helper, ASTNode_cutRoot(right));
+	}
+	else {
+	  simplify = 0;
+	}
+	break;
+	/* power x^y */
+      case AST_POWER:
+      case AST_FUNCTION_POWER:
+	if ( zero(right) ) {     /* x^0 = 1 */
+	  ASTNode_free(left);
+	  ASTNode_free(right);
+	  ASTNode_setReal(simple, 1.0);      
+	}
+	else if ( one(right) ) { /* x^1 = x */
+	  ASTNode_free(right);
+	  ASTNode_free(simple);
+	  simple = left;
+	}
+	else if ( zero(left) ) { /* 0^x = 0 */
+	  ASTNode_free(left);
+	  ASTNode_free(right);
+	  ASTNode_setReal(simple, 0.0);      
+	}
+	else if ( one(left) ) {  /* 1^x = 1 */
+	  ASTNode_free(left);
+	  ASTNode_free(right);
+	  ASTNode_setReal(simple, 1.0);      
+	}
+	else {
+	  simplify = 0;
+	}
+	break;    
+      default:
+	SolverError_error(WARNING_ERROR_TYPE,
+			  SOLVER_ERROR_AST_UNKNOWN_FAILURE,
+			  "simplifyAST: unknown failure for operator type");
+	break;
+      }
+      /* after all no simplification */
+      if (!simplify) {
+	ASTNode_setType (simple, type);
+	ASTNode_addChild(simple, left);
+	ASTNode_addChild(simple, right);
+      }
     }
   }
   /* -------------------- cases with no simplifications ------------------- */
