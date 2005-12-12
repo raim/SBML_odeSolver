@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 19:49:04 raim>
-  $Id: odeModel.c,v 1.30 2005/12/01 19:03:31 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-12 14:19:13 raim>
+  $Id: odeModel.c,v 1.31 2005/12/12 13:41:32 raimc Exp $ 
 */
 /* 
  *
@@ -405,7 +405,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
     for ( j=0; j<om->nsens; j++ ) {
       /* differentiate d(dYi/dt) / dPj */
       fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
-      simple =  AST_simplify(fprime);
+      simple =  simplifyAST(fprime);
       ASTNode_free(fprime);
       index = indexAST(simple, nvalues, om->names);
       ASTNode_free(simple);
@@ -547,7 +547,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
     
     for ( j=0; j<om->neq; j++ ) {
       fprime = differentiateAST(om->ode[i], om->names[j]);
-      simple =  AST_simplify(fprime);
+      simple =  simplifyAST(fprime);
       ASTNode_free(fprime);
       index = indexAST(simple, nvalues, om->names);
       ASTNode_free(simple);

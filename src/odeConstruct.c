@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-06 13:13:53 raim>
-  $Id: odeConstruct.c,v 1.20 2005/12/07 22:23:16 raimc Exp $
+  Last changed Time-stamp: <2005-12-12 14:26:55 raim>
+  $Id: odeConstruct.c,v 1.21 2005/12/12 13:41:30 raimc Exp $
 */
 /* 
  *
@@ -236,11 +236,11 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
 }
 
 
-/* C.3: Create ODEs from reactions
-   for each species in model `m' and ODE is constructed from its
-   reactions (in `m") and added as a RateRule to `ode' */
-static int Model_createOdes(Model_t *m, Model_t*ode )
-{
+/* C.3: Create ODEs from Reactions
+   for each species in model `m' an ODE is constructed from its
+   reactions in `m' and added as a RateRule to `ode'
+*/
+static int Model_createOdes(Model_t *m, Model_t *ode) {
   Species_t *s;
   Rule_t *rl;
   RateRule_t *rr, *rl_new;
@@ -304,7 +304,7 @@ static int Model_createOdes(Model_t *m, Model_t*ode )
 	if ( math == NULL ) {
 	  errors++;
 	  SolverError_error(ERROR_ERROR_TYPE,
-		    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
+         	    SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES,
 			    "ODE could not be constructed for species %s",
 			    Species_getId(s));
 	}
@@ -523,7 +523,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 				      by algebraic rule!*/
   }
 
-  simple = AST_simplify(ode);
+  simple = simplifyAST(ode);
   ASTNode_free(ode);
 
   if ( errors>0 ) {
