@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.14 2005/11/29 20:00:49 raimc Exp $
+# $Id: Makefile.am,v 1.15 2005/12/12 13:59:25 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -32,8 +32,8 @@ INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @CVODE_CFLAGS@
 AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity batchIntegrate \
-               simpleIntInst changeIntInst ASTIndexTest sense \
-               parameterScan \
+               simpleIntInst changeIntInst ASTIndexTest \
+               ParameterScanner Sense \
                printODEs analyzeJacobian analyzeSens \
 	       root
 printODEs_SOURCES = printODEModel.c
@@ -103,15 +103,15 @@ analyzeSens_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       @SBML_LDFLAGS@ @SBML_LIBS@ \
                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                       -lstdc++ -lxerces-c -lm
-parameterScan_SOURCES = ParameterScanner.c
-parameterScan_LDADD   = -L../src -L/@prefix@/lib -lODES \
+ParameterScanner_SOURCES = ParameterScanner.c
+ParameterScanner_LDADD   = -L../src -L/@prefix@/lib -lODES \
                         @GRACE_LDFLAGS@ @GRACE_LIBS@ \
                         @CVODE_LDFLAGS@ @CVODE_LIBS@ \
                         @SBML_LDFLAGS@ @SBML_LIBS@ \
                         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                         -lstdc++ -lxerces-c -lm
-sense_SOURCES = Sense.c
-sense_LDADD   = -L../src -L/@prefix@/lib -lODES \
+Sense_SOURCES = Sense.c
+Sense_LDADD   = -L../src -L/@prefix@/lib -lODES \
                 @GRACE_LDFLAGS@ @GRACE_LIBS@ \
                 @CVODE_LDFLAGS@ @CVODE_LIBS@ \
                 @SBML_LDFLAGS@ @SBML_LIBS@ \
