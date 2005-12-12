@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.4 2005/12/12 13:55:21 raimc Exp $
+dnl $Id: sbml.m4,v 1.5 2005/12/12 16:51:35 raimc Exp $
 
 dnl
 dnl look for SBML Library headers in some standard set of directories
@@ -15,7 +15,7 @@ AC_DEFUN([AC_SBML_PATH],
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
       ac_SBML_includes="$ac_dir"
       dnl include /sbml folder for libSBML 2.3.4 bugs
-      SBML_CFLAGS="-I$ac_SBML_includes I$ac_SBML_includes/sbml"
+      SBML_CFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
       AC_MSG_RESULT([yes])
       break
     fi
