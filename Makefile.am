@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.20 2005/12/09 18:59:51 raimc Exp $
+# $Id: Makefile.am,v 1.21 2005/12/12 17:08:03 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -34,7 +34,8 @@ else
    SUBDIRS = src odeSolver
 endif
 CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas -ansi -std=iso9899:1990
-EXTRA_DIST = SOSlib.doxy \
+EXTRA_DIST = Win32/* \
+             SOSlib.doxy \
 	     odeSolver.doxy \
              odeSolver/*.c \
              odeSolver/*.h \
@@ -54,7 +55,7 @@ EXTRA_DIST = SOSlib.doxy \
              examples/basic-model1-forward-l2.xml \
 	     examples/*.c \
              examples/Makefile.am \
-             examples/Makefile.batch \
-	     examples/Makefile.in \
+             examples/Makefile.in \
+	     examples/Makefile.batch \
              examples/Makefile.integrate 
 
