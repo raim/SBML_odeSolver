@@ -30,9 +30,8 @@
 				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="
-"
-				Outputs="$(TargetFileName)"/>
+				CommandLine="copy $(OutDir)\..\..\scripts\*.* $(OutDir)"
+				Outputs="$(TargetDir)gnuplotscript.awk"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(OutDir)\SBML_odeSolverD.lib libSBMLD.lib"
@@ -78,7 +77,9 @@
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+				CommandLine="copy $(OutDir)\..\..\scripts\*.* $(OutDir)"
+				Outputs="$(TargetDir)gnuplotscript.awk"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libSBML.lib WinCVODE.lib SBML_odeSolver.lib"

@@ -75,7 +75,7 @@ The results are placed in the file model.txt
 
 To display the results we need to first create a gnuplot file from the model output using the following command:
 
-genplotscript.awk model.txt S1 S2 > model.gnuplot
+gnuplotscript.awk model.txt S1 S2 > model.gnuplot
 
 This generates a gnuplot script to display the data in model.txt for the time course of S1 and S2 
 
@@ -150,7 +150,7 @@ select accessories
 select command prompt
 in the resulting window type the commands as detailed below
 
-Note that the genplotscript script can't be invoked directly in DOS
+Note that the gnuplotscript script can't be invoked directly in DOS
 and requires an awk installation and explicit invocation of awk
 
 Reference Guide to SOSlib Applications
@@ -230,15 +230,15 @@ SBML FILE PARSING
 Results are simply output to the standard output stream.  By default
 just the species concentration time series is output together with
 column headings with species ids.  This output can plotted in gnuplot
-using the genplotscript.awk command.
+using the gnuplotscript.awk command.
 
-genplotscript.awk
+gnuplotscript.awk
 -----------------
 
 This command generates a gnuplot plot file on standard output from 
 the default output of SBML_odeSolverApp.  This command has the form:
 
-genplotscript.awk odeSolverApp-output-file species
+gnuplotscript.awk odeSolverApp-output-file species
 
 where odeSolverApp-output-file contains the output of SBML_odeSolverApp
 and species is a sequence of species ids which are required for plotting.

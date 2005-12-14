@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-10 16:20:48 raim>
-  $Id: sbml.c,v 1.11 2005/12/12 16:47:48 raimc Exp $
+  $Id: sbml.c,v 1.12 2005/12/14 16:18:09 afinney Exp $
 */
 /* 
  *
@@ -91,7 +91,9 @@ parseModel(char *file, int printMessage, int validate, char *schemaPath,
     }
     
     if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
-       SBMLDocument_checkConsistency(d); /* causes memory losses */
+        SBMLDocument_checkConsistency(d);
+        /* AMF 9th Dec 2005 added back because inconsistent models can cause the
+           solver to crash despite the consistancy check causing memory leaks - talk to Ben B! */
 
     /* check for warnings and errors */
     for (i =0 ; i != SBMLDocument_getNumWarnings(d); i++)

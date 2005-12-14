@@ -82,7 +82,10 @@ copy  $(OutDir)\Sense.exe $(OutDir)\..\release
 copy  $(OutDir)\WinCVODE.dll $(OutDir)\..\release
 copy  $(OutDir)\SBML_odeSolverApp.exe $(OutDir)\..\release
 copy  $(OutDir)\ParameterScanner.exe $(OutDir)\..\release
-copy $(OutDir)\..\README_FOR_RELEASE.txt $(OutDir)\..\release\README.txt"
+copy $(OutDir)\..\..\scripts\*.* $(OutDir)\..\release
+copy $(OutDir)\..\..\examples\MAPK.xml $(OutDir)\..\release
+copy $(OutDir)\..\README_FOR_RELEASE.txt $(OutDir)\..\release\README.txt
+"
 				Outputs="$(OutDir)\..\release\README.txt"/>
 			<Tool
 				Name="VCLinkerTool"
