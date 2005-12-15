@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 14:19:13 raim>
-  $Id: odeModel.c,v 1.31 2005/12/12 13:41:32 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 17:19:47 raim>
+  $Id: odeModel.c,v 1.32 2005/12/15 16:33:54 raimc Exp $ 
 */
 /* 
  *
@@ -32,6 +32,16 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
+
+/*! \defgroup odeModel ODE Model Interfaces
+    \brief This module contains all functions to create and interface
+    the internal ODE Model it's Jacobian matrix and other derivatives
+    
+    The internal ODE Model (structure odeModel) can be interfaced for
+    analytical purposes. All formulae can be retrieved as libSBML
+    Abstract Syntax Trees (AST).
+*/
+/*@{*/
 
 #include "sbmlsolver/odeModel.h"
 
@@ -976,5 +986,5 @@ SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
   return (const Model_t *) om->simple;
 }
 
-
+/** @} */
 /* End of file */

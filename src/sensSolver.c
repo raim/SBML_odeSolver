@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 19:49:34 raim>
-  $Id: sensSolver.c,v 1.13 2005/12/01 19:03:31 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 16:53:21 raim>
+  $Id: sensSolver.c,v 1.14 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,14 @@
  * Contributor(s):
  *
  */
+/*! \defgroup sensi CVODES Senstivitiy Analysis
+    \ingroup cvode
+    \brief This module contains the functions that set up and
+    call SUNDIALS CVODES forward sensitivity analysis routines.
+    
 
+*/
+/*@{*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -60,14 +67,10 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 
 
 /* The Hot Stuff! */
-/** \brief Calls CVODES to move the current simulation, including
-    sensitivity analysis one time step;
+/** \brief Calls CVODES to provide forward sensitivities
 
     produces appropriate error messages on failures and returns 1 if
-    the integration can continue, 0 otherwise.  The function also
-    checks for events and steady states and stores results if
-    requested by cvodeSettings.  It also handles models without ODEs
-    (only assignment rules or constant parameters).
+    the integration can continue, 0 otherwise.  
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *engine)
@@ -106,7 +109,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *en
 /************* CVODES integrator setup functions ************/
 
 
-/* creates CVODES structures and fills cvodeSolver 
+/* creates CVODES forward sensitivity solver structures
    return 1 => success
    return 0 => failure
 */
@@ -247,7 +250,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 }
 
 
-/** \brief Prints some final statistics of the calls to CVODE routines
+/** \brief Prints some final statistics of the calls to CVODES forward
+    sensitivity analysis routines
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
@@ -321,4 +325,6 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   }  
 
 }
+
+/** @} */
 /* End of file */

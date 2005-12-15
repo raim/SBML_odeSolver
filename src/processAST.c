@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 17:34:16 raim>
-  $Id: processAST.c,v 1.26 2005/12/12 16:39:07 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:09:27 raim>
+  $Id: processAST.c,v 1.27 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,13 @@
  * Contributor(s):
  *     Stefan Müller
  */
+/*! \defgroup processAST Abstract Syntax Tree (AST) Processing 
+    \brief This module contains all functions for evaluation of and
+    symbolic operations on formulae represented as libSBML
+    Abstract Syntax Trees.
 
+*/
+/*@{*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -547,7 +553,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       }
       break;
     case AST_LOGICAL_XOR:
-      /* true if an odd number of children is true */
+      /* n-ary: true if an odd number of children is true */
       true = 0;
       for ( i=0; i<childnum; i++ ) {
 	true += evaluateAST(child(n,i),data);
@@ -2075,5 +2081,5 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   
   return (simple);
 }
-
+/** @} */
 /* End of file */

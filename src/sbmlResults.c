@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 13:34:14 raim>
-  $Id: sbmlResults.c,v 1.14 2005/11/03 12:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:05:39 raim>
+  $Id: sbmlResults.c,v 1.15 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,6 +32,13 @@
  * Contributor(s):
  *     
  */
+/*! \defgroup sbmlResults SBML Results Interface
+    \ingroup odeSolver
+    \brief This module contains interfaces to the results structures
+    returned by the high level interface to SOSlib
+
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -470,4 +477,7 @@ SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
   }
   return(resM);
 }
+
+/*\@}*/
+
 /* End of file */

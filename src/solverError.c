@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-28 14:35:35 raim>
-  $Id: solverError.c,v 1.11 2005/10/28 12:40:11 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 17:17:00 raim>
+  $Id: solverError.c,v 1.12 2005/12/15 16:33:54 raimc Exp $ 
 */
 /* 
  *
@@ -31,6 +31,13 @@
  *
  * Contributor(s):
  */
+/*! \defgroup errors SOSlib Error Management
+    \brief This optional module contains all functions to set and
+    retrieve warnings, errors and fatal errors occuring at any
+    level of SOSlib.
+
+*/
+/*@{*/
 
 #include "sbmlsolver/solverError.h"
 
@@ -321,3 +328,4 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
     
     return result ;
 }
+/** @} */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-17 13:56:01 raim>
-  $Id: drawGraph.c,v 1.18 2005/11/17 13:01:49 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:15:40 raim>
+  $Id: drawGraph.c,v 1.19 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,13 @@
  * Contributor(s):
  *     Christoph Flamm
  */
+/*! \defgroup drawGraph Graph Drawing
+    \brief This optional module contains all functions to draw SBML and ODE
+    Model structures as a graph with diverse output formats. Graph drawing
+    is based on the Graphviz library
 
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -938,5 +944,5 @@ drawModelTxt(Model_t *m, char *file) {
 }
 
 #endif
-
+/** @} */
 /* End of file */

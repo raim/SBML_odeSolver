@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 18:18:26 raim>
-  $Id: cvodeSolver.c,v 1.15 2005/12/01 19:03:30 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 16:45:22 raim>
+  $Id: cvodeSolver.c,v 1.16 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -33,6 +33,15 @@
  *     Andrew M. Finney
  *     Christoph Flamm
  */
+
+/*! \defgroup cvode CVODES Solver
+    \ingroup integrator     
+    \brief This module contains the functions that call SUNDIALS CVODES
+    solver routines for stiff and non-stiff ODE systems
+    
+
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -585,5 +594,5 @@ JacODE(long int N, DenseMat J, realtype t,
 }
 
 
-
+ /*! @} */
 /* End of file */

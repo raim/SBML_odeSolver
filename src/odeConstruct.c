@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 14:26:55 raim>
-  $Id: odeConstruct.c,v 1.21 2005/12/12 13:41:30 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:00:24 raim>
+  $Id: odeConstruct.c,v 1.22 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,18 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
-
+/*! \defgroup odeConstruct ODE Construction
+    \brief This module contains all functions to generate condense
+    the reaction network of an input models to an output model only
+    consisting of ODEs (SBML rate rules).
+    
+    The ODE construction currently can't handle SBML algebraic rules.
+    When this is done correctly, the resulting SBML model can be used
+    to initialize SUNDIALS IDA Solver for Differential Algebraic
+    Equation (DAE) Systems, which are ODE systems with additional
+    algebraic constraints.
+*/
+/*@{*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -799,4 +810,5 @@ Model_setValue(Model_t *m, const char *id, const char *rid, double value) {
   return 0;  
 }
 
+/** @} */
 /* End of file */

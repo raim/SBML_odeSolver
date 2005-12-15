@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-16 18:32:30 raim>
-  $Id: daeSolver.c,v 1.4 2005/11/29 18:30:42 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 16:49:41 raim>
+  $Id: daeSolver.c,v 1.5 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,6 +32,18 @@
  * Contributor(s):
  *
  */
+/*! \defgroup ida IDA Solver
+    \ingroup integrator     
+    \brief This module contains the functions that call SUNDIALS IDA
+    solver routines for DAE systems (NOT FUNCTIONAL!)
+
+    This code is not working yet. It is included in the documentation
+    to motivate people to help us implement this functionality. The main
+    problem is that ODE construction currently can't decide which variables
+    are to be defined via algebraic constraints. Contact us, if you want
+    to help!
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -496,5 +508,5 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
 }
 
 
-
+/** @} */
 /* End of file */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 13:32:38 raim>
-  $Id: odeSolver.c,v 1.34 2005/11/03 12:36:24 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:04:02 raim>
+  $Id: odeSolver.c,v 1.35 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -35,6 +35,16 @@
  *     Stefan Müller
  *     Andrew Finney
  */
+/*! \defgroup odeSolver High Level Interfaces
+    \brief This module contains high level interfaces to SOSlib, which
+    take an SBML model and integratorSettings as input and return results
+    mapped back to SBML structures.
+
+    Please see sbmlResults for interfaces to the returned result
+    structures.
+
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -688,5 +698,5 @@ static int SBMLResults_createSens(SBMLResults_t *Sres,
   }
   return 1;
 }
-
+/*\@}*/
 /* End of file */

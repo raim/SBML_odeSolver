@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 10:26:01 raim>
-  $Id: modelSimplify.c,v 1.10 2005/11/08 10:02:46 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:10:40 raim>
+  $Id: modelSimplify.c,v 1.11 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,9 @@
  * Contributor(s):
  *
  */
-
+/*! \addtogroup processAST  
+@{
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -364,4 +366,5 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
     }
   }
 } 
+/** @} */
 /* End of file */

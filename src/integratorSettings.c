@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 21:07:38 raim>
-  $Id: integratorSettings.c,v 1.15 2005/12/01 19:03:31 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:07:40 raim>
+  $Id: integratorSettings.c,v 1.16 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -32,6 +32,15 @@
  * Contributor(s):
  *
  */
+/*! \defgroup setttings Settings
+    \ingroup integration 
+    \brief This module contains all functions to set integration options
+    in integratorSettings
+    
+    With these functions an application can choose integration time,
+    methods and options like error tolerances.
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -612,6 +621,8 @@ void CvodeSettings_free(cvodeSettings_t *set)
     free(set->TimePoints);
   free(set);
 }
+
+/** @} */
 
 /** Creates a settings structure from a timeSettings structure
     and fills rest with default values

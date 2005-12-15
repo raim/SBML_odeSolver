@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 13:03:19 raim>
-  $Id: integratorInstance.c,v 1.44 2005/12/01 19:03:31 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 17:03:39 raim>
+  $Id: integratorInstance.c,v 1.45 2005/12/15 16:33:54 raimc Exp $
 */
 /* 
  *
@@ -34,12 +34,21 @@
  *     Christoph Flamm
  */
 
+/*! \defgroup integration ODE Integration */
+/*! \defgroup integrator Integrator Interface
+    \ingroup integration
+    \brief This module contains all interfaces to an integratorInstance
+    
+    SOSlib allows to get and set model data during an integration run.
+    This groups contain all functions available for this purpose.
+*/
+/*@{*/
+
 #include <malloc.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <cvodes.h>
 #include <kinsol.h>
 #include <cvdense.h>
@@ -68,6 +77,7 @@ static int
 IntegratorInstance_initializeSolverStructures(integratorInstance_t *);
 static integratorInstance_t *
 IntegratorInstance_allocate(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
+
 
 
 /***************** functions common to all solvers ************************/
@@ -144,7 +154,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 }
 
 
-/**  \brief Creates an new integratorInstance
+/** \brief Creates an new integratorInstance
      
     reads initial values from odeModel and integration settings from
     cvodeSettings to create integration data cvodeData and
@@ -344,7 +354,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance
 
 /**  \brief Prints the current time, the value of parameter p and 
      all variable's sensitivities Si to p, where
-     i = 1 ... NEQ
+     i = 1 .\.\.\ NEQ
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *engine, variableIndex_t *p)
@@ -901,3 +911,4 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
     IntegratorInstance_printCVODEStatistics(engine, f);
 }
 
+/*@}*/
