@@ -1,3 +1,10 @@
+
+PLEASE DON'T USE THE Makefile IN THIS FOLDER! 
+
+It is not working. See below for available documentation.
+
+
+
 USING THE SOSlib COMMANDLINE APPLICATIONS
 
 The best documentation for both the usage of the command-line application
@@ -8,6 +15,8 @@ http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 The README file in the main directory also gives short instructions.
 
 Running odeSolver -h will give you an overview of input options.
+
+
 
 
 USING SOSlib AS A LIBRARY (API)
