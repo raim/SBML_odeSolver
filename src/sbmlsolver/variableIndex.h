@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 15:23:30 raim>
-  $Id: variableIndex.h,v 1.8 2005/11/04 10:39:15 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 19:52:09 raim>
+  $Id: variableIndex.h,v 1.9 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -36,6 +36,7 @@
 #ifndef _VARIABLEINDEX_H_
 #define _VARIABLEINDEX_H_
 
+/** variable types */
 typedef enum variableType
   {
     ODE_VARIABLE,
@@ -43,7 +44,8 @@ typedef enum variableType
     CONSTANT,
     ALGEBRAIC_VARIABLE
   } variableType_t; 	 
- 
+
+/** stores index number and variableType */
 struct variableIndex
 {
   variableType_t type;

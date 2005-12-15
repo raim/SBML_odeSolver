@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 17:46:19 raim>
-  $Id: cvodedata.h,v 1.24 2005/11/29 18:28:53 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 20:49:02 raim>
+  $Id: cvodedata.h,v 1.25 2005/12/15 19:54:06 raimc Exp $
 */
 /* 
  *
@@ -50,81 +50,78 @@
 #include "sbmlsolver/odeModel.h"
 
 
-/* CvodeSettings Set; */
-
-/* Stores CVODE specific integration results, and is part of
-   the CvodeData structure (see below) */
-
+/** Stores CVODE specific integration results, data correspond
+    to the respective values in cvodeData */
 struct cvodeResults {
-  int nout;        /* counter for calculated time steps
-		      (without initial conditions), this number
-		      can be lower then the same variable in CvodeData,
-		      in case the integration is prematurely stopped. */
-  double *time;    /* time steps */
+  int nout;        /**< counter for calculated time steps (without
+		        initial conditions), this number can be lower
+		        then the same variable in cvodeData, in case
+		        the integration is prematurely stopped. */
+  double *time;    /**< the time steps */
 
-  /* number of variables for which results exist */
+  /** number of variables for which results exist */
   int nvalues;     
-  /* the following arrays represent the time series of all variables
-     and parameters of the model */
+  /** the following arrays represent the time series of all variables
+      and parameters of the model */
   double **value;
 
-  /* number of parameters for sens. analysis */
-  int neq, nsens;
-  /* sensitivities: d[Y(t)]/dP */
+  /* number of variables x(t) for which sensitivities are calculated */
+  int neq;
+  /** number of parameters p for sens. analysis */
+  int nsens;
+  /** time course of sensitivities dx(t)/dp */
   double ***sensitivity;
 
 } ;
 
-/* Contains all data needed for CVODE integration, i.e.
+/** Contains all data needed for CVODE integration, i.e.
    the ODEs, initial values, variable and parameter IDs and
    names, events, and integration settings and output files,
    but also
    the SBML model from which they have been derived,
    and the SBML version of the ODE model.
  */
-
 struct cvodeData {
 
   odeModel_t *model;
   
-  /* ODEs f(x) and values x. The ODEs are usually optimized versions
-     of the same array in odeModel */
-  int neq;
-  ASTNode_t **ode;
-  
-  /* The value array is used to write and read the
-     current values of all variables and parameters of the
-     system (of which there are `nvalues') */
-  int nvalues;
-  double *value;
+  /* ODEs f(x,p,t) = dx/dt and values x. The ODEs are usually
+     optimized versions of the same array in odeModel */
+  int neq;         /**< number of ODEs */
+  ASTNode_t **ode; /**< optimized ODEs as used for integration */
 
-  /* stores the current time of the integration */
+  
+  int nvalues; /**< total number of values (variables x(t) + parameters p) */
+  /** The value array is used to write and read the
+     current values of all variables x(t) and parameters p of the
+     system (of which there are `nvalues') */  
+  double *value; 
+
+  /** the current time of the integration */
   float currenttime;
 
-  /* current sensitivities: d[Y(t)]/dP */
-  int nsens;
-  double **sensitivity;
-  /* required by sens. analysis,
-     if no r.h.s function fS is available */
+  /* current sensitivities: dx(t)/dp */
+  int nsens;            /**< number of sensitivities */
+  double **sensitivity; /**< current values of sensitivities d[Y(t)]/dP */
+  /** current values of parameters in sensitivity analysis, required
+      and filled only if no r.h.s function fS is available */
   realtype *p;
   
-  /* cvode settings: start- and end times, timesteps, number of timesteps,
-     error tolerances, max. number of steps, etc... */
+  /** cvode settings: start- and end times, timesteps, number of timesteps,
+     error tolerances, maximum number of steps, etc... */
   cvodeSettings_t *opt;
   
-  /* trigger flags: check if triggers were active or not
+  /** trigger flags: check if triggers were active or not
      at the previous time step */
-  int *trigger;  
+  int *trigger;
+  /** steady state flag: check if steady state was found */
   int steadystate; 
 
-  /* Results: time series of integration are stored in this
+  /** Results: time series of integration are stored in this
      structure (see above) */
   cvodeResults_t *results;
 
-  /* The flag `run' remembers if already tried with or without use
-     of generated Jacobian matrix or internal approximation,
-     or with lower error tolerance. It is used to restart the integrator
-     with changed settings upon failure. */
+  /** number of runs with the one integratorInstance */
   int run;
 
 } ;

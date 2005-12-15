@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:17:00 raim>
-  $Id: solverError.c,v 1.12 2005/12/15 16:33:54 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 20:40:05 raim>
+  $Id: solverError.c,v 1.13 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -53,6 +53,7 @@
 
 #include <sbml/util/List.h>
 
+/** error message, including errorCode */
 typedef struct solverErrorMessage
 {
     char *message ;

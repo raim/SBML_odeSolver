@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 16:28:39 raim>
-  $Id: solverError.h,v 1.12 2005/12/12 15:34:33 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 20:33:39 raim>
+  $Id: solverError.h,v 1.13 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -44,14 +44,13 @@
 extern "C" {
 #endif
 
-/* error codes */
-
+  /** error codes.
+      codes < 0 reserved for CVODE 
+      codes 0 throu 9999 reserved for LibSBML */
 typedef enum errorCode
 {
-    /* codes < 0 reserved for CVODE */
-    /* codes 0 throu 9999 reserved for LibSBML */
 
-    /* 1XXXX - conversion to ode model failures */
+    /** 1XXXX - conversion to ode model failures in odeConstruct.c */
     SOLVER_ERROR_ODE_COULD_NOT_BE_CONSTRUCTED_FOR_SPECIES  = 10000,
     SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS = 10001,
     SOLVER_ERROR_THE_MODEL_CONTAINS_ALGEBRAIC_RULES = 10002,
@@ -61,32 +60,32 @@ typedef enum errorCode
     SOLVER_ERROR_MODEL_NOT_SIMPLIFIED = 10006,
     SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED = 10007,
 
-    /* 1xx30 - SBML input model failures */
+    /** 1xx30 - SBML input model failures in sbml.c */
     SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH = 10030,
     SOLVER_ERROR_CANNOT_PARSE_MODEL = 10031,
     SOLVER_ERROR_DOCUMENTLEVEL_ONE = 100032,
      
-    /* 1XX5X - Graph Drawing Errors  */
+    /** 1XX5X - Graph Drawing Errors  in drawGraph.c */
     SOLVER_ERROR_NO_GRAPHVIZ = 10050,
-    /* 1X1XX - Wrong Input Settings */
+    /** 1X1XX - Wrong Input Settings */
     SOLVER_ERROR_INTEGRATOR_SETTINGS = 10100,
     SOLVER_ERROR_VARY_SETTINGS = 10101,
       
-    /* 2XXXX - Integration Failures */
+    /** 2XXXX - Integration Failures in integratorInstance.c */
     SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL = 20000,
     SOLVER_ERROR_EVENT_TRIGGER_FIRED = 20001,
     SOLVER_ERROR_CVODE_MALLOC_FAILED = 20002,
 
-    /* 2X1XX - AST Processing Failures */
+    /** 2X1XX - AST Processing Failures in processAST.c */
+    /** AST evaluation in evaluateAST */
     SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE = 20100,
     SOLVER_ERROR_AST_UNKNOWN_FAILURE = 20101,
-    /* AST evaluation */
     SOLVER_ERROR_AST_EVALUATION_FAILED_MISSING_VALUE = 20102,
     SOLVER_ERROR_AST_EVALUATION_FAILED_DELAY = 20103,
     SOLVER_ERROR_AST_EVALUATION_FAILED_LAMBDA = 20104,
     SOLVER_ERROR_AST_EVALUATION_FAILED_FUNCTION = 20105,
     SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL = 20106,
-    /* AST differentiation */
+    /** AST differentiation in differentiateAST */
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_CONSTANT = 20110,
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_OPERATOR = 20111,
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LAMBDA = 20112,
@@ -95,24 +94,24 @@ typedef enum errorCode
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_PIECEWISE = 20117,
     SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LOGICAL_OR_RELATIONAL = 20118,
     
-    /* 2X2XX - Result Writing Failures */
+    /** 2X2XX - Result Writing Failures */
     SOLVER_ERROR_CVODE_RESULTS_FAILED = 20201,
     SOLVER_ERROR_SBML_RESULTS_FAILED = 20202,
     
-    /* 2X5XX - Integration Messages */
+    /** 2X5XX - Integration Messages in integratorInstance.c */
     SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN = 20500,
     SOLVER_MESSAGE_STEADYSTATE_FOUND = 20501,
  
-    /* 3XXXX - Memory Exhaustion */
+    /** 3XXXX - Memory Exhaustion; general */
     SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
 
-    /* 4XXXX - assorted API errors */
+    /** 4XXXX - assorted API errors */
     SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000,
     SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 40001
 
 } errorCode_t;
 
-
+  /** error types */
 typedef enum errorType
 {
     FATAL_ERROR_TYPE = 0,

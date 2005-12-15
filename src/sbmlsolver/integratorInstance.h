@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 17:46:13 raim>
-  $Id: integratorInstance.h,v 1.20 2005/12/01 19:03:31 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 20:37:17 raim>
+  $Id: integratorInstance.h,v 1.21 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -52,34 +52,36 @@ extern "C" {
   typedef struct cvodeSolver cvodeSolver_t;
   typedef struct integratorInstance integratorInstance_t ;
 
-  /* CVODE/S integrator state information */
+  /** Solver State Information */
   struct cvodeSolver
   {
-    /* these data are required by the functions common to all solvers */
+    
     double t, tout, t0;
-    int iout, nout;
-    /* these data are only used by the CVODE solver specific functions */
+    int iout, nout;  /**< above data are required by all solvers */    
     realtype reltol, atol1;
     N_Vector y, abstol, senstol;
-    void *cvode_mem;
-    /* CVODES specific data */
+    void *cvode_mem; /**< above data are used by the CVode Solver */    
     int nsens;
-    N_Vector *yS;
-    /* IDA specific data */
-    N_Vector dy;
+    N_Vector *yS;    /**< sensitivities vector specific */    
+    N_Vector dy;     /**< IDA specific data: current ODE values dx/dt */
   };
 
 
+  /** the main structure for numerical integration */
   struct integratorInstance
   {
-    /* passed to integratorInstance */
+    /** the ODE Model as passed for construction of cvodeData and
+	cvodeSolver */
     odeModel_t *om;
+    /** the integrator settings as passed for construction
+	of cvodeData and cvodeSolver  */
     cvodeSettings_t *opt;
-    /* created with integratorInstance from om and opt */
+    /** contains current values,
+	created with integratorInstance from odeModel and cvodeSettings */
     cvodeData_t *data;
-    /* alternative solver structures */
+    /** solver structure (CVODES or IDA or other future solvers) */
     cvodeSolver_t *solver;
-    /* optional results */
+    /** optional results structure, shared with cvodeData */
     cvodeResults_t *results; 
   };
   

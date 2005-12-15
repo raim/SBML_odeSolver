@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 10:31:43 raim>
-  $Id: odeModel.h,v 1.16 2005/11/04 10:39:15 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 20:50:29 raim>
+  $Id: odeModel.h,v 1.17 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -41,47 +41,49 @@
 #include "sbmlsolver/odemodeldatatype.h"
 #include "sbmlsolver/exportdefs.h"
 
+/** The internal ODE Model as constructed in odeModel.c from an SBML
+    input file, that only contains rate rules (constructed from
+    reaction network in odeConstruct.c)
+*/
 struct odeModel
 {
-  SBMLDocument_t *d; /* only if directly created from file */
-  Model_t *m;
-  Model_t *simple;
+  SBMLDocument_t *d; /**< not-NULL only if the odeModel was directly
+			  created from file */
+  Model_t *m;        /**< the input SBML reaction network */
+  Model_t *simple;   /**< the derived SBML with rate rules */
 
-  /* All names, i.e. ODE variables, assigned parameters, and constant
-     parameters */
+  /** All names, i.e. ODE variables, assigned parameters, and constant
+      parameters */
   char **names; 
 
-  /* number of ODEs (neq), assigned parameters (nass), and constant
-     parameters (nconst) */
-  int neq;
-  int nalg;
-  int nass;
-  int nconst;  
+  int neq;    /**< number of ODEs */
+  int nalg;   /**< number of algebraic rules */ 
+  int nass;   /**< number of assigned variables (nass) */
+  int nconst; /**< number of constant parameters */ 
 
-  /* Assigned variables: stores species, compartments and parameters,
-     that are set by an assignment rule */
+  /** Assigned variables: stores species, compartments and parameters,
+      that are set by an assignment rule */
   ASTNode_t **assignment;
 
-  /* algebraic rules */
+  /** Algebraic Rules (constraints) as used for DAE systems */
   ASTNode_t **algebraic;
   
-  /* The main data: number, names, and equation ASTs
-     of the ODEs. The value array is used to write and read the
-     current value of the ODE variables during simulation. */
+  /** The Ordinary Differential Equation System (ODE)s: f(x,p,t) = dx/dt */
   ASTNode_t **ode; 
 
-  /* The jacobian matrix (d[X]/dt)/d[Y] of the ODE system */
-  /* neq x neq */
+  /** The jacobian matrix df(x)/dx of the ODE system 
+      neq x neq */
   ASTNode_t ***jacob;
-  /* was the model the jacobian constructed ? */
+  /** was the jacobian matrix constructed ? */
   int jacobian;
 
-  /* forward sensitivity analysis */
-  /* neq x num_param */
-  int nsens;    /* number of parameters for sens. analysis */
-  int *index_sens; /* indexes of parameters in char **names, char *value*/
-  ASTNode_t ***jacob_sens; /*  (d[Y]/dt)/dP  */
-  int sensitivity;  /* a flag for success */
+  /* forward sensitivity analysis structure
+      neq x num_param */
+  int nsens;               /**< number of parameters for sens. analysis */
+  int *index_sens;         /**< indexes of parameters in char **names,
+			        char *value*/
+  ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp  */
+  int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
   /* adjoint */
 

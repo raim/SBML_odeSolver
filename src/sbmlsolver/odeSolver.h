@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:51:20 raim>
-  $Id: odeSolver.h,v 1.18 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 20:35:16 raim>
+  $Id: odeSolver.h,v 1.19 2005/12/15 19:54:06 raimc Exp $
 */
 /* 
  *
@@ -59,18 +59,17 @@
 extern "C" {
 #endif
 
-  /* Settings for batch integration with parameter variation */
   typedef struct varySettings varySettings_t;
-
+  /** Settings for batch integration with parameter variation */
   struct varySettings {
-    int nrdesignpoints; /*defines how many design points are set*/
-    int nrparams;       /* defines the number of parameters to be varied */
-    int cnt_params;     /* counts the number of parameters to be varied */
-    char **id;          /* array of SBML ID of the species, compartment
-			   or parameter to be varied */
-    char **rid;         /* SBML Reaction ID, if a local parameter is to be
-			   varied */
-    double **params;    /* two dimensional array with the parmaters */
+    int nrdesignpoints; /**< defines how many design points are set*/
+    int nrparams;       /**< defines the number of parameters to be varied */
+    int cnt_params;     /**< counts the number of parameters to be varied */
+    char **id;          /**< array of SBML ID of the species, compartment
+			     or parameter to be varied */
+    char **rid;         /**< SBML Reaction ID, if a local parameter is to be
+			     varied */
+    double **params;    /**< two dimensional array for parameter values */
   };
 
   SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *, cvodeSettings_t *);

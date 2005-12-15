@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-30 20:51:23 raim>
-  $Id: integratorSettings.h,v 1.11 2005/12/01 19:03:31 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-15 20:38:57 raim>
+  $Id: integratorSettings.h,v 1.12 2005/12/15 19:54:06 raimc Exp $ 
 */
 /* 
  *
@@ -45,7 +45,8 @@ extern "C" {
   typedef struct cvodeSettings cvodeSettings_t;
   typedef struct timeSettings timeSettings_t;
 
-  /* timeSettings: start- and end times, timesteps, number of timesteps */
+  /** NOT USED CURRENTLY!
+      timeSettings: start- and end times, timesteps, number of timesteps */
   struct timeSettings {
     double t0;
     double tmult;
@@ -53,33 +54,40 @@ extern "C" {
     int nout;
   } ;
 
-  /* Settings for CVODE Integration */
+  /** Settings for CVODE Integration */
   struct cvodeSettings {
-    double Time;          /* Time to which model is integrated or if
-			     'Indefinitely' its the step size */
-    int PrintStep;        /* Number of output steps from 0 to 'Time'
-			     ignored if 'Indefinitely' */
-    double *TimePoints;   /* Optional array of designed time-course.
-			     If passed by the calling application,
-			     Time will be ignored and overruled by
-			     TimePoints[Printstep+1], otherwise TimePoints
-			     will be calculated from Time and PrintSteps */
-    int Indefinitely;     /* run without a defined end time, Time field
-			     contains step duration, ignore PrintStep
-			     field*/
-    double Error;         /* absolute tolerance in Cvode integration */
-    double RError;        /* relative tolerance in Cvode integration */
-    int Mxstep;           /* maximum step number for CVode integration */
-    int CvodeMethod;      /* set ADAMS-MOULTON or BDF nonlinear solver */
-    int IterMethod;       /* set type of nonlinear solver iteration */
-    int MaxOrder;         /* set max. order of ADAMS or BDF method */
-    int Sensitivity;      /* use CVODES for sensitivity analysis */
-    int SensMethod;       /* flag for sensitivity analysis method */
-    
-    int HaltOnEvent;      /* Stops integration upon an event */
-    int SteadyState;      /* Stops integration upon a steady state */
-    int UseJacobian;      /* Toggle use of Jacobian ASTs or approximation */
-    int StoreResults;     /* Store time course history */
+    double Time;          /**< Time to which model is integrated or if
+			       step size if 'Indefinitely' is true */
+    int PrintStep;        /**< Number of output steps from 0 to 'Time';
+			       ignored if 'Indefinitely' */
+    double *TimePoints;   /**< Optional array of designed time-course.
+			      If passed by the calling application,
+			      Time will be ignored and overruled by
+			      TimePoints[Printstep+1], otherwise TimePoints
+			      will be calculated from Time and PrintSteps */
+    int Indefinitely;     /**< if not 0: run without a defined end
+			       time, Time field contains step
+			       duration, ignore PrintStep field*/
+    double Error;         /**< absolute tolerance in Cvode integration */
+    double RError;        /**< relative tolerance in Cvode integration */
+    int Mxstep;           /**< maximum step number for CVode integration */
+    int CvodeMethod;      /**< set ADAMS-MOULTON (1) or BDF (0)
+			       nonlinear solver */
+    int IterMethod;       /**< set type of nonlinear solver iteration
+			       Newton (0) or Functional (1) */
+    int MaxOrder;         /**< set maximum order of ADAMS or BDF method */
+    int Sensitivity;      /**< if not 0: use CVODES for sensitivity analysis */
+    int SensMethod;       /**< set sensitivity analysis method:
+			       0: SIMULTANEOUS,
+			       1: STAGGERED,
+			       2: STAGGERED1
+			  */    
+    int HaltOnEvent;      /**< if not 0: Stop integration upon an event */
+    int SteadyState;      /**< if not 0: Stop integration upon a
+			       steady state */
+    int UseJacobian;      /**< use of Jacobian ASTs (1) or CVODES'
+			     internal approximation (0)*/
+    int StoreResults;     /**< if not 0: Store time course history */
   } ;
 
   /* functions */
