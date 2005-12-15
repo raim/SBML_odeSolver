@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.22 2005/12/15 16:57:04 raimc Exp $
+# $Id: Makefile.am,v 1.23 2005/12/15 17:09:41 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -35,6 +35,7 @@ else
 endif
 CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas -ansi -std=iso9899:1990
 EXTRA_DIST = Win32/* \
+             OUTLOOK \
              SOSlib.doxy \
 	     odeSolver.doxy \
              odeSolver/*.c \
