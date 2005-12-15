@@ -1,0 +1,27 @@
+USING THE SOSlib COMMANDLINE APPLICATIONS
+
+The best documentation for both the usage of the command-line application
+odeSolver/SBML_odeSolverApp and of some example applications 
+can be found online at
+http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
+
+The README file in the main directory also gives short instructions.
+
+Running odeSolver -h will give you an overview of input options.
+
+
+USING SOSlib AS A LIBRARY (API)
+
+You can either run `doxygen SOSlib.doxy' in the main folder, which will
+produce documentation files in this folder.
+
+Alternatively you can access the doxygen documentation online at
+http://www.tbi.univie.ac.at/~raim/odeSolver/doc/api.html
+
+The example applications (folder applications) show how to use
+SOSlib as a library.
+
+The source code of the library (folder src), the main command-line
+application (folder odeSolver) and the example applications (folder
+examples) is well documented. You can also just see there for 
+information. 
