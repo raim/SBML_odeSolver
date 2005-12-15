@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:09:27 raim>
-  $Id: processAST.c,v 1.27 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-15 19:21:53 raim>
+  $Id: processAST.c,v 1.28 2005/12/15 18:23:16 raimc Exp $
 */
 /* 
  *
@@ -200,24 +200,22 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
 
 /* ------------------------------------------------------------------------ */
 
-/*
-  The function "static double evaluateAST(ASTNode_t *n, N_Vector y,
-  char **species, int neq)" evaluates the formula of an Abstract
-  Syntax Tree by simple recursion and returns the result as a double
-  value.
-  Variable names are searched in passed 'data', which is
-  an SBML_odeSolver specific data structure, containing variable
-  and parameter names and their current values. See files cvodedata.c/h
-  and odeConstruct.c to learn how this structure is built.
+/** Evaluates the formula of an Abstract Syntax Tree by simple
+  recursion and returns the result as a double value.
+
+  Variable names are searched in passed cvodeData, which is an
+  SBML_odeSolver specific data structure, containing current values of
+  indexed AST. See files cvodedata.c/h  and odeConstruct.c to learn
+  how this structure is built.
   
   Not implemented:
-  * PIECEWISE, LAMBDA, and the SBML model specific function DELAY 
+  * LAMBDA, and the SBML model specific function DELAY 
   * Complex numbers and/or checking for domains of trigonometric and root
     functions.
   * Checking for precision and rounding errors.
   * User-defined functions (SBML Function Definitions)
   
-  The Nodetypes AST_TIME, AST_DELAY and AST_PIECEWISE default to 0.
+  The node type AST_DELAY defaults to 0.
   The SBML DELAY function and unknown functions (SBML user-defined
   functions) use the value of the left child (first argument to
   function) or 0 if the node has no children.
@@ -565,7 +563,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	result = 0.0;
       }
       break;
-    /*!!! check n-ary definitions for relational operators !!!*/
+    /* !!! check n-ary definitions for relational operators !!! */
     case AST_RELATIONAL_EQ:
       /* n-ary: all children must be equal */
       result = 1.0;
@@ -636,10 +634,11 @@ int user_defined(ASTNode_t *node) {
 
 /* ------------------------------------------------------------------------ */
 
-/* The function differentiateAST(f,x)
+/** The function differentiateAST(f,x)
    returns the derivative of the passed AST f
    with respect to the passed variable x,
-   using basic differentiation rules. */
+   using basic differentiation rules.
+*/
 
 SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 
@@ -1764,8 +1763,10 @@ ASTNode_cutRoot(ASTNode_t *old) {
 
 /* ------------------------------------------------------------------------ */
 
-/* The function simplifyAST(f) takes an AST f,
-   simplifies (arithmetic) operations involving 0 and 1
+/** The function simplifyAST(f) takes an AST f,
+   simplifies (arithmetic) operations involving 0 and 1 and decomposes
+   n-ary `times' and `plus' nodes into an AST of binary AST.
+   
    -0 -> 0
    x+0 -> x, 0+x -> x
    x-0 -> x, 0-x -> -x
@@ -1781,7 +1782,8 @@ ASTNode_cutRoot(ASTNode_t *old) {
    calls evaluateAST(subtree),
    if no variables or user-defined functions occur in the AST subtree,
    calls itself recursively for childnodes,
-   and returns a simplified copy of f. */
+   and returns a simplified copy of f.
+*/
 
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   
