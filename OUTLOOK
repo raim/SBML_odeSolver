@@ -4,7 +4,8 @@ Subject: SOSlib todo (fwd)
 
 DOKU:
 
-optimize usage of Doxygen
+optimize usage of Doxygen, esp. for odeSolver command-line application
+and its man pages!
 
 start SOSlib/methods Wiki
 
