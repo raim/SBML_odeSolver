@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.24 2005/12/15 17:25:55 raimc Exp $
+# $Id: Makefile.am,v 1.25 2005/12/15 17:57:19 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -45,9 +45,6 @@ EXTRA_DIST = Win32/* \
              scripts/*.awk \
              sbml/*.xsd \
              doc/README \
-             doc/Makefile.am \
-             doc/Makefile.in \
-             doc/SBML_odeSolver.1.in \
              Test/simple.sh \
 	     Test/testsuite/README \
              Test/testsuite/odeSolver-wrapper.bsh \
