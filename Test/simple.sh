@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2005-12-09 19:23:06 raim>
-# $Id: simple.sh,v 1.8 2005/12/09 19:00:42 raimc Exp $
+# Last changed Time-stamp: <2005-12-15 18:00:54 raim>
+# $Id: simple.sh,v 1.9 2005/12/15 17:01:47 raimc Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
@@ -76,7 +76,7 @@ fi
 if test -x $PERL; then
   if test -x $XMGR; then
     # add a legend an display results with xmgrace
-    $PERL ../Perlen/AddLegend.pl $NOLEG $GR | $XMGR -nxy -&
+    $PERL ../scripts/xmgracefile.pl $NOLEG $GR | $XMGR -nxy -&
   else
     echo "!!! ERROR: Xmgrace not found !!!"
     exit 1
