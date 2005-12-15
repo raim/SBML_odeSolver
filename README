@@ -32,7 +32,14 @@ other programs, and linking issues.
 
 INSTALLATION 
  
-See file INSTALL in the main directory of the SOSlib. 
+The file INSTALL in the main directory gives instructions how to 
+build SOSlib with GNU Tools autoconf/automake.
+
+The file README.txt in folder Win32 gives instructions how to
+build SOSlib as a Visual C++ project.
+
+More detailed information can be accessed online at
+http://www.tbi.univie.ac.at/~raim/odeSolver/doc/
 
 USAGE
 
@@ -42,6 +49,10 @@ odeSolver <sbmlfile.xml> [options]
 
 Please start the program with option -h/--help (type `odeSolver -h')
 for more information on program and output control via command-line options.
+
+Short tutorials on usage of this and other SOSlib applications can be
+found online at 
+http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 
 ARCHITECTURE
 
