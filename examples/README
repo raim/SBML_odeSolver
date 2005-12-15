@@ -14,7 +14,7 @@ of the available interface functions.
 2 Usage of example programs:
 
   See extra documentation for ParameterScanner and Sense applications
-  in file README_App.txt or online at
+  online at
   http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 
   
@@ -76,7 +76,29 @@ values in the other integrator instance.
 exemplifies how to construct the jacobian matrix of a derived ODE system
 and how to interface evaluate the ODE model and its jacobian.
 
+
 ./analyzeSens
 
 exemplifies how to construct and interface the parametric matrix 
 for sensitivity analysis
+
+
+./Sense MAPK.xml 200 7.5 p Ki MKKK_P MAPK_PP > sense.gnuplot
+
+creates a plot of the sensitivity of species MKKK_P and MAPK_PP to the
+values of the parameter Ki for the timecourse of 200 timesteps of 7.5 time
+units. To display the plot type the command:
+Linux: 	gnuplot -persist sense.gnuplot &
+Windows:	wgnuplot -persist sense.gnuplot &
+
+
+
+./ParameterScanner MAPK.xml 200 7.5 Ki 0 15 0.15 MAPK_PP > pscan.gnuplot
+
+creates plot data of a parameter scan in MAPK.xml of parameter Ki from
+0 through 15 in steps of 0.15. The surface plotted is the concentration of
+MAPK_PP in 200 timesteps of 7.5 time units.
+To display the plot type the command:
+
+Linux: 	gnuplot -persist pscan.gnuplot &
+Windows:	wgnuplot -persist pscan.gnuplot &
