@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 12:58:09 raim>
-  $Id: cvodeSolver.c,v 1.17 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 16:27:01 raim>
+  $Id: cvodeSolver.c,v 1.18 2005/12/16 15:30:23 raimc Exp $
 */
 /* 
  *
@@ -177,7 +177,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     /*  calling CVODE: the same call can be used for CVODES  */
     if ( opt->Sensitivity ) 
-      return IntegratorInstance_cvodesOneStep(engine);
+      return IntegratorInstance_getForwardSens(engine);
     else
       return 1; /* OK */    
 }

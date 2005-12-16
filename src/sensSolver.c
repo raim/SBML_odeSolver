@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 11:04:19 raim>
-  $Id: sensSolver.c,v 1.16 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 16:27:14 raim>
+  $Id: sensSolver.c,v 1.17 2005/12/16 15:30:23 raimc Exp $
 */
 /* 
  *
@@ -73,7 +73,7 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
     the integration can continue, 0 otherwise.  
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_cvodesOneStep(integratorInstance_t *engine)
+int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 {
     int i, j, flag;
     realtype *ydata = NULL;
@@ -134,7 +134,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /*****  adding sensitivity specific structures ******/
 
-    /*
+    /**
      * construct sensitivity related structures
      */
     /* free sensitivity from former runs (changed for non-default cases!) */
@@ -197,7 +197,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       /* ERROR HANDLING CODE if failes */
     }
 
-    /***** set parameter values or R.H.S function fS *****/
+    /* *** set parameter values or R.H.S function fS *****/
     /* NOTES: */
     /* !!! plist could later be used to specify requested parameters
        for sens.analysis !!! */
