@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: Sense.c,v 1.1 2005/11/14 10:11:45 afinney Exp $
+  Last changed Time-stamp: <2005-12-16 16:28:40 raim>
+  $Id: Sense.c,v 1.2 2005/12/16 15:29:18 raimc Exp $
 */
 /* 
  *

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: ParameterScanner.c,v 1.6 2005/10/28 15:18:28 afinney Exp $
+  Last changed Time-stamp: <2005-12-16 16:28:47 raim>
+  $Id: ParameterScanner.c,v 1.7 2005/12/16 15:29:18 raimc Exp $
 */
 /* 
  *
