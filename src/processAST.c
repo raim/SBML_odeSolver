@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:14:59 raim>
-  $Id: processAST.c,v 1.29 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 12:53:49 raim>
+  $Id: processAST.c,v 1.30 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -32,10 +32,13 @@
  * Contributor(s):
  *     Stefan Müller
  */
-/*! \defgroup processAST Abstract Syntax Tree (AST) Processing 
+/*! \defgroup processAST Formula Processing: f(x), df/dx
+    \ingroup symbolic
     \brief This module contains all functions for evaluation of and
     symbolic operations on formulae represented as libSBML
-    Abstract Syntax Trees.
+    Abstract Syntax Trees (AST).
+
+    These functions are used both for numerical and symbolic analysis
 
 */
 /*@{*/
@@ -74,14 +77,14 @@ double atanh(double x)
 }
 #endif /* WIN32 */
 
-/**
+/*
  * function pointer to user defined function
  */
 static double 
 (*UsrDefFunc)(char*, int, double*) = NULL;
 
 /** 
- * sets function pointer for  user defined function to udf
+ * Sets function pointer for  user defined function to udf
 
    Takes a function pointer as an argument. This function udf
    is called in evaluateAST to interface external data that can
@@ -121,7 +124,7 @@ SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*)
 
 /* ------------------------------------------------------------------------ */
 
-/** copies the passed constant AST, including potential
+/** Copies the passed constant AST, including potential
     SOSlib ASTNodeIndex, and returns the copy.
 */
 
@@ -168,8 +171,9 @@ ASTNode_t *copyAST(const ASTNode_t *f)
 
 /* ------------------------------------------------------------------------ */
 
-/* takes an AST and a string array and converts AST_NAME to
-   AST_IndexName, which holds the name and the index in the array */
+/** Takes an AST and a string array `names' and converts AST_NAME to
+    AST_IndexName, which holds the name of the variable and
+    additionally its index in the passed array `names' */
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
 {
   int i, found;
@@ -235,16 +239,18 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
   how this structure is built.
   
   Not implemented:
-  * LAMBDA, and the SBML model specific function DELAY 
-  * Complex numbers and/or checking for domains of trigonometric and root
+  - Complex numbers and/or checking for domains of trigonometric and root
     functions.
-  * Checking for precision and rounding errors.
-  * User-defined functions (SBML Function Definitions)
+  - Checking for precision and rounding errors.
+  - SBML model specific function DELAY 
+  - SBML Function Definitions
+  - LAMBDA (only used in SBML Function Definitions)
   
   The node type AST_DELAY defaults to 0.
   The SBML DELAY function and unknown functions (SBML user-defined
   functions) use the value of the left child (first argument to
-  function) or 0 if the node has no children.
+  function) or 0 if the node has no children and produce an errorMessage
+  via SOSlibs Error Management System.
 */
 
 SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
@@ -292,15 +298,16 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       break;
 	
     case AST_NAME:
-      /*
-	Finds the value of the variable in
-	the data->value array. SOSlib's extension to libSBML's
-	AST allows to add the index of the variable in this array
-	to AST_NAME (ASTIndexName). If the ASTNode is node is not
-	indexed, its array index is searched via the model->names
-	array, that corresponds to the value array. For nodes
-        with name `Time' or `time' the data->currenttime is returned.
-	If no value is found a fatal error is produced. */
+      /** VARIABLES:
+
+          find the value of the variable in the data->value
+	  array. SOSlib's extension to libSBML's AST allows to add the
+	  index of the variable in this array to AST_NAME
+	  (ASTIndexName). If the ASTNode is not indexed, its array
+	  index is searched via the data->model->names array, which
+	  corresponds to the data->value array. For nodes with name
+	  `Time' or `time' the data->currenttime is returned.  If no
+	  value is found a fatal error is produced. */
       found = 0;
       if ( ASTNode_isSetIndex(n) ) {
 	result = data->value[ASTNode_getIndex(n)];
@@ -385,8 +392,10 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 			" Defaults to 0 to avoid program crash");
       result = 0.0;
       break;
-      
+    /** FUNCTIONS: */
     case AST_FUNCTION:
+      /**  Evaluate external functions, if it was set with
+	   setUserDefinedFunction */      
       if (UsrDefFunc == NULL) {
 	SolverError_error(FATAL_ERROR_TYPE,
 			  SOLVER_ERROR_AST_EVALUATION_FAILED_FUNCTION,
@@ -398,7 +407,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	result = 0.0;
       }
       else {
-	/* 	   "Evaluating external function\n"); */
 	double *func_vals = NULL;
 	ASSIGN_NEW_MEMORY_BLOCK(func_vals, childnum+1, double, 0);
 	for ( i=0; i<childnum; i++ ) {
@@ -660,10 +668,9 @@ int user_defined(ASTNode_t *node) {
 
 /* ------------------------------------------------------------------------ */
 
-/** The function differentiateAST(f,x)
-   returns the derivative of the passed AST f
-   with respect to the passed variable x,
-   using basic differentiation rules.
+/** The function differentiateAST(f,x) returns the derivative f' of
+   the passed formula f with respect to the passed variable x, using
+   basic differentiation rules.
 */
 
 SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
@@ -679,7 +686,9 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   
   fprime = ASTNode_create();
 
-  /** check if variable x is part of formula */  
+  /** VARIABLES */
+  
+  /** check if variable x is part of f(x): if not f' = 0 */  
   found = 0;
   list = ASTNode_getListOfNodes(f, (ASTNodePredicate) user_defined);
   for ( i=0; i<List_size(list); i++ ) {
@@ -704,17 +713,18 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   if ( ASTNode_isNumber(f) ) { /* redundant */
     ASTNode_setReal(fprime, 0.0);
   }
-  /** variables (or time) */ 
+  /** f(x) = x =>  f' = 1 */ 
   else if ( ASTNode_isName(f) ) {
-    if ( strcmp(ASTNode_getName(f), x) == 0 ) { /* redundant */
+    if ( strcmp(ASTNode_getName(f), x) == 0 ) { /* redundant, other
+						   case catched above */
       ASTNode_setReal(fprime, 1.0);    
     }
     else {
       ASTNode_setReal(fprime, 0.0);
     }   
   }
-  /** constants */
-  else if ( ASTNode_isConstant(f) ) { /* redundant */
+  /* constants */
+  else if ( ASTNode_isConstant(f) ) { /* redundant, other case catched above */
     switch(type) {
     case AST_CONSTANT_E:
     case AST_CONSTANT_PI:
@@ -731,10 +741,11 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
-  /** operators */
+  /** OPERATORS */
   else if ( ASTNode_isOperator(f) || type==AST_FUNCTION_POWER ) {
     switch(type) {
     case AST_PLUS:
+      /** f(x)=a(x)+b(x) => f'(x) = a' + b' */
       ASTNode_setType(fprime, AST_PLUS);
       for ( i=0; i<childnum; i++ ) {
 	ASTNode_addChild(fprime,
@@ -742,6 +753,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       }
       break;
     case AST_MINUS:
+      /** f(x)=a(x)-b(x) => f'(x) = a' - b' */
       ASTNode_setType(fprime, AST_MINUS);
       for ( i=0; i<childnum; i++ ) {
 	ASTNode_addChild(fprime,
@@ -749,7 +761,8 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       }
       break;
     case AST_TIMES:
-      /* catch cases with operand number != 2 */
+      /** catch n-ary operators with operand number != 2,
+	  and decompose in simplifyAST */
       if ( ASTNode_getNumChildren(f) != 2 ) {
 	helper = simplifyAST(f); /* decomposes the n-ary operator */
 	ASTNode_free(fprime);
@@ -891,7 +904,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
-  /** functions */
+  /** FUNCTIONS: */
   else if ( ASTNode_isFunction(f) || type==AST_LAMBDA ) {
     switch(type) {
     case AST_LAMBDA:
@@ -1792,31 +1805,37 @@ ASTNode_cutRoot(ASTNode_t *old) {
 
 /* ------------------------------------------------------------------------ */
 
-/*! \addtogroup simplifyAST AST Simplification */
+/*! \addtogroup simplifyAST */
 /*@{*/
 
 /** The function simplifyAST(f) takes an AST f,
-   simplifies (arithmetic) operations involving 0 and 1 and decomposes
-   n-ary `times' and `plus' nodes into an AST of binary AST.
+    and returns a simplified copy of f.
+
+
+    simplifies (arithmetic) operations involving 0 and 1: \n   
+   -0 -> 0;\n
+   x+0 -> x, 0+x -> x;\n
+   x-0 -> x, 0-x -> -x;\n
+   x*0 -> 0, 0*x -> 0, x*1 -> x, 1*x -> x;\n
+   0/x -> 0, x/1 -> x;\n
+   x^0 -> 1, x^1 -> x, 0^x -> 0, 1^x -> 1;\n
    
-   -0 -> 0;
-   x+0 -> x, 0+x -> x;
-   x-0 -> x, 0-x -> -x;
-   x*0 -> 0, 0*x -> 0, x*1 -> x, 1*x -> x;
-   0/x -> 0, x/1 -> x;
-   x^0 -> 1, x^1 -> x, 0^x -> 0, 1^x -> 1;
+   propagates unary minuses\n
+    --x -> x; \n
+    -x + -y -> -(x+y), -x + y -> y-x,    x + -y -> x-y; \n
+    -x - -y -> y-x,    -x - y -> -(x+y), x - -y -> x+y; \n 
+    -x * -y -> x*y,    -x * y -> -(x*y), x * -y -> -(x*y);\n
+    -x / -y -> x/y,    -x / y -> -(x/y), x / -y -> -(x/y); \n
    
-   propagates unary minuses
-   - -x -> x;
-   -x + -y -> -(x+y), -x + y -> y-x,    x + -y -> x-y;
-   -x - -y -> y-x,    -x - y -> -(x+y), x - -y -> x+y;
-   -x * -y -> x*y,    -x * y -> -(x*y), x * -y -> -(x*y);
-   -x / -y -> x/y,    -x / y -> -(x/y), x / -y -> -(x/y);
+   calls evaluateAST(subtree), if no variables or user-defined
+   functions occur in the AST subtree,
+
+   decomposes n-ary `times' and `plus' nodes into an AST of binary
+   AST.
    
-   calls evaluateAST(subtree),
-   if no variables or user-defined functions occur in the AST subtree,
    calls itself recursively for childnodes,
-   and returns a simplified copy of f.
+   
+   
 */
 
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {

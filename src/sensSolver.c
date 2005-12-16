@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 19:14:11 raim>
-  $Id: sensSolver.c,v 1.15 2005/12/15 18:23:16 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 11:04:19 raim>
+  $Id: sensSolver.c,v 1.16 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,7 @@
  * Contributor(s):
  *
  */
-/*! \defgroup sensi CVODES Sensitivity Analysis
+/*! \defgroup sensi CVODES Forward Sensitivity:  dx(t)/dp
     \ingroup cvode
     \brief This module contains the functions that set up and
     call SUNDIALS CVODES forward sensitivity analysis routines.

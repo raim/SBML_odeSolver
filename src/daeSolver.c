@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:24:16 raim>
-  $Id: daeSolver.c,v 1.6 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 12:57:09 raim>
+  $Id: daeSolver.c,v 1.7 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -32,10 +32,12 @@
  * Contributor(s):
  *
  */
-/*! \defgroup ida IDA Solver
-    \ingroup integrator     
-    \brief NOT IMPLEMENTED CODE: This module contains the functions that
-    call SUNDIALS IDA solver routines for DAE systems
+/*! \defgroup ida IDA DAE Solver: x(t)
+    \ingroup integrator
+
+    \brief NOT COMPILED CODE: This module contains the functions that
+    will call SUNDIALS IDA solver routines for DAE systems, once
+    implemented.
 
     This code is not working yet. It is not compiled with the current
     package. It is included in the documentation merely to motivate

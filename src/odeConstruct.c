@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:47:11 raim>
-  $Id: odeConstruct.c,v 1.23 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 11:10:46 raim>
+  $Id: odeConstruct.c,v 1.24 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -32,8 +32,10 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
-/*! \defgroup odeConstruct ODE Construction
-    \brief This module contains all functions to generate condense
+/*! \defgroup symbolic Symbolic Analysis */
+/*! \defgroup odeConstruct ODE Construction: SBML -> f(x,p,t) = dx/dt
+    \ingroup symbolic
+    \brief This module contains all functions to condense
     the reaction network of an input models to an output model only
     consisting of ODEs (SBML rate rules).
     

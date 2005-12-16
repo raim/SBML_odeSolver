@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:19:47 raim>
-  $Id: odeModel.c,v 1.32 2005/12/15 16:33:54 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-16 11:06:28 raim>
+  $Id: odeModel.c,v 1.33 2005/12/16 15:04:44 raimc Exp $ 
 */
 /* 
  *
@@ -33,7 +33,8 @@
  *     Andrew M. Finney
  */
 
-/*! \defgroup odeModel ODE Model Interfaces
+/*! \defgroup odeModel ODE Model: f(x,p,t) = dx/dt
+    \ingroup symbolic
     \brief This module contains all functions to create and interface
     the internal ODE Model it's Jacobian matrix and other derivatives
     
@@ -376,265 +377,6 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
   return om;
 }
 
-
-/** \brief Construct Sensitivity R.H.S. for ODEModel.
-    
-*/
-
-SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
-{
-  int i, j, k, failed, nvalues;
-  ASTNode_t *ode, *fprime, *simple, *index;
-  List_t *names;
-
-  failed = 0;
-  nvalues = om->neq + om->nass + om->nconst;
-
-  om->sensitivity = 0;
-  om->jacob_sens = NULL;
-  om->nsens = om->nconst;
-
-  ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
-  /*!!! non-default case:
-    these values should be passed for other cases !!!*/
-  for ( i=0; i<om->nsens; i++ )
-    om->index_sens[i] = om->neq + om->nass + i;
- 
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
-  for ( i=0; i<om->neq; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
-
-  for ( i=0; i<om->neq; i++ ) {
-    ode = copyAST(om->ode[i]);
-    /* assignment rule replacement: reverse to satisfy
-       SBML specifications that variables defined by
-       an assignment rule can appear in rules declared afterwards */
-    for ( j=om->nass-1; j>=0; j-- )
-      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
-    
-    for ( j=0; j<om->nsens; j++ ) {
-      /* differentiate d(dYi/dt) / dPj */
-      fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
-      simple =  simplifyAST(fprime);
-      ASTNode_free(fprime);
-      index = indexAST(simple, nvalues, om->names);
-      ASTNode_free(simple);
-      om->jacob_sens[i][j] = index;
-      /* check if the AST contains a failure notice */
-      names = ASTNode_getListOfNodes(index,
-				     (ASTNodePredicate) ASTNode_isName);
-
-      for ( k=0; k<List_size(names); k++ ) 
-	if ( strcmp(ASTNode_getName(List_get(names,k)),
-		    "differentiation_failed") == 0 ) 
-	  failed++;
-      List_free(names);      
-    }
-    ASTNode_free(ode);
-  }
-
-  if ( failed != 0 ) {
-    SolverError_error(WARNING_ERROR_TYPE,
-    SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-	      "%d entries of the parametric `Jacobian' matrix could not "
-	      "be constructed, due to failure of differentiation. "
-	      "Cvode will use internal approximation instead.", failed);
-    om->sensitivity = 0;
-  }
-  else 
-    om->sensitivity = 1;
-
-  return om->sensitivity;
-
-}
-
-
-/** \brief Free Sensitivity R.H.S. for ODEModel.    
-*/
-
-SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
-{
-  int i, j;
-
-  /* free parameter index */
-  free(om->index_sens);
-  /* free parametric matrix, if it has been constructed */
-  if ( om->jacob_sens != NULL )
-    {
-      for ( i=0; i<om->neq; i++ ) {
-          for ( j=0; j<om->nsens; j++ ) 
-	          ASTNode_free(om->jacob_sens[i][j]);
-          free(om->jacob_sens[i]);
-      }
-      free(om->jacob_sens);      
-  }
-}
-
-
-/**  \brief Returns the ith/jth entry of the parametric matrix
-     
-    Returns NULL if either the parametric has not been constructed yet,
-    or if i > neq or j > nsens. Ownership remains within the odeModel_t
-    structure.
-*/
-
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int i, int j)
-{
-  if ( om->jacob_sens == NULL )
-    return NULL;
-  if ( i >= om->neq || j >= om->nsens )
-    return NULL;  
-  return (const ASTNode_t *) om->jacob_sens[i][j];
-}
-
-
-/** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the parametric matrix.
-    
-    Returns NULL if either the parametric matrix has not been constructed
-    yet, or if vi1 or vi2 are not an ODE variable or a constant for 
-    sensitivity analysis, respectively. Ownership remains within the
-    odeModel_t structure.
-*/
-
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
-{
-  /*!!! needs better solution, if sensitivity for selected params
-        will be implemented !!!*/
-  return ODEModel_getSensIJEntry(om, vi1->index, vi2->type_index);
-}
-
-
-/** \brief Returns the variableIndex for the jth parameter for
-    which sensitivity analysis was requested, where
-    0 < j < ODEModel_getNsens;
-    
-    Returns NULL if either the parametric matrix has not been constructed
-    yet, or if j => ODEModel_getNsens;
-*/
-
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *om, int j)
-{
-  if ( j < om->nsens )
-    return ODEModel_getVariableIndexByNum(om, om->index_sens[j]);
-  else
-    return NULL;
-}
-
-
-/** \brief Construct Jacobian Matrix for ODEModel.
-    
-   Once an ODE system has been constructed from an SBML model, this
-   function calculates the derivative of each species' ODE with respect
-   to all other species for which an ODE exists, i.e. it constructs the
-   jacobian matrix of the ODE system. Returns 1 if successful, 0 otherwise. 
-*/
-
-SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
-{  
-  int i, j, k, failed, nvalues;
-  ASTNode_t *fprime, *simple, *index, *ode;
-  List_t *names;
-
-  if ( om == NULL )
-    return 0;
-  
-  /******************** Calculate Jacobian ************************/
-  
-  failed = 0;
-  nvalues = om->neq + om->nass + om->nconst;
-  
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0);
-  for ( i=0; i<om->neq; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0);
-      
-  for ( i=0; i<om->neq; i++ ) {
-    ode = copyAST(om->ode[i]);
-    /* assignment rule replacement: reverse to satisfy
-       SBML specifications that variables defined by
-       an assignment rule can appear in rules declared afterwards */
-    for ( j=om->nass-1; j>=0; j-- )
-      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
-    
-    for ( j=0; j<om->neq; j++ ) {
-      fprime = differentiateAST(om->ode[i], om->names[j]);
-      simple =  simplifyAST(fprime);
-      ASTNode_free(fprime);
-      index = indexAST(simple, nvalues, om->names);
-      ASTNode_free(simple);
-      om->jacob[i][j] = index;
-      /* check if the AST contains a failure notice */
-      names = ASTNode_getListOfNodes(index ,
-				     (ASTNodePredicate) ASTNode_isName);
-
-      for ( k=0; k<List_size(names); k++ ) 
-	if ( strcmp(ASTNode_getName(List_get(names,k)),
-		    "differentiation_failed") == 0 ) 
-	  failed++;
-      List_free(names);
-    }
-    ASTNode_free(ode);
-  }
-  if ( failed != 0 ) {
-    SolverError_error(WARNING_ERROR_TYPE,
-	  SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-		"%d entries of the Jacobian matrix could not be constructed, "
-		"due to failure of differentiation. Cvode will use internal "
-		"approximation of the Jacobian instead.", failed);
-    om->jacobian = 0;
-  }
-  else 
-    om->jacobian = 1;
-    
-  return om->jacobian;
-}
-
-
-/**  \brief Returns the ith/jth entry of the jacobian matrix
-     
-    Returns NULL if either the jacobian has not been constructed yet,
-    or if i or j are >neq. Ownership remains within the odeModel_t
-    structure.
-*/
-
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
-{
-  if ( om->jacob == NULL )
-    return NULL;
-  if ( i >= om->neq || j >= om->neq )
-    return NULL;  
-  return (const ASTNode_t *) om->jacob[i][j];
-}
-
-
-/** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the jacobian matrix.
-    
-    Returns NULL if either the jacobian has not been constructed yet,
-    or if the v1 or vi2 are not ODE variables. Ownership remains
-    within the odeModel_t structure.
-*/
-
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
-{
-  return ODEModel_getJacobianIJEntry(om, vi1->index, vi2->index);
-}
-
-
-/** \brief Constructs and returns the determinant of the jacobian matrix.
-    
-    The calling application takes ownership of the returned ASTNode_t
-    and must free it, if not required.
-*/
-
-SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
-{
-
-  ASTNode_t ***A;
-
-  if ( om->jacob != NULL && om->jacobian == 1 )
-    return determinantNAST(om->jacob, om->neq);
-  else
-    return NULL; 
-}
 
 
 /** \brief Frees the odeModel structures
@@ -987,4 +729,291 @@ SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
 }
 
 /** @} */
+
+
+/*! \defgroup jacobian Jacobian Matrix: J = df(x)/dx
+    \ingroup odeModel
+    \brief Constructing and Interfacing the Jacobian Matrix of an ODE
+    system
+
+    as used for CVODES and IDA Dense Solvers
+*/
+/*@{*/
+
+/** \brief Construct Jacobian Matrix for ODEModel.
+    
+   Once an ODE system has been constructed from an SBML model, this
+   function calculates the derivative of each species' ODE with respect
+   to all other species for which an ODE exists, i.e. it constructs the
+   jacobian matrix of the ODE system. Returns 1 if successful, 0 otherwise. 
+*/
+
+SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
+{  
+  int i, j, k, failed, nvalues;
+  ASTNode_t *fprime, *simple, *index, *ode;
+  List_t *names;
+
+  if ( om == NULL )
+    return 0;
+  
+  /******************** Calculate Jacobian ************************/
+  
+  failed = 0;
+  nvalues = om->neq + om->nass + om->nconst;
+  
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0);
+  for ( i=0; i<om->neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0);
+      
+  for ( i=0; i<om->neq; i++ ) {
+    ode = copyAST(om->ode[i]);
+    /* assignment rule replacement: reverse to satisfy
+       SBML specifications that variables defined by
+       an assignment rule can appear in rules declared afterwards */
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
+    
+    for ( j=0; j<om->neq; j++ ) {
+      fprime = differentiateAST(om->ode[i], om->names[j]);
+      simple =  simplifyAST(fprime);
+      ASTNode_free(fprime);
+      index = indexAST(simple, nvalues, om->names);
+      ASTNode_free(simple);
+      om->jacob[i][j] = index;
+      /* check if the AST contains a failure notice */
+      names = ASTNode_getListOfNodes(index ,
+				     (ASTNodePredicate) ASTNode_isName);
+
+      for ( k=0; k<List_size(names); k++ ) 
+	if ( strcmp(ASTNode_getName(List_get(names,k)),
+		    "differentiation_failed") == 0 ) 
+	  failed++;
+      List_free(names);
+    }
+    ASTNode_free(ode);
+  }
+  if ( failed != 0 ) {
+    SolverError_error(WARNING_ERROR_TYPE,
+	  SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+		"%d entries of the Jacobian matrix could not be constructed, "
+		"due to failure of differentiation. Cvode will use internal "
+		"approximation of the Jacobian instead.", failed);
+    om->jacobian = 0;
+  }
+  else 
+    om->jacobian = 1;
+    
+  return om->jacobian;
+}
+
+
+/**  \brief Returns the ith/jth entry of the jacobian matrix
+     
+    Returns NULL if either the jacobian has not been constructed yet,
+    or if i or j are >neq. Ownership remains within the odeModel_t
+    structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
+{
+  if ( om->jacob == NULL )
+    return NULL;
+  if ( i >= om->neq || j >= om->neq )
+    return NULL;  
+  return (const ASTNode_t *) om->jacob[i][j];
+}
+
+
+/** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the jacobian matrix.
+    
+    Returns NULL if either the jacobian has not been constructed yet,
+    or if the v1 or vi2 are not ODE variables. Ownership remains
+    within the odeModel_t structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
+{
+  return ODEModel_getJacobianIJEntry(om, vi1->index, vi2->index);
+}
+
+
+/** \brief Constructs and returns the determinant of the jacobian matrix.
+    
+    The calling application takes ownership of the returned ASTNode_t
+    and must free it, if not required.
+*/
+
+SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
+{
+
+  ASTNode_t ***A;
+
+  if ( om->jacob != NULL && om->jacobian == 1 )
+    return determinantNAST(om->jacob, om->neq);
+  else
+    return NULL; 
+}
+
+
+/** @} */
+
+
+
+/*! \defgroup parametric `Parametric Matrix': P = df(x)/dp
+    \ingroup odeModel
+    \brief Constructing and Interfacing a `Parametric Matrix' of
+    an ODE system
+
+    as used for CVODES sensitivity analysis
+*/
+/*@{*/
+
+
+/** \brief Construct Sensitivity R.H.S. for ODEModel.
+    
+*/
+
+SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
+{
+  int i, j, k, failed, nvalues;
+  ASTNode_t *ode, *fprime, *simple, *index;
+  List_t *names;
+
+  failed = 0;
+  nvalues = om->neq + om->nass + om->nconst;
+
+  om->sensitivity = 0;
+  om->jacob_sens = NULL;
+  om->nsens = om->nconst;
+
+  ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
+  /*!!! non-default case:
+    these values should be passed for other cases !!!*/
+  for ( i=0; i<om->nsens; i++ )
+    om->index_sens[i] = om->neq + om->nass + i;
+ 
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
+  for ( i=0; i<om->neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
+
+  for ( i=0; i<om->neq; i++ ) {
+    ode = copyAST(om->ode[i]);
+    /* assignment rule replacement: reverse to satisfy
+       SBML specifications that variables defined by
+       an assignment rule can appear in rules declared afterwards */
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
+    
+    for ( j=0; j<om->nsens; j++ ) {
+      /* differentiate d(dYi/dt) / dPj */
+      fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
+      simple =  simplifyAST(fprime);
+      ASTNode_free(fprime);
+      index = indexAST(simple, nvalues, om->names);
+      ASTNode_free(simple);
+      om->jacob_sens[i][j] = index;
+      /* check if the AST contains a failure notice */
+      names = ASTNode_getListOfNodes(index,
+				     (ASTNodePredicate) ASTNode_isName);
+
+      for ( k=0; k<List_size(names); k++ ) 
+	if ( strcmp(ASTNode_getName(List_get(names,k)),
+		    "differentiation_failed") == 0 ) 
+	  failed++;
+      List_free(names);      
+    }
+    ASTNode_free(ode);
+  }
+
+  if ( failed != 0 ) {
+    SolverError_error(WARNING_ERROR_TYPE,
+    SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+	      "%d entries of the parametric `Jacobian' matrix could not "
+	      "be constructed, due to failure of differentiation. "
+	      "Cvode will use internal approximation instead.", failed);
+    om->sensitivity = 0;
+  }
+  else 
+    om->sensitivity = 1;
+
+  return om->sensitivity;
+
+}
+
+
+/** \brief Free Sensitivity R.H.S. for ODEModel.    
+*/
+
+SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
+{
+  int i, j;
+
+  /* free parameter index */
+  free(om->index_sens);
+  /* free parametric matrix, if it has been constructed */
+  if ( om->jacob_sens != NULL )
+    {
+      for ( i=0; i<om->neq; i++ ) {
+          for ( j=0; j<om->nsens; j++ ) 
+	          ASTNode_free(om->jacob_sens[i][j]);
+          free(om->jacob_sens[i]);
+      }
+      free(om->jacob_sens);      
+  }
+}
+
+
+/**  \brief Returns the ith/jth entry of the parametric matrix
+     
+    Returns NULL if either the parametric has not been constructed yet,
+    or if i > neq or j > nsens. Ownership remains within the odeModel_t
+    structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int i, int j)
+{
+  if ( om->jacob_sens == NULL )
+    return NULL;
+  if ( i >= om->neq || j >= om->nsens )
+    return NULL;  
+  return (const ASTNode_t *) om->jacob_sens[i][j];
+}
+
+
+/** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the parametric matrix.
+    
+    Returns NULL if either the parametric matrix has not been constructed
+    yet, or if vi1 or vi2 are not an ODE variable or a constant for 
+    sensitivity analysis, respectively. Ownership remains within the
+    odeModel_t structure.
+*/
+
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
+{
+  /*!!! needs better solution, if sensitivity for selected params
+        will be implemented !!!*/
+  return ODEModel_getSensIJEntry(om, vi1->index, vi2->type_index);
+}
+
+
+/** \brief Returns the variableIndex for the jth parameter for
+    which sensitivity analysis was requested, where
+    0 < j < ODEModel_getNsens;
+    
+    Returns NULL if either the parametric matrix has not been constructed
+    yet, or if j => ODEModel_getNsens;
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *om, int j)
+{
+  if ( j < om->nsens )
+    return ODEModel_getVariableIndexByNum(om, om->index_sens[j]);
+  else
+    return NULL;
+}
+
+
+/** @} */
+
 /* End of file */

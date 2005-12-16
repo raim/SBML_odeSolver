@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:31:38 raim>
-  $Id: integratorInstance.c,v 1.46 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 13:01:58 raim>
+  $Id: integratorInstance.c,v 1.47 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -34,8 +34,8 @@
  *     Christoph Flamm
  */
 
-/*! \defgroup integration ODE Integration */
-/*! \defgroup integrator Integrator Interface
+/*! \defgroup integration Numerical Analysis */
+/*! \defgroup integrator ODE/DAE Integrator Interface
     \ingroup integration
     \brief This module contains all interfaces to an integratorInstance
     
@@ -503,13 +503,12 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 }
 
 
-/*
-    Default function for updating data, to be used by solvers after
-    calculating the dependent variables data->value[i], where 0 <= i <
-    neq) and setting the current solver time solver->t.  The function
-    updates assigend values, and checks for event triggers and steady
-    state, and increases loop variables, stores results and sets next
-    output time.
+/** Default function for updating data, to be used by solvers after
+    they have calculate x(t) and updated the time.
+
+    The function updates assigned variables, checks for event
+    triggers and steady state, increases loop variables, stores
+    results and sets next output time.
 */
 
 int IntegratorInstance_updateData(integratorInstance_t *engine)
@@ -639,9 +638,8 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 /** \brief Approximate identification of a steady state
     
     Evaluates mean and std of rates and returns 1 if a "steady state"
-    is reached to stop  the calling integrator.
-    This function is only called by the integrator function if specified
-    via commandline options!
+    is reached to stop the calling integrator.  This function is only
+    called by the integrator function if specified via cvodeSettings !
 */
 /* NOTE: provisional steady state finding! */
 SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *engine)

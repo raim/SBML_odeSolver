@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:26:10 raim>
-  $Id: nullSolver.c,v 1.6 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 11:05:41 raim>
+  $Id: nullSolver.c,v 1.7 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -32,16 +32,17 @@
  * Contributor(s):
  *     Lukas Endler
  */
-/*! \defgroup nullSolver KINSOL Root Finder
+/*! \defgroup nullSolver KINSOL Root Finder:  f(x,p,t) = dx/dt = 0
     \ingroup integrator
     \brief NOT FUNCTIONAL YET: An interface to SUNDIALS KinSolver
-    to find the root of a system of non-linear equations.
+    to find a local root of a system of non-linear equations.
 
-    This code is working, however it is not functional. The KinSolver
-    interface could be used to locally search for steady states.
-    It would need better input settings. The example file `findRoot'
-    in the examples folder can be used to play with settings and develop
-    this functionality. Contact us, if you want to help!    
+    This code is working. It is, however, not functional. The
+    KinSolver interface could be used to locally search for steady
+    states. It would need better input settings. The example file
+    `findRoot' in the examples folder can be used to play with
+    settings and develop this functionality. Contact us, if you want
+    to help!
 */
 /** @{ */
 

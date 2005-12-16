@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 16:45:22 raim>
-  $Id: cvodeSolver.c,v 1.16 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 12:58:09 raim>
+  $Id: cvodeSolver.c,v 1.17 2005/12/16 15:04:44 raimc Exp $
 */
 /* 
  *
@@ -34,7 +34,7 @@
  *     Christoph Flamm
  */
 
-/*! \defgroup cvode CVODES Solver
+/*! \defgroup cvode CVODES ODE Solver:  x(t)
     \ingroup integrator     
     \brief This module contains the functions that call SUNDIALS CVODES
     solver routines for stiff and non-stiff ODE systems
@@ -63,10 +63,7 @@
 /** The Hot Stuff!
    Calls CVODE to move the current simulation one time step; produces
    appropriate error messages on failures and returns 1 if the
-   integration can continue, 0 otherwise.  The function also checks
-   for events and steady states and stores results if requested by
-   cvodeSettings.  It also handles models without ODEs (only
-   assignment rules or constant parameters).
+   integration can continue, 0 otherwise. 
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *engine)
