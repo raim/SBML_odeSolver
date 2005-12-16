@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 16:27:01 raim>
-  $Id: cvodeSolver.c,v 1.18 2005/12/16 15:30:23 raimc Exp $
+  $Id: cvodeSolver.c,v 1.19 2005/12/16 18:32:15 afinney Exp $
 */
 /* 
  *
@@ -58,7 +58,8 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
-
+#include "sbmlsolver/sensSolver.h"
+#include "sbmlsolver\modelSimplify.h"
 
 /** The Hot Stuff!
    Calls CVODE to move the current simulation one time step; produces

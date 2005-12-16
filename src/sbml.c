@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-10 16:20:48 raim>
-  $Id: sbml.c,v 1.12 2005/12/14 16:18:09 afinney Exp $
+  $Id: sbml.c,v 1.13 2005/12/16 18:32:15 afinney Exp $
 */
 /* 
  *
@@ -39,7 +39,7 @@
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-/* #include <sbml/xml/ParseMessage.h> */
+#include <sbml/xml/ParseMessage.h> 
 
 /* own header files */
 #include "sbmlsolver/sbml.h"

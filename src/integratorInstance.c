@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 13:01:58 raim>
-  $Id: integratorInstance.c,v 1.47 2005/12/16 15:04:44 raimc Exp $
+  $Id: integratorInstance.c,v 1.48 2005/12/16 18:32:15 afinney Exp $
 */
 /* 
  *
@@ -62,6 +62,7 @@
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
+#include "sbmlsolver/modelSimplify.h"
 /* #include "sbmlsolver/daeSolver.h" */ /* !!! not yet working !!! */
 
 
