@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 02:12:25 raim>
-  $Id: integratorSettings.c,v 1.17 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 02:29:18 raim>
+  $Id: integratorSettings.c,v 1.18 2005/12/16 01:30:21 raimc Exp $
 */
 /* 
  *
@@ -210,9 +210,8 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
 			    set->StoreResults,
 			    set->Sensitivity, set->SensMethod);
 
-  CvodeSettings_setMethod(clone, CvodeSettings_getMethod(set));
-  CvodeSettings_setMaxOrder(clone, CvodeSettings_getMaxOrder(set));
-  CvodeSettings_setIterMethod(clone, CvodeSettings_getIterMethod(set);
+  CvodeSettings_setMethod(clone, set->CvodeMethod, set->MaxOrder);
+  CvodeSettings_setIterMethod(clone, set->IterMethod);
   
   /* Unless indefinite integration is chosen, generate a TimePoints array  */
   if  ( !clone->Indefinitely ) {    
