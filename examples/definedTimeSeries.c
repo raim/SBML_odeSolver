@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 15:31:15 raim>
-  $Id: definedTimeSeries.c,v 1.8 2005/12/12 14:40:53 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 02:24:31 raim>
+  $Id: definedTimeSeries.c,v 1.9 2005/12/16 01:25:40 raimc Exp $
 */
 /* 
  *
@@ -58,7 +58,7 @@ main (int argc, char *argv[]){
   /* parsing command-line arguments */
   if (argc < 2 ) {
     fprintf(stderr,
-	    "usage %s sbml-model-file simulation-time time-steps\n",
+	    "usage %s sbml-model-file\n",
             argv[0]);
     exit(EXIT_FAILURE);
   }
