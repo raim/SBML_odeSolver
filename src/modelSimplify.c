@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:16:54 raim>
-  $Id: modelSimplify.c,v 1.12 2005/12/16 01:25:08 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 16:57:34 raim>
+  $Id: modelSimplify.c,v 1.13 2005/12/16 16:00:55 raimc Exp $
 */
 /* 
  *
@@ -32,9 +32,12 @@
  * Contributor(s):
  *
  */
-/*! \defgroup simplifyAST AST Simplification
+/*! \defgroup simplifyAST AST Manipulations
     \ingroup processAST
     \brief Diverse Functions to manipulate libSBML Abstract Syntax Trees.
+
+    Replace variable names with values, with other names, with formulae,
+    expand defined functions, simplify formulae etc.
 */
 /** @{ */
 

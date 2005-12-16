@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 12:53:49 raim>
-  $Id: processAST.c,v 1.30 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 16:55:40 raim>
+  $Id: processAST.c,v 1.31 2005/12/16 16:00:55 raimc Exp $
 */
 /* 
  *
@@ -169,66 +169,6 @@ ASTNode_t *copyAST(const ASTNode_t *f)
   return copy;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/** Takes an AST and a string array `names' and converts AST_NAME to
-    AST_IndexName, which holds the name of the variable and
-    additionally its index in the passed array `names' */
-ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
-{
-  int i, found;
-  ASTNode_t *index;
-
-  index = ASTNode_create();
-
-  /* DISTINCTION OF CASES */
-
-  /* integers, reals */
-  if ( ASTNode_isInteger(f) ) {
-    ASTNode_setInteger(index, ASTNode_getInteger(f));
-  }
-  else if ( ASTNode_isReal(f) ) {
-    ASTNode_setReal(index, ASTNode_getReal(f));
-  }
-  /* copy existing indexes */
-/*   else if ( ASTNode_isSetIndex(f) ) { */
-/*     ASTNode_free(index); */
-/*     index = ASTNode_createIndexName(); */
-/*     ASTNode_setName(index, ASTNode_getName(f)); */
-/*     ASTNode_setIndex(index, ASTNode_getIndex(f));     */
-/*   } */
-  /* writing indexed name nodes */
-  else if ( ASTNode_isName(f) ) {
-    found = 0;
-    for ( i=0; i<nvalues; i++ ) {
-      if ( strcmp(ASTNode_getName(f), names[i]) == 0 ) {
-        ASTNode_free(index);
-	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
-	ASTNode_setIndex(index, i);
-	ASTNode_setName(index, ASTNode_getName(f));
-	found++;
-      }
-    }
-    if ( !found )
-      ASTNode_setName(index, ASTNode_getName(f));
-  }
-  /* constants */
-  /* functions, operators */
-  else {
-    ASTNode_setType(index, ASTNode_getType(f));
-    /* user-defined functions: name must be set */
-    if ( ASTNode_getType(f) == AST_FUNCTION ) {
-      ASTNode_setName(index, ASTNode_getName(f));
-    }
-    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) {
-      ASTNode_addChild(index, indexAST(ASTNode_getChild(f,i), nvalues, names));
-    }
-  }
-
-  return index;
-}
-
-/* ------------------------------------------------------------------------ */
 
 /** Evaluates the formula of an Abstract Syntax Tree by simple
   recursion and returns the result as a double value.
@@ -654,16 +594,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     }
   
   return result;
-}
-
-/* ------------------------------------------------------------------------ */
-
-/* logical predicate that checks if ASTNode is a user-defined variable name,
-   (or time), or a user defined function */
-int user_defined(ASTNode_t *node) {
-  if ( ASTNode_isName(node) || ASTNode_getType(node)==AST_FUNCTION )
-    return 1;
-  return 0;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1766,41 +1696,6 @@ determinantNAST(ASTNode_t ***A, int N) {
   
 }
 
-
-/* ------------------------------------------------------------------------ */
-
-int zero(ASTNode_t *f) {
-  if ( ASTNode_isReal(f) ) {
-    return (ASTNode_getReal(f)==0.0);
-  }
-  if ( ASTNode_isInteger(f) ) {
-    return (ASTNode_getInteger(f)==0);
-  }
-  return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
-int one(ASTNode_t *f) {
-  if ( ASTNode_isReal(f) ) {
-    return (ASTNode_getReal(f)==1.0);
-  }
-  if ( ASTNode_isInteger(f) ) {
-    return (ASTNode_getInteger(f)==1);
-  }
-  return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
-ASTNode_t *
-ASTNode_cutRoot(ASTNode_t *old) {
-  ASTNode_t *new;
-  new = copyAST(ASTNode_getChild(old, 0));
-  ASTNode_free(old);
-  return new;
-}
-
 /** @} */
 
 /* ------------------------------------------------------------------------ */
@@ -1808,10 +1703,67 @@ ASTNode_cutRoot(ASTNode_t *old) {
 /*! \addtogroup simplifyAST */
 /*@{*/
 
-/** The function simplifyAST(f) takes an AST f,
-    and returns a simplified copy of f.
+/** Takes an AST and a string array `names' and converts AST_NAME to
+    AST_IndexName, which holds the name of the variable and
+    additionally its index in the passed array `names' */
+ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
+{
+  int i, found;
+  ASTNode_t *index;
 
+  index = ASTNode_create();
 
+  /* DISTINCTION OF CASES */
+
+  /* integers, reals */
+  if ( ASTNode_isInteger(f) ) {
+    ASTNode_setInteger(index, ASTNode_getInteger(f));
+  }
+  else if ( ASTNode_isReal(f) ) {
+    ASTNode_setReal(index, ASTNode_getReal(f));
+  }
+  /* copy existing indexes */
+/*   else if ( ASTNode_isSetIndex(f) ) { */
+/*     ASTNode_free(index); */
+/*     index = ASTNode_createIndexName(); */
+/*     ASTNode_setName(index, ASTNode_getName(f)); */
+/*     ASTNode_setIndex(index, ASTNode_getIndex(f));     */
+/*   } */
+  /* writing indexed name nodes */
+  else if ( ASTNode_isName(f) ) {
+    found = 0;
+    for ( i=0; i<nvalues; i++ ) {
+      if ( strcmp(ASTNode_getName(f), names[i]) == 0 ) {
+        ASTNode_free(index);
+	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
+	ASTNode_setIndex(index, i);
+	ASTNode_setName(index, ASTNode_getName(f));
+	found++;
+      }
+    }
+    if ( !found )
+      ASTNode_setName(index, ASTNode_getName(f));
+  }
+  /* constants */
+  /* functions, operators */
+  else {
+    ASTNode_setType(index, ASTNode_getType(f));
+    /* user-defined functions: name must be set */
+    if ( ASTNode_getType(f) == AST_FUNCTION ) {
+      ASTNode_setName(index, ASTNode_getName(f));
+    }
+    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) {
+      ASTNode_addChild(index, indexAST(ASTNode_getChild(f,i), nvalues, names));
+    }
+  }
+
+  return index;
+}
+
+/** Takes an AST f, and returns a simplified copy of f.
+
+    decomposes n-ary `times' and `plus' nodes into an AST of binary AST. 
+   
     simplifies (arithmetic) operations involving 0 and 1: \n   
    -0 -> 0;\n
    x+0 -> x, 0+x -> x;\n
@@ -1830,9 +1782,6 @@ ASTNode_cutRoot(ASTNode_t *old) {
    calls evaluateAST(subtree), if no variables or user-defined
    functions occur in the AST subtree,
 
-   decomposes n-ary `times' and `plus' nodes into an AST of binary
-   AST.
-   
    calls itself recursively for childnodes,
    
    
@@ -2136,5 +2085,54 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
   
   return (simple);
 }
+
+
 /** @} */
+
+
+/* ------------------------------------------------------------------------ */
+
+/* logical predicate that checks if ASTNode is a user-defined variable name,
+   (or time), or a user defined function */
+int user_defined(ASTNode_t *node) {
+  if ( ASTNode_isName(node) || ASTNode_getType(node)==AST_FUNCTION )
+    return 1;
+  return 0;
+}
+
+
+/* ------------------------------------------------------------------------ */
+
+int zero(ASTNode_t *f) {
+  if ( ASTNode_isReal(f) ) {
+    return (ASTNode_getReal(f)==0.0);
+  }
+  if ( ASTNode_isInteger(f) ) {
+    return (ASTNode_getInteger(f)==0);
+  }
+  return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
+int one(ASTNode_t *f) {
+  if ( ASTNode_isReal(f) ) {
+    return (ASTNode_getReal(f)==1.0);
+  }
+  if ( ASTNode_isInteger(f) ) {
+    return (ASTNode_getInteger(f)==1);
+  }
+  return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
+ASTNode_t *
+ASTNode_cutRoot(ASTNode_t *old) {
+  ASTNode_t *new;
+  new = copyAST(ASTNode_getChild(old, 0));
+  ASTNode_free(old);
+  return new;
+}
+
 /* End of file */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:11:40 raim>
-  $Id: ASTIndexNameNode.cpp,v 1.2 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 16:45:23 raim>
+  $Id: ASTIndexNameNode.cpp,v 1.3 2005/12/16 16:00:53 raimc Exp $
 */
 /* 
  *
@@ -32,9 +32,6 @@
  * Contributor(s):
  *
  */
-/*! \addtogroup processAST  
-@{
-*/
 
 #include "sbmlsolver/ASTIndexNameNode.h"
 
@@ -47,27 +44,45 @@ ASTIndexNameNode::~ASTIndexNameNode(void)
 }
 
 // C interface
+/** Creates a SOSlib specific variant of AST_NAME type ASTNode
+    that can store an index (ASTIndexNameNode).
 
+    This index corresponds to the index of the variable in a
+    value array, allowing fast access to values for evaluation.
+*/
 ASTNode_t *ASTNode_createIndexName(void)
 {
     return new ASTIndexNameNode();
 }
 
+/** Returns the index of an indexed AST_NAME node (ASTIndexNameNode)
+*/
 unsigned int ASTNode_getIndex(ASTNode_t *node)
 {
     return static_cast<ASTIndexNameNode*>(node)->getIndex();
 }
 
+/** Sets the index of an indexed AST_NAME node (ASTIndexNameNode)
+*/
 void ASTNode_setIndex(ASTNode_t *node, unsigned int index)
 {
     static_cast<ASTIndexNameNode*>(node)->setIndex(index);
 }
 
+/*! \addtogroup simplifyAST
+@{
+*/
+
+/** Returns true (1) if the ASTNode is an ASTIndexNameNode
+*/
 SBML_ODESOLVER_API int ASTNode_isIndexName(ASTNode_t *node)
 {
     return dynamic_cast<ASTIndexNameNode*>(node) != 0;
 }
 
+/** Returns true (1) if the an indexed ASTNode (ASTIndexNameNode) has
+    it's index set
+*/
 SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
 {
     return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetIndex();
