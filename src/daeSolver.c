@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 16:49:41 raim>
-  $Id: daeSolver.c,v 1.5 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 01:24:16 raim>
+  $Id: daeSolver.c,v 1.6 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -34,14 +34,15 @@
  */
 /*! \defgroup ida IDA Solver
     \ingroup integrator     
-    \brief This module contains the functions that call SUNDIALS IDA
-    solver routines for DAE systems (NOT FUNCTIONAL!)
+    \brief NOT IMPLEMENTED CODE: This module contains the functions that
+    call SUNDIALS IDA solver routines for DAE systems
 
-    This code is not working yet. It is included in the documentation
-    to motivate people to help us implement this functionality. The main
-    problem is that ODE construction currently can't decide which variables
-    are to be defined via algebraic constraints. Contact us, if you want
-    to help!
+    This code is not working yet. It is not compiled with the current
+    package. It is included in the documentation merely to motivate
+    people to help us implement this functionality. The main problem
+    is that ODE construction currently can't decide which variables
+    are to be defined via algebraic constraints. Contact us, if you
+    want to help!
 */
 /*@{*/
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:10:40 raim>
-  $Id: modelSimplify.c,v 1.11 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 01:16:54 raim>
+  $Id: modelSimplify.c,v 1.12 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -32,9 +32,11 @@
  * Contributor(s):
  *
  */
-/*! \addtogroup processAST  
-@{
+/*! \defgroup simplifyAST AST Simplification
+    \ingroup processAST
+    \brief Diverse Functions to manipulate libSBML Abstract Syntax Trees.
 */
+/** @{ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +53,6 @@
 /** Replaces all AST_NAME types with `name' appearing in the formula 
     'math' by the `newname'
 */
-
 SBML_ODESOLVER_API void
 AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname) {
 

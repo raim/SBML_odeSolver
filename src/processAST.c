@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 19:21:53 raim>
-  $Id: processAST.c,v 1.28 2005/12/15 18:23:16 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 01:14:59 raim>
+  $Id: processAST.c,v 1.29 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -77,14 +77,40 @@ double atanh(double x)
 /**
  * function pointer to user defined function
  */
-static double
+static double 
 (*UsrDefFunc)(char*, int, double*) = NULL;
 
-/**
+/** 
  * sets function pointer for  user defined function to udf
+
+   Takes a function pointer as an argument. This function udf
+   is called in evaluateAST to interface external data that can
+   be supplied by a calling applications. It must return a
+   double value for the current time of an integration run.
+   
+   It takes the following arguments:
+
+   char *: must be the name of a function used in any formula
+           in the SBML file, but not defined via an SBML
+	   Function Definition in the same SBML model.
+
+   int: is the number of arguments the SBML function takes, which
+        is also the size of the following double array
+
+   double *: is an array that is filled by evaluateAST to supply
+             the external function with current values of the arguments
+	     of the respective function the SBML model.
+
+  Sorry, if above description is confusing, because of two different
+  types of `function'. Basically, it allows a hard-coded definition
+  of an otherwise undefined function in the SBML file. While this would
+  be invalid SBML (!), it allows a model to access external data.
+  We will in one of the next releases provide an example of a simple
+  interpolation function, that takes only the current time as argument
+  and interpolates a value for the current time from an external time
+  series data set.	   
  */
-SBML_ODESOLVER_API void
-setUserDefinedFunction(double(*udf)(char*, int, double*))
+SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*))
 {
   UsrDefFunc = udf;
 }
@@ -95,7 +121,7 @@ setUserDefinedFunction(double(*udf)(char*, int, double*))
 
 /* ------------------------------------------------------------------------ */
 
-/** Copies the passed constant AST, including potential
+/** copies the passed constant AST, including potential
     SOSlib ASTNodeIndex, and returns the copy.
 */
 
@@ -316,14 +342,14 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       break;
 	
     case AST_CONSTANT_E:
-      /* exp(1) is used to adjust exponentiale to machine precision */
+      /** exp(1) is used to adjust exponentiale to machine precision */
       result = exp(1);
       break;
     case AST_CONSTANT_FALSE:
       result = 0.0;
       break;
     case AST_CONSTANT_PI:
-      /* pi = 4 * atan 1  is used to adjust Pi to machine precision */
+      /** pi = 4 * atan 1  is used to adjust Pi to machine precision */
       result = 4.*atan(1.);
       break;
     case AST_CONSTANT_TRUE:
@@ -392,31 +418,31 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = acosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCCOT:
-      /* arccot x =  arctan (1 / x) */
+      /** arccot x =  arctan (1 / x) */
       result = atan(1./ evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCCOTH:
-      /* arccoth x = 1/2 * ln((x+1)/(x-1)) */
+      /** arccoth x = 1/2 * ln((x+1)/(x-1)) */
       result = ((1./2.)*log((evaluateAST(child(n,0),data)+1.)/
 			    (evaluateAST(child(n,0),data)-1.)) );
       break;
     case AST_FUNCTION_ARCCSC:
-      /* arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
+      /** arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
       result = atan( 1. / MySQRT( (evaluateAST(child(n,0),data)-1.)*
 				(evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCCSCH:
-      /* arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
+      /** arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
       result = log((1.+MySQRT((1+MySQR(evaluateAST(child(n,0),data))))) /
 		   evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_ARCSEC:
-      /* arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
+      /** arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
       result = atan( MySQRT( (evaluateAST(child(n,0),data)-1.)*
 			    (evaluateAST(child(n,0),data)+1.) ) );
       break;
     case AST_FUNCTION_ARCSECH:
-      /* arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
+      /** arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
       result = log((1.+pow((1-MySQR(evaluateAST(child(n,0),data))),0.5))/
 		   evaluateAST(child(n,0),data));      
       break;
@@ -442,20 +468,20 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = cosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_COT:
-      /* cot x = 1 / tan x */
+      /** cot x = 1 / tan x */
       result = (1./tan(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_COTH:
-      /* coth x = cosh x / sinh x */
+      /** coth x = cosh x / sinh x */
       result = cosh(evaluateAST(child(n,0),data)) /
 	sinh(evaluateAST(child(n,0),data));
       break;  
     case AST_FUNCTION_CSC:
-      /* csc x = 1 / sin x */
+      /** csc x = 1 / sin x */
       result = (1./sin(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_CSCH:
-      /* csch x = 1 / sinh x  */
+      /** csch x = 1 / sinh x  */
       result = (1./sinh(evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_EXP:
@@ -483,7 +509,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = log(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_LOG:
-      /* log(x,y) = log10(y)/log10(x) (where x is the base)  */
+      /** log(x,y) = log10(y)/log10(x) (where x is the base)  */
       result = log10(evaluateAST(child(n,1),data)) /
 	log10(evaluateAST(child(n,0),data));
       break;
@@ -503,11 +529,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 		   (1./evaluateAST(child(n,0),data)));
       break;
     case AST_FUNCTION_SEC:
-      /* sec x = 1 / cos x */
+      /** sec x = 1 / cos x */
       result = 1./cos(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_SECH:
-      /* sech x = 1 / cosh x */
+      /** sech x = 1 / cosh x */
       result = 1./cosh(evaluateAST(child(n,0),data));
       break;
     case AST_FUNCTION_SIN:
@@ -653,7 +679,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   
   fprime = ASTNode_create();
 
-  /* check if variable x is part of formula */  
+  /** check if variable x is part of formula */  
   found = 0;
   list = ASTNode_getListOfNodes(f, (ASTNodePredicate) user_defined);
   for ( i=0; i<List_size(list); i++ ) {
@@ -678,7 +704,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
   if ( ASTNode_isNumber(f) ) { /* redundant */
     ASTNode_setReal(fprime, 0.0);
   }
-  /* variables (or time) */ 
+  /** variables (or time) */ 
   else if ( ASTNode_isName(f) ) {
     if ( strcmp(ASTNode_getName(f), x) == 0 ) { /* redundant */
       ASTNode_setReal(fprime, 1.0);    
@@ -687,7 +713,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setReal(fprime, 0.0);
     }   
   }
-  /* constants */
+  /** constants */
   else if ( ASTNode_isConstant(f) ) { /* redundant */
     switch(type) {
     case AST_CONSTANT_E:
@@ -705,7 +731,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
-  /* operators */
+  /** operators */
   else if ( ASTNode_isOperator(f) || type==AST_FUNCTION_POWER ) {
     switch(type) {
     case AST_PLUS:
@@ -731,7 +757,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 	ASTNode_free(helper);
       }
       else {
-	/* f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */
+	/** f(x)=a(x)*b(x) => f'(x) = a'*b + a*b' */
 	ASTNode_setType(fprime, AST_PLUS);    
 
 	ASTNode_addChild(fprime, ASTNode_create());
@@ -748,7 +774,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       }
       break;
     case AST_DIVIDE:
-      /* f(x)=a(x)/b(x) => f'(x) = a'/b - a/b^2*b' */    
+      /** f(x)=a(x)/b(x) => f'(x) = a'/b - a/b^2*b' */    
       ASTNode_setType(fprime, AST_MINUS);
 
       ASTNode_addChild(fprime, ASTNode_create());
@@ -776,7 +802,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       break;
     case AST_POWER:
     case AST_FUNCTION_POWER:
-      /* f(x)=a(x)^b => f'(x) = b * a^(b-1)*a' */
+      /** f(x)=a(x)^b => f'(x) = b * a^(b-1)*a' */
       /* check if variable x is part of b(x) */
       found = 0;  
       list = ASTNode_getListOfNodes(ASTNode_getChild(f, 1),
@@ -810,7 +836,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 	ASTNode_setReal(ASTNode_getChild(help_3, 1), 1.0);	
 	break;
       }
-      /* f(x)=a^b(x) => f'(x) = f * ln(a)*b' */
+      /** f(x)=a^b(x) => f'(x) = f * ln(a)*b' */
       /* check if variable x is part of a(x) */
       found = 0;  
       list = ASTNode_getListOfNodes(ASTNode_getChild(f, 0),
@@ -834,7 +860,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 	ASTNode_addChild(help_2, copyAST(ASTNode_getChild(f, 0)));
 	break;
       }
-      /* f(x)=a(x)^b(x) => f'(x)= f * ( b/a*a' + ln(a)*b' ) */
+      /** f(x)=a(x)^b(x) => f'(x)= f * ( b/a*a' + ln(a)*b' ) */
       ASTNode_setType (fprime, AST_TIMES);
       ASTNode_addChild(fprime, copyAST(f));
       ASTNode_addChild(fprime, ASTNode_create());
@@ -865,7 +891,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
     }
   }
-  /* functions */
+  /** functions */
   else if ( ASTNode_isFunction(f) || type==AST_LAMBDA ) {
     switch(type) {
     case AST_LAMBDA:
@@ -938,18 +964,18 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       fprime = sum;
       break;
     case AST_FUNCTION_ABS:                                         /* WRONG */
-      /* f(x)=abs(a(x)) => f' = sig(a)*a'
-	 CAN RESULT IN A DISCONTINUOUS FUNCTION! */ 
+      /** f(x)=abs(a(x)) => f' = sig(a)*a'
+	 WRONG: CAN RESULT IN A DISCONTINUOUS FUNCTION! */ 
       ASTNode_setType(fprime, ASTNode_getType(f)); /* WRONG !!! */
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
 
-    /* TRIGONOMETRIC FUNCTION DERIVATIVES
+    /** TRIGONOMETRIC FUNCTION DERIVATIVES
        mostly taken from
        http://www.rism.com/Trig/circular.htm and
        http://www.rism.com/Trig/hyperbol.htm */  
     case AST_FUNCTION_ARCCOS:
-      /* f(x)=arccos(a(x)) => f' = - a' / sqrt(1 - a^2)  */
+      /** f(x)=arccos(a(x)) => f' = - a' / sqrt(1 - a^2)  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  - a'  */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -977,7 +1003,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCCOSH:
-      /* f(x)=arccosh(a(x)) => f' =   a' / sqrt(a^2 - 1)  */
+      /** f(x)=arccosh(a(x)) => f' =   a' / sqrt(a^2 - 1)  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  a'  */
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
@@ -1003,7 +1029,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(child3(fprime,1,1,1), 1);
       break;
     case AST_FUNCTION_ARCCOT:
-      /* f(x)=arccot(a(x)) => f' = - a' / (1 + a^2) */
+      /** f(x)=arccot(a(x)) => f' = - a' / (1 + a^2) */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  - a'  */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1026,7 +1052,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger( child3(fprime,1,1,1), 2);     
       break;
     case AST_FUNCTION_ARCCOTH:
-      /* f(x)=arccoth(a(x)) => f' = - a' / (-1 + a^2) */
+      /** f(x)=arccoth(a(x)) => f' = - a' / (-1 + a^2) */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  - a'  */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1051,7 +1077,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger( child3(fprime,1,1,1), 2);    
       break;
     case AST_FUNCTION_ARCCSC:
-      /* f(x)=arccsc(a(x)) => f' = - a' * a * sqrt(a^2 - 1)  */
+      /** f(x)=arccsc(a(x)) => f' = - a' * a * sqrt(a^2 - 1)  */
       ASTNode_setType(fprime,AST_TIMES);
       /*  - a' * ... */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1089,7 +1115,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCCSCH:
-      /* f(x)=arccos(a(x)) => f' = - a' * a * sqrt(a^2 + 1)  */
+      /** f(x)=arccos(a(x)) => f' = - a' * a * sqrt(a^2 + 1)  */
       ASTNode_setType(fprime,AST_TIMES);
       /*  - a' * ... */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1127,7 +1153,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCSEC:
-      /* f(x)=arcsec(a(x)) => f' = a' * a * sqrt(a^2 - 1)  */
+      /** f(x)=arcsec(a(x)) => f' = a' * a * sqrt(a^2 - 1)  */
       ASTNode_setType(fprime,AST_TIMES);
       /*  a' * ... */
       ASTNode_addChild(fprime,
@@ -1163,7 +1189,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
       break;
     case AST_FUNCTION_ARCSECH:
-      /* f(x)=arcsech(a(x)) => f' = - a' * a * sqrt(1 - a^2)  */
+      /** f(x)=arcsech(a(x)) => f' = - a' * a * sqrt(1 - a^2)  */
       ASTNode_setType(fprime,AST_TIMES);
       /*  - a' * ... */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1199,7 +1225,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 			 2);
       break;
     case AST_FUNCTION_ARCSIN:
-      /* f(x)=arcsin(a(x)) => f' = a' / sqrt(1 - a^2)  */
+      /** f(x)=arcsin(a(x)) => f' = a' / sqrt(1 - a^2)  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  a'  */
       ASTNode_addChild(fprime,
@@ -1225,7 +1251,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCSINH:
-      /* f(x)=arcsinh(a(x)) => f' = a' / sqrt(1 + a^2)  */
+      /** f(x)=arcsinh(a(x)) => f' = a' / sqrt(1 + a^2)  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  a'  */
       ASTNode_addChild(fprime,
@@ -1251,7 +1277,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 2);
       break;
     case AST_FUNCTION_ARCTAN:
-      /* f(x)=atan(a(x)) => f' = a' / (1 + a^2) */
+      /** f(x)=atan(a(x)) => f' = a' / (1 + a^2) */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  a'  */
       ASTNode_addChild(fprime,
@@ -1272,7 +1298,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger( child3(fprime,1,1,1), 2);    
       break;
     case AST_FUNCTION_ARCTANH:
-      /* f(x)=atan(a(x)) => f' = a' / (1 - a^2) */
+      /** f(x)=atan(a(x)) => f' = a' / (1 - a^2) */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  a'  */
       ASTNode_addChild(fprime,
@@ -1293,12 +1319,12 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger( child3(fprime,1,1,1), 2);     
       break;
     case AST_FUNCTION_CEILING:
-      /* f(x) = ceil(a(x)) */
+      /** f(x) = ceil(a(x)) */
       ASTNode_setType(fprime, ASTNode_getType(f));
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COS:
-      /* f(x)=cos(a(x)) => f' = a' * -sin(a) */   
+      /** f(x)=cos(a(x)) => f' = a' * -sin(a) */   
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
@@ -1310,7 +1336,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COSH:
-      /* f(x)=cosh(a(x)) => f' = a' * -sinh(a) */   
+      /** f(x)=cosh(a(x)) => f' = a' * -sinh(a) */   
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
@@ -1322,7 +1348,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COT:
-      /* f(x)=cot(a(x)) => f' = - a' / (sin(a))^2 */
+      /** f(x)=cot(a(x)) => f' = - a' / (sin(a))^2 */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  - a'  */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1343,7 +1369,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(child2(fprime,1,1), 2);  
       break;
     case AST_FUNCTION_COTH:
-      /* f(x)=cot(a(x)) => f' = - a' / (sinh(a))^2 */
+      /** f(x)=cot(a(x)) => f' = - a' / (sinh(a))^2 */
       ASTNode_setType(fprime,AST_DIVIDE);
       /*  - a'  */
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1364,7 +1390,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(child2(fprime,1,1), 2);  
       break;  
     case AST_FUNCTION_CSC:
-      /* f(x)=csc(a(x)) => f' = - a' * csc(a) * cot(a) */
+      /** f(x)=csc(a(x)) => f' = - a' * csc(a) * cot(a) */
       /* - a' * ... */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1386,7 +1412,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));
       break;
     case AST_FUNCTION_CSCH:
-      /* f(x)=csch(a(x)) => f' = - a' * csch(a) * coth(a) */
+      /** f(x)=csch(a(x)) => f' = - a' * csch(a) * coth(a) */
       /* - a' * ... */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1414,7 +1440,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
        ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_EXP:
-      /* f(x)=e^a(x) =>  f' = e^a * a'  */
+      /** f(x)=e^a(x) =>  f' = e^a * a'  */
       ASTNode_setType(fprime, AST_TIMES);
       ASTNode_addChild(fprime, copyAST(f));
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
@@ -1426,12 +1452,13 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_FLOOR:                                       /* WRONG */
-      /* f(x) = floor(a(x)) */
+      /** f(x) = floor(a(x))
+           WRONG: CAN RESULT IN A DISCONTINUOUS FUNCTION! */
       ASTNode_setType(fprime, ASTNode_getType(f));
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_LN:
-      /* f(x)=ln(a(x)) => f' = 1 / a * a' */
+      /** f(x)=ln(a(x)) => f' = 1 / a * a' */
       ASTNode_setType (fprime, AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f, 0), x));
@@ -1443,7 +1470,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setReal (help_2, 1.0);    
       break;
     case AST_FUNCTION_LOG:
-    /* f(x)=log(b,x) = 1/ln(b)*ln(x)
+    /** f(x)=log(b,x) = 1/ln(b)*ln(x)
        differentiate ln(x)! */
       ASTNode_setType (fprime, AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
@@ -1471,7 +1498,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setName(fprime, "differentiation_failed");
       break;
     case AST_FUNCTION_ROOT:
-      /* f(x)=root(a(x),b(x)) = a(x)^(1/b(x))
+      /** f(x)=root(a(x),b(x)) = a(x)^(1/b(x))
 	 differentiate this! */
       helper = ASTNode_create();
       ASTNode_setType (helper, AST_FUNCTION_POWER);
@@ -1488,7 +1515,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_free(helper);
       break;
     case AST_FUNCTION_SEC:
-      /* f(x)=sec(a(x)) => f' = a' * sec(a) * tan(x) */
+      /** f(x)=sec(a(x)) => f' = a' * sec(a) * tan(x) */
       /* a' * ... */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
@@ -1507,7 +1534,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));		         
       break;
     case AST_FUNCTION_SECH:
-      /* f(x)=sech(a(x)) f' = - a' * sech(a) * tanh(a)  */
+      /** f(x)=sech(a(x)) f' = - a' * sech(a) * tanh(a)  */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
@@ -1528,7 +1555,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
 		       copyAST(ASTNode_getChild(f,0)));    
       break;
     case AST_FUNCTION_SIN:
-      /* f(x)=sin(a(x)) => f' = a' * cos(a) */
+      /** f(x)=sin(a(x)) => f' = a' * cos(a) */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_COS);
@@ -1537,7 +1564,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_SINH:
-      /* f(x)=sinh(a(x)) => f' = a' * cosh(a) */    
+      /** f(x)=sinh(a(x)) => f' = a' * cosh(a) */    
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
       ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_COSH);
@@ -1546,7 +1573,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_TAN:
-      /* f(x)= tan(a(x)) => f' = a' / (cos(a))^2  */
+      /** f(x)= tan(a(x)) => f' = a' / (cos(a))^2  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /* a' */
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
@@ -1564,7 +1591,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {
       ASTNode_setInteger(child2(fprime,1,1), 2);        
       break;
     case AST_FUNCTION_TANH:
-      /* f(x)= tanh(a(x)) => f' = a' / (cosh(a))^2  */
+      /** f(x)= tanh(a(x)) => f' = a' / (cosh(a))^2  */
       ASTNode_setType(fprime,AST_DIVIDE);
       /* a' */
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
@@ -1761,24 +1788,31 @@ ASTNode_cutRoot(ASTNode_t *old) {
   return new;
 }
 
+/** @} */
+
 /* ------------------------------------------------------------------------ */
+
+/*! \addtogroup simplifyAST AST Simplification */
+/*@{*/
 
 /** The function simplifyAST(f) takes an AST f,
    simplifies (arithmetic) operations involving 0 and 1 and decomposes
    n-ary `times' and `plus' nodes into an AST of binary AST.
    
-   -0 -> 0
-   x+0 -> x, 0+x -> x
-   x-0 -> x, 0-x -> -x
-   x*0 -> 0, 0*x -> 0, x*1 -> x, 1*x -> x
-   0/x -> 0, x/1 -> x
-   x^0 -> 1, x^1 -> x, 0^x -> 0, 1^x -> 1
+   -0 -> 0;
+   x+0 -> x, 0+x -> x;
+   x-0 -> x, 0-x -> -x;
+   x*0 -> 0, 0*x -> 0, x*1 -> x, 1*x -> x;
+   0/x -> 0, x/1 -> x;
+   x^0 -> 1, x^1 -> x, 0^x -> 0, 1^x -> 1;
+   
    propagates unary minuses
-   - -x -> x
-   -x + -y -> -(x+y), -x + y -> y-x,    x + -y -> x-y
-   -x - -y -> y-x,    -x - y -> -(x+y), x - -y -> x+y
-   -x * -y -> x*y,    -x * y -> -(x*y), x * -y -> -(x*y)
-   -x / -y -> x/y,    -x / y -> -(x/y), x / -y -> -(x/y)
+   - -x -> x;
+   -x + -y -> -(x+y), -x + y -> y-x,    x + -y -> x-y;
+   -x - -y -> y-x,    -x - y -> -(x+y), x - -y -> x+y;
+   -x * -y -> x*y,    -x * y -> -(x*y), x * -y -> -(x*y);
+   -x / -y -> x/y,    -x / y -> -(x/y), x / -y -> -(x/y);
+   
    calls evaluateAST(subtree),
    if no variables or user-defined functions occur in the AST subtree,
    calls itself recursively for childnodes,

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:00:24 raim>
-  $Id: odeConstruct.c,v 1.22 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 01:47:11 raim>
+  $Id: odeConstruct.c,v 1.23 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -67,11 +67,11 @@ static void Model_copyAssignmentRules(Model_t *m, Model_t*ode);
 
 
 /** C: Construct an ODE system from a Reaction Network
-    constructs an ODE systems of the reaction network
-    of the passed model `m' 
-    and returns a new SBML model `ode', that only
-    consists of RateRules, representing ODEs.
-    See comments at steps C.1-C.5 for details
+    
+    constructs an ODE systems of the reaction network of the passed
+    model `m' and returns a new SBML model `ode', that only consists
+    of RateRules, representing ODEs.  See comments at steps C.1-C.5
+    for details
 */
 
 SBML_ODESOLVER_API Model_t*
@@ -82,17 +82,17 @@ Model_reduceToOdes(Model_t *m) {
   
   errors = 0;
 
-  /* C.1: Initialize a new model */  
+  /** C.1: Initialize a new model */  
   ode = Model_copyInits(m);
 
-  /* C.2: Copy predefined ODES (RateRules) and
+  /** C.2: Copy predefined ODES (RateRules) and
      create rate rules from reactions */
   Model_copyOdes(m, ode);
 
-  /* !!! supress ODE construction for algebraic rule
+  /** !!! supress ODE construction for algebraic rule
          defined variables !!! */
   
-  /* C.3: Create ODEs from reactions */
+  /** C.3: Create ODEs from reactions */
   errors = Model_createOdes(m, ode);
 
   if ( errors>0 ) {
@@ -101,7 +101,7 @@ Model_reduceToOdes(Model_t *m) {
 		      "ODE model could not be constructed");
   }
   
-  /* C.4: Copy incompatible SBML structures     
+  /** C.4: Copy incompatible SBML structures     
      The next steps will copy remaining definitions that can't be
       simplified, i.e. expressed in a system of ODEs, to the new model.
       They will also store warning and error messages, if these
@@ -110,23 +110,23 @@ Model_reduceToOdes(Model_t *m) {
       copied, only for printing out results.
    */
   
-  /* C.4a: Copy events to new model and create warning */
+  /** C.4a: Copy events to new model and create warning */
   Model_copyEvents(m, ode);
 
-  /* C.4.b: Copy AlgebraicRules to new model and create error */
+  /** C.4.b: Copy AlgebraicRules to new model and create error */
   Model_copyAlgebraicRules(m, ode);
 
-  /* C.4.c: Copy Assignment Rules to new model */
+  /** C.4.c: Copy Assignment Rules to new model */
   Model_copyAssignmentRules(m, ode);
     
-  /* C.5: replace function definitions in all formulas */
+  /** C.5: replace function definitions in all formulas */
   ODE_replaceFunctionDefinitions(ode);
     
   return ode;
 }
 
 
-/* C.1: Initialize a new model from an input model
+/* Initialize a new model from an input model
    Creates a new SBML model and copies
    compartments, species and parameters from the passed model */ 
 static Model_t *
@@ -332,11 +332,27 @@ static int Model_createOdes(Model_t *m, Model_t *ode) {
 }
 
 
-/** C.3.a: Creates and ODE for a species from its reactions
+/** Creates and ODE for a species from its reactions
+    
     This function takes a species and a model, constructs and ODE for
     that species from all the reaction it appears in as either reactant
-    or modifier. It directly constructs an Abstract Syntax Tree (AST)
-    and returns a pointer to it.
+    or product. Local kinetic Law parameters are replaced by their value.
+    It directly constructs an Abstract Syntax Tree (AST) and returns a
+    pointer to it. 
+
+    In one of the next releases this function will take additional
+    arguments:
+
+    a listOfParameter, which will allow to `globalize' local
+    parameters (e.g. for sensitivity analysis for local parameters)
+
+    and
+
+    a listOfRules, which will allow to convert kineticLaws to assignment
+    rules. The ODEs will then only consist of stoichiometry and a
+    parameter. As a kinetic Law appears in all ODEs of the reaction,
+    this will significantly reduce the time for numerical evalution of
+    the ODE system and thus improve the performance of integration routines.
 */
 
 SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
@@ -371,10 +387,9 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 		  Species_getId(s)) == 0 ) {
 	if ( kl != NULL ) {
 
-	  /** Construct expression for reactant
-	      by multiplying the kinetic law
-	      with stoichiometry (math) and putting
-	      a minus in front of it
+	  /* Construct expression for reactant by multiplying the
+	      kinetic law with stoichiometry (math) and putting a
+	      minus in front of it
 	  */
 	  if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
 	    reactant = ASTNode_create();
@@ -530,8 +545,8 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
       but are not defined as constant or boundarySpecies, set ODE to 0.
     */
     ode = ASTNode_create();
-    ASTNode_setInteger(ode, 0); /*!!! change for DAE models should be defined
-				      by algebraic rule!*/
+    ASTNode_setInteger(ode, 0); /*  !!! change for DAE models should
+				      be defined by algebraic rule!*/
   }
 
   simple = simplifyAST(ode);
@@ -729,7 +744,7 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
 
 
 
-/** Returns the value from a compartment, species or parameter
+/** Returns the value of a compartment, species or parameter
     with the passed ID
 */
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:03:39 raim>
-  $Id: integratorInstance.c,v 1.45 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 01:31:38 raim>
+  $Id: integratorInstance.c,v 1.46 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -354,7 +354,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance
 
 /**  \brief Prints the current time, the value of parameter p and 
      all variable's sensitivities Si to p, where
-     i = 1 .\.\.\ NEQ
+     i = 1 to NEQ
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *engine, variableIndex_t *p)

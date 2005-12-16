@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:07:40 raim>
-  $Id: integratorSettings.c,v 1.16 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 02:12:25 raim>
+  $Id: integratorSettings.c,v 1.17 2005/12/16 01:25:08 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,7 @@
  * Contributor(s):
  *
  */
-/*! \defgroup setttings Settings
+/*! \defgroup setttings Integrator Settings
     \ingroup integration 
     \brief This module contains all functions to set integration options
     in integratorSettings
@@ -53,7 +53,45 @@ static int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *, int);
 
 
 /** Creates a settings structure with default values
-    Time = 1 and Printstep = 10
+
+DEFAULT INTEGRATION SETTINGS ARE
+
+1) CVODE SPECIFIC SETTINGS:
+
+absolute error tolerance for each output time:   1e-18
+
+relative error tolerance for each output time:   1e-10
+
+max. nr. of steps to reach next output time:     10000
+
+Nonlinear solver method:                         0: BDF
+
+          Maximum Order:                         5
+
+Iteration method:                                0: NEWTON
+
+Sensitivity:                                     0: no
+
+     method:                                     0: simultaneous
+
+2) SOSlib SPECIFIC SETTINGS:
+
+Jacobian matrix: 1: generate Jacobian
+
+Indefinitely:    0: finite integration
+
+Event Handling:  0: keep integrating
+
+Steady States:   0: keep integrating
+
+Store Results:   1: store results (only for finite integration)
+
+3) TIME SETTINGS:
+
+endtime: 1
+
+steps:   10
+
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
@@ -166,11 +204,15 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
   ASSIGN_NEW_MEMORY(clone, struct cvodeSettings, NULL);
     
   /* Setting SBML ODE Solver integration parameters */
-  CvodeSettings_setErrors(set, set->Error, set->RError, set->Mxstep);
-  CvodeSettings_setSwitches(set, set->UseJacobian, set->Indefinitely,
+  CvodeSettings_setErrors(clone, set->Error, set->RError, set->Mxstep);
+  CvodeSettings_setSwitches(clone, set->UseJacobian, set->Indefinitely,
 			    set->HaltOnEvent, set->SteadyState,
 			    set->StoreResults,
 			    set->Sensitivity, set->SensMethod);
+
+  CvodeSettings_setMethod(clone, CvodeSettings_getMethod(set));
+  CvodeSettings_setMaxOrder(clone, CvodeSettings_getMaxOrder(set));
+  CvodeSettings_setIterMethod(clone, CvodeSettings_getIterMethod(set);
   
   /* Unless indefinite integration is chosen, generate a TimePoints array  */
   if  ( !clone->Indefinitely ) {    
