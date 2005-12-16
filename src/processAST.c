@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:55:40 raim>
-  $Id: processAST.c,v 1.31 2005/12/16 16:00:55 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 18:03:36 raim>
+  $Id: processAST.c,v 1.32 2005/12/16 17:35:55 raimc Exp $
 */
 /* 
  *
@@ -77,11 +77,17 @@ double atanh(double x)
 }
 #endif /* WIN32 */
 
-/*
- * function pointer to user defined function
- */
-static double 
-(*UsrDefFunc)(char*, int, double*) = NULL;
+
+/* local functions  */
+
+static int user_defined(ASTNode_t *node);
+static int zero(ASTNode_t *f);
+static int one(ASTNode_t *f); 
+static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old);
+
+
+/* function pointer to user defined function */
+static double (*UsrDefFunc)(char*, int, double*) = NULL;
 
 /** 
  * Sets function pointer for  user defined function to udf
@@ -2094,7 +2100,7 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f) {
 
 /* logical predicate that checks if ASTNode is a user-defined variable name,
    (or time), or a user defined function */
-int user_defined(ASTNode_t *node) {
+static int user_defined(ASTNode_t *node) {
   if ( ASTNode_isName(node) || ASTNode_getType(node)==AST_FUNCTION )
     return 1;
   return 0;
@@ -2103,7 +2109,7 @@ int user_defined(ASTNode_t *node) {
 
 /* ------------------------------------------------------------------------ */
 
-int zero(ASTNode_t *f) {
+static int zero(ASTNode_t *f) {
   if ( ASTNode_isReal(f) ) {
     return (ASTNode_getReal(f)==0.0);
   }
@@ -2115,7 +2121,7 @@ int zero(ASTNode_t *f) {
 
 /* ------------------------------------------------------------------------ */
 
-int one(ASTNode_t *f) {
+static int one(ASTNode_t *f) {
   if ( ASTNode_isReal(f) ) {
     return (ASTNode_getReal(f)==1.0);
   }
@@ -2127,8 +2133,7 @@ int one(ASTNode_t *f) {
 
 /* ------------------------------------------------------------------------ */
 
-ASTNode_t *
-ASTNode_cutRoot(ASTNode_t *old) {
+static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old) {
   ASTNode_t *new;
   new = copyAST(ASTNode_getChild(old, 0));
   ASTNode_free(old);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:05:39 raim>
-  $Id: sbmlResults.c,v 1.15 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-16 18:30:31 raim>
+  $Id: sbmlResults.c,v 1.16 2005/12/16 17:35:55 raimc Exp $
 */
 /* 
  *
@@ -34,8 +34,9 @@
  */
 /*! \defgroup sbmlResults SBML Results Interface
     \ingroup odeSolver
+    
     \brief This module contains interfaces to the results structures
-    returned by the high level interface to SOSlib
+    returned by the high level interfaces to SOSlib
 
 */
 /*@{*/
@@ -57,7 +58,7 @@ static void TimeCourseArray_free(timeCourseArray_t *);
 static timeCourse_t *TimeCourse_create(int timepoints);
 static void TimeCourse_free(timeCourse_t *);
 static timeCourse_t *TimeCourseArray_getTimeCourse(const char *, timeCourseArray_t *);
-static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *time);
+static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *);
 
 
 /*** results as returned by _odeSolver ***/
