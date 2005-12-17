@@ -40,7 +40,7 @@ SHORT INSTALLATION INFORMATION:
  available, and detailed instructions to use these or how
  to build SOSlib from source under Windows in the folder
  Win32 or online at
- http://www.tbi.univie.ac.at/~raim/odeSolver/new/doc/installWin.html
+ http://www.tbi.univie.ac.at/~raim/odeSolver/doc/installWin.html
 
  NOTES FOR INSTALLATION FROM CVS VERSION:
  If you have checked out from our sourceforge CVS please
