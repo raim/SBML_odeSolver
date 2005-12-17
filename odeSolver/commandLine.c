@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 15:28:35 raim>
-  $Id: commandLine.c,v 1.15 2005/12/01 19:02:34 raimc Exp $
+  Last changed Time-stamp: <2005-12-17 19:51:13 raim>
+  $Id: commandLine.c,v 1.16 2005/12/17 19:00:11 raimc Exp $
 */
 /* 
  *
@@ -443,6 +443,7 @@ int integrator(integratorInstance_t *engine,
 	       int PrintMessage, int PrintOnTheFly, FILE *outfile)
 {
   int i, j;
+  odeModel_t *om = engine->om;
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
   
@@ -450,28 +451,39 @@ int integrator(integratorInstance_t *engine,
       print initial values, if on-the-fly printint is set
  */
   if ( PrintOnTheFly && data->run == 1 ) {
-    fprintf(stderr, "\nPrinting results on the fly !\n");
+    fprintf(stderr,
+	    "\nPrinting concentrations or sensitivities on the fly !\n");
     fprintf(stderr, "Overruling all other print options!!\n\n");
     
-    fprintf(outfile, "#t ");
-    for ( i=0; i<data->nvalues; i++ )
-      fprintf(outfile, "%s ", data->model->names[i]);
-    fprintf(outfile, "\n");
-
-    fprintf(outfile, "%g ", solver->t0);
-    for ( i=0; i<data->nvalues; i++ )
-      fprintf(outfile, "%g ", data->value[i]);
-    fprintf(outfile, "\n");
     
+    /* print sensitivities */
     if ( Opt.Sensitivity && data->sensitivity != NULL ) {
-      for ( j=0; j<data->nsens; j++ ) {
-	fprintf(outfile, "#%s ",
-		data->model->names[data->model->index_sens[j]]);
-	for ( i=0; i<data->neq; i++ ) {	
+      
+      fprintf(outfile, "##SENSITIVITIES\n");
+      fprintf(outfile, "#t ");
+      for ( i=0; i<om->neq; i++ ) 
+	for ( j=0; j<om->nsens; j++ )
+	  fprintf(outfile, "d%s/%s ",
+		  om->names[i], om->names[om->index_sens[j]]);
+      fprintf(outfile, "\n");
+       
+      for ( i=0; i<om->neq; i++ ) 
+	for ( j=0; j<om->nsens; j++ )
 	  fprintf(outfile, "%g ", data->sensitivity[i][j]);
-	}
-	fprintf(outfile, "\n");
-      }
+      fprintf(outfile, "\n");
+    }
+    /* print concentrations */
+    else {
+      
+      fprintf(outfile, "##CONCENTRATIONS\n");
+      fprintf(outfile, "#t ");      
+      for ( i=0; i<data->nvalues; i++ )
+	fprintf(outfile, "%s ", om->names[i]);
+      fprintf(outfile, "\n");
+
+      fprintf(outfile, "%g ", solver->t0);
+      for ( i=0; i<data->nvalues; i++ )
+	fprintf(outfile, "%g ", data->value[i]);
       fprintf(outfile, "\n");
     }
   }
@@ -500,23 +512,27 @@ int integrator(integratorInstance_t *engine,
     */
  
     if ( PrintOnTheFly ) {
-      fprintf(outfile, "%g ", solver->t);
-      for ( i=0; i<engine->data->nvalues; i++ )
-	fprintf(outfile, "%g ", engine->data->value[i]);
-      fprintf(outfile, "\n");
-      
+
+      /* print sensitivities */
       if ( Opt.Sensitivity && data->sensitivity != NULL ) {
-	for ( j=0; j<data->nsens; j++ ) {
-	  fprintf(outfile, "#%s ",
-		  data->model->names[data->model->index_sens[j]]);
-	  for ( i=0; i<data->neq; i++ ) {	
+
+	fprintf(outfile, "%g ", solver->t);
+	for ( i=0; i<data->neq; i++ ) 
+	  for ( j=0; j<data->nsens; j++ ) 
 	    fprintf(outfile, "%g ", data->sensitivity[i][j]);
-	  }
-	  fprintf(outfile, "\n");
-	}
 	fprintf(outfile, "\n");
+
       }
-    }  
+      /* print concentrations */
+      else {
+	
+	fprintf(outfile, "%g ", solver->t);
+	for ( i=0; i<engine->data->nvalues; i++ )
+	  fprintf(outfile, "%g ", engine->data->value[i]);
+	fprintf(outfile, "\n");
+	
+      }
+    }
     else if ( PrintMessage ) {
       const  char chars[5] = "|/-\\";
       fprintf(stderr, "\b\b\b\b\b\b");
@@ -525,10 +541,31 @@ int integrator(integratorInstance_t *engine,
 	      chars[(solver->iout-1) % 4]);
     }
   }
-  if ( !PrintOnTheFly && PrintMessage ) {
-    fprintf(stderr,
-	    "finished. Results stored.\n");
+  
+  if ( PrintOnTheFly && data->run == 1 ) {
+    
+    fprintf(outfile, "#t ");
+    /* print sensitivities */
+    if ( Opt.Sensitivity && data->sensitivity != NULL ) {
+      
+      for ( i=0; i<om->neq; i++ ) 
+	for ( j=0; j<om->nsens; j++ )
+	  fprintf(outfile, "d%s/%s ",
+		  om->names[i], om->names[om->index_sens[j]]);
+      fprintf(outfile, "\n");
+      fprintf(outfile, "##SENSITIVITIES\n");
+    }
+    /* print concentrations */
+    else {
+
+      for ( i=0; i<data->nvalues; i++ )
+	fprintf(outfile, "%s ", om->names[i]);
+      fprintf(outfile, "\n");
+      fprintf(outfile, "##CONCENTRATIONS\n");
+    }
   }
+  else if ( PrintMessage )
+    fprintf(stderr, "finished. Results stored.\n");
 
   return 0;
 
