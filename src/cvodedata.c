@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-29 17:47:15 raim>
-  $Id: cvodedata.c,v 1.22 2005/11/29 18:28:27 raimc Exp $
+  Last changed Time-stamp: <2005-12-17 00:18:50 raim>
+  $Id: cvodedata.c,v 1.23 2005/12/17 13:40:59 raimc Exp $
 */
 /* 
  *
@@ -32,6 +32,15 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
+
+/*! \defgroup cvodeData Integration Results Interface:  x(t)
+    \ingroup integration 
+    \brief This module contains the functions to create input data
+    for formula evaluation and retrieve results from integration
+    
+
+*/
+/*@{*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,6 +169,100 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 
 }
 
+/** Frees cvodeData
+*/
+
+SBML_ODESOLVER_API void CvodeData_free(cvodeData_t * data) {
+  
+  if(data == NULL)
+    return;
+  
+  CvodeData_freeStructures(data);
+  free(data);
+
+}
+
+
+/** Returns the number of time points for which results exist
+*/
+
+SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *results)     
+{
+  return results->nout + 1;
+}
+
+/** Returns the time point number n, where 0 <= n < CvodeResults_getNout
+*/
+
+SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *results, int n)
+{
+  return results->time[n];
+}
+
+
+/** Returns the value of a variable or parameter of the odeModel
+    at time step timestep via its variableIndex, where
+    0 <= timestep < CvodeResults_getNout,
+    and the variableIndex can be retrieved from the input odeModel
+*/
+
+SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variableIndex_t *vi, int timestep)
+{
+  return results->value[vi->index][timestep];
+}
+
+
+/** Returns the sensitivity of ODE variable y to parameter p
+    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
+
+    Must not be called, if sensitivity wasn't calculated!
+*/
+
+SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int parameter, int timestep)
+{
+  return results->sensitivity[value][parameter][timestep];
+  /*!!! will need  adaptation to selected sens.analysis !!!*/
+}
+
+
+/** Returns the sensitivity of ODE variable y to parameter p
+    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
+
+    Must not be called, if sensitivity wasn't calculated!
+*/
+
+SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *p, int timestep)
+{
+  return results->sensitivity[y->index][p->type_index][timestep];
+  /*!!! will need  adaptation to selected sens.analysis !!!*/
+}
+
+
+/** Frees results structure cvodeResults filled by the
+    CVODE integrator
+*/
+SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
+
+  int i, j;
+  /* free CVODE results if filled */
+  if(results != NULL){
+    for( i=0; i<results->nvalues; i++ ) 
+      free(results->value[i]);
+    free(results->time);
+    free(results->value);
+    if ( results->sensitivity != NULL ) {
+      for ( i=0; i<results->neq; i++ ) {
+	for ( j=0; j<results->nsens; ++j )
+	  free(results->sensitivity[i][j]);
+	free(results->sensitivity[i]);
+      }
+      free(results->sensitivity);
+    }
+    free(results);	      
+  }
+}
+
+ /*! @} */
 
 /* initialize cvodeData from cvodeSettings and odeModel (could be
    separated in to functions to further support modularity and
@@ -271,19 +374,6 @@ static void CvodeData_freeStructures(cvodeData_t * data)
 }
 
 
-/** Frees cvodeData, as created by IntegratorInstance
-*/
-
-void CvodeData_free(cvodeData_t * data) {
-  
-  if(data == NULL)
-    return;
-  
-  CvodeData_freeStructures(data);
-  free(data);
-
-}
-
 
 /********* cvodeResults will be created by integration runs *********/
 
@@ -329,84 +419,5 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
   
   return results;  
 }
-
-
-/** Returns the number of time points for which results exist
-*/
-
-SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *results)     
-{
-  return results->nout + 1;
-}
-
-/** Returns the time point number n, where 0 <= n < CvodeResults_getNout
-*/
-
-SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *results, int n)
-{
-  return results->time[n];
-}
-
-
-/** Returns the value of a variable or parameter of the odeModel
-    at time step timestep via its variableIndex, where
-    0 <= timestep < CvodeResults_getNout,
-    and the variableIndex can be retrieved from the input odeModel
-*/
-
-SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variableIndex_t *vi, int timestep)
-{
-  return results->value[vi->index][timestep];
-}
-
-
-/** Returns the sensitivity of ODE variable y to parameter p
-    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
-
-    Must not be called, if sensitivity wasn't calculated!
-*/
-
-SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int parameter, int timestep)
-{
-  return results->sensitivity[value][parameter][timestep];
-}
-
-
-/** Returns the sensitivity of ODE variable y to parameter p
-    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
-
-    Must not be called, if sensitivity wasn't calculated!
-*/
-
-SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *p, int timestep)
-{
-  return results->sensitivity[y->index][p->type_index][timestep];
-}
-
-
-/** Frees results structure cvodeResults filled by the
-    CVODE integrator
-*/
-void CvodeResults_free(cvodeResults_t *results) {
-
-  int i, j;
-  /* free CVODE results if filled */
-  if(results != NULL){
-    for( i=0; i<results->nvalues; i++ ) 
-      free(results->value[i]);
-    free(results->time);
-    free(results->value);
-    if ( results->sensitivity != NULL ) {
-      for ( i=0; i<results->neq; i++ ) {
-	for ( j=0; j<results->nsens; ++j )
-	  free(results->sensitivity[i][j]);
-	free(results->sensitivity[i]);
-      }
-      free(results->sensitivity);
-    }
-    free(results);	      
-  }
-}
-
 
 /* End of file */
