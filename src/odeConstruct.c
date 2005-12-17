@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 11:10:46 raim>
-  $Id: odeConstruct.c,v 1.24 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2005-12-17 19:22:57 raim>
+  $Id: odeConstruct.c,v 1.25 2005/12/17 19:30:35 raimc Exp $
 */
 /* 
  *
@@ -364,7 +364,6 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
   Reaction_t *r;
   SpeciesReference_t *sref;
   KineticLaw_t *kl;
-  Compartment_t *c;
   ASTNode_t *simple, *ode, *tmp, *reactant;
 
   errors = 0;
@@ -501,45 +500,16 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
      If formula is empty skip division by compartment and set formula
      to 0.  The latter case can happen, if a species is neither
      constant nor a boundary condition but appears only as a modifier
-     in reactions.  The rate for such species is set to 0. */
+     in reactions. The rate for such species is set to 0. */
 
   if( ode != NULL ) {
-    for ( j=0; j<Model_getNumCompartments(m); j++ ) {
-      c = Model_getCompartment(m,j);
-      if ( strcmp(Compartment_getId(c), Species_getCompartment(s)) == 0 ) {
-	if ( Compartment_getConstant(c) ) {
-	  if ( Compartment_getSize(c) != 1 ) {
-	    tmp = copyAST(ode);
-	    ASTNode_free(ode);
-	    ode = ASTNode_create();
-	    ASTNode_setCharacter(ode, '/');
-	    ASTNode_addChild(ode, tmp);
-	    ASTNode_addChild(ode, ASTNode_create());
-	    ASTNode_setReal(ASTNode_getChild(ode,1),
-			    Compartment_getSize(c));
-	  }
-	}
-	else if ( !(Compartment_getConstant(c)) ) {
-	  tmp = copyAST(ode);
-	  ASTNode_free(ode);
-	  ode = ASTNode_create();
-	  ASTNode_setCharacter(ode, '/');
-	  ASTNode_addChild(ode, tmp);
-	  ASTNode_addChild(ode, ASTNode_create());
-	  ASTNode_setName(ASTNode_getChild(ode,1),
-			  Compartment_getId(c));
-	}
-      }
-      /*       tmp = copyAST(ode); */
-      /* 	  ASTNode_free(ode); */
-      /* 	  ode = ASTNode_create(); */
-      /* 	  ASTNode_setCharacter(ode, '/'); */
-      /* 	  ASTNode_addChild(ode, tmp); */
-      /* 	  ASTNode_addChild(ode, ASTNode_create()); */
-      /* 	  ASTNode_setName(ASTNode_getChild(ode,1), */
-      /* 			  Compartment_getId(c)); */
-      /*  } */
-    }	 
+    tmp = copyAST(ode);
+    ASTNode_free(ode);
+    ode = ASTNode_create();
+    ASTNode_setCharacter(ode, '/');
+    ASTNode_addChild(ode, tmp);
+    ASTNode_addChild(ode, ASTNode_create());
+    ASTNode_setName(ASTNode_getChild(ode,1), Species_getCompartment(s));
   }
   else {
     /*
