@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:28:47 raim>
-  $Id: ParameterScanner.c,v 1.7 2005/12/16 15:29:18 raimc Exp $
+  Last changed Time-stamp: <2005-12-17 13:10:00 raim>
+  $Id: ParameterScanner.c,v 1.8 2005/12/17 12:10:56 raimc Exp $
 */
 /* 
  *
@@ -40,12 +40,12 @@
 #include "sbmlsolver/solverError.h"
 
 void DumpState(
-    integratorInstance_t *ii, double parameter, variableIndex_t *v)
+    integratorInstance_t *ii, variableIndex_t *p, variableIndex_t *v)
 {
     printf(
         " %g %g %g\n", 
         IntegratorInstance_getTime(ii),
-        parameter,
+        IntegratorInstance_getVariableValue(ii, p),
         IntegratorInstance_getVariableValue(ii, v));
 }
 
@@ -111,7 +111,7 @@ int doit(int argc, char *argv[])
     parameterVI = ODEModel_getVariableIndex(model, parameterStr);
     RETURN_ON_ERRORS_WITH(1);
     
-    CvodeSettings_setIndefinitely(settings, 1);     /* run without a defined end time */
+    CvodeSettings_setIndefinitely(settings, 1);    /* run without a defined end time */
     CvodeSettings_setTime(settings, timeStepLength, 1);          /*  end time is the step size - Indefinitely == 1 */
     CvodeSettings_setError(settings, errorTolerance);         /* absolute tolerance in Cvode integration */
     CvodeSettings_setRError(settings, relativeErrorTolerance);        /* relative tolerance in Cvode integration */
@@ -133,7 +133,7 @@ int doit(int argc, char *argv[])
         RETURN_ON_ERRORS_WITH(1);
 
         IntegratorInstance_setVariableValue(integratorInstance, parameterVI, parameter);
-        DumpState(integratorInstance, parameter, speciesVI);
+        DumpState(integratorInstance, parameterVI, speciesVI);
 
         for (i=0; i != numberOfTimeSteps && !error; i++)
         {
@@ -146,7 +146,7 @@ int doit(int argc, char *argv[])
                 error = 1;
             }
             else
-                DumpState(integratorInstance, parameter, speciesVI);
+                DumpState(integratorInstance, parameterVI, speciesVI);
         }
         IntegratorInstance_free(integratorInstance);
         printf("\n");
