@@ -35,6 +35,18 @@ Solution: pass optional listOfRules/listOfParameters to odeFromReactions
           and convert kineticLaws to parameter and rule!
           Then add the new rules/parameters to the ode model
 
+Problem:  kinetic law types, encoded as sboTerms in SBML L2V2, 
+          as currently discussed by the sbml community,
+          could be evaluated in a hard coded form, which might be faster 
+	  then our current approach
+Solution: setUserDefinedFunction (in processAST.c) could be used to 
+          set hard-coded evaluation for sboTerms encoding certain pre-
+	  defined kinetic laws. The ODEs could then either contain directly
+	  the sboTerm or this approach could be combined with above
+	  suggestion of using `globalized' kinetic laws as assignment
+	  rules. These assignment rules could then contain the udf 
+	  function call.
+
 Problem:  Constant Parameters need to stay in the formulae, for later
           setting with IntegratorInstance_setVariable, as well as for
           arbitrary sensitivity analysis
