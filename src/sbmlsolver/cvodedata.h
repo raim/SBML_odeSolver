@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 18:01:25 raim>
-  $Id: cvodedata.h,v 1.27 2005/12/21 17:02:53 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 18:09:54 raim>
+  $Id: cvodedata.h,v 1.28 2005/12/21 17:12:45 raimc Exp $
 */
 /* 
  *
@@ -82,6 +82,10 @@ struct cvodeResults {
     a specific integration run and current (on or off) states of event
     triggers and of steady state approximation and the number of integration
     runs with this instance of cvodeData.
+
+    API Interface functions to retrieve values directly from cvodeData,
+    instead of via IntegratorInstance_getVariableValue()) will be available
+    in one of the next releases!
 */
 struct cvodeData {
 
@@ -104,7 +108,7 @@ struct cvodeData {
 
   /* current sensitivities: dx(t)/dp */
   int nsens;            /**< number of sensitivities */
-  double **sensitivity; /**< current values of sensitivities d[Y(t)]/dP */
+  double **sensitivity; /**< current values of sensitivities dx(t)/dp */
   /** current values of parameters in sensitivity analysis, required
       and filled only if no r.h.s function fS is available */
   realtype *p;
