@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 15:47:50 raim>
-  $Id: odeModel.c,v 1.34 2005/12/21 14:59:31 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-21 16:48:35 raim>
+  $Id: odeModel.c,v 1.35 2005/12/21 15:49:36 raimc Exp $ 
 */
 /* 
  *
@@ -62,7 +62,7 @@
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				    int nass, int nevents, int nalg);
-
+static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
 
 /** \brief Create internal model odeModel from a reaction network,
     represented as libSBML's Model_t structure.
