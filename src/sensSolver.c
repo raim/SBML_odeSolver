@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:27:14 raim>
-  $Id: sensSolver.c,v 1.17 2005/12/16 15:30:23 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 15:18:14 raim>
+  $Id: sensSolver.c,v 1.18 2005/12/21 14:59:31 raimc Exp $
 */
 /* 
  *
@@ -61,13 +61,14 @@
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
  */
-static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot, 
-               int iS, N_Vector yS, N_Vector ySdot, 
-               void *fS_data, N_Vector tmp1, N_Vector tmp2);
+void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
+	int iS, N_Vector yS, N_Vector ySdot,
+	void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
 
 /* The Hot Stuff! */
-/** \brief Calls CVODES to provide forward sensitivities
+/** \brief Calls CVODES to provide forward sensitivities after a call to
+    cvodeOneStep.
 
     produces appropriate error messages on failures and returns 1 if
     the integration can continue, 0 otherwise.  
@@ -154,7 +155,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       om->nsens = om->nconst;
 
       ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
-      /*!!! non-default case:
+      /* !!! non-default case:
 	these values should be passed for other cases !!!*/
       for ( i=0; i<om->nsens; i++ )
 	om->index_sens[i] = om->neq + om->nass + i;
@@ -284,11 +285,18 @@ SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInsta
 
 /************* Additional Function for Sensitivity Analysis **************/
 
-/* 
- * fS routine. Compute sensitivity r.h.s. for param[iS]
+/**
+ * fS routine: Called by CVODES to compute the sensitivity RHS for one
+ * parameter.
+ *
+    CVODES sensitivity analysis calls this function any time required,
+    with current values for variables x, time t and sensitivities
+    s. The function evaluates df/dx*s + df/dp for one p and writes the
+    results back to CVODE's N_Vector(ySdot) vector. The function is
+    not `static' only for including it in the documentation!
  */
 
-static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot, 
+void fS(int Ns, realtype t, N_Vector y, N_Vector ydot, 
                int iS, N_Vector yS, N_Vector ySdot, 
                void *fS_data, N_Vector tmp1, N_Vector tmp2)
 {
@@ -303,19 +311,19 @@ static void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   dySdata = NV_DATA_S(ySdot);
 
 
-  /* update ODE variables from CVODE */
+  /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) {
     data->value[i] = ydata[i];
   }
-  /* update assignment rules */
+  /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) {
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
   }
-  /* update time */
+  /** update time */
   data->currenttime = t;
 
-  /* evaluate parametric `jacobian' */
+  /** evaluate sensitivity RHS: df/x*s + df/dp for one p */
   for(i=0; i<data->model->neq; i++) {
     dySdata[i] = 0;
     for (j=0; j<data->model->neq; j++) {

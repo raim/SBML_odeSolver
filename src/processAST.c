@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 18:03:36 raim>
-  $Id: processAST.c,v 1.32 2005/12/16 17:35:55 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 11:18:48 raim>
+  $Id: processAST.c,v 1.33 2005/12/21 14:59:31 raimc Exp $
 */
 /* 
  *
@@ -92,23 +92,33 @@ static double (*UsrDefFunc)(char*, int, double*) = NULL;
 /** 
  * Sets function pointer for  user defined function to udf
 
-   Takes a function pointer as an argument. This function udf
-   is called in evaluateAST to interface external data that can
-   be supplied by a calling applications. It must return a
-   double value for the current time of an integration run.
+   Takes a function pointer as an argument. This function udf is
+   called in evaluateAST to interface external data that can be
+   supplied by a calling applications. It must return a double value
+   for the current time of an integration run.
    
-   It takes the following arguments:
+   ARGUMENTS TO THE PASSED FUNCTION:
 
-   char *: must be the name of a function used in any formula
-           in the SBML file, but not defined via an SBML
-	   Function Definition in the same SBML model.
+   char *:   must be the name of a function used in any formula in the
+             SBML file, but not defined via an SBML Function
+             Definition in the same SBML model
 
-   int: is the number of arguments the SBML function takes, which
-        is also the size of the following double array
+   int:      is the number of arguments the SBML function takes, which is
+             also the size of the following double array
 
-   double *: is an array that is filled by evaluateAST to supply
-             the external function with current values of the arguments
-	     of the respective function the SBML model.
+   double *: is an array that is filled by evaluateAST to supply the
+             external function with current values of the arguments of
+             the respective function the SBML model
+
+   POSSIBLE APPLICATIONS:
+   
+   * Setting a set of udfs could later also be used to enhance
+   integration performance by using SBML sboTerms in kinetic laws,
+   i.e. for hard-coded kinetic law evaluation!
+
+   * The function might also be useful for introducing stochastic
+   effects to the ODE system. An external function could call a random
+   number generator.
 
   Sorry, if above description is confusing, because of two different
   types of `function'. Basically, it allows a hard-coded definition
@@ -117,8 +127,9 @@ static double (*UsrDefFunc)(char*, int, double*) = NULL;
   We will in one of the next releases provide an example of a simple
   interpolation function, that takes only the current time as argument
   and interpolates a value for the current time from an external time
-  series data set.	   
- */
+  series data set.
+*/
+
 SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*))
 {
   UsrDefFunc = udf;
@@ -130,8 +141,8 @@ SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*)
 
 /* ------------------------------------------------------------------------ */
 
-/** Copies the passed constant AST, including potential
-    SOSlib ASTNodeIndex, and returns the copy.
+/** Copies the passed AST, including potential SOSlib ASTNodeIndex, and
+    returns the copy.
 */
 
 ASTNode_t *copyAST(const ASTNode_t *f)
@@ -176,8 +187,8 @@ ASTNode_t *copyAST(const ASTNode_t *f)
 }
 
 
-/** Evaluates the formula of an Abstract Syntax Tree by simple
-  recursion and returns the result as a double value.
+/** Evaluates the passed formula n by a simple recursion and returns
+    the result as a double value.
 
   Variable names are searched in passed cvodeData, which is an
   SBML_odeSolver specific data structure, containing current values of
@@ -604,9 +615,8 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
 /* ------------------------------------------------------------------------ */
 
-/** The function differentiateAST(f,x) returns the derivative f' of
-   the passed formula f with respect to the passed variable x, using
-   basic differentiation rules.
+/** Returns the derivative f' of the passed formula f with respect to
+    the passed variable x, using basic differentiation rules.
 */
 
 SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x) {

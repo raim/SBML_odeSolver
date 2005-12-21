@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 17:15:40 raim>
-  $Id: drawGraph.c,v 1.19 2005/12/15 16:33:54 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 11:41:56 raim>
+  $Id: drawGraph.c,v 1.20 2005/12/21 14:59:31 raimc Exp $
 */
 /* 
  *
@@ -34,9 +34,11 @@
  */
 /*! \defgroup drawGraph Graph Drawing
     \brief This optional module contains all functions to draw SBML and ODE
-    Model structures as a graph with diverse output formats. Graph drawing
-    is based on the Graphviz library
+    Model structures as a graph with diverse output formats.
 
+    Graph drawing is based on the Graphviz library. Unfortunately most
+    graphviz versions currently have memory leaks. If you know, how these
+    could be avoided, please contact us.
 */
 /*@{*/
 
@@ -75,12 +77,28 @@ static int drawModelTxt(Model_t *m, char *file);
 
 #define WORDSIZE 10000
 
-/**
+/** Draws a graph of the non-zero entries in the Jacobian matrix J =
+    df/dx of an ODE system f(x,p,t) = dx/dt at the end-time of the
+    last integration.
 
+    Negative entries f(x1)/dx2 will be drawn as a red edge with a
+    `tee' arrowhead from x2 to x1, representing the negative influence
+    of x2 on x1. Positive entries will be drawn in black with a
+    normal arrowhead. The edges are labelled by the actual value of
+    the entry at time t. Note, that edge labels and also graph
+    structure can change with time.
+
+    The input cvodeData can be retrieved from an integratorInstance with
+    IntegratorInstance_getData(). The output graph will be written to
+    a file named `file.`format', where format can be e.g. `ps', `svg',
+    `jpg', `png', `cmapx' etc. The latter retrieves an HTML image map.
+    Please see the graphviz documentation for other available formats.
 */
 
 SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
 
+  /** if SOSlib has been compiled without graphviz, the graph will be
+      written to a text file in graphviz' dot format */
 #if !USE_GRAPHVIZ
 
   SolverError_error(
@@ -307,11 +325,35 @@ drawJacobyTxt(cvodeData_t *data, char *file) {
 #endif
 
 
-/**
+/** Draws a graph of the non-zero entries in the sensitivity matrix P
+    = df/dp of an ODE system f(x,p,t) = dx/dt at the end-time of the
+    last integration.
 
+    Negative entries will f(x)/dp will be drawn as a red edge with a
+    `tee' arrowhead from p to x, representing the negative influence
+    of p on x.  Positive entries will be drawn in black with a normal
+    arrowhead. The edges are labelled by the actual value of the entry
+    at time t. Note, that edge labels and also graph structure can
+    change with time.
+    
+    As this graph is usually of very high or full connectivity, i.e.
+    no variable is completely independent of some parameter of the
+    system, the function takes a threshold between 0 and 1 as an
+    additional input. Only edges for entries greater then the
+    threshold multiplied by the maximum entry for species x will be
+    drawn.
+
+    The input cvodeData can be retrieved from an integratorInstance with
+    IntegratorInstance_getData(). The output graph will be written to
+    a file named `file.`format', where format can be e.g. `ps', `svg',
+    `jpg', `png', `cmapx' etc. The latter retrieves an HTML image map.
+    Please see the graphviz documentation for other available formats.
 */
 
 SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *format, double threshold) {
+
+  /** if SOSlib has been compiled without graphviz, the graph will be
+      written to a text file in graphviz' dot format */
 
 #if !USE_GRAPHVIZ
 
@@ -582,12 +624,26 @@ drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
 
 
 
-/**
+/** Draws a bipartite graph of the reaction network in the passed SBML
+    model `m' (as libSBML Model_t).
 
+    Reactions will be boxes and species will be ellipses. The
+    stoichiometry will be drawn as edge labels, if other than
+    1. Boundary species will be drawn in blue and constant species
+    will be drawn in green where the latter overrides the former.
+    Reaction modifier interactions will be drawn as dashed arrows with
+    an open circle as an arrowhead.
+
+    The output graph will be written to a file named `file.`format',
+    where format can be e.g. `ps', `svg', `jpg', `png', `cmapx'
+    etc. The latter retrieves an HTML image map.  Please see the
+    graphviz documentation for other available formats.
 */
 
 SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
   
+  /** if SOSlib has been compiled without graphviz, the graph will be
+      written to a text file in graphviz' dot format */  
 #if !USE_GRAPHVIZ
 
   SolverError_error(

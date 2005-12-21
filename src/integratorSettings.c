@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 02:29:18 raim>
-  $Id: integratorSettings.c,v 1.18 2005/12/16 01:30:21 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 13:44:59 raim>
+  $Id: integratorSettings.c,v 1.19 2005/12/21 14:59:31 raimc Exp $
 */
 /* 
  *
@@ -264,25 +264,30 @@ SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep
 }
 
 
-/** Set method non-linear solver methods, and its max.order
-    0: BDF 1: Adams-Moulton,
-    Default method is BDF
+/** Set method non-linear solver methods, and its maximum order (currently
+    the latter cannot really be set, but default to 5 for BDF or 12 for
+    Adams-Moulton!!
+    
+    CvodeMethod: 0: BDF (default); 1: Adams-Moulton,\n
+    MaxOrder: maximum order (default: 5 for BDF, 12 for Adams-Moulton.
+
 */
 
-SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *set, int i, int j)
+SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *set, int CvodeMethod, int MaxOrder)
 {
-  /* i == 0: default BDF method
-     i == 1: Adams-Moulton method */
-  if ( 0 <= i < 2 ) {
-    set->CvodeMethod = i;
-    set->MaxOrder = j;
+  /* CvodeMethod == 0: default BDF method
+     Method == 1: Adams-Moulton method */
+  if ( 0 <= CvodeMethod < 2 ) {
+    set->CvodeMethod = CvodeMethod;
+    set->MaxOrder = MaxOrder;
   }
 }
 
 
 /** Set method for CVODE integration
-    0: NEWTON; 1: FUNCTIONAL,
-    Default method is NEWTON
+
+    0: NEWTON (default)\n
+    1: FUNCTIONAL
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *set, int i)
@@ -294,8 +299,9 @@ SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *set, int i)
 }
 
 
-/** Sets maximum order of BDF or Adams-Moulton method, respectively
-   default: 5
+/** Sets maximum order of BDF or Adams-Moulton method, respectively,
+    currently this settings is not really used but defaults to 5 for BDF and
+    12 for Adams-Moulton: ASAP!
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxOrder)
@@ -304,9 +310,9 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
 }
 
 
-/** Sets integration switches in cvodeSettings. WARNING:
-    this function's type signature will change with time,
-    as new settings will be required for other solvers!
+/** Sets integration switches in cvodeSettings. WARNING: this
+    function's type signature will change with time, as new settings
+    will be required for other solvers!
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
@@ -361,8 +367,10 @@ SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTim
 
 /** Sets the ith time step for the integration, where
     0 < i <= PrintStep.
-    The first time is always 0 and can not be set.
-    Returns 1, if sucessful and 0, if not.
+    
+    Returns 1, if sucessful and 0, if not.\n
+    The first time is always 0 and can not be set at the moment, as
+    an SBML input file is supposed to start with 0.
 */
 
 SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, double time)
@@ -377,9 +385,10 @@ SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, do
 
 
 /** Sets use of generated Jacobian matrix (i=1) or
-    of CVODE's internal approximation (i=0). If construction
-    of the Jacobian matrix fails, the internal approximation will
-    be used even if i==1.
+    of CVODE's internal approximation (i=0).
+
+    If construction of the Jacobian matrix fails, the internal
+    approximation will be used in any case!
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
@@ -388,20 +397,25 @@ SBML_ODESOLVER_API void CvodeSettings_setJacobian(cvodeSettings_t *set, int i)
 }
 
 
-/** Sets indefinite integration (i=1). For indefinite integration
+/** Sets indefinite integration (i=1).
+
+    For indefinite integration
     Time will be used as integration step and PrintStep will
     be ignored.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int i)
-{ /*??? set->Time ??*/
+{ /* set->Time will be used and PrintStep */
   set->Indefinitely = i;
 }
 
 
-/** Sets event handling: if i==1, the integration will stop upon
-    detection of an event and evaluation of event assignments;
-    if i==0 the integration continues after evaluation of event
+/** Sets event handling, stop (1, default) or don't stop (0) on events.
+
+    If i==1, the integration will stop upon
+    detection of an event and evaluation of event assignments.
+    
+    If i==0 the integration continues after evaluation of event
     assignments. CAUTION: the accuracy of event evaluations depends
     on the chosen printstep values!
 */
@@ -618,9 +632,10 @@ SBML_ODESOLVER_API int CvodeSettings_getSteadyState(cvodeSettings_t *set)
 
 
 /** Returns 1, if integration results should be stored internally,
-    and 0 if not; If set to 0 current values can be retrieved during
-    an integration loop, and the values at the end time of integration
-    afterwards.
+    and 0 if not.
+
+    If set to 0 current values can be retrieved during an integration
+    loop, and the values at the end time of integration afterwards.
 */
 
 SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *set)
@@ -639,7 +654,7 @@ SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *set)
 }
 
 
-/** Get sensitivity method 
+/** Get sensitivity method `simultaneous', `staggered'  or `staggered1'
 */
 
 SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)

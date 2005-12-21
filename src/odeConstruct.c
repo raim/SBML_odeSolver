@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 19:22:57 raim>
-  $Id: odeConstruct.c,v 1.25 2005/12/17 19:30:35 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 10:28:09 raim>
+  $Id: odeConstruct.c,v 1.26 2005/12/21 14:59:31 raimc Exp $
 */
 /* 
  *
@@ -33,15 +33,15 @@
  *     Andrew M. Finney
  */
 /*! \defgroup symbolic Symbolic Analysis */
-/*! \defgroup odeConstruct ODE Construction: SBML -> f(x,p,t) = dx/dt
+/*! \defgroup odeConstruct ODE Construction: SBML reactions -> SBML rate rules
     \ingroup symbolic
     \brief This module contains all functions to condense
     the reaction network of an input models to an output model only
-    consisting of ODEs (SBML rate rules).
+    consisting of SBML rate rules, representing an ODE system f(x,p,t) = dx/dt 
     
     The ODE construction currently can't handle SBML algebraic rules.
-    When this is done correctly, the resulting SBML model can be used
-    to initialize SUNDIALS IDA Solver for Differential Algebraic
+    As soon as this is done correctly, the resulting SBML model can be
+    used to initialize SUNDIALS IDA Solver for Differential Algebraic
     Equation (DAE) Systems, which are ODE systems with additional
     algebraic constraints.
 */

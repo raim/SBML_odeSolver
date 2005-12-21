@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 11:06:28 raim>
-  $Id: odeModel.c,v 1.33 2005/12/16 15:04:44 raimc Exp $ 
+  Last changed Time-stamp: <2005-12-21 15:47:50 raim>
+  $Id: odeModel.c,v 1.34 2005/12/21 14:59:31 raimc Exp $ 
 */
 /* 
  *
@@ -64,24 +64,21 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				    int nass, int nevents, int nalg);
 
 
-/** \brief Create internal model odeModel from an SBML representation
-    of a reaction network
+/** \brief Create internal model odeModel from a reaction network,
+    represented as libSBML's Model_t structure.
 
+    The input model must be of SBML level2!
     The function at first, attempts to construct a simplified SBML
     model, that contains all compartments, species, parameters, events
     and rules of the input model, and constructs new ODEs as SBML
     RateRules from the reaction network of the input model.  The
-    function then creates the structure odeModel_t which contains
+    function then creates the structure odeModel which contains
     variable, parameter and constant names and all formulas (ODEs and
     assignments) as indexed AST (iAST). This structure can be used to
     initialize and run several integration runs, each associated with
     initial conditions in cvodeData_t. Alternatively I.1a - I.1c
-    allow to construct odeModel_t from higher-level data (a file, an
+    allow to construct odeModel from higher-level data (a file, an
     SBML document or a reaction network model, respectively).
-*/
-
-
-/** \brief Create odeModel from input SBML model
 */
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
@@ -131,7 +128,7 @@ ODEModel_fillStructures(Model_t *ode)
 
   /*
     counting number of equations (ODEs/rateRules and assignment Rules)
-    to initialize CvodeData structure. Any other occuring values are
+    to initialize cvodeData structure. Any other occuring values are
     stored as parameters.
   */
 
@@ -325,7 +322,10 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 }
 
 
-/** \brief  Create internal model odeModel_t from file
+/** \brief Create internal model odeModel from an SBML file, that
+    contains level 1 or level 2 SBML.
+
+    Conversion of level 1 to level 2 models is done internally.
 */
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
@@ -351,7 +351,8 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
 }
 
 
-/** \brief Create internal model odeModel_t from SBMLDocument
+/** \brief Create internal model odeModel_t from SBMLDocument containing
+    a level 2 SBML model.
 */
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
@@ -435,24 +436,6 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   free(om);
 }       
 
-
-/* searches for the string "symbol" in the odeModel's names array
-   and returns its index number, or -1 if it doesn't exist */
-static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
-{
-    int i, nvalues;
-
-    nvalues = om->neq + om->nass + om->nconst + om->nalg;
-    
-    for ( i=0; i<nvalues && strcmp(symbol, om->names[i]); i++ );
-    
-    if (i<nvalues)
-        return i;
-
-    return -1;
-}
-
-
 /** \brief Returns 1 if a variable or parameter with the SBML id
    exists in the ODEModel.
 */
@@ -465,7 +448,7 @@ SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbo
 
 /** \brief Returns the total number of values in oodeModel, equivalent
     to ODEModel_getNeq + ODEModel_getNumAssignments +
-    ODEModel_getNumConstants;
+    ODEModel_getNumConstants
 */
 
 SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
@@ -486,106 +469,14 @@ SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *om,
 }
 
 
-/** \brief Creates and returns a variable index for ith variable
-
-   Returns NULL if i > nvalues. This functions works for all types of
-   variables (ODE_VARIABLE, ASSIGNED_VARIABLE and CONSTANT). This
-   variableIndex can be used to get and set values during an
-   integration run with IntegratorInstance_getVariable and
-   IntegratorInstance_setVariable, respectively. The variableIndex
-   must be freed by the calling application.
-*/
-
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *om, int i)
-{
-    variableIndex_t *vi;
-
-    if ( i > ODEModel_getNumValues(om) )
-    {
-        /* VariableIndex_free(vi); */
-        SolverError_error(
-            ERROR_ERROR_TYPE,
-            SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-            "No such variable in the model");
-	return NULL;
-	
-    }
-    else
-      {
-	ASSIGN_NEW_MEMORY(vi, variableIndex_t, NULL);
-	vi->index = i;
-	if ( i<om->neq ) {
-	  vi->type = ODE_VARIABLE;
-	  vi->type_index = vi->index;
-	}
-	else if ( i < om->neq + om->nass ) {
-	  vi->type = ASSIGNMENT_VARIABLE;
-	  vi->type_index = i - om->neq;
-	}
-	else if( i < om->neq + om->nass + om->nconst) {
-	  vi->type = CONSTANT;
-	  vi->type_index = i - om->neq - om->nass;
-	}
-	else {
-	  vi->type = ALGEBRAIC_VARIABLE;
-	  vi->type_index = i - om->neq - om->nass - om->nconst;
-	}
-      }
-    return vi;
-}
-
-
-/** \brief Creates and returns the variableIndex for the string "symbol"
-
-   where `symbol' is the ID (corresponding to the SBML ID in the input
-   model) of one of the models variables (ODE_VARIABLE,
-   ASSIGNED_VARIABLE and CONSTANT) or NULL if the symbol was not
-   found. The variableIndex must be freed by the calling application.
-*/
-
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, const char *symbol)
-{
-
-  int index;
-
-  index = ODEModel_getVariableIndexFields(om, symbol);
-
-  if (index == -1)
-    {
-      SolverError_error(
-			ERROR_ERROR_TYPE,
-			SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-			"symbol %s is not in the model",
-			symbol);
-
-      return NULL;
-    }
-
-  return ODEModel_getVariableIndexByNum(om, index);
-}
-
-
-/** \brief Returns the number of ODEs (number of equations) in the
-    odeModel
-*/
-
 SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *om)
 {
   return om->neq;
 }
 
 
-/** \brief Returns the number variables that are defined by
-    an algebraic rule
-*/
-
-SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *om)
-{
-  return om->nalg;
-}
-
 /** \brief Returns the number parameters for which sensitivity
-    analysis might be requested.
+    analysis might be requested
 
 */
 
@@ -595,8 +486,8 @@ SBML_ODESOLVER_API int ODEModel_getNsens(odeModel_t *om)
 }
 
 
-/** \brief Returns the ith ODE from the odeModel, where must be 0 <= i
-    < ODEModel_GetNeq.
+/** \brief Returns the ODE from the odeModel for the variable with
+    variableIndex vi.
 
     The ODE is returned as an `indexed abstract syntax tree' (iAST),
     which is an extension to the usual libSBML AST. Every AST_NAME
@@ -614,22 +505,8 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableInde
 }
 
 
-/** \brief  Creates and returns a variable index for ith ODE variable.
 
-   Returns NULL if not existing (i > ODEModel_getNeq(om)). The
-   variableIndex must be freed by the calling application.
-*/
-
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *om, int i)
-{
-  if ( i < om->neq )
-    return ODEModel_getVariableIndexByNum(om, i);
-  else
-    return NULL;
-}
-
-
-/** \brief Returns the number of variable assignements in the odeModel
+/** \brief Returns the number of variable assignments in the odeModel
 */
 
 SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
@@ -638,8 +515,8 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
 }
 
 
-/** \brief  Returns the ith assignment formula from the odeModel, where 
-     0 <= i < ODEModel_GetNumAssignments.
+/** \brief Returns the assignment formula from the odeModel for the
+    variable with variableIndex vi
 
      The ODE is returned as an `indexed abstract syntax tree' (iAST),
      which is an extension to the usual libSBML AST. Every AST_NAME
@@ -656,21 +533,6 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, varia
     return NULL;
 }
 
-
-/** \brief Creates and returns a variable index for ith assigned variable.
-
-    Returns NULL if not existing (i > ODEModel_getNumAssignedVar(om)).
-    The variableIndex must be freed by the calling application.
-*/
-
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *om, int i)
-{
-  if ( i < om->nass )
-    return ODEModel_getVariableIndexByNum(om, i + om->neq);
-  else
-    return NULL;  
-}
-
 /** \brief Returns the number of constant parameters of the odeModel
 */
 
@@ -680,28 +542,19 @@ SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *om)
 }
 
 
-/**\brief  Creates and returns a variable index for ith constant.
+/** \brief Returns the number variables that are defined by
+    an algebraic rule.
 
-   Returns NULL if not existing (i > ODEModel_getNumConstants(om)).
-   The variableIndex must be freed by the calling application.
+    As SBML Algebraic Rules and ODE models with algebraic constraints (DAE
+    models) can currently not be handled, this function is
+    of no use.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *om)
 {
-  if ( i < om->nconst )
-    return ODEModel_getVariableIndexByNum(om, i + om->neq + om->nass);
-  else
-    return NULL;
+  return om->nalg;
 }
 
-
-/** \brief  Frees a variableIndex structure
-*/
-
-SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
-{
-    free(vi);
-}
 
 /** \brief Prints the names (SBML IDs) of all model variables
     and parameters
@@ -717,10 +570,11 @@ SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om)
 
 
 /** \brief Returns the SBML model that has been extracted from the input
-    SBML model's reaction network and structures;
+    SBML model's reaction network and structures
 
     The model contains only compartments, species, parameters and SBML
-    Rules. The returned model is constant and must not be changed.
+    Rules. Changes to this model will have no effect on odeModel or
+    integratorInstance.
 */
 
 SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
@@ -733,7 +587,7 @@ SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
 
 /*! \defgroup jacobian Jacobian Matrix: J = df(x)/dx
     \ingroup odeModel
-    \brief Constructing and Interfacing the Jacobian Matrix of an ODE
+    \brief Constructing and Interfacing the Jacobian matrix of an ODE
     system
 
     as used for CVODES and IDA Dense Solvers
@@ -745,7 +599,10 @@ SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
    Once an ODE system has been constructed from an SBML model, this
    function calculates the derivative of each species' ODE with respect
    to all other species for which an ODE exists, i.e. it constructs the
-   jacobian matrix of the ODE system. Returns 1 if successful, 0 otherwise. 
+   jacobian matrix of the ODE system. At the moment this matrix is
+   freed together with the ODE model. A separate function will be available
+   soon.\n
+   Returns 1 if successful, 0 otherwise. 
 */
 
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
@@ -811,7 +668,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 /**  \brief Returns the ith/jth entry of the jacobian matrix
      
     Returns NULL if either the jacobian has not been constructed yet,
-    or if i or j are >neq. Ownership remains within the odeModel_t
+    or if i or j are >neq. Ownership remains within the odeModel
     structure.
 */
 
@@ -829,7 +686,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, 
     
     Returns NULL if either the jacobian has not been constructed yet,
     or if the v1 or vi2 are not ODE variables. Ownership remains
-    within the odeModel_t structure.
+    within the odeModel structure.
 */
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
@@ -860,9 +717,9 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 
 
 
-/*! \defgroup parametric `Parametric Matrix': P = df(x)/dp
+/*! \defgroup parametric Sensitivity Matrix: P = df(x)/dp
     \ingroup odeModel
-    \brief Constructing and Interfacing a `Parametric Matrix' of
+    \brief Constructing and Interfacing the sensitivity matrix of
     an ODE system
 
     as used for CVODES sensitivity analysis
@@ -872,6 +729,12 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 
 /** \brief Construct Sensitivity R.H.S. for ODEModel.
     
+   Once an ODE system has been constructed from an SBML model, this
+   function calculates the derivative of each species' ODE with respect
+   to all global parameters of the SBML model\n
+   In an upcoming release this will only be done for selected parameters!\n
+   Returns 1 if successful, 0 otherwise.
+   
 */
 
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
@@ -967,7 +830,7 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 /**  \brief Returns the ith/jth entry of the parametric matrix
      
     Returns NULL if either the parametric has not been constructed yet,
-    or if i > neq or j > nsens. Ownership remains within the odeModel_t
+    or if i > neq or j > nsens. Ownership remains within the odeModel
     structure.
 */
 
@@ -986,7 +849,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int 
     Returns NULL if either the parametric matrix has not been constructed
     yet, or if vi1 or vi2 are not an ODE variable or a constant for 
     sensitivity analysis, respectively. Ownership remains within the
-    odeModel_t structure.
+    odeModel structure.
 */
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
@@ -1016,4 +879,171 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *
 
 /** @} */
 
+
+/*! \defgroup variableIndex Variables + Parameters
+    \ingroup odeModel
+    \brief Getting the variableIndex structure
+
+    The variableIndex can be used to retrieve formulae from odeModel,
+    and to get and set current values in the integratorInstance.
+*/
+/*@{*/
+
+
+
+/* searches for the string "symbol" in the odeModel's names array
+   and returns its index number, or -1 if it doesn't exist */
+static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
+{
+    int i, nvalues;
+
+    nvalues = om->neq + om->nass + om->nconst + om->nalg;
+    
+    for ( i=0; i<nvalues && strcmp(symbol, om->names[i]); i++ );
+    
+    if (i<nvalues)
+        return i;
+
+    return -1;
+}
+
+
+/** \brief Creates and returns a variable index for ith variable
+
+   Returns NULL if i > nvalues. This functions works for all types of
+   variables (ODE_VARIABLE, ASSIGNED_VARIABLE, ALGEBRAIC_VARIABLE and
+   CONSTANT). This variableIndex can be used to get and set values
+   during an integration run with IntegratorInstance_getVariable and
+   IntegratorInstance_setVariable, respectively. The variableIndex
+   must be freed by the calling application.
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *om, int i)
+{
+    variableIndex_t *vi;
+
+    if ( i > ODEModel_getNumValues(om) )
+    {
+        /* VariableIndex_free(vi); */
+        SolverError_error(
+            ERROR_ERROR_TYPE,
+            SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
+            "No such variable in the model");
+	return NULL;
+	
+    }
+    else
+      {
+	ASSIGN_NEW_MEMORY(vi, variableIndex_t, NULL);
+	vi->index = i;
+	if ( i<om->neq ) {
+	  vi->type = ODE_VARIABLE;
+	  vi->type_index = vi->index;
+	}
+	else if ( i < om->neq + om->nass ) {
+	  vi->type = ASSIGNMENT_VARIABLE;
+	  vi->type_index = i - om->neq;
+	}
+	else if( i < om->neq + om->nass + om->nconst) {
+	  vi->type = CONSTANT;
+	  vi->type_index = i - om->neq - om->nass;
+	}
+	else {
+	  vi->type = ALGEBRAIC_VARIABLE;
+	  vi->type_index = i - om->neq - om->nass - om->nconst;
+	}
+      }
+    return vi;
+}
+
+
+/** \brief Creates and returns the variableIndex for the string "symbol"
+
+   where `symbol' is the ID (corresponding to the SBML ID in the input
+   model) of one of the models variables (ODE_VARIABLE,
+   ASSIGNED_VARIABLE, ALGEBRAIC_VARIABLE and CONSTANT) or NULL if the
+   symbol was not found. The variableIndex must be freed by the
+   calling application.
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, const char *symbol)
+{
+
+  int index;
+
+  index = ODEModel_getVariableIndexFields(om, symbol);
+
+  if (index == -1)
+    {
+      SolverError_error(
+			ERROR_ERROR_TYPE,
+			SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
+			"symbol %s is not in the model",
+			symbol);
+
+      return NULL;
+    }
+
+  return ODEModel_getVariableIndexByNum(om, index);
+}
+
+
+
+/** \brief  Creates and returns a variable index for ith ODE variable.
+
+   Returns NULL if not existing (i > ODEModel_getNeq(om)). The
+   variableIndex must be freed by the calling application.
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *om, int i)
+{
+  if ( i < om->neq )
+    return ODEModel_getVariableIndexByNum(om, i);
+  else
+    return NULL;
+}
+
+
+/** \brief Creates and returns a variable index for ith assigned variable.
+
+    Returns NULL if not existing (i > ODEModel_getNumAssignedVar(om)).
+    The variableIndex must be freed by the calling application.
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *om, int i)
+{
+  if ( i < om->nass )
+    return ODEModel_getVariableIndexByNum(om, i + om->neq);
+  else
+    return NULL;  
+}
+
+/**\brief  Creates and returns a variable index for ith constant.
+
+   Returns NULL if not existing (i > ODEModel_getNumConstants(om)).
+   The variableIndex must be freed by the calling application.
+*/
+
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, int i)
+{
+  if ( i < om->nconst )
+    return ODEModel_getVariableIndexByNum(om, i + om->neq + om->nass);
+  else
+    return NULL;
+}
+
+/** \brief  Frees a variableIndex structure
+*/
+
+SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
+{
+    free(vi);
+}
+
+
+/** \brief Returns the number of ODEs (number of equations) in the
+    odeModel
+*/
+
+/** @} */
 /* End of file */
