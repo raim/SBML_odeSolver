@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 00:18:50 raim>
-  $Id: cvodedata.c,v 1.23 2005/12/17 13:40:59 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 18:02:35 raim>
+  $Id: cvodedata.c,v 1.24 2005/12/21 17:02:52 raimc Exp $
 */
 /* 
  *
@@ -34,10 +34,10 @@
  */
 
 /*! \defgroup cvodeData Integration Results Interface:  x(t)
-    \ingroup integration 
-    \brief This module contains the functions to create input data
-    for formula evaluation and retrieve results from integration
+    \ingroup integration
     
+    \brief This module contains the functions to create input data
+    for formula evaluation and retrieve results from integration   
 
 */
 /*@{*/
@@ -103,10 +103,15 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 
 
 /* Step I.2: */
-/** Create cvodeData.
-    Use the odeModel structure to initialize and
-    fill the data structure cvodeData_t *, that can then
-    be passed to CVODE for integration */
+/** Creates cvodeData from an odeModel and initial values from the
+    original SBML model.
+
+    This function is internally used by integratorInstance creation.
+    
+    It is available as an API function, so users can create this
+    structure from an odeModel to evaluate formulae in odeModel
+    independent of integratorInstance.
+*/
 SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 {
   int neq, nconst, nass, nvalues, nevents;

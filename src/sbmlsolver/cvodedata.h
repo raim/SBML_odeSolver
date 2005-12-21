@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 00:15:16 raim>
-  $Id: cvodedata.h,v 1.26 2005/12/17 13:40:59 raimc Exp $
+  Last changed Time-stamp: <2005-12-21 18:01:25 raim>
+  $Id: cvodedata.h,v 1.27 2005/12/21 17:02:53 raimc Exp $
 */
 /* 
  *
@@ -74,13 +74,15 @@ struct cvodeResults {
 
 } ;
 
-/** Contains all data needed for CVODE integration, i.e.
-   the ODEs, initial values, variable and parameter IDs and
-   names, events, and integration settings and output files,
-   but also
-   the SBML model from which they have been derived,
-   and the SBML version of the ODE model.
- */
+/** Contains the data needed for AST formula evaluation and odeModel
+    integration and usually corresponds to an odeModel
+
+    cvodeData is used for storing current variable, sensitivity and time
+    values. It also holds the internal version of ODEs for optimized for
+    a specific integration run and current (on or off) states of event
+    triggers and of steady state approximation and the number of integration
+    runs with this instance of cvodeData.
+*/
 struct cvodeData {
 
   odeModel_t *model;
