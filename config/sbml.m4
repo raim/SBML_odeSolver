@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.5 2005/12/12 16:51:35 raimc Exp $
+dnl $Id: sbml.m4,v 1.6 2005/12/21 15:51:00 raimc Exp $
 
 dnl
 dnl look for SBML Library headers in some standard set of directories
@@ -50,7 +50,7 @@ AC_DEFUN([AC_SBML_PATH],
      test $sbml_minor_version -eq 3 &&
      test $sbml_micro_version -le 3;
   then
-    AC_MSG_NOTICE([found SBML Library Version <= $sbml_version])
+    AC_MSG_NOTICE([found SBML Library Version $sbml_version])
   else
     AC_MSG_NOTICE([found SBML Library Version $sbml_version])
   fi 
@@ -75,9 +75,8 @@ AC_DEFUN([CONFIG_LIB_SBML],
     AC_SBML_PATH
   else
     dnl get version of installed libsbml
-    AC_MSG_CHECKING(for SBML Library Version)
     changequote(<<, >>)
-    sbml_sharedlib=$with_libsbml/libsbml.?.?.?.so
+    sbml_sharedlib=$with_libsbml/lib/libsbml.?.?.?.so
     if test -z "$sbml_sharedlib"; then sbml_sharedlib='libsbml.2.3.3'; fi
     sbml_version=`echo $sbml_sharedlib | sed 's/.*libsbml\.\([0-9]*\.[0-9]*\.[0-9]*\).so/\1/p; d'`
     sbml_major_version=`expr $sbml_version : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
@@ -88,7 +87,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
        test $sbml_minor_version -eq 3 &&
        test $sbml_micro_version -le 3;
     then
-      AC_MSG_NOTICE([found SBML Library Version <= $sbml_version])
+      AC_MSG_NOTICE([found SBML Library Version $sbml_version])
     else
       AC_MSG_NOTICE([found SBML Library Version $sbml_version])
     fi     
