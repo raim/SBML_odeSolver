@@ -67,6 +67,16 @@ Solution: SENS errors control: separate error values,
           TRUE/FALSE error control
 	  set good pbar values
 
+Problem:  SUNDIALS comes with parallel solver routines
+Solution: implement SUNDIALS parallel routines
+
+Problem:  hardcoded model would always be fastest
+Solution: write a function (based on evaluateAST/differentiateAST) that 
+          converts all formulae to C code, write out a complete C file
+	  that only needs linking to SUNDIALS for compilation. Compile and
+	  run. Eventually we could include TCC (Ben's suggestion) to do
+	  compilation and execution at runtime.
+
 
 1.6.1: New Features
 
