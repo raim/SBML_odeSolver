@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.19 2005/11/04 19:31:44 raimc Exp $
+# $Id: Makefile.am,v 1.20 2005/12/21 13:14:00 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -30,13 +30,13 @@
 ##
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
-INCLUDES = @CVODE_CFLAGS@ \
+INCLUDES = @SUNDIALS_CFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
            @SBML_CFLAGS@ \
            @GRACE_CFLAGS@ \
            -I.
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
-        @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+        @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
         @GRACE_LDFLAGS@ @GRACE_LIBS@ \
         -lxerces-c -lm

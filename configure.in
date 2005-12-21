@@ -66,7 +66,7 @@ AC_PATH_PROG([SWIG],[swig],[swig])
 AC_PATH_PROG([PERL],[perl],[perl])
 
 CONFIG_LIB_SBML
-CONFIG_LIB_SUNDIALS_CVODE
+CONFIG_LIB_SUNDIALS
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
 dnl configure options
@@ -183,9 +183,9 @@ if test $yes_libsbml = yes; then
 fi
 echo "SUNDIALS Library         = $yes_libsundials"
 if test $yes_libsundials       = yes; then
-  echo "       CFLAGS          = $CVODE_CFLAGS"
-  echo "       LDFLAGS         = $CVODE_LDFLAGS"
-  echo "       LIBS            = $CVODE_LIBS"
+  echo "       CFLAGS          = $SUNDIALS_CFLAGS"
+  echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
+  echo "       LIBS            = $SUNDIALS_LIBS"
 fi
 echo "  GRACE                = $yes_grace"
 if test $yes_grace = yes; then

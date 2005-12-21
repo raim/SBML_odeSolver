@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.15 2005/12/12 13:59:25 raimc Exp $
+# $Id: Makefile.am,v 1.16 2005/12/21 13:14:00 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -28,7 +28,7 @@
 ## Contributor(s):
 ##     Rainer Machne    
 ##
-INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @CVODE_CFLAGS@
+INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @SUNDIALS_CFLAGS@
 AM_CFLAGS  = @CFLAGS@ --pedantic
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity batchIntegrate \
@@ -39,49 +39,49 @@ bin_PROGRAMS = defSeries integrate sensitivity batchIntegrate \
 printODEs_SOURCES = printODEModel.c
 printODEs_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                    @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                    @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     -lstdc++ -lxerces-c -lm
 defSeries_SOURCES = definedTimeSeries.c
 defSeries_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                    @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                    @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     -lstdc++ -lxerces-c -lm
 integrate_SOURCES = integrate.c
 integrate_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                    @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                    @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     -lstdc++ -lxerces-c -lm
 sensitivity_SOURCES = sensitivity.c
 sensitivity_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                      @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                      @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                       @SBML_LDFLAGS@ @SBML_LIBS@ \
                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                       -lstdc++ -lxerces-c -lm
 batchIntegrate_SOURCES = batch_integrate.c
 batchIntegrate_LDADD   = -L../src -L/@prefix@/lib -lODES \
                          @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                         @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                          @SBML_LDFLAGS@ @SBML_LIBS@ \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                          -lstdc++ -lxerces-c -lm
 simpleIntInst_SOURCES  = simpleIntegratorInstance.c
 simpleIntInst_LDADD    = -L../src -L/@prefix@/lib -lODES \
                          @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                         @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                          @SBML_LDFLAGS@ @SBML_LIBS@ \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                          -lstdc++ -lxerces-c -lm
 changeIntInst_SOURCES  = ChangingIntegratorInstance.c
 changeIntInst_LDADD    = -L../src -L/@prefix@/lib -lODES \
                          @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                         @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                          @SBML_LDFLAGS@ @SBML_LIBS@ \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                          -lstdc++ -lxerces-c -lm
@@ -92,35 +92,35 @@ ASTIndexTest_LDADD   = -L../src -L/@prefix@/lib -lODES \
 analyzeJacobian_SOURCES = analyzeJacobian.c
 analyzeJacobian_LDADD   = -L../src -L/@prefix@/lib -lODES \
                           @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                          @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                          @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                           @SBML_LDFLAGS@ @SBML_LIBS@ \
                           @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                           -lstdc++ -lxerces-c -lm
 analyzeSens_SOURCES = analyzeSensitivity.c
 analyzeSens_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                      @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                      @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                       @SBML_LDFLAGS@ @SBML_LIBS@ \
                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                       -lstdc++ -lxerces-c -lm
 ParameterScanner_SOURCES = ParameterScanner.c
 ParameterScanner_LDADD   = -L../src -L/@prefix@/lib -lODES \
                         @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                        @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                        @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                         @SBML_LDFLAGS@ @SBML_LIBS@ \
                         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                         -lstdc++ -lxerces-c -lm
 Sense_SOURCES = Sense.c
 Sense_LDADD   = -L../src -L/@prefix@/lib -lODES \
                 @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+                @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                 @SBML_LDFLAGS@ @SBML_LIBS@ \
                 @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                 -lstdc++ -lxerces-c -lm
 root_SOURCES = findRoot.c
 root_LDADD   = -L../src -L/@prefix@/lib -lODES \
                @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-               @CVODE_LDFLAGS@ @CVODE_LIBS@ \
+               @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                @SBML_LDFLAGS@ @SBML_LIBS@ \
                @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                -lstdc++ -lxerces-c -lm
