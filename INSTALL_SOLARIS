@@ -1,0 +1,106 @@
+From tommi.aho@tut.fi Thu Dec 22 12:02:35 2005
+Date: Thu, 22 Dec 2005 13:01:23 +0200
+From: Tommi Aho <tommi.aho@tut.fi>
+To: Rainer Machne <raim@tbi.univie.ac.at>
+Cc: sbmlsolver-discuss@lists.sourceforge.net
+Subject: [SOSlib-discuss] Installation summary for Solaris 9
+
+    [ The following text is in the "ISO-8859-1" character set. ]
+    [ Your display is set for the "ISO-8859-15" character set.  ]
+    [ Some special characters may be displayed incorrectly. ]
+
+
+Hi!
+
+There were some difficulties with Solaris 9 and odeSolver 1.6.0. Here is 
+a summary how I got it done. Maybe this helps you.
+
+
+sbmlsolver> gunzip  SBML_odeSolver-1.6.0.tar.gz
+sbmlsolver> tar -xvvf SBML_odeSolver-1.6.0.tar
+
+Change into configure, line 4192 (only this line because the following 
+configuration doesn't use the other lines including the -rpath switch):
+Original line 4192:
+SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
+Modified line:
+SBML_RPATH="-Wl,-R,$with_libsbml/lib"
+
+sbmlsolver/SBML_odeSolver-1.6.0> ./configure 
+--prefix=/home/u2/univ2/ttkk/tomaho/sbmlsolver/local_installation \
+--with-libsbml=/home/u2/univ2/ttkk/tomaho/libsbml/local_installation \
+--with-sundials=/home/u2/univ2/ttkk/tomaho/sundials/sundials
+
+...
+Build Settings for SBML_odeSolver v1.6.0:
+----------------------------------
+  host type            = solaris
+  shared lib extension = so
+  install dir          = 
+/home/u2/univ2/ttkk/tomaho/sbmlsolver/local_installation
+  CC                   = gcc
+  CFLAGS               =
+  LDFLAGS              =
+  LIBS                 = -lm
+  SBML Library         = yes
+       CFLAGS          = 
+-I/home/u2/univ2/ttkk/tomaho/libsbml/local_installation/include
+-I/home/u2/univ2/ttkk/tomaho/libsbml/local_installation/include/sbml
+       LDFLAGS         = 
+-L/home/u2/univ2/ttkk/tomaho/libsbml/local_installation/lib
+       LIBS            = -lsbml
+SUNDIALS Library         = yes
+       CFLAGS          = 
+-I/home/u2/univ2/ttkk/tomaho/sundials/sundials/include
+       LDFLAGS         = -L/home/u2/univ2/ttkk/tomaho/sundials/sundials/lib
+       LIBS            = -lsundials_kinsol -lsundials_cvodes 
+-lsundials_cvode -lsundials_nvecserial -lsundials_shared
+  GRACE                = no
+XMGRACE functionality will NOT be installed!
+  GRAPHVIZ             = no
+GRAPHVIZ functionality will NOT be installed!
+
+
+sbmlsolver/SBML_odeSolver-1.6.0> make
+...
+options.c:7:20: getopt.h: No such file or directory
+...
+
+getopt has problems with portability. See e.g. 
+http://www.thedotin.net/maillists/coldsync-hackers/msg01314.html
+
+Download the needed getopt files, e.g. from 
+http://www.molpopgen.org/krthornt/gccSolaris/
+Compile them
+sbmlsolver/SBML_odeSolver-1.6.0/odeSolver> gcc --pedantic -c getopt.c
+sbmlsolver/SBML_odeSolver-1.6.0/odeSolver> gcc --pedantic -c getopt1.c
+
+Add the object files to the linking by modifying
+odeSolver/Makefile and odeSolver/Makefile.in:
+The following 2 lines exist in both of these files. The third line is 
+added (and the slash in the 2nd line).
+am_odeSolver_OBJECTS = main.$(OBJEXT) commandLine.$(OBJEXT) \
+        options.$(OBJEXT) printModel.$(OBJEXT) interactive.$(OBJEXT) \
+        getopt1.$(OBJEXT) getopt.$(OBJEXT)
+
+sbmlsolver/SBML_odeSolver-1.6.0> make
+
+sbmlsolver/SBML_odeSolver-1.6.0> make install
+
+... and the system is running. :-)
+
+Best regards,
+Tommi
+
+
+
+
+-------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc. Do you grep through log files
+for problems?  Stop!  Download the new AJAX search engine that makes
+searching your log files as easy as surfing the  web.  DOWNLOAD SPLUNK!
+http://ads.osdn.com/?ad_id=7637&alloc_id=16865&op=click
+_______________________________________________
+sbmlsolver-discuss mailing list
+sbmlsolver-discuss@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/sbmlsolver-discuss
