@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:27:01 raim>
-  $Id: cvodeSolver.c,v 1.20 2005/12/16 18:56:48 afinney Exp $
+  Last changed Time-stamp: <2005-12-21 15:53:11 raim>
+  $Id: cvodeSolver.c,v 1.21 2005/12/22 11:51:26 raimc Exp $
 */
 /* 
  *
@@ -61,10 +61,13 @@
 #include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/modelSimplify.h"
 
-/** The Hot Stuff!
-   Calls CVODE to move the current simulation one time step; produces
-   appropriate error messages on failures and returns 1 if the
-   integration can continue, 0 otherwise. 
+/** Calls CVODE to move the current simulation one time step.
+
+    produces appropriate error messages on failures and returns 1 if the
+    integration can continue, 0 otherwise. This function is called by
+    IntegratorInstance_integrateOneStep, but could also be called directly
+    by a calling application that is sure to use CVODES (and not e.g. IDA),
+    to avoid the if statements in the wrapper function.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *engine)
@@ -187,9 +190,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 /************* CVODE integrator setup functions ************/
 
 
-/* creates CVODE structures and fills cvodeSolver 
-   return 1 => success
-   return 0 => failure
+/** creates CVODE structures and fills cvodeSolver, 
+   returns 1 on success or 0 on failure
 */
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
@@ -275,12 +277,14 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     solver->reltol = opt->RError;
 
     /**
-     * Call CVodeCreate to create the non-linear solver memory:
+     * Call CVodeCreate to create the non-linear solver memory:\n
      *
-     * CV_BDF         Backward Differentiation Formula method
-     * CV_ADAMS       Adams-Moulton method
-     * CV_NEWTON      Newton iteration method
-     * CV_FUNCTIONAL  functional iteration method
+       Nonlinear Solver:\n
+     * CV_BDF         Backward Differentiation Formula method\n
+     * CV_ADAMS       Adams-Moulton method\n
+       Iteration Method:\n
+     * CV_NEWTON      Newton iteration method\n
+     * CV_FUNCTIONAL  functional iteration method\n
      */
     if ( opt->CvodeMethod == 0 )
       method = CV_BDF;
@@ -298,16 +302,19 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       return 0; /* error */
     }
 
+    /** !! max. order should be set here !! */
+
     /**
-     * Call CVodeMalloc to initialize the integrator memory:
+     * Call CVodeMalloc to initialize the integrator memory:\n
      *
-     * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
-     * f          user's right hand side function in y'=f(t,y)
-     * t0         initial value of time
-     * y          the initial dependent variable vector
-     * CV_SV      specifies scalar relative and vector absolute tolerances
-     * reltol     the scalar relative tolerance
-     * abstol     pointer to the absolute tolerance vector
+     * cvode_mem:  pointer to the CVode memory block returned by CVodeCreate\n
+     * f:          user's right hand side function in f(x,p,t) = dx/dt\n
+     * t0:         initial value of time\n
+     * y:         the initial dependent variable vector (called in x in the
+     *            docu)\n
+     * CV_SV:     specifies scalar relative and vector absolute tolerances\n
+     * reltol:    the scalar relative tolerance\n
+     * abstol:    pointer to the absolute tolerance vector\n
      */
     flag = CVodeMalloc(solver->cvode_mem, f, solver->t0, solver->y,
                        CV_SV, solver->reltol, solver->abstol);
@@ -498,18 +505,18 @@ int check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
 /***************** Functions Called by the CVODE Solver ******************/
 
 /**
-   f routine. Compute f(t,y).
+   f routine: Compute f(t,x) = df/dx .
+   
    This function is called by CVODE's integration routines every time
-   needed.
-   It evaluates the ODEs with the current variable values, as supplied
-   by CVODE's N_VIth(y,i) vector containing the values of all variables.
-   These values are first written back to CvodeData.
-   Then every ODE is passed to processAST, together with the cvodeData_t *,
-   and this function calculates the current value of the ODE.
-   The returned value is written back to CVODE's N_VIth(ydot,i) vector that
-   contains the values of the ODEs.
-   The the cvodeData_t * is updated again with CVODE's internal values for
-   all variables.
+   required. It evaluates the ODEs with the current variable values,
+   as supplied by CVODE's N_Vector y vector containing the values of
+   all variables (called x in this documentation.  These values are
+   first written back to CvodeData.  Then every ODE is passed to
+   evaluateAST, together with the cvodeData_t *, and this function
+   calculates the current value of the ODE.  The returned value is
+   written back to CVODE's N_Vector(ydot) vector that contains the
+   values of the ODEs.
+
 */
 
 void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
@@ -522,17 +529,17 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
-  /* update parameters: p is modified by CVODES,
+  /** update parameters: p is modified by CVODES,
      if fS could not be generated  */
   if ( data->p != NULL && data->opt->Sensitivity  )
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p[i];
 
-  /* update ODE variables from CVODE */
+  /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
 
-  /* update assignment rules */
+  /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
@@ -540,16 +547,17 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /* update time  */
   data->currenttime = t;
 
-  /* evaluate ODEs */
+  /** evaluate ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<data->model->neq; i++ ) 
     dydata[i] = evaluateAST(data->ode[i],data);
 
 }
 
 /**
-   Jacobian routine. Compute J(t,y).
+   Jacobian routine: Compute J(t,x) = df/dx
+   
    This function is (optionally) called by CVODE's integration routines
-   every time needed.
+   every time  required.
    Very similar to the f routine, it evaluates the Jacobian matrix
    equations with CVODE's current values and writes the results
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
@@ -567,25 +575,25 @@ JacODE(long int N, DenseMat J, realtype t,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   
-  /* update parameters: p is modified by CVODES,
-     if fS could not be generated  */
+  /** update parameters: p is modified by CVODES,
+      if fS could not be generated  */
   if ( data->p != NULL && data->opt->Sensitivity )
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p[i];
 
-  /* update ODE variables from CVODE */
+  /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
 
-  /* update assignment rules */
+  /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
 
-  /* update time */
+  /** update time */
   data->currenttime = t;
 
-  /* evaluate Jacobian*/
+  /** evaluate Jacobian J = df/dx */
   for ( i=0; i<data->model->neq; i++ ) 
     for ( j=0; j<data->model->neq; j++ ) 
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);

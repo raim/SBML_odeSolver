@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 13:01:58 raim>
-  $Id: integratorInstance.c,v 1.48 2005/12/16 18:32:15 afinney Exp $
+  Last changed Time-stamp: <2005-12-17 12:24:08 raim>
+  $Id: integratorInstance.c,v 1.49 2005/12/22 11:51:26 raimc Exp $
 */
 /* 
  *
@@ -297,6 +297,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t
 {
   /*!!! needs better solution, if sensitivity for selected params
         will be implemented !!!*/
+  /*!!! needs to catch variableIndex for which no sensitivity exists !!!*/
   return engine->data->sensitivity[y->index][p->type_index];
 }
 
