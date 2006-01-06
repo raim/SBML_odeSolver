@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 15:53:11 raim>
-  $Id: cvodeSolver.c,v 1.22 2006/01/06 11:48:48 afinney Exp $
+  $Id: cvodeSolver.c,v 1.23 2006/01/06 17:10:44 afinney Exp $
 */
 /* 
  *
@@ -80,6 +80,13 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     cvodeSettings_t *opt = engine->opt;
     cvodeResults_t *results = engine->results;
     odeModel_t *om = engine->om;
+
+    if (!engine->isValid)
+    {
+        IntegratorInstance_freeCVODESolverStructures(engine);
+        solver->t0 = solver->t;
+        IntegratorInstance_createCVODESolverStructures(engine);
+    }
     
     /* !!!! calling CVODE !!!! */
     flag = CVode(solver->cvode_mem, solver->tout,
@@ -401,6 +408,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	data->ode[i] = copyAST(om->ode[i]);
      }
     }
+
+    engine->isValid = 1; /* 'solver' is consistant with 'data' */
 
     return 1; /* 1 == OK */
 }

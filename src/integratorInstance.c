@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 12:24:08 raim>
-  $Id: integratorInstance.c,v 1.50 2006/01/06 11:48:48 afinney Exp $
+  $Id: integratorInstance.c,v 1.51 2006/01/06 17:10:44 afinney Exp $
 */
 /* 
  *
@@ -739,9 +739,7 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
   if ( vi->index < om->neq ) {
     /* if (om->algebraic) ?? */
-    IntegratorInstance_freeCVODESolverStructures(engine);
-    solver->t0 = solver->t;
-    IntegratorInstance_createCVODESolverStructures(engine);
+    engine->isValid = 0; /* 'solver' is no longer consistant with 'data' */
   }
   else if ( vi->index >= om->neq+om->nass ) {
     /* optimize ODEs for evaluation */

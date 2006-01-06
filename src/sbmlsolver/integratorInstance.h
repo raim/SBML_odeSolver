@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:37:17 raim>
-  $Id: integratorInstance.h,v 1.21 2005/12/15 19:54:06 raimc Exp $ 
+  $Id: integratorInstance.h,v 1.22 2006/01/06 17:10:45 afinney Exp $ 
 */
 /* 
  *
@@ -55,7 +55,6 @@ extern "C" {
   /** Solver State Information */
   struct cvodeSolver
   {
-    
     double t, tout, t0;
     int iout, nout;  /**< above data are required by all solvers */    
     realtype reltol, atol1;
@@ -70,6 +69,9 @@ extern "C" {
   /** the main structure for numerical integration */
   struct integratorInstance
   {
+    /** implies that the 'data' field state is consistant with the 'solver' field */
+    int isValid; 
+
     /** the ODE Model as passed for construction of cvodeData and
 	cvodeSolver */
     odeModel_t *om;
