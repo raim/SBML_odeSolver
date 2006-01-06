@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 15:18:14 raim>
-  $Id: sensSolver.c,v 1.18 2005/12/21 14:59:31 raimc Exp $
+  $Id: sensSolver.c,v 1.19 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -117,8 +117,8 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq, ns;
-    realtype *ydata, *abstoldata, *ySdata, *senstoldata;
+    int i, j, flag;
+    realtype *abstoldata, *ySdata;
 
     odeModel_t *om = engine->om;
     cvodeData_t *data = engine->data;

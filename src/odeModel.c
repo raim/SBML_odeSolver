@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 16:48:35 raim>
-  $Id: odeModel.c,v 1.35 2005/12/21 15:49:36 raimc Exp $ 
+  $Id: odeModel.c,v 1.36 2006/01/06 11:48:48 afinney Exp $ 
 */
 /* 
  *
@@ -309,7 +309,6 @@ ODEModel_fillStructures(Model_t *ode)
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nalg, int nevents)
 {
-  int i;
   odeModel_t *data;
 
   ASSIGN_NEW_MEMORY(data, odeModel_t, NULL)
@@ -703,8 +702,6 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, va
 
 SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 {
-
-  ASTNode_t ***A;
 
   if ( om->jacob != NULL && om->jacobian == 1 )
     return determinantNAST(om->jacob, om->neq);

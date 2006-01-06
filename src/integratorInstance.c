@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 12:24:08 raim>
-  $Id: integratorInstance.c,v 1.49 2005/12/22 11:51:26 raimc Exp $
+  $Id: integratorInstance.c,v 1.50 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -165,7 +165,6 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *om, cvodeSettings_t *opt)
 {
   cvodeData_t *data;
-  integratorInstance_t *engine;
     
   data = CvodeData_create(om);
   RETURN_ON_FATALS_WITH(NULL);
@@ -361,7 +360,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *engine, variableIndex_t *p)
 {
-  int j, index;
+  int j;
   cvodeData_t *data = engine->data;
 
   if ( data->sensitivity == NULL )

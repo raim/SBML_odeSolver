@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 19:32:08 raim>
-  $Id: printModel.c,v 1.14 2005/12/17 19:00:11 raimc Exp $
+  $Id: printModel.c,v 1.15 2006/01/06 11:48:47 afinney Exp $
 */
 /* 
  *
@@ -675,6 +675,9 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   }
 #endif  
   
+  results = data->results;
+  om = data->model;
+
   if ( Opt.PrintMessage ) {
     fprintf(stderr,
 	    "\nPrinting time course of all variable values");
@@ -684,9 +687,6 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
       fprintf(stderr, ".\n\n");
   }
   
-  results = data->results;
-  om = data->model;
-
   /* print sensitivities of calculated */
   if ( Opt.Sensitivity  && results->sensitivity != NULL ) {
     fprintf(f, "#t ");

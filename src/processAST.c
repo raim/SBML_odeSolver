@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 11:18:48 raim>
-  $Id: processAST.c,v 1.33 2005/12/21 14:59:31 raimc Exp $
+  $Id: processAST.c,v 1.34 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -219,7 +219,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   ASTNodeType_t type;
   /* ASTNode_t **child; */
 
-  char *unknown;
   double result;
 
   if ( n == NULL ) {

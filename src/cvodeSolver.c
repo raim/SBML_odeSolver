@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 15:53:11 raim>
-  $Id: cvodeSolver.c,v 1.21 2005/12/22 11:51:26 raimc Exp $
+  $Id: cvodeSolver.c,v 1.22 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -196,7 +196,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq, method, iteration, maxorder;
+    int i, j, flag, neq, method, iteration;
     realtype *ydata, *abstoldata;
 
     ASTNode_t *tmp;

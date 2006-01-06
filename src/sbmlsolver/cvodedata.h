@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 18:09:54 raim>
-  $Id: cvodedata.h,v 1.28 2005/12/21 17:12:45 raimc Exp $
+  $Id: cvodedata.h,v 1.29 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -148,13 +148,13 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
   SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
+  SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 #ifdef __cplusplus
 }
 #endif
 
 
 /* internal functions used by integratorInstance.c */
-int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
 

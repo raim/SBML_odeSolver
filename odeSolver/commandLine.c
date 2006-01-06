@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 19:51:13 raim>
-  $Id: commandLine.c,v 1.16 2005/12/17 19:00:11 raimc Exp $
+  $Id: commandLine.c,v 1.17 2006/01/06 11:48:47 afinney Exp $
 */
 /* 
  *
@@ -79,7 +79,6 @@ odeSolver (int argc, char *argv[])
   FILE *outfile;
   ASTNode_t *det;
   odeModel_t *om;
-  cvodeData_t *data;
   integratorInstance_t *ii;
   cvodeSettings_t *set;
   clock_t startTime, endTime ;

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 18:30:53 raim>
-  $Id: odeSolver.c,v 1.36 2005/12/16 17:35:54 raimc Exp $
+  $Id: odeSolver.c,v 1.37 2006/01/06 11:48:48 afinney Exp $
 */
 /* 
  *
@@ -217,8 +217,6 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
 
 
   int i, j;
-  double value, increment;
- 
   odeModel_t *om;
   integratorInstance_t *ii;
   variableIndex_t *vi;
@@ -350,7 +348,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid) {
 
 static int localizeParameter(Model_t *m, char *id, char *rid) {
 
-  int i, found;
+  int found;
   Reaction_t *r;
   KineticLaw_t *kl;
   ListOf_t     *pl;
@@ -711,7 +709,7 @@ SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *vs)
 
 SBML_ODESOLVER_API void VarySettings_free(varySettings_t *vs)
 {
-  int i, j;
+  int i;
   
   for ( i=0; i<vs->nrparams; i++ ) {
     free(vs->id[i]);
