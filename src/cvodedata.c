@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 18:02:35 raim>
-  $Id: cvodedata.c,v 1.24 2005/12/21 17:02:52 raimc Exp $
+  $Id: cvodedata.c,v 1.25 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -83,6 +83,11 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
   data->sensitivity = NULL;
   data->p = NULL;
   
+
+  /* Adjoint specific */
+  data->adjvalue = NULL;
+
+
   return data ;
 }
 
@@ -99,6 +104,21 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 
   return 1;
 }
+
+
+
+
+static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq)
+{
+  int i;
+  
+  ASSIGN_NEW_MEMORY_BLOCK(data->adjvalue, neq, double, 0);
+ 
+  return 1;
+}
+
+
+
 
 
 
@@ -136,9 +156,17 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
      used for multiple reruns of integration  */
   data->run = 0;
 
+
+  
+  /* Adjoint specific stuff */
+  data->adjrun = 0;
+
+
     /* initialize values */
   CvodeData_initializeValues(data);
   
+
+
   return data;
 }
 
@@ -171,6 +199,13 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
     data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
   /* set current time to 0 */
   data->currenttime = 0.0;
+
+
+  /* Zeroing initial adjoint values */
+  /*
+  for ( i=0; i<data->neq; i++ ) 
+    data->adjvalue[i] = 0.0;
+  */
 
 }
 
@@ -255,6 +290,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
       free(results->value[i]);
     free(results->time);
     free(results->value);
+
     if ( results->sensitivity != NULL ) {
       for ( i=0; i<results->neq; i++ ) {
 	for ( j=0; j<results->nsens; ++j )
@@ -263,6 +299,12 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
       }
       free(results->sensitivity);
     }
+
+
+    /* Adjoint free  */
+    if ( results->adjvalue != NULL )    
+      free(results->adjvalue);
+
     free(results);	      
   }
 }
@@ -317,6 +359,19 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     }
   }
 
+
+
+
+  /* create structures for adjoint sensitivity analysis */
+  if ( opt->ReadyForAdjoint ) { 
+    if(data->adjvalue == NULL){
+      CvodeData_allocateAdjSens(data, om->neq);
+      RETURN_ON_FATALS_WITH(0);          
+    }
+  }
+
+
+
   /* Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */
   /* allow results only for finite integrations */
@@ -328,6 +383,8 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   if ( opt->StoreResults ) {
     data->results = CvodeResults_create(data, opt->PrintStep);
     RETURN_ON_FATALS_WITH(0);
+
+
     if  ( opt->Sensitivity ) {
       CvodeResults_allocateSens(data->results, om->neq, om->nconst,
 				opt->PrintStep);
@@ -336,6 +393,23 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 	for ( j=0; j<data->results->nsens; ++j )
 	  data->results->sensitivity[i][j][0] = data->sensitivity[i][j];
     }
+
+    
+   
+    
+    /* Adjoint specific  */
+    if  ( opt->ReadyForAdjoint ) {
+      CvodeResults_allocateAdjSens(data->results, om->neq, om->n_adj_sens, opt->PrintStep);
+      /* write initial values for sensitivity */
+      for ( i=0; i<data->results->neq; i++ )
+	  data->results->adjvalue[i][0] = data->adjvalue[i];
+    }
+
+
+
+
+
+
     RETURN_ON_FATALS_WITH(0);
   }
 
@@ -357,12 +431,18 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   /* free sensitivity structure */
   if ( data->p != NULL )
     free(data->p);
+
   if ( data->sensitivity != NULL ) {
     for ( i=0; i<data->neq; i++ )
       free(data->sensitivity[i]);
     free(data->sensitivity);
   }
 	   
+  /* free adjoint structure*/
+  if ( data->adjvalue != NULL ) 
+    free(data->adjvalue );
+
+
   /* free results structure */
   CvodeResults_free(data->results);
 
@@ -399,6 +479,27 @@ int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int n
   return 1;
 }
 
+
+
+int CvodeResults_allocateAdjSens(cvodeResults_t *results, int neq, int nadjsens, int nout)
+{
+  int i, j;
+
+  ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue, neq, double *, 0);
+
+  for ( i=0; i<neq; i++ ) 
+    ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue[i], nout+1, double, 0);
+
+
+  results->nadjeq = neq;
+  results->nadjsens = nadjsens;    
+
+  return 1;
+}
+
+
+
+
 /* Creates cvodeResults, the structure that stores
    CVODE integration results */
 cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
@@ -421,7 +522,10 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
     ASSIGN_NEW_MEMORY_BLOCK(results->value[i], nout+1, double, NULL);
 
   results->sensitivity = NULL;
-  
+
+  /* adjoint */
+  results->adjvalue = NULL;  
+
   return results;  
 }
 

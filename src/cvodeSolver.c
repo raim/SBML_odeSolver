@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 15:53:11 raim>
-  $Id: cvodeSolver.c,v 1.23 2006/01/06 17:10:44 afinney Exp $
+  $Id: cvodeSolver.c,v 1.24 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -87,10 +87,25 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
         solver->t0 = solver->t;
         IntegratorInstance_createCVODESolverStructures(engine);
     }
-    
+
+
+    /* Forward solver is only called if not in the adjoint (backward) phase    */
+ if(!opt->ReadyForAdjoint){
+    if( opt->DoAdjoint){
+
+
+    /* !!!! CvodeF is needed in the forward phase if the adjoint soln is desired !!!! */
+    flag = CVodeF(solver->cvode_mem, solver->tout,
+		 solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck) ); 
+    }
+    else{    
     /* !!!! calling CVODE !!!! */
     flag = CVode(solver->cvode_mem, solver->tout,
 		 solver->y, &(solver->t), CV_NORMAL);
+
+    }
+
+
 
     if ( flag != CV_SUCCESS )
       {
@@ -185,13 +200,48 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     flag = IntegratorInstance_updateData(engine);
     if ( flag != 1 )
       return 0;
+ } /* if(!opt->ReadyForAdjoint) */
+ 
+else{ /* if(opt->ReadyForAdjoint) */
+
+  flag = CVodeB(solver->cvadj_mem, solver->tout, solver->yA, &(solver->t), CV_NORMAL);
+  if (check_flag(&flag, "CVodeB", 1, stderr)) return(1);
+
+
+ }
+
+
+
 
     /*  calling CVODE: the same call can be used for CVODES  */
     if ( opt->Sensitivity ) 
       return IntegratorInstance_getForwardSens(engine);
+    else if( opt->ReadyForAdjoint )
+      return IntegratorInstance_getAdjSens(engine);
+
+
+
+ 
     else
       return 1; /* OK */    
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /************* CVODE integrator setup functions ************/
@@ -211,6 +261,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     cvodeData_t *data = engine->data;
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
+
+    
+ 
+ if(!opt->ReadyForAdjoint){
+   /* Forward phase */
+
 
     neq = engine->om->neq; /* number of equations */
 
@@ -310,7 +366,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
 
     /** !! max. order should be set here !! */
-
     /**
      * Call CVodeMalloc to initialize the integrator memory:\n
      *
@@ -374,6 +429,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     
     CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
 
+
+
     if ( opt->Sensitivity ) {
       flag = IntegratorInstance_createCVODESSolverStructures(engine);
       if ( flag == 0 ) {
@@ -381,6 +438,21 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	/* ERROR HANDLING CODE if SensSolver construction failed */
       }
     }
+
+
+
+
+
+    /* If adjoint is desired, CVadjMalloc needs to be done before calling CVodeF  */
+    if(opt->DoAdjoint){
+       solver->cvadj_mem = NULL;
+       solver->cvadj_mem = CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
+         if (check_flag( (void *)solver->cvadj_mem, "CVadjMalloc", 1, stderr)) return(1);
+    }
+
+
+
+
     
     /* set ODEs for evaluation */
     /*!!! will need adaptation to selected sens.analysis !!!*/    
@@ -409,10 +481,40 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      }
     }
 
+
+
+
+} /*  if(!opt->ReadyForAdjoint) */
+else{   /* adjoint phase*/
+
+  /* CVODESolverStructures from former adjoint runs must be freed */
+    if ( data->adjrun > 1 )
+      IntegratorInstance_freeCVODESolverStructures(engine);
+ 
+
+
+     flag = IntegratorInstance_createCVODESSolverStructures(engine);
+      if ( flag == 0 ) {
+	return 0;/* error */
+	/* ERROR HANDLING CODE if SensSolver construction failed */
+      }
+
+ }
+
+
+
+
+
+
     engine->isValid = 1; /* 'solver' is consistant with 'data' */
 
     return 1; /* 1 == OK */
 }
+
+
+
+
+
 
 /* frees N_V vector structures, and the cvode_mem solver */
 void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
@@ -436,6 +538,11 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
     if (engine->solver->dy != NULL)
       N_VDestroy_Serial(engine->solver->dy);
       
+
+    /* Free sensitivity vector yS */
+    if (engine->solver->yA != NULL)
+      N_VDestroy_Serial(engine->solver->yA);
+
 }
 
 

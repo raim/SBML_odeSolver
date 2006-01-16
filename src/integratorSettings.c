@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 13:44:59 raim>
-  $Id: integratorSettings.c,v 1.19 2005/12/21 14:59:31 raimc Exp $
+  $Id: integratorSettings.c,v 1.20 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -190,6 +190,12 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
     /* ... generate default TimePoint array */
     CvodeSettings_setTime(set, Time, PrintStep);
   }
+
+ 
+  /* Default: not doing adjoint solution  */
+  set->DoAdjoint = 0;
+  set->ReadyForAdjoint = 0;
+
   return set;
 }
 
@@ -255,6 +261,9 @@ SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *set, double REr
 }
 
 
+
+
+
 /** Sets maximum number of internal steps during CVODE integration
 */
 
@@ -262,6 +271,66 @@ SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep
 {
   set->Mxstep = Mxstep;  
 }
+
+
+/* Sets flag that tells solver that the adjoint solution is desired   */
+SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *set) 
+{
+  set->DoAdjoint = 1;
+}
+
+/* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
+SBML_ODESOLVER_API void CvodeSettings_setReadyAdj(cvodeSettings_t *set) 
+{
+  set->ReadyForAdjoint = 1;
+}
+
+
+
+
+
+/** Sets absolute and relative error tolerances and maximum number of
+    internal steps during CVODE adjoint integration 
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *set, double Error, double RError) 
+{
+  CvodeSettings_setAdjError(set, Error);
+  CvodeSettings_setAdjRError(set, RError);
+  /* CvodeSettings_setAdjMxstep(set, Mxstep);*/    
+}
+
+
+/** Sets absolute error tolerance for adjoint integration  
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *set, double Error)
+{
+  set->AdjError = Error;
+}
+
+
+/** Sets relative error tolerance for adjoint integration  
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *set, double RError)
+{
+  set->AdjRError = RError;
+}
+
+
+
+
+
+/** Sets the number of forward steps saved, prior to doing the adjoint integration  
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setnSaveSteps(cvodeSettings_t *set, int nSaveSteps)
+{
+  set->nSaveSteps = nSaveSteps;
+}
+
+
 
 
 /** Set method non-linear solver methods, and its maximum order (currently
@@ -347,6 +416,35 @@ static int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *timeseries,
 }
 
 
+/* Sets a predefined adjoint timeseries in cvodeSettings. Assigns memory for
+   an array of requested time points.  AdjPrintStep must be the size of
+   the passed array timeseries. Returns 1, if sucessful and 0, if
+   not. */
+
+static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseries, int AdjPrintStep)
+{
+  int i;
+
+  free(set->AdjTimePoints);
+  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, AdjPrintStep+1, double, 0);    
+
+  set->AdjTime = timeseries[AdjPrintStep-1];
+  set->AdjPrintStep = AdjPrintStep;
+
+  /* Adjoint is integrated backwards to time=0.0 (initial time for forward)  */
+  set->AdjTimePoints[AdjPrintStep+1] = 0.0;
+
+  for ( i=1; i<= AdjPrintStep; i++ ) 
+    set->AdjTimePoints[i] = timeseries[i-1];
+  
+  return 1;
+}
+
+
+
+
+
+
 /** Calculates a time point series from Endtime and Printstep and sets
     the time series in cvodeSettings. Returns 1, if sucessful and 0, if
     not.
@@ -363,6 +461,32 @@ SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTim
   free(timeseries);
   return j;
 }
+
+
+
+/** Calculates adjoint time point series from Endtime and Printstep and sets
+    the time series in cvodeSettings. Returns 1, if sucessful and 0, if
+    not.
+*/
+
+SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double EndTime, int PrintStep)
+{
+  int i, j;
+  double *timeseries;
+  ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);  
+
+  /* Adjoint time series goes backwards, from EndTime to 0 */
+  for ( i=1; i<=PrintStep; i++ )
+    timeseries[PrintStep - i] = i * EndTime/PrintStep;
+
+  j = CvodeSettings_setAdjTimeSeries(set, timeseries, PrintStep);
+
+  free(timeseries);
+  return j;
+}
+
+
+
 
 
 /** Sets the ith time step for the integration, where

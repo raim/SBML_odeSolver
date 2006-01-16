@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:50:29 raim>
-  $Id: odeModel.h,v 1.17 2005/12/15 19:54:06 raimc Exp $ 
+  $Id: odeModel.h,v 1.18 2006/01/16 16:17:22 jamescclu Exp $ 
 */
 /* 
  *
@@ -85,7 +85,26 @@ struct odeModel
   ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp  */
   int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
+
   /* adjoint */
+  /* Given a parameter to observation map F(p), computes the adjoint operator applied to v, F'*(p)v   */                    
+
+  int n_adj_sens;     /**< number of parameters for performing adjoint sens. analysis */
+  int *index_adj_sens;  
+
+  int observation_type;   /**< 0: continuous data observed
+                               1: discrete data observed  */
+
+  int n_observation_times; /* ? needed ?  */
+  double *observation_times_list;  /**< list of observation times if observation_type = 1  */
+  
+
+  ASTNode_t *vector_v;  /**< The vector v for which the value F'* v  is desired */
+  int adj_sensitivity; /**< Was the vector v provided/constructed ? */
+
+
+
+
 
 };
 

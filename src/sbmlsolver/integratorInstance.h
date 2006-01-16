@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:37:17 raim>
-  $Id: integratorInstance.h,v 1.22 2006/01/06 17:10:45 afinney Exp $ 
+  $Id: integratorInstance.h,v 1.23 2006/01/16 16:17:22 jamescclu Exp $ 
 */
 /* 
  *
@@ -63,6 +63,14 @@ extern "C" {
     int nsens;
     N_Vector *yS;    /**< sensitivities vector specific */    
     N_Vector dy;     /**< IDA specific data: current ODE values dx/dt */
+
+
+    /** adjoint specific */
+    void *cvadj_mem;
+    N_Vector yA;    
+    realtype reltolA, reltolQA;
+    N_Vector abstolA, abstolQA; 
+
   };
 
 

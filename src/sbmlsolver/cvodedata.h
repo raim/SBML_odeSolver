@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 18:09:54 raim>
-  $Id: cvodedata.h,v 1.29 2006/01/06 11:48:48 afinney Exp $
+  $Id: cvodedata.h,v 1.30 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -72,6 +72,17 @@ struct cvodeResults {
   /** time course of sensitivities dx(t)/dp */
   double ***sensitivity;
 
+
+  /** Adjoint specific stuff */
+
+  /** dimension of the adjoint solution  */
+  int nadjeq;
+  /** number of parameters p for adjoint sens. analysis */
+  int nadjsens; 
+  /**  the time series of all adjoint variables */
+  double **adjvalue;
+
+
 } ;
 
 /** Contains the data needed for AST formula evaluation and odeModel
@@ -127,10 +138,20 @@ struct cvodeData {
      structure (see above) */
   cvodeResults_t *results;
 
-  /** number of runs with the one integratorInstance */
+  /** number of (forward) runs with the one integratorInstance */
   int run;
 
+  
+
+  /* Adjoint specific  */ 
+  double *adjvalue;  /** The value array is used to write and read the
+			 current values of all adjoint variables \psi(t) (of which there are `neq') */  
+ 
+  /** number of adjoint runs with the one integratorInstance */
+  int adjrun;
 } ;
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,6 +179,8 @@ extern "C" {
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
 
+/* Adjoint specific internal functions used by integratorInstance.c */
+int CvodeResults_allocateAdjSens(cvodeResults_t *, int neq, int nadjsens, int nout);
 
 #endif
 

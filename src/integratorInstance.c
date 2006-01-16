@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 12:24:08 raim>
-  $Id: integratorInstance.c,v 1.51 2006/01/06 17:10:44 afinney Exp $
+  $Id: integratorInstance.c,v 1.52 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -123,36 +123,68 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
   /* initialize the solver's time settings */
   
-  /* set initial time, first output time and number of time steps */
-  solver->t0 = opt->TimePoints[0];      /* initial time           */
-  
-  /* first output time as passed to CVODE */
-  if ( opt->Indefinitely )
-    solver->tout = opt->Time;      
-  else 
-    solver->tout = opt->TimePoints[1];
 
-  solver->nout = opt->PrintStep;     /* number of output steps */
-  solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
+
+  if(!opt->ReadyForAdjoint){
+
+    /* set initial time, first output time and number of time steps */
+    solver->t0 = opt->TimePoints[0];      /* initial time           */
+  
+    /* first output time as passed to CVODE */
+    if ( opt->Indefinitely )
+      solver->tout = opt->Time;      
+    else 
+      solver->tout = opt->TimePoints[1];
+
+    solver->nout = opt->PrintStep;     /* number of output steps */
+    solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
 				       when starting from odeModel */
-  
-  /* set up loop variables */
-  solver->iout=1;         /* counts integration steps, start with 1 */
+    /* set up loop variables */
+    solver->iout=1;         /* counts integration steps, start with 1 */
 
-  /* write initial conditions to results structure */
-  if ( opt->StoreResults ) {
-    results->time[0] = data->currenttime;
-    for ( i=0; i<data->nvalues; i++ )
-      results->value[i][0] = data->value[i];
+
+    /* write initial conditions to results structure */
+    if ( opt->StoreResults ) {
+      results->time[0] = data->currenttime;
+      for ( i=0; i<data->nvalues; i++ )
+	results->value[i][0] = data->value[i];
+    }
+
+    /* count adjoint integration runs with this integratorInstance */
+    data->adjrun++;
+  
   }
-  
-  /* count integration runs with this integratorInstance */
-  data->run++;
+  else{
 
+     solver->t0 = opt->AdjTimePoints[0]; 
+     solver->tout = opt->AdjTimePoints[1]; 
+     solver->nout = opt->AdjPrintStep;     /* number of output steps */
+     solver->t = opt->AdjTimePoints[0];    /* CVODE current time, always 0,
+				              when starting from odeModel */
+    /* set up loop variables */
+    solver->iout=1;  
+
+    /* write adjoint initial conditions to results structure */
+    // Need to look into modifying data values? 
+    if ( opt->AdjStoreResults ) {
+      results->time[0] = data->currenttime;
+      for ( i=0; i<data->nvalues; i++ )
+	results->value[i][0] = data->value[i];
+    }
+
+    /* count integration runs with this integratorInstance */
+    data->run++;
+    
+  }
+
+
+  
   /* initialize specific solver structures */
   return IntegratorInstance_initializeSolverStructures(engine);
 
 }
+
+
 
 
 /** \brief Creates an new integratorInstance
@@ -173,7 +205,12 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
   RETURN_ON_FATALS_WITH(NULL);
   
   return IntegratorInstance_allocate(data, opt, om);
+      
 }
+
+
+
+
 
 
 /** \brief Resets and existing integratorInstance with new settings.
@@ -449,8 +486,22 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 	  results->sensitivity[i][j][k] = iResults->sensitivity[i][j][k];
   }
 
+
+
+  if ( iResults->sensitivity != NULL ) {
+    
+
+
+  }
+  
+
+
+
   return results;  
 }
+
+
+
 
 
 /**  \brief Writes current simulation data to original model

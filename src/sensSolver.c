@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 15:18:14 raim>
-  $Id: sensSolver.c,v 1.19 2006/01/06 11:48:48 afinney Exp $
+  $Id: sensSolver.c,v 1.20 2006/01/16 16:17:22 jamescclu Exp $
 */
 /* 
  *
@@ -66,6 +66,20 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
 
+static void fA(realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yA, N_Vector yAdot,
+	 void *fA_data);
+
+
+static void JacA(long int NB, DenseMat JB, realtype t,
+                 N_Vector y, N_Vector yB, N_Vector fyB, void *jac_dataB,
+                 N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B);
+
+
+static void fQA(realtype t, N_Vector y, N_Vector yB, 
+                N_Vector qBdot, void *fQ_dataB);
+
+
+
 /* The Hot Stuff! */
 /** \brief Calls CVODES to provide forward sensitivities after a call to
     cvodeOneStep.
@@ -107,6 +121,54 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 }
 
 
+
+
+
+/* The Hot Stuff! */
+/** \brief Calls CVODES to provide forward sensitivities after a call to
+    cvodeOneStep.
+
+    produces appropriate error messages on failures and returns 1 if
+    the integration can continue, 0 otherwise.  
+*/
+
+int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
+{
+    int i, j, flag;
+    realtype *yAdata = NULL;
+   
+    cvodeSolver_t *solver = engine->solver;
+    cvodeData_t *data = engine->data;
+    cvodeSettings_t *opt = engine->opt;
+    cvodeResults_t *results = engine->results;
+    
+    
+    /* getting sensitivities */
+    /*flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS); */
+    
+    if ( flag != CV_SUCCESS )
+      return 0; /* !!! CVODES specific error handling !!! */    
+    else {
+     
+	yAdata = NV_DATA_S(solver->yA);
+	for ( i=0; i<data->neq; i++ ) {
+	  data->adjvalue[i] = yAdata[i];
+
+          /* store results */
+	  if ( opt->AdjStoreResults )
+	    results->adjvalue[i][solver->iout-1] = yAdata[i]; 
+	}
+      
+    }
+    
+    return 1;
+}
+
+
+
+
+
+
 /************* CVODES integrator setup functions ************/
 
 
@@ -124,6 +186,14 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     cvodeData_t *data = engine->data;
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
+
+    /* adjoint specific*/
+    int method, iteration;
+    N_Vector qA;
+    realtype *ydata;
+
+
+if( !opt->ReadyForAdjoint ){
 
     /* realtype pbar[data->nsens+1]; */
     /*int *plist; removed by AMF 8/11/05
@@ -248,7 +318,113 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     } 
     
     return 1; /* OK */
+
+} /* if (!opt->ReadyForAdjoint) */
+else{
+
+
+    qA = NULL;
+ 
+
+/*  Allocate yA, abstolA vectors */
+    solver->yA = N_VNew_Serial(engine->om->neq);
+    if (check_flag((void *)solver->yA, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector y failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			"N_VNew_Serial for vector y failed");
+      return 0; /* error */
+    }
+
+    solver->abstolA = N_VNew_Serial(engine->om->neq);
+    if (check_flag((void *)solver->abstolA, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector abstol failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			"N_VNew_Serial for vector abstol failed");
+      return 0; /* error */
+    }
+
+    
+    /**
+     * Initialize y, abstol vectors
+     */
+    ydata      = NV_DATA_S(solver->yA);
+    abstoldata = NV_DATA_S(solver->abstolA);
+    for ( i=0; i<engine->om->neq; i++ ) {
+
+      /* Set initial value vector components of yAdj */
+      ydata[i] = data->adjvalue[i];
+
+
+      /* Set absolute tolerance vector components,
+         currently the same absolute error is used for all y */ 
+      abstoldata[i] = opt->AdjError;       
+    }
+    
+    /* scalar relative tolerance: the same for all y */
+    solver->reltolA = opt->AdjRError;
+
+
+      
+
+    /* Adjoint specific allocations   */
+    /* NOTE:  CVadjMalloc needs to be done before CVodeF */
+
+    /**
+     * Call CVodeCreate to create the non-linear solver memory:\n
+     *
+       Nonlinear Solver:\n
+     * CV_BDF         Backward Differentiation Formula method\n
+     * CV_ADAMS       Adams-Moulton method\n
+       Iteration Method:\n
+     * CV_NEWTON      Newton iteration method\n
+     * CV_FUNCTIONAL  functional iteration method\n
+     */
+    if ( opt->CvodeMethod == 0 )
+      method = CV_BDF;
+    else
+      method = CV_ADAMS;
+    if ( opt->IterMethod == 0 )
+      iteration = CV_NEWTON;
+    else
+      iteration = CV_FUNCTIONAL;
+
+
+  flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
+  if (check_flag(&flag, "CVodeCreateB", 1, stderr)) return(1);
+
+  flag = CVodeMallocB(solver->cvadj_mem, fA, solver->t0, solver->yA, CV_SV, solver->reltolA, solver->abstolA);
+  if (check_flag(&flag, "CVodeMallocB", 1, stderr)) return(1);
+
+
+
+  flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
+  if (check_flag(&flag, "CVodeSetFdataB", 1, stderr)) return(1);
+
+  flag = CVDenseB(solver->cvadj_mem, om->neq);
+  if (check_flag(&flag, "CVDenseB", 1, stderr)) return(1);
+
+  flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
+  if (check_flag(&flag, "CVDenseSetJacFnB", 1, stderr)) return(1);
+
+  flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, qA);
+  if (check_flag(&flag, "CVodeQuadMallocB", 1, stderr)) return(1);
+
+  flag = CVodeSetQuadFdataB(solver->cvadj_mem, engine->data);
+  if (check_flag(&flag, "CVodeSetQuadFdataB", 1, stderr)) return(1);
+
+  flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE, CV_SS, solver->reltolQA, solver->abstolQA);
+  if (check_flag(&flag, "CVodeSetQuadErrConB", 1, stderr)) return(1);
+
+
+
+} /* if (opt->ReadyForAdjoint) */
+
+
+
 }
+
+
+
 
 
 /** \brief Prints some final statistics of the calls to CVODES forward
@@ -334,5 +510,89 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 
 }
 
+
+
+/************* Additional Function for Adjoint Sensitivity Analysis **************/
+
+/**
+ * fA routine: Called by CVODES to compute the adjoint sensitivity RHS for one
+ * parameter.
+ *
+    CVODES sensitivity analysis calls this function any time required,
+    with current values for variables x, time t and sensitivities
+    s. The function evaluates df/dx*s + df/dp for one p and writes the
+    results back to CVODE's N_Vector(ySdot) vector. The function is
+    not `static' only for including it in the documentation!
+ */
+
+static void fA(realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector yA, N_Vector yAdot,
+               void *fA_data)
+{
+
+  /*
+  int i, j;
+  realtype *ydata, *ySdata, *dySdata;
+  cvodeData_t *data;
+  data  = (cvodeData_t *) fS_data;
+  
+  ydata = NV_DATA_S(y);
+  ySdata = NV_DATA_S(yS);
+  
+  dySdata = NV_DATA_S(ySdot);
+
+
+  
+  for ( i=0; i<data->model->neq; i++ ) {
+    data->value[i] = ydata[i];
+  }
+ 
+  for ( i=0; i<data->model->nass; i++ ) {
+    data->value[data->model->neq+i] =
+      evaluateAST(data->model->assignment[i],data);
+  }
+ 
+  data->currenttime = t;
+
+  
+  for(i=0; i<data->model->neq; i++) {
+    dySdata[i] = 0;
+    for (j=0; j<data->model->neq; j++) {
+      dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
+    }
+    dySdata[i] +=  evaluateAST(data->model->jacob_sens[i][iS], data);
+  }  
+*/
+
+}
+
+
+static void JacA(long int NB, DenseMat JB, realtype t,
+                 N_Vector y, N_Vector yB, N_Vector fyB, void *jac_dataB,
+                 N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B){
+
+
+}
+
+
+static void fQA(realtype t, N_Vector y, N_Vector yB, 
+                N_Vector qBdot, void *fQ_dataB)
+{
+ 
+}
+
+
+
+
+
 /** @} */
 /* End of file */
+
+
+
+
+
+
+
+
+
+

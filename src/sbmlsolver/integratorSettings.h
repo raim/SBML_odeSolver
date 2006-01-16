@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:38:57 raim>
-  $Id: integratorSettings.h,v 1.12 2005/12/15 19:54:06 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.13 2006/01/16 16:17:22 jamescclu Exp $ 
 */
 /* 
  *
@@ -30,6 +30,7 @@
  *     Rainer Machne
  *
  * Contributor(s):
+
  *     
  */
 #include "sbmlsolver/exportdefs.h"
@@ -88,6 +89,33 @@ extern "C" {
     int UseJacobian;      /**< use of Jacobian ASTs (1) or CVODES'
 			     internal approximation (0)*/
     int StoreResults;     /**< if not 0: Store time course history */
+
+
+
+
+    /**< Adjoint related flags and settings   */   
+    int DoAdjoint;       /**< if not 0, the adjoint solution is desired   */
+    int ReadyForAdjoint;    /**< if 1, ready to start allocation/initialization necessary for backwards run  */
+    
+    double AdjTime;          /**< Time to which model is integrated or if
+			       step size if 'Indefinitely' is true */
+    int AdjPrintStep;        /**< Number of output steps from 0 to 'Time';
+			       ignored if 'Indefinitely' */ 
+     
+    double *AdjTimePoints;   /**< Optional array of designed time-course.
+			      If passed by the calling application,
+			      AdjTime will be ignored and overruled by
+			      AdjTimePoints[AdjPrintstep+1], otherwise AdjTimePoints
+			      will be calculated from AdjTime and AdjPrintSteps */
+
+    int nSaveSteps;           /**< Number of steps saved in forward phase  */    
+    int ncheck;              /**< Number of checkpoints, as returned by CvodeF */
+
+    double AdjError;         /**< absolute tolerance in adjoint integration */
+    double AdjRError;        /**< relative tolerance in adjoint integration */ 
+    int AdjStoreResults;     /**< if not 0: Store adjoint time course history */
+
+
   } ;
 
   /* functions */
@@ -107,6 +135,18 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *, int);
+
+
+  /* Adjoint setttings */
+  SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
+  SBML_ODESOLVER_API void CvodeSettings_setReadyAdj(cvodeSettings_t *); 
+  SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *, double Error, double RError);
+  SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *, double);
+  SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *, double);
+  SBML_ODESOLVER_API void CvodeSettings_setnSaveSteps(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *, double EndTime, int PrintStep);
+
+
   SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *, int, int);
   SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *, int);

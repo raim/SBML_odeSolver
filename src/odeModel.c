@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 16:48:35 raim>
-  $Id: odeModel.c,v 1.36 2006/01/06 11:48:48 afinney Exp $ 
+  $Id: odeModel.c,v 1.37 2006/01/16 16:17:22 jamescclu Exp $ 
 */
 /* 
  *
@@ -163,7 +163,9 @@ ODEModel_fillStructures(Model_t *ode)
   om->nconst = nconst;
   om->nass = nass;
 
-  om->nsens = 0; /* sensitivity parameters can be chosen later */
+  om->nsens = 0;     /*         sensitivity parameters can be chosen later */
+  om->n_adj_sens = 0; /* adjoint sensitivity parameters can be chosen later */
+
 
   /* 
     filling the Ids of all rate rules (ODEs) and assignment rules
