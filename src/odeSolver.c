@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 18:30:53 raim>
-  $Id: odeSolver.c,v 1.37 2006/01/06 11:48:48 afinney Exp $
+  Last changed Time-stamp: <2006-02-03 13:42:40 raim>
+  $Id: odeSolver.c,v 1.38 2006/02/03 12:43:21 raimc Exp $
 */
 /* 
  *
@@ -32,8 +32,10 @@
  * Contributor(s):
  *     Stefanie Widder
  *     Christoph Flamm
+ *     Akira Funahashi
  *     Stefan Müller
  *     Andrew Finney
+ *     Norihiro Kikuchi
  */
 /*! \defgroup odeSolver High Level Interfaces
     \brief This module contains high level interfaces to SOSlib, which
@@ -231,7 +233,8 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
  
   /** At first, globalize all local (kineticLaw) parameters to be varied */
   for ( i=0; i<vs->nrparams; i++ ) 
-    if ( vs->rid[i] != NULL ) 
+    /* ** modified after suggestion by Norihiro Kikuchi ** */
+    if ( vs->rid[i] != NULL && strlen(vs->rid[i]) > 0 ) 
       globalizeParameter(m, vs->id[i], vs->rid[i]);     
     
  
@@ -249,8 +252,9 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   /** now, work through the passed parameters in varySettings */
   for ( i=0; i<vs->nrparams; i++ ) {
 
-    /* get the index for parameter i */
-    if ( vs->rid[i] != NULL ) {
+    /* get the index for parameter i
+    ** modified after suggestion by Norihiro Kikuchi ** */ 
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) {
       ASSIGN_NEW_MEMORY_BLOCK(local_param,
 			      strlen(vs->id[i]) + strlen(vs->rid[i]) + 4,
 			      char , 0);
@@ -289,8 +293,9 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   }
   /** localize parameters again, unfortunately the new globalized
      parameter cannot be freed currently  */
-  for ( i=0; i<vs->nrparams; i++ ) 
-    if ( vs->rid[i] != NULL ) 
+  for ( i=0; i<vs->nrparams; i++ )
+    /*  ** modified after suggestion by Norihiro Kikuchi ** */
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) 
       localizeParameter(m, vs->id[i], vs->rid[i]);     
 
   /* free variableIndex, used for setting values */
@@ -641,7 +646,7 @@ int VarySettings_setName(varySettings_t *vs, int i,
   
   /* setting parameter reaction id: local parameters will be
      `globalized' in the input model */
-  if ( rid != NULL ) {
+  if ( rid != NULL  && strlen(rid) > 0 ) {
     ASSIGN_NEW_MEMORY_BLOCK(vs->rid[i], strlen(rid)+1, char, 0);
     sprintf(vs->rid[i], "%s", rid);    
   }
