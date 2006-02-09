@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:29:33 raim>
-  $Id: sbml.h,v 1.5 2005/10/28 09:04:12 afinney Exp $
+  Last changed Time-stamp: <2006-02-09 19:31:32 raim>
+  $Id: sbml.h,v 1.6 2006/02/09 18:35:06 raimc Exp $
 */
 /* 
  *
@@ -65,6 +65,6 @@ SBML_ODESOLVER_API SBMLDocument_t*parseModel(
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif
 /* End of file */
