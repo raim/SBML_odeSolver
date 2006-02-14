@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-01 19:58:14 raim>
-  $Id: adj_sensitivity.c,v 1.2 2006/02/14 15:10:46 jamescclu Exp $
+  $Id: adj_sensitivity.c,v 1.3 2006/02/14 15:38:03 jamescclu Exp $
 */
 /* 
  *
@@ -111,7 +111,7 @@ main (int argc, char *argv[]){
 
   /* 0: simultaneous 1: staggered, 2: staggered1
      see CVODES user guide for details */
-  CvodeSettings_setSensMethod(set, 0);
+  CvodeSettings_setSensMethod(set, 1);
   CvodeSettings_setJacobian(set, 1);
  
   /* ACTIVATE ADJOINT ANALYSIS */
@@ -120,7 +120,7 @@ main (int argc, char *argv[]){
   /* Do the time settings analogous to forward phase, but only reversed */
   CvodeSettings_setAdjTime(set, tout, 10);
   CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
-  CvodeSettings_setnSaveSteps(set, 10);
+  CvodeSettings_setnSaveSteps(set, 1000);
    
   /* set this as a default elsewhere !!! */
   om->n_adj_sens = om->nconst;
@@ -147,7 +147,7 @@ main (int argc, char *argv[]){
     IntegratorInstance_dumpPSensitivities(ii, p);
   }
 
-  VariableIndex_free(p);
+ /*  VariableIndex_free(p); */
 
   /* forward quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
@@ -189,13 +189,14 @@ main (int argc, char *argv[]){
 
   /* Adjoint Integration */
   CvodeSettings_setAdjPhase(set);
-    
+   
   fprintf(stderr, "\n### Commencing adjoint integration:\n");
   /* For adjoint phase, resetting the isValid flag, 
      and create the necessary adjoint structures */
   ii->isValid = 0;
   IntegratorInstance_set(ii, set);
   
+ 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
   ii->data->currenttime =  ii->solver->t0;

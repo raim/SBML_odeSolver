@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Model by stefan@tbi.univie.ac.at -->
+<!-- $Id: repressilator.xml,v 1.1 2006/02/14 15:38:03 jamescclu Exp $ -->
+
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="repressilator(scaled)">
+    <listOfCompartments>
+      <compartment id="compartment" size="1"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="x1" compartment="compartment" initialAmount="1"/>
+      <species id="x2" compartment="compartment" initialAmount="1"/>
+      <species id="x3" compartment="compartment" initialAmount="0.1"/>
+      <species id="y1" compartment="compartment" initialAmount="1"/>
+      <species id="y2" compartment="compartment" initialAmount="0.1"/>
+      <species id="y3" compartment="compartment" initialAmount="0.1"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="alpha" value="1.52"/>
+      <parameter id="beta"  value="1.1"/>
+      <parameter id="rho"   value="2"/>
+    </listOfParameters>
+    <listOfRules>
+      <rateRule variable="x1">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <times/>
+            <ci> beta </ci>
+            <apply>
+              <minus/>
+              <ci> y1 </ci>
+              <ci> x1 </ci>
+            </apply>
+          </apply>
+        </math>
+      </rateRule>
+      <rateRule variable="x2">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <times/>
+            <ci> beta </ci>
+            <apply>
+              <minus/>
+              <ci> y2 </ci>
+              <ci> x2 </ci>
+            </apply>
+          </apply>
+        </math>
+      </rateRule>
+      <rateRule variable="x3">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <times/>
+            <ci> beta </ci>
+            <apply>
+              <minus/>
+              <ci> y3 </ci>
+              <ci> x3 </ci>
+            </apply>
+          </apply>
+        </math>
+      </rateRule>
+      <rateRule variable="y1">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <minus/>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> alpha </ci>
+                <ci> x1 </ci>
+              </apply>
+              <apply>
+                <plus/>
+                <cn type="integer"> 1 </cn>
+                <ci> x1 </ci>
+                <apply>
+                  <times/>
+                  <ci> rho </ci>
+                  <ci> x3 </ci>
+                </apply>
+              </apply>
+            </apply>
+            <ci> y1 </ci>
+          </apply>
+        </math>
+      </rateRule>
+      <rateRule variable="y2">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <minus/>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> alpha </ci>
+                <ci> x2 </ci>
+              </apply>
+              <apply>
+                <plus/>
+                <cn type="integer"> 1 </cn>
+                <ci> x2 </ci>
+                <apply>
+                  <times/>
+                  <ci> rho </ci>
+                  <ci> x1 </ci>
+                </apply>
+              </apply>
+            </apply>
+            <ci> y2 </ci>
+          </apply>
+        </math>
+      </rateRule>
+      <rateRule variable="y3">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <minus/>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> alpha </ci>
+                <ci> x3 </ci>
+              </apply>
+              <apply>
+                <plus/>
+                <cn type="integer"> 1 </cn>
+                <ci> x3 </ci>
+                <apply>
+                  <times/>
+                  <ci> rho </ci>
+                  <ci> x2 </ci>
+                </apply>
+              </apply>
+            </apply>
+            <ci> y3 </ci>
+          </apply>
+        </math>
+      </rateRule>
+    </listOfRules>
+  </model>
+</sbml>
