@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 13:44:59 raim>
-  $Id: integratorSettings.c,v 1.20 2006/01/16 16:17:22 jamescclu Exp $
+  $Id: integratorSettings.c,v 1.21 2006/02/14 15:08:43 jamescclu Exp $
 */
 /* 
  *
@@ -194,7 +194,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
  
   /* Default: not doing adjoint solution  */
   set->DoAdjoint = 0;
-  set->ReadyForAdjoint = 0;
+  set->AdjointPhase = 0;
 
   return set;
 }
@@ -280,9 +280,9 @@ SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *set)
 }
 
 /* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
-SBML_ODESOLVER_API void CvodeSettings_setReadyAdj(cvodeSettings_t *set) 
+SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *set) 
 {
-  set->ReadyForAdjoint = 1;
+  set->AdjointPhase = 1;
 }
 
 
@@ -421,7 +421,7 @@ static int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *timeseries,
    the passed array timeseries. Returns 1, if sucessful and 0, if
    not. */
 
-static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseries, int AdjPrintStep)
+static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseries, int AdjPrintStep, double EndTime)
 {
   int i;
 
@@ -431,8 +431,8 @@ static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseri
   set->AdjTime = timeseries[AdjPrintStep-1];
   set->AdjPrintStep = AdjPrintStep;
 
-  /* Adjoint is integrated backwards to time=0.0 (initial time for forward)  */
-  set->AdjTimePoints[AdjPrintStep+1] = 0.0;
+  /* Adjoint is integrated backwards from EndTime to time=0.0 (initial time for forward)  */
+  set->AdjTimePoints[0] = EndTime;
 
   for ( i=1; i<= AdjPrintStep; i++ ) 
     set->AdjTimePoints[i] = timeseries[i-1];
@@ -477,9 +477,10 @@ SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double End
 
   /* Adjoint time series goes backwards, from EndTime to 0 */
   for ( i=1; i<=PrintStep; i++ )
-    timeseries[PrintStep - i] = i * EndTime/PrintStep;
+    timeseries[i-1] = (PrintStep - i) * EndTime/PrintStep;
 
-  j = CvodeSettings_setAdjTimeSeries(set, timeseries, PrintStep);
+ 
+  j = CvodeSettings_setAdjTimeSeries(set, timeseries, PrintStep, EndTime);
 
   free(timeseries);
   return j;

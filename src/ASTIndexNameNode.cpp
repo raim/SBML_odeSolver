@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 16:45:23 raim>
-  $Id: ASTIndexNameNode.cpp,v 1.3 2005/12/16 16:00:53 raimc Exp $
+  $Id: ASTIndexNameNode.cpp,v 1.4 2006/02/14 15:08:43 jamescclu Exp $
 */
 /* 
  *
@@ -35,7 +35,7 @@
 
 #include "sbmlsolver/ASTIndexNameNode.h"
 
-ASTIndexNameNode::ASTIndexNameNode() : ASTNode(AST_NAME), index(0)
+ASTIndexNameNode::ASTIndexNameNode() : ASTNode(AST_NAME), index(0), dataSet(0)
 {
 }
 
@@ -87,5 +87,24 @@ SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
 {
     return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetIndex();
 }
+
+
+
+
+/** Returns true (1) if the an indexed ASTNode (ASTIndexNameNode) has
+    its data set
+*/
+SBML_ODESOLVER_API unsigned int ASTNode_isSetData(ASTNode_t *node)
+{
+    return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetData();
+}
+
+/** Sets the data of an indexed AST_NAME node (ASTIndexNameNode)
+*/
+void ASTNode_setData(ASTNode_t *node)
+{
+    static_cast<ASTIndexNameNode*>(node)->setData();
+}
+
 
 /** @} */

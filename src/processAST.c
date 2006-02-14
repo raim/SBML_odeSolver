@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 11:18:48 raim>
-  $Id: processAST.c,v 1.34 2006/01/06 11:48:48 afinney Exp $
+  $Id: processAST.c,v 1.35 2006/02/14 15:08:43 jamescclu Exp $
 */
 /* 
  *
@@ -59,6 +59,8 @@
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/ASTIndexNameNode.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/util.h"
+#include "sbmlsolver/interpol.h"
 
 #ifdef WIN32
 double acosh(double x)
@@ -236,8 +238,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
   childnum = ASTNode_getNumChildren(n);
   type = ASTNode_getType(n);
-
- 
   switch(type)
     {
     case AST_INTEGER:
@@ -266,7 +266,10 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	  value is found a fatal error is produced. */
       found = 0;
       if ( ASTNode_isSetIndex(n) ) {
-	result = data->value[ASTNode_getIndex(n)];
+	if ( ASTNode_isSetData(n) )
+	  result = call(ASTNode_getIndex(n), data->currenttime, data->model->time_series);
+	else
+	  result = data->value[ASTNode_getIndex(n)];
 	found++;
       }
       if ( found == 0 ) {
@@ -1726,6 +1729,9 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
   int i, found;
   ASTNode_t *index;
 
+  const char *str;
+  char *short_str = NULL;
+
   index = ASTNode_create();
 
   /* DISTINCTION OF CASES */
@@ -1747,17 +1753,36 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
   /* writing indexed name nodes */
   else if ( ASTNode_isName(f) ) {
     found = 0;
+    str = ASTNode_getName(f);
+  /* alloc mem for data variable */
+    if ( strstr(str, "_data") != NULL ) {
+      short_str = space((strlen(str)-5+1) * sizeof(char));
+      strncpy(short_str, str, strlen(str)-5);
+    }
     for ( i=0; i<nvalues; i++ ) {
-      if ( strcmp(ASTNode_getName(f), names[i]) == 0 ) {
+      if ( strcmp(str, names[i]) == 0 ) {
         ASTNode_free(index);
 	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
+	ASTNode_setName(index, str);
 	ASTNode_setIndex(index, i);
-	ASTNode_setName(index, ASTNode_getName(f));
 	found++;
+	break;
+      }
+      else if ( short_str != NULL && strcmp(short_str, names[i]) == 0 ) {
+        ASTNode_free(index);
+	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
+	ASTNode_setName(index, short_str);
+	ASTNode_setIndex(index, i);
+	ASTNode_setData(index);
+	found++;
+	break;
       }
     }
     if ( !found )
-      ASTNode_setName(index, ASTNode_getName(f));
+      ASTNode_setName(index, str);
+    /* free mem */
+    if ( short_str != NULL )
+      free(short_str);
   }
   /* constants */
   /* functions, operators */
@@ -1771,7 +1796,6 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
       ASTNode_addChild(index, indexAST(ASTNode_getChild(f,i), nvalues, names));
     }
   }
-
   return index;
 }
 

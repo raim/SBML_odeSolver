@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.20 2005/12/21 13:14:00 raimc Exp $
+# $Id: Makefile.am,v 1.21 2006/02/14 15:08:43 jamescclu Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -60,6 +60,7 @@ libODES_a_SOURCES = ASTIndexNameNode.cpp \
 		    sbml.c \
 		    sbmlResults.c \
 		    solverError.c \
+		    interpol.c \
 		    util.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/config.h \
@@ -82,6 +83,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
 		     sbmlsolver/sbmlResults.h \
 		     sbmlsolver/solverError.h \
 		     sbmlsolver/util.h \
+                     sbmlsolver/interpol.h \
 		     sbmlsolver/variableIndex.h
 pkgconfig_DATA = libODES.pc
 

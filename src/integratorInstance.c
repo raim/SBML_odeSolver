@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 12:24:08 raim>
-  $Id: integratorInstance.c,v 1.52 2006/01/16 16:17:22 jamescclu Exp $
+  $Id: integratorInstance.c,v 1.53 2006/02/14 15:08:43 jamescclu Exp $
 */
 /* 
  *
@@ -92,6 +92,9 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   integratorInstance_t *engine;
 
   data->run = 0;
+
+   data->adjrun = 0;
+
     
   ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
   ASSIGN_NEW_MEMORY(engine->solver, struct cvodeSolver, 0);
@@ -125,7 +128,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   
 
 
-  if(!opt->ReadyForAdjoint){
+  if(!opt->AdjointPhase){
 
     /* set initial time, first output time and number of time steps */
     solver->t0 = opt->TimePoints[0];      /* initial time           */
@@ -151,7 +154,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     }
 
     /* count adjoint integration runs with this integratorInstance */
-    data->adjrun++;
+    data->run++;
   
   }
   else{
@@ -173,7 +176,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     }
 
     /* count integration runs with this integratorInstance */
-    data->run++;
+    data->adjrun++;
     
   }
 
@@ -198,11 +201,15 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 {
   cvodeData_t *data;
     
+  
+
   data = CvodeData_create(om);
   RETURN_ON_FATALS_WITH(NULL);
 
+ 
   CvodeData_initialize(data, opt, om);
   RETURN_ON_FATALS_WITH(NULL);
+  
   
   return IntegratorInstance_allocate(data, opt, om);
       
@@ -370,6 +377,28 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
 }
 
 
+
+/**  \brief Prints the current adjoint integration data,
+
+    The first value is the current time, followed by adjoint ODE variable values.
+*/
+
+SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *engine)
+{
+  int i;
+  cvodeData_t *data = engine->data;
+
+  printf("%g  ", data->currenttime);
+  for ( i=0; i<data->neq; i++ )
+    printf("%g ", data->adjvalue[i]);
+  printf("\n");
+}
+
+
+
+
+
+
 /**  \brief Prints the current time, current value of variable y and 
      sensitivities to all parameters for which calculated
 */
@@ -444,7 +473,8 @@ SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine
 
 SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
 {
-    return engine->solver->iout > engine->solver->nout;
+
+   return engine->solver->iout > engine->solver->nout;
 }
 
 
@@ -488,11 +518,11 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 
 
 
-  if ( iResults->sensitivity != NULL ) {
+/*   if ( iResults->sensitivity != NULL ) { */
     
 
 
-  }
+/*   } */
   
 
 
@@ -620,6 +650,64 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     solver->tout = opt->TimePoints[solver->iout];
   return flag;
 }
+
+
+
+
+
+
+
+
+
+/** Default function for updating adjoint data, to be used by solvers after
+    they have calculate psi(t) and updated the time.
+
+    The function increases loop variables, stores
+    results and sets next output time.
+*/
+
+int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
+{
+  int i, flag = 1;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeData_t *data = engine->data;
+  cvodeSettings_t *opt = engine->opt;
+  cvodeResults_t *results = engine->results;
+  odeModel_t *om = engine->om;
+    
+  /* update rest of cvodeData_t **/
+  data->currenttime = solver->t;
+
+  /* store results */
+  if (opt->AdjStoreResults)
+    {
+      results->nout = solver->iout;
+      results->time[solver->iout] = solver->t;
+      for ( i=0; i<data->neq; i++ ) 
+        results->adjvalue[i][solver->iout] = data->adjvalue[i];
+    }
+            
+
+  /* increase integration step counter */
+  solver->iout++;
+    
+  /* ... and set next output time */
+  if ( opt->Indefinitely )
+    solver->tout += opt->Time;
+  else if ( solver->iout <= solver->nout )
+    solver->tout = opt->AdjTimePoints[solver->iout];
+  return flag;
+}
+
+
+
+
+
+
+
+
+
+
 
 
 /************* Internal Checks During Integration Step *******************/
@@ -834,6 +922,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
      and use the default update IntegratorInstance_updateData(engine)
      afterwards */
     
+
     /* for models without ODEs, we just need to increase the time */
     if ( engine->om->neq == 0 ) 
       return IntegratorInstance_simpleOneStep(engine);
