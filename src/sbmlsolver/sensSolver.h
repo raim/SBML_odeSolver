@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 16:27:25 raim>
-  $Id: sensSolver.h,v 1.5 2006/01/16 16:17:22 jamescclu Exp $
+  $Id: sensSolver.h,v 1.6 2006/02/14 15:07:29 jamescclu Exp $
 */
 /* 
  *
@@ -45,11 +45,15 @@ extern "C" {
   /* CVODES SOLVER */  
   SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
 
+  
+
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_getForwardSens(integratorInstance_t *);
   int IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *);
 
   int IntegratorInstance_getAdjSens(integratorInstance_t *);
+  
+  int IntegratorInstance_CVODEQuad(integratorInstance_t *engine);
 
 
 #ifdef __cplusplus

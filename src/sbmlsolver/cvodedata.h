@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-21 18:09:54 raim>
-  $Id: cvodedata.h,v 1.30 2006/01/16 16:17:22 jamescclu Exp $
+  $Id: cvodedata.h,v 1.31 2006/02/14 15:07:29 jamescclu Exp $
 */
 /* 
  *
@@ -71,8 +71,9 @@ struct cvodeResults {
   int nsens;
   /** time course of sensitivities dx(t)/dp */
   double ***sensitivity;
-
-
+  /** time course of directional sensitivities \sum_i dx(t)/dp_i \delta p_i */
+  double **directional;  
+ 
   /** Adjoint specific stuff */
 
   /** dimension of the adjoint solution  */
@@ -168,6 +169,7 @@ extern "C" {
   SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *);
   SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
   SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
+  SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, double *dp);
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
   SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 #ifdef __cplusplus

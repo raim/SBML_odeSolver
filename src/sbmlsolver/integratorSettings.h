@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:38:57 raim>
-  $Id: integratorSettings.h,v 1.13 2006/01/16 16:17:22 jamescclu Exp $ 
+  $Id: integratorSettings.h,v 1.14 2006/02/14 15:07:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -94,8 +94,9 @@ extern "C" {
 
 
     /**< Adjoint related flags and settings   */   
-    int DoAdjoint;       /**< if not 0, the adjoint solution is desired   */
-    int ReadyForAdjoint;    /**< if 1, ready to start allocation/initialization necessary for backwards run  */
+    int DoAdjoint;          /**< if 1, the adjoint solution is desired   */
+    int AdjointPhase;       /**< if 0, do the forward phase of the normal run 
+			         or the forward phase in preparation for the adjoint  */
     
     double AdjTime;          /**< Time to which model is integrated or if
 			       step size if 'Indefinitely' is true */
@@ -139,7 +140,7 @@ extern "C" {
 
   /* Adjoint setttings */
   SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
-  SBML_ODESOLVER_API void CvodeSettings_setReadyAdj(cvodeSettings_t *); 
+  SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *); 
   SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *, double Error, double RError);
   SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *, double);

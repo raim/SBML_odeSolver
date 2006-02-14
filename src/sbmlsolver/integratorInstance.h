@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:37:17 raim>
-  $Id: integratorInstance.h,v 1.23 2006/01/16 16:17:22 jamescclu Exp $ 
+  $Id: integratorInstance.h,v 1.24 2006/02/14 15:07:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -64,12 +64,14 @@ extern "C" {
     N_Vector *yS;    /**< sensitivities vector specific */    
     N_Vector dy;     /**< IDA specific data: current ODE values dx/dt */
 
+    N_Vector q; /* For forward sensitivity quadrature of integral functional */
 
     /** adjoint specific */
     void *cvadj_mem;
     N_Vector yA;    
     realtype reltolA, reltolQA;
     N_Vector abstolA, abstolQA; 
+    N_Vector qA;
 
   };
 
@@ -107,6 +109,10 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
   SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *);
+
+  SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *);
+
+
   SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
@@ -137,5 +143,10 @@ extern "C" {
    result storage and loop variables; to be used by solver
    specific ...OneStep functions */
 int IntegratorInstance_updateData(integratorInstance_t *);
+
+/* default function for adjoint data update, event and steady state handling,
+   result storage and loop variables; to be used by solver
+   specific ...OneStep functions */
+int IntegratorInstance_updateAdjData(integratorInstance_t *);
 
 #endif

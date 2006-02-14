@@ -18,9 +18,16 @@ public:
     unsigned int isSetIndex() const { return indexSet; }
     void setIndex(unsigned int i) { index = i; indexSet = 1; }
 
+    unsigned int isSetData() const { return dataSet; }
+    void setData() { dataSet = 1; } 
+
 private:
     unsigned int index ;
     int indexSet ;
+ 
+    /* used for differentiating whether the name refers
+       to a variable for which "data" is available   */
+    int dataSet;
 };
 
 #endif /* __cplusplus */
@@ -38,6 +45,17 @@ SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *);
 
 /* assumes node is index node */
 SBML_ODESOLVER_API void ASTNode_setIndex(ASTNode_t *, unsigned int); 
+
+
+
+/* returns 0 if node isn't index or if data is not set yet */
+SBML_ODESOLVER_API unsigned int ASTNode_isSetData(ASTNode_t *);
+
+/* assumes node is index node, and then sets data  */
+SBML_ODESOLVER_API void ASTNode_setData(ASTNode_t *); 
+
+
+
 
 END_C_DECLS
 

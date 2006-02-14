@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:50:29 raim>
-  $Id: odeModel.h,v 1.18 2006/01/16 16:17:22 jamescclu Exp $ 
+  $Id: odeModel.h,v 1.19 2006/02/14 15:07:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -40,6 +40,7 @@
 
 #include "sbmlsolver/odemodeldatatype.h"
 #include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/interpol.h"
 
 /** The internal ODE Model as constructed in odeModel.c from an SBML
     input file, that only contains rate rules (constructed from
@@ -87,25 +88,21 @@ struct odeModel
 
 
   /* adjoint */
-  /* Given a parameter to observation map F(p), computes the adjoint operator applied to v, F'*(p)v   */                    
+  /* Given a parameter to observation map F(p),
+     computes the adjoint operator applied to the vector v, F'*(p)v.
+     v is given by a symbolic expression involving x and observation data. */
 
-  int n_adj_sens;     /**< number of parameters for performing adjoint sens. analysis */
-  int *index_adj_sens;  
+  int n_adj_sens;          /**< number of parameters for adj. sens. analysis */
+  int *index_adj_sens;
 
-  int observation_type;   /**< 0: continuous data observed
-                               1: discrete data observed  */
+  int observation_type;    /**< 0: continuous data observed
+                                1: discrete data observed  */
 
-  int n_observation_times; /* ? needed ?  */
-  double *observation_times_list;  /**< list of observation times if observation_type = 1  */
-  
+  time_series_t *time_series;  /**< time series of observation data
+				    or of vector v */
 
-  ASTNode_t *vector_v;  /**< The vector v for which the value F'* v  is desired */
-  int adj_sensitivity; /**< Was the vector v provided/constructed ? */
-
-
-
-
-
+  ASTNode_t **vector_v;     /**< The vector v*/
+ 
 };
 
 #ifdef __cplusplus
