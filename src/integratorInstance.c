@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 12:24:08 raim>
-  $Id: integratorInstance.c,v 1.53 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:00:30 raim>
+  $Id: integratorInstance.c,v 1.54 2006/02/17 16:03:12 raimc Exp $
 */
 /* 
  *
@@ -168,7 +168,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     solver->iout=1;  
 
     /* write adjoint initial conditions to results structure */
-    // Need to look into modifying data values? 
+    /* Need to look into modifying data values? */
     if ( opt->AdjStoreResults ) {
       results->time[0] = data->currenttime;
       for ( i=0; i<data->nvalues; i++ )
