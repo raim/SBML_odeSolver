@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 15:53:11 raim>
-  $Id: cvodeSolver.c,v 1.25 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:34:25 raim>
+  $Id: cvodeSolver.c,v 1.26 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -79,7 +79,6 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   cvodeSolver_t *solver = engine->solver;
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;
-  cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
 
 
@@ -96,7 +95,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   if(!opt->AdjointPhase){
     if( opt->DoAdjoint){
 
-      /* !!!! CvodeF is needed in the forward phase if the adjoint soln is desired !!!! */
+      /* !!!! CvodeF is needed in the forward phase if the adjoint soln
+	 is desired !!!! */
       flag = CVodeF(solver->cvadj_mem, solver->tout,
 		    solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck) );
     }

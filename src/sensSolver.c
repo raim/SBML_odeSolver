@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 15:18:14 raim>
-  $Id: sensSolver.c,v 1.21 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:58:39 raim>
+  $Id: sensSolver.c,v 1.22 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -92,34 +92,37 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
 int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 {
-    int i, j, flag;
-    realtype *ydata = NULL;
-    realtype *ySdata = NULL;
+  int i, j, flag;
+  realtype *ySdata = NULL;
    
-    cvodeSolver_t *solver = engine->solver;
-    cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = engine->opt;
-    cvodeResults_t *results = engine->results;
+  cvodeSolver_t *solver;
+  cvodeData_t *data;
+  cvodeSettings_t *opt;
+  cvodeResults_t *results;
     
+ solver = engine->solver;
+ data = engine->data;
+ opt = engine->opt;
+ results = engine->results;
+ 
+  /* getting sensitivities */
+  flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     
-    /* getting sensitivities */
-    flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
-    
-    if ( flag != CV_SUCCESS )
-      return 0; /* !!! CVODES specific error handling !!! */    
-    else {
-      for ( j=0; j<data->nsens; j++ ) {
-	ySdata = NV_DATA_S(solver->yS[j]);
-	for ( i=0; i<data->neq; i++ ) {
-	  data->sensitivity[i][j] = ySdata[i];
-          /* store results */
-	  if ( opt->StoreResults )
-	    results->sensitivity[i][j][solver->iout-1] = ySdata[i]; 
-	}
+  if ( flag != CV_SUCCESS )
+    return 0; /* !!! CVODES specific error handling !!! */    
+  else {
+    for ( j=0; j<data->nsens; j++ ) {
+      ySdata = NV_DATA_S(solver->yS[j]);
+      for ( i=0; i<data->neq; i++ ) {
+	data->sensitivity[i][j] = ySdata[i];
+	/* store results */
+	if ( opt->StoreResults )
+	  results->sensitivity[i][j][solver->iout-1] = ySdata[i]; 
       }
     }
+  }
     
-    return 1;
+  return 1;
 }
 
 
@@ -138,25 +141,29 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 
 int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
 {
-    int i, j, flag;
-    realtype *yAdata = NULL;
+  int i;
+  realtype *yAdata = NULL;
    
-    cvodeSolver_t *solver = engine->solver;
-    cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = engine->opt;
-    cvodeResults_t *results = engine->results;
+  cvodeSolver_t *solver;
+  cvodeData_t *data;
+  cvodeSettings_t *opt;
+  cvodeResults_t *results;
     
+  solver = engine->solver;
+  data = engine->data;
+  opt = engine->opt;
+  results = engine->results;
   
-	yAdata = NV_DATA_S(solver->yA);
-	for ( i=0; i<data->neq; i++ ) {
-	  data->adjvalue[i] = yAdata[i];
+  yAdata = NV_DATA_S(solver->yA);
+  for ( i=0; i<data->neq; i++ ) {
+    data->adjvalue[i] = yAdata[i];
 
-          /* store results */
-	  if ( opt->AdjStoreResults )
-	    results->adjvalue[i][solver->iout-1] = yAdata[i];
-	}
+    /* store results */
+    if ( opt->AdjStoreResults )
+      results->adjvalue[i][solver->iout-1] = yAdata[i];
+  }
     
-    return 1;
+  return 1;
 }
 
 

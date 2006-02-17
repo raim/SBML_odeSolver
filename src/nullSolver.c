@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 11:05:41 raim>
-  $Id: nullSolver.c,v 1.7 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2006-02-17 17:47:30 raim>
+  $Id: nullSolver.c,v 1.8 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -82,8 +82,6 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
     
     cvodeSolver_t *solver = engine->solver;
     cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = engine->opt;
-    cvodeResults_t *results = engine->results;
     odeModel_t *om = engine->om;
 
     /* IntegratorInstance_freeCVODESolverStructures(engine); */
@@ -133,7 +131,7 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
 int
 IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq;
+    int i, flag, neq;
     realtype *ydata, *scale, *constr;
     N_Vector constraints;
     

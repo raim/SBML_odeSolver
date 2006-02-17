@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-01-24 14:29:58 stefan>
-  $Id: interpol.c,v 1.1 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 18:00:20 raim>
+  $Id: interpol.c,v 1.2 2006/02/17 17:07:28 raimc Exp $
 */
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "util.h"
 
 #define PRIVATE static
-#define PUBLIC
+#define PUBLIC SBML_ODESOLVER_API
 
 #undef VERBOSE
 /* #define VERBOSE */
@@ -18,9 +18,16 @@
 
 /* ------------------------------------------------------------------------ */
 
+static int read_header_line(char *file, int n_var, char **var,
+			   int *col, int *index);
+static int read_columns(char *file, int n_col, int *col, int *index,
+			time_series_t *ts);
+
+/* ------------------------------------------------------------------------ */
+
 PUBLIC void free_data(time_series_t* ts) {
 
-    int i, j;
+    int i;
 
     /* free data */
     for (i=0; i<ts->n_var; i++){
@@ -126,16 +133,15 @@ PUBLIC void test_interpol(time_series_t* ts) {
 
 /* ------------------------------------------------------------------------ */
 
-/* given a file name and a variable list, */
-/* read_data reads time series data from the file, */
-/* (but only for variables in the list) */
-/* stores the data according to the index in the variable list, */
-/* calculates the second derivatives for spline interpolation, */
-/* and returns a pointer to the created data structure. */
+/** given a file name and a variable list, read_data reads time series
+    data from the file, (but only for variables in the list) stores
+    the data according to the index in the variable list, calculates
+    the second derivatives for spline interpolation, and returns a
+    pointer to the created data structure. */
 
 PUBLIC time_series_t *read_data(char *file, int n_var, char **var) {
 
-    int i, j;
+    int i;
     char *name;
 
     int n_data;      /* number of relevant data columns */
@@ -344,8 +350,6 @@ PUBLIC double call(int i, double x, time_series_t *ts) {
     double *xs, *ys; /* x values, y values */
     double y;        /* result */
 
-    int l;
-    
     /* introduce abbreviations */
     nt = ts->n_time;
     xs = ts->time;

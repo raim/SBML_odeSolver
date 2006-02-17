@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-10 16:20:48 raim>
-  $Id: sbml.c,v 1.13 2005/12/16 18:32:15 afinney Exp $
+  Last changed Time-stamp: <2006-02-14 14:50:46 raim>
+  $Id: sbml.c,v 1.14 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -134,9 +134,9 @@ newSBMLReader (char *schemaPath,
   sr = SBMLReader_create();
 
   SBMLReader_setSchemaValidationLevel(sr, XML_SCHEMA_VALIDATION_BASIC);
-  SBMLReader_setSchemaFilenameL1v1(sr, schema[0]);
-  SBMLReader_setSchemaFilenameL1v2(sr, schema[1]);
-  SBMLReader_setSchemaFilenameL2v1(sr, schema[2]);
+/*   SBMLReader_setSchemaFilenameL1v1(sr, schema[0]); */
+/*   SBMLReader_setSchemaFilenameL1v2(sr, schema[1]); */
+/*   SBMLReader_setSchemaFilenameL2v1(sr, schema[2]); */
 
   free(schema[0]);
   free(schema[1]);

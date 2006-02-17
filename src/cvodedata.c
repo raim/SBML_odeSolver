@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 18:02:35 raim>
-  $Id: cvodedata.c,v 1.26 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:33:38 raim>
+  $Id: cvodedata.c,v 1.27 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -261,8 +261,9 @@ SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  
 }
 
 
-/** Computes the directional sensitivity of ODE variable y to parameter direction dp,
-    for all time steps.
+/** Computes the directional sensitivity of ODE variable y to parameter
+    direction dp, for all time steps.
+    
     Must not be called, if sensitivity wasn't calculated!
 */
 
@@ -479,7 +480,7 @@ int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int n
 
 int CvodeResults_allocateAdjSens(cvodeResults_t *results, int neq, int nadjsens, int nout)
 {
-  int i, j;
+  int i;
 
   ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue, neq, double *, 0);
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 16:48:35 raim>
-  $Id: odeModel.c,v 1.37 2006/01/16 16:17:22 jamescclu Exp $ 
+  Last changed Time-stamp: <2006-02-17 17:50:39 raim>
+  $Id: odeModel.c,v 1.38 2006/02/17 17:07:28 raimc Exp $ 
 */
 /* 
  *
@@ -499,7 +499,7 @@ SBML_ODESOLVER_API int ODEModel_getNsens(odeModel_t *om)
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableIndex_t *vi)
 {
-  if ( 0 < vi->index < om->neq )
+  if ( 0 < vi->index && vi->index < om->neq )
     return (const ASTNode_t *) om->ode[vi->index];
   else
     return NULL;
@@ -528,7 +528,7 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, variableIndex_t *vi)
 {
-  if ( om->neq <= vi->index < om->nass )
+  if ( om->neq <= vi->index && vi->index < om->nass )
     return (const ASTNode_t *) om->assignment[vi->type_index];  
   else
     return NULL;

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:00:30 raim>
-  $Id: integratorInstance.c,v 1.54 2006/02/17 16:03:12 raimc Exp $
+  Last changed Time-stamp: <2006-02-17 17:33:06 raim>
+  $Id: integratorInstance.c,v 1.55 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -183,6 +183,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
   
   /* initialize specific solver structures */
+  /* will return 1, solver structures will be initialized from OneStep */
   return IntegratorInstance_initializeSolverStructures(engine);
 
 }
@@ -673,7 +674,6 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
-  odeModel_t *om = engine->om;
     
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
@@ -832,7 +832,6 @@ static int
 IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 {
   odeModel_t *om = engine->om;
-  cvodeSettings_t *opt = engine->opt;
 
   /* IDA SOLVER for DAE systems */
   /* if (om->algebraic)
@@ -1038,7 +1037,6 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
 SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
 {
   odeModel_t *om = engine->om;
-  cvodeSettings_t *opt = engine->opt;
 
   /* if (om->algebraic) IntegratorInstance_printIDAStatistics(engine, f); */
     

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 20:35:16 raim>
-  $Id: odeSolver.h,v 1.19 2005/12/15 19:54:06 raimc Exp $
+  Last changed Time-stamp: <2006-02-14 14:56:11 raim>
+  $Id: odeSolver.h,v 1.20 2006/02/17 17:07:32 raimc Exp $
 */
 /* 
  *
@@ -76,6 +76,7 @@ extern "C" {
   SBML_ODESOLVER_API SBMLResultsMatrix_t *SBML_odeSolverBatch(SBMLDocument_t *, cvodeSettings_t *, varySettings_t *);
   SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch(Model_t *, cvodeSettings_t *, varySettings_t *);
+  SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatchFull(Model_t *, cvodeSettings_t *, varySettings_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *, integratorInstance_t *);
 
   /* settings for parameter variation batch runs */

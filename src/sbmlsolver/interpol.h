@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2004-12-22 10:08:47 stefan>
-  $Id: interpol.h,v 1.1 2006/02/14 15:07:29 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:42:32 raim>
+  $Id: interpol.h,v 1.2 2006/02/17 17:07:32 raimc Exp $
 */
 
 #ifndef _INTERPOL_H_
@@ -29,11 +29,6 @@ void print_data(time_series_t *ts);
 void test_interpol(time_series_t *ts);
 
 time_series_t *read_data(char *file, int num, char **var);
-
-static int read_header_line(char *file, int n_var, char **var,
-			   int *col, int *index);
-static int read_columns(char *file, int n_col, int *col, int *index,
-			time_series_t *ts);
 
 double call(int i, double x, time_series_t *ts);
 

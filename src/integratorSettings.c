@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 13:44:59 raim>
-  $Id: integratorSettings.c,v 1.21 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-17 17:49:56 raim>
+  $Id: integratorSettings.c,v 1.22 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -117,7 +117,6 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, in
 
 SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 {
-  int i;
   printf("\n");
   printf("SOSlib INTEGRATION SETTINGS\n");
   printf("1) CVODE SPECIFIC SETTINGS:\n");
@@ -346,10 +345,11 @@ SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *set, int CvodeM
 {
   /* CvodeMethod == 0: default BDF method
      Method == 1: Adams-Moulton method */
-  if ( 0 <= CvodeMethod < 2 ) {
+  if ( 0 <= CvodeMethod &&  CvodeMethod < 2 ) {
     set->CvodeMethod = CvodeMethod;
     set->MaxOrder = MaxOrder;
   }
+  /* else error message !! ? */
 }
 
 
@@ -363,7 +363,7 @@ SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *set, int i)
 {
   /* i == 0: default NEWTON iteration
      i == 1: FUNCTIONAL iteraction */
-  if ( 0 <= i < 1 ) set->IterMethod = i;
+  if ( 0 <= i && i < 1 ) set->IterMethod = i;
   else set->IterMethod = 0;
 }
 
@@ -500,7 +500,7 @@ SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double End
 
 SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, double time)
 {
-  if ( 0 < i <= set->PrintStep ) {
+  if ( 0 < i && i <= set->PrintStep ) {
     set->TimePoints[i] = time;
     return 1;
   }
@@ -596,7 +596,7 @@ SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *set, int i
 
 SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *set, int i)
 {
-  if ( 0 <= i < 3 ) set->SensMethod = i;
+  if ( 0 <= i && i < 3 ) set->SensMethod = i;
   else set->SensMethod = 0;
 }
 

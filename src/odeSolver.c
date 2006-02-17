@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-03 13:42:40 raim>
-  $Id: odeSolver.c,v 1.38 2006/02/03 12:43:21 raimc Exp $
+  Last changed Time-stamp: <2006-02-17 17:52:50 raim>
+  $Id: odeSolver.c,v 1.39 2006/02/17 17:07:28 raimc Exp $
 */
 /* 
  *
@@ -219,6 +219,111 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
 
 
   int i, j;
+  odeModel_t *om;
+  integratorInstance_t *ii;
+  variableIndex_t *vi = NULL;
+  SBMLResultsMatrix_t *resM;
+
+  char *local_param;
+  
+  int errorCode = 0;
+
+
+  resM = SBMLResultsMatrix_allocate(vs->nrparams, vs->nrdesignpoints);
+ 
+  /** At first, globalize all local (kineticLaw) parameters to be varied */
+  for ( i=0; i<vs->nrparams; i++ ) 
+    /* ** modified after suggestion by Norihiro Kikuchi ** */
+    if ( vs->rid[i] != NULL && strlen(vs->rid[i]) > 0 ) 
+      globalizeParameter(m, vs->id[i], vs->rid[i]);     
+    
+ 
+  /** Then create internal odeModel: attempts to construct a simplified
+     SBML model with reactions replaced by ODEs.
+     See comments in Model_odeSolver for details.  */
+  om = ODEModel_create(m);      
+  RETURN_ON_FATALS_WITH(NULL);
+ 
+  /** an integratorInstance is created from the odeModel and the passed
+     cvodeSettings. If that worked out ...  */  
+  ii = IntegratorInstance_create(om, set);
+  RETURN_ON_FATALS_WITH(NULL);
+      
+  /** now, work through the passed parameters in varySettings */
+  for ( i=0; i<vs->nrparams; i++ ) {
+
+    /* get the index for parameter i
+    ** modified after suggestion by Norihiro Kikuchi ** */ 
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) {
+      ASSIGN_NEW_MEMORY_BLOCK(local_param,
+			      strlen(vs->id[i]) + strlen(vs->rid[i]) + 4,
+			      char , 0);
+      sprintf(local_param, "r_%s_%s", vs->rid[i], vs->id[i]);
+      vi = ODEModel_getVariableIndex(om, local_param);
+      free(local_param);
+    }
+    else
+      vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    
+    if ( vi == NULL )
+      return NULL;
+  
+    /* then, work through all values for this parameter */
+    for ( j=0; j<vs->nrdesignpoints; j++ ) {
+
+      /* Set the value!*/
+      IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
+
+ 
+      /** .... the integrator loop can be started, that invokes
+	  CVODE to move one time step and store results. These
+	  functions will also handle events and check for steady states. */
+      errorCode = 0;
+      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
+	if (!IntegratorInstance_integrateOneStep(ii))
+	  errorCode = IntegratorInstance_handleError(ii);
+  
+      RETURN_ON_FATALS_WITH(NULL);
+        
+      /** map cvode results back to SBML compartments, species and
+	  parameters  */
+      resM->results[i][j] = SBMLResults_fromIntegrator(m, ii);
+      IntegratorInstance_reset(ii);
+    }
+  }
+  /** localize parameters again, unfortunately the new globalized
+     parameter cannot be freed currently  */
+  for ( i=0; i<vs->nrparams; i++ )
+    /*  ** modified after suggestion by Norihiro Kikuchi ** */
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) 
+      localizeParameter(m, vs->id[i], vs->rid[i]);     
+
+  /* free variableIndex, used for setting values */
+  VariableIndex_free(vi);
+  /* free integration data */
+  IntegratorInstance_free(ii);
+  /* free odeModel */
+  ODEModel_free(om);
+  /* ... well done. */
+  return(resM);
+
+}
+
+
+/** Solves the timeCourses for a SBML model, passed via a libSBML
+    Model_t (must be level 2 SBML!!) structure and according to passed
+    integration and parameter variation settings and returns the
+    SBMLResultsMatrix containing SBMLResults for all combinations of
+    parameter values. This function will eventually replace
+    odeSolverBatch
+*/
+
+SBML_ODESOLVER_API SBMLResultsMatrix_t *
+Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
+			 varySettings_t *vs) {
+
+
+  int i, j, k, l;
   odeModel_t *om;
   integratorInstance_t *ii;
   variableIndex_t *vi;
