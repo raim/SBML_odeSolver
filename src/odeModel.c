@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:50:39 raim>
-  $Id: odeModel.c,v 1.38 2006/02/17 17:07:28 raimc Exp $ 
+  Last changed Time-stamp: <2006-02-23 16:23:47 raim>
+  $Id: odeModel.c,v 1.39 2006/02/23 15:34:22 raimc Exp $ 
 */
 /* 
  *
@@ -499,7 +499,7 @@ SBML_ODESOLVER_API int ODEModel_getNsens(odeModel_t *om)
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableIndex_t *vi)
 {
-  if ( 0 < vi->index && vi->index < om->neq )
+  if ( 0 <= vi->index && vi->index < om->neq )
     return (const ASTNode_t *) om->ode[vi->index];
   else
     return NULL;
