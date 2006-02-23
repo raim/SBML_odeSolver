@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 11:41:56 raim>
-  $Id: drawGraph.c,v 1.20 2005/12/21 14:59:31 raimc Exp $
+  Last changed Time-stamp: <2006-02-23 14:22:30 raim>
+  $Id: drawGraph.c,v 1.21 2006/02/23 15:34:58 raimc Exp $
 */
 /* 
  *
@@ -60,6 +60,7 @@
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/drawGraph.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/util.h"
 
 /* Header Files for Graphviz */
 #if USE_GRAPHVIZ
