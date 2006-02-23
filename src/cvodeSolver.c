@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:34:25 raim>
-  $Id: cvodeSolver.c,v 1.26 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-02-23 16:03:10 raim>
+  $Id: cvodeSolver.c,v 1.27 2006/02/23 15:38:05 raimc Exp $
 */
 /* 
  *
@@ -87,7 +87,6 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
       IntegratorInstance_freeCVODESolverStructures(engine);
       solver->t0 = solver->t;
-
       IntegratorInstance_createCVODESolverStructures(engine);
     }
 
@@ -500,42 +499,45 @@ else{   /* adjoint phase*/
 /* frees N_V vector structures, and the cvode_mem solver */
 void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 {
-    /* Free the y, abstol vectors */ 
+  /* Free the y, abstol vectors */
+  if (engine->solver->y != NULL)
     N_VDestroy_Serial(engine->solver->y);
+  if (engine->solver->abstol != NULL)
     N_VDestroy_Serial(engine->solver->abstol);
 
-    /* Free the integrator memory */
+  /* Free the integrator memory */
+  if (engine->solver->cvode_mem != NULL)
     CVodeFree(engine->solver->cvode_mem);
 
-    /* Free sensitivity vector yS */
-    if (engine->solver->yS != NULL)
-      N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
+  /* Free sensitivity vector yS */
+  if (engine->solver->yS != NULL)
+    N_VDestroyVectorArray_Serial(engine->solver->yS, engine->solver->nsens);
 
-    /* Free sensitivity vector yS */
-    if (engine->solver->senstol != NULL)
-      N_VDestroy_Serial(engine->solver->senstol);
+  /* Free sensitivity vector yS */
+  if (engine->solver->senstol != NULL)
+    N_VDestroy_Serial(engine->solver->senstol);
 
-    /* Free IDA vector dy */
-    if (engine->solver->dy != NULL)
-      N_VDestroy_Serial(engine->solver->dy);
+  /* Free IDA vector dy */
+  if (engine->solver->dy != NULL)
+    N_VDestroy_Serial(engine->solver->dy);
       
-    /* Adjoint related  */
+  /* Adjoint related  */
     
-    /* Free adjoint sensitivity vector yA */
-    if (engine->solver->yA != NULL)
-      N_VDestroy_Serial(engine->solver->yA);
+  /* Free adjoint sensitivity vector yA */
+  if (engine->solver->yA != NULL)
+    N_VDestroy_Serial(engine->solver->yA);
 
-    /* Free adjoint sensitivity quad vector qA */
-    if (engine->solver->qA != NULL)
-      N_VDestroy_Serial(engine->solver->qA);
+  /* Free adjoint sensitivity quad vector qA */
+  if (engine->solver->qA != NULL)
+    N_VDestroy_Serial(engine->solver->qA);
 
-    /* Free adjoint sensitivity quad vector abstolQA */
-    if (engine->solver->abstolA != NULL)
-      N_VDestroy_Serial(engine->solver->abstolA);
+  /* Free adjoint sensitivity quad vector abstolQA */
+  if (engine->solver->abstolA != NULL)
+    N_VDestroy_Serial(engine->solver->abstolA);
 
-    /* Free adjoint sensitivity quad vector abstolQA */
-    if (engine->solver->abstolQA != NULL)
-      N_VDestroy_Serial(engine->solver->abstolQA);
+  /* Free adjoint sensitivity quad vector abstolQA */
+  if (engine->solver->abstolQA != NULL)
+    N_VDestroy_Serial(engine->solver->abstolQA);
 
 }
 
