@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 11:18:48 raim>
-  $Id: processAST.c,v 1.35 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-02-23 14:13:51 raim>
+  $Id: processAST.c,v 1.36 2006/02/23 15:36:43 raimc Exp $
 */
 /* 
  *
@@ -62,22 +62,21 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/interpol.h"
 
-#ifdef WIN32
-double acosh(double x)
+
+static double acosh(double x)
 {
 	return log(x + (sqrt(x - 1) * sqrt(x + 1)));
 }
 
-double asinh(double x)
+static double asinh(double x)
 {
 	return log(x + sqrt((x * x) + 1));
 }
 
-double atanh(double x)
+static double atanh(double x)
 {
 	return (log(1 + x) - log(1-x))/2 ;
 }
-#endif /* WIN32 */
 
 
 /* local functions  */
@@ -309,7 +308,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	
     case AST_CONSTANT_E:
       /** exp(1) is used to adjust exponentiale to machine precision */
-      result = exp(1);
+      result = exp(1.);
       break;
     case AST_CONSTANT_FALSE:
       result = 0.0;
