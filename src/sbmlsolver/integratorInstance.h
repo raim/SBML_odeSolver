@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 20:37:17 raim>
-  $Id: integratorInstance.h,v 1.24 2006/02/14 15:07:29 jamescclu Exp $ 
+  Last changed Time-stamp: <2006-02-23 17:19:53 raim>
+  $Id: integratorInstance.h,v 1.25 2006/03/02 16:21:45 raimc Exp $ 
 */
 /* 
  *
@@ -64,7 +64,7 @@ extern "C" {
     N_Vector *yS;    /**< sensitivities vector specific */    
     N_Vector dy;     /**< IDA specific data: current ODE values dx/dt */
 
-    N_Vector q; /* For forward sensitivity quadrature of integral functional */
+    N_Vector q; /**< forward sensitivity quadratures of integral functional */ 
 
     /** adjoint specific */
     void *cvadj_mem;
@@ -148,5 +148,10 @@ int IntegratorInstance_updateData(integratorInstance_t *);
    result storage and loop variables; to be used by solver
    specific ...OneStep functions */
 int IntegratorInstance_updateAdjData(integratorInstance_t *);
+
+/* internal function used for optimization of ODEs; will handle the
+   case of sensitivity analysis, where ODEs can not be optimized; */
+/*!!! will need adaptation to selected sens.analysis !!!*/
+void IntegratorInstance_optimizeOdes(integratorInstance_t *);
 
 #endif
