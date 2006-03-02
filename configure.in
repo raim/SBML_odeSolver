@@ -45,6 +45,7 @@ esac
 AC_SUBST(TestDataDirectory)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
+CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 AC_SUBST(CFLAGS)
 
 dnl ---------------------------------------------------------------------------
