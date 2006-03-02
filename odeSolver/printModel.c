@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 19:32:08 raim>
-  $Id: printModel.c,v 1.15 2006/01/06 11:48:47 afinney Exp $
+  Last changed Time-stamp: <2006-02-23 13:51:34 raim>
+  $Id: printModel.c,v 1.16 2006/03/02 16:22:57 raimc Exp $
 */
 /* 
  *
@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <math.h> 
 
 /* Header Files from the SBML Library libsbml */
 #include <sbml/SBMLTypes.h>
@@ -920,7 +920,7 @@ void printPhase(cvodeData_t *data)
 static int printXMGReactionTimeCourse ( cvodeData_t *data )
 {
 
-  int i, j, k, n;
+  int i, j, n;
   double maxY, minY, result;
   
   Model_t *m;
@@ -1223,14 +1223,14 @@ static int printXMGConcentrationTimeCourse(cvodeData_t *data)
 
   cvodeResults_t *results;
 
+  results = data->results;
+  
   maxY = 1.0;
   minY = 0.0;
 
   fprintf(stderr, "Printing results to XMGrace!\n");
   if ( Opt.Sensitivity  && results->sensitivity != NULL )
     fprintf(stderr, "SORRY: sensitivities can not be printed to XMGrace\n");
-  
-  results = data->results;
   
   if ( openXMGrace(data) > 0 ){
     fprintf(stderr,
