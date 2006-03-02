@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:33:06 raim>
-  $Id: integratorInstance.c,v 1.55 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-03-02 16:02:03 raim>
+  $Id: integratorInstance.c,v 1.56 2006/03/02 16:16:50 raimc Exp $
 */
 /* 
  *
@@ -74,8 +74,6 @@ IntegratorInstance_initializeSolver(integratorInstance_t *,
 				    cvodeSettings_t *,
 				    odeModel_t *);
 /* the following functions contain solver specific switches */
-static int
-IntegratorInstance_initializeSolverStructures(integratorInstance_t *);
 static integratorInstance_t *
 IntegratorInstance_allocate(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 
@@ -114,7 +112,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 {
   int i;
   cvodeSolver_t *solver = engine->solver;
-  cvodeResults_t *results = data->results;; 
+  cvodeResults_t *results = data->results; 
 
   /* irreversibly linking the engine to its input model */
   engine->om = om;
@@ -180,12 +178,14 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     
   }
 
+  /* set flag to 0 to indicate that solver structures need to be
+     created before integration */
+  engine->isValid = 0;
+  /* set state variable vector y to NULL */
+  solver->y = NULL;
 
+  return 1;
   
-  /* initialize specific solver structures */
-  /* will return 1, solver structures will be initialized from OneStep */
-  return IntegratorInstance_initializeSolverStructures(engine);
-
 }
 
 
@@ -827,27 +827,6 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 /**************** functions that switch between solvers *****************/
 
 
-/* initializes a cvodeSolver structure */
-static int
-IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
-{
-  odeModel_t *om = engine->om;
-
-  /* IDA SOLVER for DAE systems */
-  /* if (om->algebraic)
-       return initializeIDASolverStructures; */
-
-  /* nothing to be done for models without ODEs */
-  if (!om->neq)
-    return 1;
-
-  /* CVODE SOLVER */
-  if (om->neq) 
-    return IntegratorInstance_createCVODESolverStructures(engine);
-    
-}
-
-
 /** \brief Sets the value of a variable or parameter during an
     integration via its variableIndex.
 
@@ -860,51 +839,68 @@ IntegratorInstance_initializeSolverStructures(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
-
-  int i, j;
-  ASTNode_t *tmp;
   odeModel_t *om;
   cvodeData_t *data;
-  cvodeSettings_t *opt;
-  cvodeSolver_t *solver;
 
   om = engine->om;
-  opt = engine->opt;
   data = engine->data;
-  solver = engine->solver;
 
   data->value[vi->index] = value;
 
+  /* initial values need to be set in results,
+     because they had already been initialized */
+  if ( engine->solver->t == 0.0 && data->results != NULL )
+    data->results->value[vi->index][0] = value;
+  
   if ( vi->index < om->neq ) {
     /* if (om->algebraic) ?? */
     engine->isValid = 0; /* 'solver' is no longer consistant with 'data' */
   }
   else if ( vi->index >= om->neq+om->nass ) {
-    /* optimize ODEs for evaluation */
-    /*!!! will need adaptation to selected sens.analysis !!!*/
-    for ( i=0; i<om->neq; i++ ) {
-      if ( !opt->Sensitivity  || om->sensitivity ) {
-	/* optimize each ODE: replace nconst and simplifyAST */
-	tmp = copyAST(om->ode[i]);
-	for ( j=0; j<om->nconst; j++ ) {
-	  AST_replaceNameByValue(tmp,
-				 om->names[om->neq+om->nass+j],
-				 data->value[om->neq+om->nass+j]);
-	}
-	if ( data->ode[i] != NULL )
-	  ASTNode_free(data->ode[i]);	
- 	data->ode[i] = simplifyAST(tmp);
-	ASTNode_free(tmp);
+    /* optimize ODEs for evaluation again, if a constant has been reset */
+    IntegratorInstance_optimizeOdes(engine);
+  }
+}
+
+/** internal function used for optimization of ODEs; will handle the
+    case of sensitivity analysis, where ODEs can not be optimized; */
+/*!!! will need adaptation to selected sens.analysis !!!*/
+
+void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
+{
+  int i, j;
+  ASTNode_t *tmp;
+  cvodeData_t *data;
+  cvodeSettings_t *opt;
+  odeModel_t *om;
+  
+  om = engine->om;
+  opt = engine->opt;
+  data = engine->data;
+  
+  /*!!! will need adaptation to selected sens.analysis !!!*/
+
+  for ( i=0; i<om->neq; i++ ) {
+    if ( !opt->Sensitivity  || om->sensitivity ) {
+      /* optimize each ODE: replace nconst and simplifyAST */
+      tmp = copyAST(om->ode[i]);
+      for ( j=0; j<om->nconst; j++ ) {
+	AST_replaceNameByValue(tmp,
+			       om->names[om->neq+om->nass+j],
+			       data->value[om->neq+om->nass+j]);
       }
-      else {
-	if ( data->ode[i] != NULL )
-	  ASTNode_free(data->ode[i]);
-	data->ode[i] = copyAST(om->ode[i]);
-      }
+      if ( data->ode[i] != NULL )
+	ASTNode_free(data->ode[i]);	
+      data->ode[i] = simplifyAST(tmp);
+      ASTNode_free(tmp);
+    }
+    else {
+      if ( data->ode[i] != NULL )
+	ASTNode_free(data->ode[i]);
+      data->ode[i] = copyAST(om->ode[i]);
     }
   }
-}	
-
+}
 
 /** \brief Moves the current integration one step forward and switches
     between different solvers for filling ODE variables.
