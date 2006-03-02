@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:58:39 raim>
-  $Id: sensSolver.c,v 1.22 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-02-24 14:17:35 raim>
+  $Id: sensSolver.c,v 1.23 2006/03/02 16:15:27 raimc Exp $
 */
 /* 
  *
@@ -181,28 +181,28 @@ int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
 int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag;
-    realtype *abstoldata, *ySdata;
+  int i, j, flag;
+  realtype *abstoldata, *ySdata;
 
-    odeModel_t *om = engine->om;
-    cvodeData_t *data = engine->data;
-    cvodeSolver_t *solver = engine->solver;
-    cvodeSettings_t *opt = engine->opt;
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeSettings_t *opt = engine->opt;
 
-    /* adjoint specific*/
-    int method, iteration;
-    /* N_Vector qA; */
-    realtype *ydata;
+  /* adjoint specific*/
+  int method, iteration;
+  /* N_Vector qA; */
+  realtype *ydata;
 
 
-if( !opt->AdjointPhase ){
+  if( !opt->AdjointPhase ) {
 
     /* realtype pbar[data->nsens+1]; */
     /*int *plist; removed by AMF 8/11/05
-    realtype *pbar;
+      realtype *pbar;
 
-    ASSIGN_NEW_MEMORY_BLOCK(plist, data->nsens+1, int, 0)
-    ASSIGN_NEW_MEMORY_BLOCK(pbar, data->nsens+1, realtype, 0)*/
+      ASSIGN_NEW_MEMORY_BLOCK(plist, data->nsens+1, int, 0)
+      ASSIGN_NEW_MEMORY_BLOCK(pbar, data->nsens+1, realtype, 0)*/
 
 
     /*****  adding sensitivity specific structures ******/
@@ -217,7 +217,7 @@ if( !opt->AdjointPhase ){
        construct sensitivity matrix dx/dp, sets om->sensitivity
        to 1 if successful, 0 otherwise */
     /*!!! this function will require additional input for
-       non-default case, via sensitivity input settings! !!!*/
+      non-default case, via sensitivity input settings! !!!*/
 
     if ( om->jacobian ) 
       ODEModel_constructSensitivity(om);
@@ -228,13 +228,15 @@ if( !opt->AdjointPhase ){
 
       ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
       /* !!! non-default case:
-	these values should be passed for other cases !!!*/
+	 these values should be passed for other cases !!!*/
       for ( i=0; i<om->nsens; i++ )
 	om->index_sens[i] = om->neq + om->nass + i;
     }
     
     engine->solver->nsens = data->nsens;
 
+    /*!!! valgrind memcheck sensitivity: 1,248 (32 direct, 1,216 indirect)
+      bytes in 1 blocks are definitely lost !!!*/
     solver->yS = N_VNewVectorArray_Serial(data->nsens, data->neq);      
     if (check_flag((void *)solver->yS, "N_VNewVectorArray_Serial",
 		   1, stderr))
@@ -251,7 +253,7 @@ if( !opt->AdjointPhase ){
       ySdata = NV_DATA_S(solver->yS[j]);
       for ( i=0; i<data->neq; i++ ) {
 	ySdata[i] = data->sensitivity[i][j];
-/* 	printf("  data->sensitivity[%d][%d] = %.3g  ", i, j, data->sensitivity[i][j]); */
+	/* 	printf("  data->sensitivity[%d][%d] = %.3g  ", i, j, data->sensitivity[i][j]); */
       }
     }
 
@@ -316,53 +318,55 @@ if( !opt->AdjointPhase ){
 	return 0;
       }
     }
-/*     CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
-/* 			   solver->reltol, &solver->senstol); */
+    /*     CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
+    /* 			   solver->reltol, &solver->senstol); */
     
     /* difference FALSE/TRUE ? */
     flag = CVodeSetSensErrCon(solver->cvode_mem, FALSE);
     if (check_flag(&flag, "CVodeSetSensFdata", 1, stderr)) {
       return 0;
       /* ERROR HANDLING CODE if failes */
-    } 
-    
-    solver->q = N_VNew_Serial(om->nconst);
-    if (check_flag((void *) solver->q, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector abstol failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector q failed");
-      return 0; /* error */
     }
+    
+    if( opt->DoAdjoint ) {
+      
+      solver->q = N_VNew_Serial(om->nconst);
+      if (check_flag((void *) solver->q, "N_VNew_Serial", 0, stderr)) {
+	/* Memory allocation of vector abstol failed */
+	SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			  "N_VNew_Serial for vector q failed");
+	return 0; /* error */
+      }
 
-    /* Init solver->qA = 0.0;*/
-    for(i=0; i<om->nconst; i++)
-      NV_Ith_S(solver->q, i) = 0.0;
+      /* Init solver->qA = 0.0;*/
+      for(i=0; i<om->nconst; i++)
+	NV_Ith_S(solver->q, i) = 0.0;
+ 
+      flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
+      if (check_flag(&flag, "CVodeQuadMalloc", 1, stderr)) return(1);
 
-    flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
-    if (check_flag(&flag, "CVodeQuadMalloc", 1, stderr)) return(1);
-
-    flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-    if (check_flag(&flag, "CVodeSetQuadFdata", 1, stderr)) return(1);
+      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
+      if (check_flag(&flag, "CVodeSetQuadFdata", 1, stderr)) return(1);
 
 
-  /*   flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE, CV_SS, reltolQ, &abstolQ); */
-/*     if (check_flag(&flag, "CVodeSetQuadErrCon", 1)) return(1); */
-
+      /*   flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE, CV_SS, reltolQ, &abstolQ); */
+      /*     if (check_flag(&flag, "CVodeSetQuadErrCon", 1)) return(1); */
+    }
 
     return 1; /* OK */
 
-} /* if (!opt->ReadyForAdjoint) */
-else{
+  } /* if (!opt->ReadyForAdjoint) */
+  else{
 
 
-   if (  om->jacob_sens == NULL ) 
-    ODEModel_constructSensitivity(om);
+    if (  om->jacob_sens == NULL ) 
+      ODEModel_constructSensitivity(om);
 
-   if (  om->jacob == NULL ) 
+    if (  om->jacob == NULL ) 
       opt->UseJacobian = ODEModel_constructJacobian(om);
     
 
-  /*  Allocate yA, abstolA vectors */
+    /*  Allocate yA, abstolA vectors */
     solver->yA = N_VNew_Serial(engine->om->neq);
     if (check_flag((void *)solver->yA, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
@@ -399,10 +403,10 @@ else{
     /**
      * Call CVodeCreateB to create the non-linear solver memory:\n
      *
-       Nonlinear Solver:\n
+     Nonlinear Solver:\n
      * CV_BDF         Backward Differentiation Formula method\n
      * CV_ADAMS       Adams-Moulton method\n
-       Iteration Method:\n
+     Iteration Method:\n
      * CV_NEWTON      Newton iteration method\n
      * CV_FUNCTIONAL  functional iteration method\n
      */
@@ -415,66 +419,66 @@ else{
     else
       iteration = CV_FUNCTIONAL;
 
-  flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
-  if (check_flag(&flag, "CVodeCreateB", 1, stderr)) return(1);
+    flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
+    if (check_flag(&flag, "CVodeCreateB", 1, stderr)) return(1);
 
-  flag = CVodeMallocB(solver->cvadj_mem, fA, solver->t0, solver->yA, CV_SV, solver->reltolA, solver->abstolA);
-  if (check_flag(&flag, "CVodeMallocB", 1, stderr)) return(1);
+    flag = CVodeMallocB(solver->cvadj_mem, fA, solver->t0, solver->yA, CV_SV, solver->reltolA, solver->abstolA);
+    if (check_flag(&flag, "CVodeMallocB", 1, stderr)) return(1);
 
-  flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
-  if (check_flag(&flag, "CVodeSetFdataB", 1, stderr)) return(1);
+    flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
+    if (check_flag(&flag, "CVodeSetFdataB", 1, stderr)) return(1);
 
-  flag = CVDenseB(solver->cvadj_mem, om->neq);
-  if (check_flag(&flag, "CVDenseB", 1, stderr)) return(1);
+    flag = CVDenseB(solver->cvadj_mem, om->neq);
+    if (check_flag(&flag, "CVDenseB", 1, stderr)) return(1);
 
-  flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
-  if (check_flag(&flag, "CVDenseSetJacFnB", 1, stderr)) return(1);
+    flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
+    if (check_flag(&flag, "CVDenseSetJacFnB", 1, stderr)) return(1);
 
-  solver->qA = N_VNew_Serial(om->n_adj_sens);
-  if (check_flag((void *) solver->qA, "N_VNew_Serial", 0, stderr)) {
-    /* Memory allocation of vector abstol failed */
-    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-		      "N_VNew_Serial for vector qA failed");
-    return 0; /* error */
-  }
+    solver->qA = N_VNew_Serial(om->n_adj_sens);
+    if (check_flag((void *) solver->qA, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector abstol failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			"N_VNew_Serial for vector qA failed");
+      return 0; /* error */
+    }
 
-  /* Init solver->qA = 0.0;*/
-  for(i=0; i<om->n_adj_sens; i++)
-    NV_Ith_S(solver->qA, i) = 0.0;
+    /* Init solver->qA = 0.0;*/
+    for(i=0; i<om->n_adj_sens; i++)
+      NV_Ith_S(solver->qA, i) = 0.0;
   
-  /*  Allocate abstolQA vector */
-  solver->abstolQA = N_VNew_Serial(engine->om->neq);
-  if (check_flag((void *)solver->abstolQA, "N_VNew_Serial", 0, stderr)) {
-    /* Memory allocation of vector abstol failed */
-    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-		      "N_VNew_Serial for vector quad abstol failed");
-    return 0; /* error */
-  } 
+    /*  Allocate abstolQA vector */
+    solver->abstolQA = N_VNew_Serial(engine->om->neq);
+    if (check_flag((void *)solver->abstolQA, "N_VNew_Serial", 0, stderr)) {
+      /* Memory allocation of vector abstol failed */
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			"N_VNew_Serial for vector quad abstol failed");
+      return 0; /* error */
+    } 
 
-  abstoldata = NV_DATA_S(solver->abstolQA);
-  for ( i=0; i<engine->om->neq; i++ ) {
-    /* Set absolute tolerance vector components,
-       currently the same absolute error is used for all y */ 
-    abstoldata[i] = opt->AdjError;       
-  } 
+    abstoldata = NV_DATA_S(solver->abstolQA);
+    for ( i=0; i<engine->om->neq; i++ ) {
+      /* Set absolute tolerance vector components,
+	 currently the same absolute error is used for all y */ 
+      abstoldata[i] = opt->AdjError;       
+    } 
 
-  solver->reltolQA = solver->reltolA;
+    solver->reltolQA = solver->reltolA;
  
-  flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
-  if (check_flag(&flag, "CVodeQuadMallocB", 1, stderr)) return(1);
+    flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
+    if (check_flag(&flag, "CVodeQuadMallocB", 1, stderr)) return(1);
 
-  flag = CVodeSetQuadFdataB(solver->cvadj_mem, data);
-  if (check_flag(&flag, "CVodeSetQuadFdataB", 1, stderr)) return(1);
+    flag = CVodeSetQuadFdataB(solver->cvadj_mem, data);
+    if (check_flag(&flag, "CVodeSetQuadFdataB", 1, stderr)) return(1);
 
- /*  flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE, CV_SV, solver->reltolQA, solver->abstolQA); */
-/*   if (check_flag(&flag, "CVodeSetQuadErrConB", 1, stderr)) return(1); */
+    /*  flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE, CV_SV, solver->reltolQA, solver->abstolQA); */
+    /*   if (check_flag(&flag, "CVodeSetQuadErrConB", 1, stderr)) return(1); */
 
- /*   flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE, CV_SS, &(solver->reltolQA), solver->abstolQA );  */
-/*     if (check_flag(&flag, "CVodeSetQuadErrConB", 1, stderr)) return(1); */
+    /*   flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE, CV_SS, &(solver->reltolQA), solver->abstolQA );  */
+    /*     if (check_flag(&flag, "CVodeSetQuadErrConB", 1, stderr)) return(1); */
 
-  return 1; /* OK */
+    return 1; /* OK */
 
-} /* if (opt->ReadyForAdjoint) */
+  } /* if (opt->ReadyForAdjoint) */
 
 }
 
@@ -750,10 +754,7 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
       dqdata[i] += evaluateAST(engine->om->vector_v[j], data) * NV_Ith_S(yS[i], j);
   }
 
-  for(i=0; i<data->model->nconst; i++)
-    free(yS[i]);
-
-  free(yS);
+  N_VDestroyVectorArray_Serial(yS, data->model->nconst);
 
 }
 
