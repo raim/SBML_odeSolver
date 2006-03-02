@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-23 16:03:10 raim>
-  $Id: cvodeSolver.c,v 1.27 2006/02/23 15:38:05 raimc Exp $
+  Last changed Time-stamp: <2006-02-24 14:09:12 raim>
+  $Id: cvodeSolver.c,v 1.28 2006/03/02 16:19:45 raimc Exp $
 */
 /* 
  *
@@ -84,8 +84,6 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
   if (!engine->isValid)
     {
-
-      IntegratorInstance_freeCVODESolverStructures(engine);
       solver->t0 = solver->t;
       IntegratorInstance_createCVODESolverStructures(engine);
     }
@@ -244,19 +242,18 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq, method, iteration;
-    realtype *ydata, *abstoldata;
+  int i, j, flag, neq, method, iteration;
+  realtype *ydata, *abstoldata;
 
-    ASTNode_t *tmp;
-    odeModel_t *om = engine->om;
-    cvodeData_t *data = engine->data;
-    cvodeSolver_t *solver = engine->solver;
-    cvodeSettings_t *opt = engine->opt;
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeSettings_t *opt = engine->opt;
 
     
  
- if(!opt->AdjointPhase){
-   /* i.e, in the forward phase */
+  if ( !opt->AdjointPhase ) {
+    /* i.e, in the forward phase */
 
     neq = engine->om->neq; /* number of equations */
 
@@ -284,12 +281,14 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
     
     /* CVODESolverStructures from former runs must be freed */
-    if ( data->run > 1 )
+    if (  solver->y != NULL )
       IntegratorInstance_freeCVODESolverStructures(engine);
     
     /**
      * Allocate y, abstol vectors
      */
+    /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
+      bytes  in 2 blocks are definitely lost !!!*/
     solver->y = N_VNew_Serial(neq);
     if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector y failed */
@@ -297,6 +296,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 			"N_VNew_Serial for vector y failed");
       return 0; /* error */
     }
+    /*!!! valgrind memcheck sensitivity:   576 (32 direct, 544 indirect)
+      bytes in 2 blocks are definitely lost !!!*/
     solver->abstol = N_VNew_Serial(neq);
     if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
       /* Memory allocation of vector abstol failed */
@@ -329,10 +330,10 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /**
      * Call CVodeCreate to create the non-linear solver memory:\n
      *
-       Nonlinear Solver:\n
+     Nonlinear Solver:\n
      * CV_BDF         Backward Differentiation Formula method\n
      * CV_ADAMS       Adams-Moulton method\n
-       Iteration Method:\n
+     Iteration Method:\n
      * CV_NEWTON      Newton iteration method\n
      * CV_FUNCTIONAL  functional iteration method\n
      */
@@ -345,6 +346,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     else
       iteration = CV_FUNCTIONAL;
     
+    /*!!! valgrind memcheck sensitivity: 20,632 (1,880 direct,
+      18,752 indirect) bytes in 1 blocks are definitely lost !!!*/
     solver->cvode_mem = CVodeCreate(method, iteration);
     if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
@@ -379,7 +382,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     flag = CVodeSetFdata(solver->cvode_mem, engine->data);
     if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
       /* ERROR HANDLING CODE if CVodeSetFdata failes */
-       return 0; /* error */
+      return 0; /* error */
     }
     
     /**
@@ -428,67 +431,44 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
 
 
-    /* If adjoint is desired, CVadjMalloc needs to be done before calling CVodeF  */
+    /* If adjoint is desired, CVadjMalloc needs to be done before
+       calling CVodeF  */
     if(opt->DoAdjoint){
-       solver->cvadj_mem = NULL;
-       solver->cvadj_mem = CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
-         if (check_flag( (void *)solver->cvadj_mem, "CVadjMalloc", 1, stderr)) return(1);
+      solver->cvadj_mem = NULL;
+      /*!!! valgrind memcheck adj_sensitivity: 627,528 (280 direct,
+	627,248 indirect) bytes in 1 blocks are definitely lost !!!*/
+      solver->cvadj_mem = CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
+      if (check_flag( (void *)solver->cvadj_mem, "CVadjMalloc", 1, stderr))
+	return(1);
     }
 
 
     /* set ODEs for evaluation */
     /*!!! will need adaptation to selected sens.analysis !!!*/    
-    for ( i=0; i<om->neq; i++ ) {
-      /* optimize ODEs if no sensitivities are requested,
-         or if the construction of the parametric matrix was
-         successfull */
-      if ( !opt->Sensitivity || om->sensitivity ) {
-	/* optimize each ODE: replace nconst and simplifyAST */
-	tmp = copyAST(om->ode[i]);
-	for ( j=0; j<om->nconst; j++ ) {
-	  AST_replaceNameByValue(tmp,
-				 om->names[om->neq+om->nass+j],
-				 data->value[om->neq+om->nass+j]);
-	}
-	if ( data->ode[i] != NULL )
-	  ASTNode_free(data->ode[i]);
-	    
- 	data->ode[i] = simplifyAST(tmp);
-	ASTNode_free(tmp);
-      }
-      else {
-	if ( data->ode[i] != NULL )
-	  ASTNode_free(data->ode[i]);
-	data->ode[i] = copyAST(om->ode[i]);
-     }
-    }
+    IntegratorInstance_optimizeOdes(engine);
 
 
-
-
-} /*  if(!opt->ReadyForAdjoint) */
-else{   /* adjoint phase*/
-
-
+  } /*  if(!opt->ReadyForAdjoint) */
+  else {   /* adjoint phase*/
    
 
-  /* CVODESolverStructures from former adjoint runs must be freed */
+    /* CVODESolverStructures from former adjoint runs must be freed */
     if ( data->adjrun > 1 )
       IntegratorInstance_freeCVODESolverStructures(engine);
  
   
-     flag = IntegratorInstance_createCVODESSolverStructures(engine);
-      if ( flag == 0 ) {
-	return 0;/* error */
-	/* ERROR HANDLING CODE if SensSolver construction failed */
-      }
+    flag = IntegratorInstance_createCVODESSolverStructures(engine);
+    if ( flag == 0 ) {
+      return 0;/* error */
+      /* ERROR HANDLING CODE if SensSolver construction failed */
+    }
 
- }
+  }
 
 
-    engine->isValid = 1; /* 'solver' is consistant with 'data' */
+  engine->isValid = 1; /* 'solver' is consistant with 'data' */
 
-    return 1; /* 1 == OK */
+  return 1; /* 1 == OK */
 }
 
 
