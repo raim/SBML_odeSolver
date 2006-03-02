@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:49:56 raim>
-  $Id: integratorSettings.c,v 1.22 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-02-24 14:05:42 raim>
+  $Id: integratorSettings.c,v 1.23 2006/03/02 16:17:24 raimc Exp $
 */
 /* 
  *
@@ -431,7 +431,8 @@ static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseri
   set->AdjTime = timeseries[AdjPrintStep-1];
   set->AdjPrintStep = AdjPrintStep;
 
-  /* Adjoint is integrated backwards from EndTime to time=0.0 (initial time for forward)  */
+  /* Adjoint is integrated backwards from EndTime to time=0.0
+     (initial time for forward)  */
   set->AdjTimePoints[0] = EndTime;
 
   for ( i=1; i<= AdjPrintStep; i++ ) 
@@ -800,6 +801,8 @@ void CvodeSettings_free(cvodeSettings_t *set)
 {
   if ( set->TimePoints != NULL )
     free(set->TimePoints);
+  if ( set->AdjTimePoints != NULL )
+    free(set->AdjTimePoints);
   free(set);
 }
 
