@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:52:50 raim>
-  $Id: odeSolver.c,v 1.39 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-02-23 17:18:52 raim>
+  $Id: odeSolver.c,v 1.40 2006/03/02 16:20:49 raimc Exp $
 */
 /* 
  *
@@ -323,10 +323,10 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
 			 varySettings_t *vs) {
 
 
-  int i, j, k, l;
+  int i, j; /* k, l;*/
   odeModel_t *om;
   integratorInstance_t *ii;
-  variableIndex_t *vi;
+  variableIndex_t *vi = NULL;
   SBMLResultsMatrix_t *resM;
 
   char *local_param;
