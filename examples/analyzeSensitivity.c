@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-17 13:27:42 raim>
-  $Id: analyzeSensitivity.c,v 1.3 2005/11/17 13:01:50 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:54:22 raim>
+  $Id: analyzeSensitivity.c,v 1.4 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -42,16 +42,12 @@
 #include "sbmlsolver/solverError.h"
 
 
-static printSensiMatrix(odeModel_t *odeModel, cvodeData_t *data)
+static void printSensiMatrix(odeModel_t *odeModel, cvodeData_t *data)
 {
 
   int i, j;
   const ASTNode_t *f  = NULL;
-  char *formula;
 
-  /* first, get the number of equations of the ODE system */
-  int neq = ODEModel_getNeq(odeModel);
-  
   printf("i\\j ");
   for ( j=0; j<ODEModel_getNsens(odeModel); j++ )
     printf("%d   ", j);
@@ -78,14 +74,12 @@ static printSensiMatrix(odeModel_t *odeModel, cvodeData_t *data)
 
 int main(void)
 {
-    int i, j, neq;
+    int i, j;
     char *formula;
     variableIndex_t *vi = NULL;
     variableIndex_t *vj = NULL;
     const ASTNode_t *f  = NULL;
     cvodeData_t *data   = NULL;
-    cvodeSettings_t *set;
-    integratorInstance_t *iI;
 
     /* first load an SBML model and directly construct the
        internal odeModel from it */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 10:12:50 raim>
-  $Id: findRoot.c,v 1.2 2005/11/08 09:13:24 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:52:51 raim>
+  $Id: findRoot.c,v 1.3 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -41,7 +41,7 @@
 
 int
 main (int argc, char *argv[]){
-  int i, j;
+
   char model[256];
   
   SBMLDocument_t *d;

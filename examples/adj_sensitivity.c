@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 19:58:14 raim>
-  $Id: adj_sensitivity.c,v 1.3 2006/02/14 15:38:03 jamescclu Exp $
+  Last changed Time-stamp: <2006-03-07 16:56:51 raim>
+  $Id: adj_sensitivity.c,v 1.4 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -54,12 +54,10 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
-  cvodeResults_t *results;
-  variableIndex_t *y, *p;
+  variableIndex_t *p;
   char *sbml_file, *v_file, *data_file; 
   time_series_t *ts;
   int flag;
-  ASTNode_t **vector_v;
   double *dp;
   double tout; 
 

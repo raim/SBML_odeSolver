@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-01 18:13:32 raim>
-  $Id: analyzeJacobian.c,v 1.4 2005/12/01 18:59:54 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:55:23 raim>
+  $Id: analyzeJacobian.c,v 1.5 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -42,15 +42,12 @@
 #include "sbmlsolver/solverError.h"
 
 
-static printJacobian(odeModel_t *odeModel, cvodeData_t *data)
+static void printJacobian(odeModel_t *odeModel, cvodeData_t *data)
 {
 
   int i, j;
   const ASTNode_t *f  = NULL;
 
-  /* first, get the number of equations of the ODE system */
-  int neq = ODEModel_getNeq(odeModel);
-  
   printf("i\\j ");
   for ( j=0; j<ODEModel_getNeq(odeModel); j++ )
     printf("%d   ", j);
@@ -77,7 +74,6 @@ static printJacobian(odeModel_t *odeModel, cvodeData_t *data)
 
 int main(void)
 {
-    int i, j, neq;
     char *formula;
     variableIndex_t *vi = NULL;
     variableIndex_t *vj = NULL;

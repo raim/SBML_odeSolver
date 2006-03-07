@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 15:25:35 raim>
-  $Id: batch_integrate.c,v 1.18 2005/12/12 14:40:53 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:55:50 raim>
+  $Id: batch_integrate.c,v 1.19 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -43,7 +43,7 @@ int
 main (int argc, char *argv[]){
   int i, j;
   char *model, *parameter, *reaction;
-  double start, end, steps, value;
+  double start, end, steps;
   double time ;
   double printstep;
 

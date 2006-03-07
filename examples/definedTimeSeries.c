@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 02:24:31 raim>
-  $Id: definedTimeSeries.c,v 1.9 2005/12/16 01:25:40 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:57:44 raim>
+  $Id: definedTimeSeries.c,v 1.10 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -40,7 +40,7 @@
 
 int
 main (int argc, char *argv[]){
-  int i, j;
+  int i;
   char *model;
 
   /* libSBML types */
@@ -49,7 +49,6 @@ main (int argc, char *argv[]){
 
   /* SOSlib types */
   SBMLResults_t *results;
-  timeCourse_t *tc;
   cvodeSettings_t *set;
 
   double printstep;

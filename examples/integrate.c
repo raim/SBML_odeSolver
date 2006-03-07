@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-12 15:25:41 raim>
-  $Id: integrate.c,v 1.12 2005/12/12 14:40:53 raimc Exp $
+  Last changed Time-stamp: <2006-03-07 16:57:25 raim>
+  $Id: integrate.c,v 1.13 2006/03/07 15:58:35 raimc Exp $
 */
 /* 
  *
@@ -39,18 +39,16 @@
 
 
 int
-main (int argc, char *argv[]){
-  int i, j;
+main (int argc, char *argv[])
+{
   char *model;
   double time;
   double printstep;
   /* libSBML types */
   SBMLDocument_t *d;
   SBMLReader_t *sr;
-  Model_t *m;
   /* SOSlib types */
   SBMLResults_t *results;
-  timeCourse_t *tc;
   cvodeSettings_t *set;
 
   /* parsing command-line arguments */
