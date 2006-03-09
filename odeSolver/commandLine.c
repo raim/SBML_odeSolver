@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 19:51:13 raim>
-  $Id: commandLine.c,v 1.17 2006/01/06 11:48:47 afinney Exp $
+  $Id: commandLine.c,v 1.18 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -109,7 +109,14 @@ odeSolver (int argc, char *argv[])
       '--mpath'.
     */
     char* sbmlFilename;
-    sbmlFilename = concat(Opt.ModelPath, Opt.ModelFile);
+
+    if (strlen(Opt.ModelPath) == 0)
+    {
+        ASSIGN_NEW_MEMORY_BLOCK(sbmlFilename, strlen(Opt.ModelFile) + 1, char, EXIT_FAILURE);
+        strcpy(sbmlFilename, Opt.ModelFile);
+    }
+    else
+        sbmlFilename = concat(Opt.ModelPath, Opt.ModelFile);
 
     /** Parse the Model from File, -v: validation
 	See file sbml.c.
@@ -296,6 +303,7 @@ odeSolver (int argc, char *argv[])
 				   Opt.Error, Opt.RError, Opt.Mxstep,
 				   Opt.Jacobian, 0, Opt.HaltOnEvent,
 				   Opt.SteadyState, 1, Opt.Sensitivity, 2);
+    CvodeSettings_setCompileFunctions(set, Opt.Compile);
 
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);
@@ -395,8 +403,13 @@ odeSolver (int argc, char *argv[])
   /* Print some final statistics   */
   if ( Opt.PrintMessage ) {
     IntegratorInstance_printStatistics(ii, stdout);
+  }
+
+  if ( Opt.Benchmark ) {
     printf("## execution time %f\n",
 	   ((double)(endTime-startTime))/CLOCKS_PER_SEC);
+    printf("## integrationTime %f\n",
+	   IntegratorInstance_getIntegrationTime(ii));
   }
 
     
@@ -417,8 +430,6 @@ odeSolver (int argc, char *argv[])
     xfree(sbmlFilename);   
     SBMLDocument_free(d);
 
-/*     printf("#integration execution time %f\n", */
-/* 	   ((double)(endTime-startTime))/ CLOCKS_PER_SEC); */
   }
 
   return(EXIT_SUCCESS);

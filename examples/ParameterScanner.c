@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 13:10:00 raim>
-  $Id: ParameterScanner.c,v 1.8 2005/12/17 12:10:56 raimc Exp $
+  $Id: ParameterScanner.c,v 1.9 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -120,6 +120,7 @@ int doit(int argc, char *argv[])
     CvodeSettings_setSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
     CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
     CvodeSettings_setStoreResults(settings, 0);     /* don't Store time course history */
+    CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
 
     printf("set xlabel 'time'\n");
     printf("set ylabel '%s'\n", parameterStr);
@@ -132,7 +133,7 @@ int doit(int argc, char *argv[])
         integratorInstance = IntegratorInstance_create(model, settings);
         RETURN_ON_ERRORS_WITH(1);
 
-        IntegratorInstance_setVariableValue(integratorInstance, parameterVI, parameter);
+        IntegratorInstance_setVariableValue(integratorInstance, parameterVI, parameter); 
         DumpState(integratorInstance, parameterVI, speciesVI);
 
         for (i=0; i != numberOfTimeSteps && !error; i++)

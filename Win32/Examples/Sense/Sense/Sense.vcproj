@@ -85,7 +85,7 @@ copy  $(OutDir)\ParameterScanner.exe $(OutDir)\..\release
 copy $(OutDir)\..\..\scripts\*.* $(OutDir)\..\release
 copy $(OutDir)\..\..\examples\MAPK.xml $(OutDir)\..\release
 copy $(OutDir)\..\README_FOR_RELEASE.txt $(OutDir)\..\release\README.txt
-"
+xcopy /E /U /Y $(OutDir)\tcc $(OutDir)\..\release\tcc"
 				Outputs="$(OutDir)\..\release\README.txt"/>
 			<Tool
 				Name="VCLinkerTool"

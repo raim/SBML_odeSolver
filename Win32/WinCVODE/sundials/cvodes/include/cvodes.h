@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.3 $
- * $Date: 2005/11/30 11:31:16 $
+ * $Revision: 1.4 $
+ * $Date: 2006/03/09 17:23:48 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban
  *                and Dan Shumaker @ LLNL
@@ -580,7 +580,7 @@ int CVodeRootInit(void *cvode_mem, int nrtfn, CVRootFn g, void *g_data);
  * -----------------------------------------------------------------
  */
 
-int CVodeSetQuadFdata(void *cvode_mem, void *fQ_data);
+WINCVODE_API int CVodeSetQuadFdata(void *cvode_mem, void *fQ_data);
 int CVodeSetQuadErrCon(void *cvode_mem, booleantype errconQ, 
                        int itolQ, realtype reltolQ, void *abstolQ);
 
@@ -605,7 +605,7 @@ int CVodeSetQuadErrCon(void *cvode_mem, booleantype errconQ,
  * -----------------------------------------------------------------
  */
 
-int CVodeQuadMalloc(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
+WINCVODE_API int CVodeQuadMalloc(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
 
 /*
  * -----------------------------------------------------------------
@@ -1030,7 +1030,7 @@ WINCVODE_API int CVodeGetNonlinSolvStats(void *cvode_mem, long int *nniters,
  * -----------------------------------------------------------------
  */
 
-int CVodeGetQuad(void *cvode_mem, realtype t, N_Vector yQout);
+WINCVODE_API int CVodeGetQuad(void *cvode_mem, realtype t, N_Vector yQout);
 int CVodeGetQuadDky(void *cvode_mem, realtype t, int k, N_Vector dky);
 
 /*

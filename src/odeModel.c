@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 16:23:47 raim>
-  $Id: odeModel.c,v 1.39 2006/02/23 15:34:22 raimc Exp $ 
+  $Id: odeModel.c,v 1.40 2006/03/09 17:23:49 afinney Exp $ 
 */
 /* 
  *
@@ -59,6 +59,10 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/modelSimplify.h"
 
+#define COMPILED_RHS_FUNCTION_NAME "rhs"
+#define COMPILED_JACOBIAN_FUNCTION_NAME "jac"
+#define COMPILED_EVENT_FUNCTION_NAME "event"
+
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				    int nass, int nevents, int nalg);
@@ -96,6 +100,9 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
   
   om->m = m;
   om->d = NULL; /* will be set if created from file */
+  om->compiledCVODEFunctionCode = NULL;
+  om->compiledCVODEJacobianFunction = NULL;
+  om->compiledCVODERhsFunction = NULL;
     
   return om;
 }
@@ -281,6 +288,7 @@ ODEModel_fillStructures(Model_t *ode)
     if ( type == SBML_RATE_RULE ) {
       rr = (RateRule_t *)rl;
       math = indexAST(Rule_getMath(rl), nvalues, om->names);
+      /*AST_dump("assigning om->ode", math);*/
       om->ode[neq] = math; 
       neq++;      
     }
@@ -432,6 +440,10 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   /* free document, if model was constructed from file */
   if ( om->d != NULL ) 
     SBMLDocument_free(om->d);    
+
+  /* free compiled code */
+  if (om->compiledCVODEFunctionCode)
+      CompiledCode_free(om->compiledCVODEFunctionCode);
 
   /* free model structure */
   free(om);
@@ -1039,6 +1051,299 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
     free(vi);
 }
 
+void ODEModel_generateASTWithoutIndex(odeModel_t *om, charBuffer_t *buffer, ASTNode_t *node)
+{
+    ASTNode_t *index = indexAST(node, om->neq + om->nass + om->nconst, om->names);
+    generateAST(buffer, index);
+    ASTNode_free(index);
+}
+
+void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node, charBuffer_t *buffer)
+{
+    CharBuffer_append(buffer, "value[");
+    CharBuffer_appendInt(buffer, index);
+    CharBuffer_append(buffer, "] = ");
+    ODEModel_generateASTWithoutIndex(om, buffer, node);
+    CharBuffer_append(buffer, ";\n");
+}
+
+void ODEModel_generateAssignmentRuleCode(odeModel_t *om, charBuffer_t *buffer)
+{
+    int i ;
+
+    for ( i=0; i<om->nass; i++ )
+        ODEModel_generateAssignmentCode(om, om->neq+i, om->assignment[i], buffer);
+}
+
+void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
+{
+    int i, j;
+    ASTNode_t *trigger, *assignment;
+    Event_t *e;
+    EventAssignment_t *ea;
+    variableIndex_t *vi;
+
+    CharBuffer_append(buffer,"DLL_EXPORT int ");
+    CharBuffer_append(buffer,COMPILED_EVENT_FUNCTION_NAME);
+    CharBuffer_append(buffer,"(cvodeData_t *data, int *odeVarIsValid)\n"\
+        "{\n"\
+        "    double *value = data->value;\n"\
+        "    int fired = 0;\n"\
+        "    int *trigger = data->trigger;\n");
+    
+    ODEModel_generateAssignmentRuleCode(om, buffer);
+
+    for ( i=0; i<Model_getNumEvents(om->simple); i++ ) {
+        e = Model_getEvent(om->simple, i);
+        trigger = (ASTNode_t *) Event_getTrigger(e);
+
+        CharBuffer_append(buffer, "if ((trigger[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] == 0) && (");
+        ODEModel_generateASTWithoutIndex(om, buffer, trigger);
+        CharBuffer_append(buffer, "))\n"\
+            "{\n"\
+            "    fired++;\n"\
+            "    trigger[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] = 1;\n");
+
+        for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
+            int setIsValidFalse = 0;
+            /* generate event assignment */
+            ea = Event_getEventAssignment(e, j);
+            assignment = (ASTNode_t *) EventAssignment_getMath(ea);           
+            vi = ODEModel_getVariableIndex(om, EventAssignment_getVariable(ea));
+            CharBuffer_append(buffer, "    ");
+            ODEModel_generateAssignmentCode(om, vi->index, assignment, buffer);
+            VariableIndex_free(vi);
+
+            /* identify cases which modify variables computed by solver which
+            set the solver into an invalid state */
+            if (vi->index < om->neq && !setIsValidFalse)
+            {
+                CharBuffer_append(buffer, "    *odeVarIsValid = 0;\n");
+                setIsValidFalse = 1 ;
+            }
+        }
+
+        CharBuffer_append(buffer, "}\n"\
+            "else {\n"\
+            "    trigger[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] = 0;\n"\
+            "}\n");
+    }
+
+    if (om->nass)
+    {
+        CharBuffer_append(buffer, "if ( fired )\n{\n");
+        ODEModel_generateAssignmentRuleCode(om, buffer);
+        CharBuffer_append(buffer, "}\n");
+    }
+    
+    CharBuffer_append(buffer, "return fired;\n}\n");
+}
+
+void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
+{
+    int i ;
+
+    CharBuffer_append(buffer,"DLL_EXPORT void ");
+    CharBuffer_append(buffer,COMPILED_RHS_FUNCTION_NAME);
+    CharBuffer_append(buffer,
+        "(realtype t, N_Vector y, N_Vector ydot, void *f_data)\n"\
+        "{\n"\
+        "    int i;\n"\
+        "    realtype *ydata, *dydata;\n"\
+        "    cvodeData_t *data;\n"\
+        "    double *value ;\n"\
+        "    data = (struct cvodeData *) f_data;\n"\
+        "    value = data->value;\n"\
+        "    ydata = NV_DATA_S(y);\n"\
+        "    dydata = NV_DATA_S(ydot);\n");
+
+        /** update parameters: p is modified by CVODES,
+            if fS could not be generated  */
+
+    CharBuffer_append(buffer,
+        "if ( data->p != NULL && data->opt->Sensitivity  )\n"\
+        "    for ( i=0; i<data->nsens; i++ )\n"\
+        "    data->value[data->model->index_sens[i]] = data->p[i];\n");
+
+    /** update ODE variables from CVODE */
+    for ( i=0; i<om->neq; i++ ) 
+    {
+        CharBuffer_append(buffer, "value[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] = ydata[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "];\n");
+    }
+
+    /** update assignment rules */
+    ODEModel_generateAssignmentRuleCode(om, buffer);
+
+    /* update time  */
+    CharBuffer_append(buffer, "data->currenttime = t;\n");
+
+    /** evaluate ODEs f(x,p,t) = dx/dt */
+    for ( i=0; i<om->neq; i++ ) 
+    {
+        CharBuffer_append(buffer, "dydata[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] = ");
+        generateAST(buffer, om->ode[i]);
+        CharBuffer_append(buffer, ";\n");
+    }
+
+    CharBuffer_append(buffer, "}\n");
+}
+
+void ODEModel_generateCVODEJacobianFunction(odeModel_t *om, charBuffer_t *buffer)
+{
+    int i, j ;
+
+    CharBuffer_append(buffer,"DLL_EXPORT void ");
+    CharBuffer_append(buffer,COMPILED_JACOBIAN_FUNCTION_NAME);
+    CharBuffer_append(buffer,
+        "(long int N, DenseMat J, realtype t,\n"\
+        "    N_Vector y, N_Vector fy, void *jac_data,\n"\
+        "    N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)\n"\
+        "{\n"\
+        "  \n"\
+        "int i;\n"\
+        "realtype *ydata;\n"\
+        "cvodeData_t *data;\n"\
+        "double *value;\n"\
+        "data  = (cvodeData_t *) jac_data;\n"\
+        "value = data->value ;\n"\
+        "ydata = NV_DATA_S(y);\n"\
+        "\n"\
+        "if ( data->p != NULL && data->opt->Sensitivity )\n"\
+        "    for ( i=0; i<data->nsens; i++ )\n"\
+        "        value[data->model->index_sens[i]] = data->p[i];\n"\
+        "\n");
+
+    /** update ODE variables from CVODE */
+    for ( i=0; i<om->neq; i++ ) 
+    {
+        CharBuffer_append(buffer, "value[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "] = ydata[");
+        CharBuffer_appendInt(buffer, i);
+        CharBuffer_append(buffer, "];\n");
+    }
+
+    /** update assignment rules */
+    ODEModel_generateAssignmentRuleCode(om, buffer);
+
+    /* update time  */
+    CharBuffer_append(buffer, "data->currenttime = t;\n");
+
+    /** evaluate Jacobian J = df/dx */
+    for ( i=0; i<om->neq; i++ )
+    {
+        for ( j=0; j<om->neq; j++ ) 
+        {
+            CharBuffer_append(buffer, "DENSE_ELEM(J,");
+            CharBuffer_appendInt(buffer, i);
+            CharBuffer_append(buffer, ",");
+            CharBuffer_appendInt(buffer, j);
+            CharBuffer_append(buffer, ") = ");
+            generateAST(buffer, om->jacob[i][j]);
+            CharBuffer_append(buffer, ";\n");
+        }
+    }
+
+    CharBuffer_append(buffer, "}\n");
+}
+
+void ODEModel_compileCVODEFunctions(odeModel_t *om)
+{
+    charBuffer_t *buffer = CharBuffer_create();
+
+#ifdef WIN32        
+    CharBuffer_append(buffer,
+        "#include <windows.h>\n"\
+        "#include <math.h>\n"\
+        "#include <sbmlsolver/sundialstypes.h>\n"\
+        "#include <sbmlsolver/nvector.h>\n"\
+        "#include <sbmlsolver/cvodeDataStruct.h>\n"\
+        "#include <sbmlsolver/nvector_serial.h>\n"\
+        "#include <sbmlsolver/dense.h>\n" 
+        "#include <sbmlsolver/cvodeSettingsStruct.h>\n"\
+        "#include <sbmlsolver/odeModelStruct.h>\n"\
+        "#define DLL_EXPORT __declspec(dllexport)\n");
+#endif
+    generateMacros(buffer);
+
+    if (om->jacobian)
+        ODEModel_generateCVODEJacobianFunction(om, buffer);
+
+    ODEModel_generateEventFunction(om, buffer);
+    ODEModel_generateCVODERHSFunction(om, buffer);
+    om->compiledCVODEFunctionCode = Compiler_compile(CharBuffer_getBuffer(buffer));
+
+    if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+    {
+        CharBuffer_free(buffer);
+        return ;
+    }
+
+    CharBuffer_free(buffer);
+
+    if (om->jacobian)
+    {
+        om->compiledCVODEJacobianFunction =
+                CompiledCode_getFunction(om->compiledCVODEFunctionCode, COMPILED_JACOBIAN_FUNCTION_NAME);
+
+        if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+            return;
+    }
+
+    om->compiledEventFunction =
+            CompiledCode_getFunction(om->compiledCVODEFunctionCode, COMPILED_EVENT_FUNCTION_NAME);
+
+    if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+        return;
+
+    om->compiledCVODERhsFunction =
+            CompiledCode_getFunction(om->compiledCVODEFunctionCode, COMPILED_RHS_FUNCTION_NAME);
+}
+
+SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
+{
+    if (!om->compiledCVODERhsFunction)
+    {
+        ODEModel_compileCVODEFunctions(om);
+        RETURN_ON_ERRORS_WITH(NULL);
+    }
+
+    return om->compiledCVODERhsFunction;
+}
+
+SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *om)
+{
+    if (!om->jacobian)
+    {
+        SolverError_error(
+            ERROR_ERROR_TYPE,
+            SOLVER_ERROR_CANNOT_COMPILE_JACOBIAN_NOT_COMPUTED,
+            "Attempting to compile jacobian before the jacobian is computed\n"\
+            "Call ODEModel_constructJacobian before calling\n"\
+            "ODEModel_getCompiledCVODEJacobianFunction or ODEModel_getCompiledCVODERHSFunction\n");
+        return NULL;
+    }
+
+    if (!om->compiledCVODEJacobianFunction)
+    {
+        ODEModel_compileCVODEFunctions(om);
+        RETURN_ON_ERRORS_WITH(NULL);
+    }
+
+    return om->compiledCVODEJacobianFunction;
+}
 
 /** \brief Returns the number of ODEs (number of equations) in the
     odeModel

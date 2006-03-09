@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:33:39 raim>
-  $Id: solverError.h,v 1.13 2005/12/15 19:54:06 raimc Exp $ 
+  $Id: solverError.h,v 1.14 2006/03/09 17:23:50 afinney Exp $ 
 */
 /* 
  *
@@ -105,6 +105,17 @@ typedef enum errorCode
     /** 3XXXX - Memory Exhaustion; general */
     SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
 
+    /** 3025X - Win32 Errors */
+    SOLVER_ERROR_WIN32_ERROR = 30250,
+    SOLVER_ERROR_WIN32_FORMAT_ERROR = 30251,
+
+    /** 305XX - Compilation Errors */
+    SOLVER_ERROR_COMPILATION_FAILED = 30500,
+    SOLVER_ERROR_CANNOT_COMPILE_JACOBIAN_NOT_COMPUTED = 30501,
+    SOLVER_ERROR_AST_COMPILATION_FAILED_DATA_AST_NODE_NOT_SUPPORTED_YET = 30502,
+    SOLVER_ERROR_AST_COMPILATION_FAILED_MISSING_VALUE = 30503,
+    SOLVER_ERROR_AST_COMPILATION_FAILED_STRANGE_NODE_TYPE = 30504,
+
     /** 4XXXX - assorted API errors */
     SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000,
     SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 40001
@@ -148,6 +159,11 @@ SBML_ODESOLVER_API void SolverError_clear();
 
 /* create an error */
 SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, char *format, ...);
+
+#ifdef WIN32
+/* create an error from the last windows error */
+SBML_ODESOLVER_API void SolverError_storeLastWin32Error(const char *context);
+#endif
 
 /* exit the program if errors or fatals have been created. */
 SBML_ODESOLVER_API void SolverError_haltOnErrors();

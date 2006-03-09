@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 16:57:34 raim>
-  $Id: modelSimplify.c,v 1.13 2005/12/16 16:00:55 raimc Exp $
+  $Id: modelSimplify.c,v 1.14 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -191,6 +191,9 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
   ASTNode_t *old, *new;
   List_t *names;
 
+  /*AST_dump("function:", function);
+  AST_dump("replacing:", math);*/
+
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isFunction);
 
   for ( i=0; i<List_size(names); i++ ) {
@@ -237,6 +240,8 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
     ASTNode_free(new);
   }
   List_free(names);
+
+  /*AST_dump("with ", math);*/
 }
 
 /** Replace all constants of a model in an AST math */

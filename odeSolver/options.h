@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-03 11:24:14 raim>
-  $Id: options.h,v 1.2 2005/11/03 11:04:00 raimc Exp $
+  $Id: options.h,v 1.3 2006/03/09 17:23:49 afinney Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -44,6 +44,8 @@ typedef struct _Options {
   int Validate;         /* Validate SBML model before doing anything else */
   int Write;            /* Print results to file instead of stdout */
   int Xmgrace;          /* Print results to XMGrace instead of stdout */
+  int Compile;          /* Compile the rhs ode function, jacobian function and events function */
+  int Benchmark;        /* print execution time statistics */
 } Options;
 
 Options Opt;

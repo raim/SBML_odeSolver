@@ -78,7 +78,13 @@
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+				CommandLine="copy $(OutDir)\..\..\src\sbmlsolver\*.h $(OutDir)\tcc\include\sbmlsolver
+copy $(OutDir)\..\WinCvode\sundials\shared\include\*.h $(OutDir)\tcc\include\sbmlsolver
+copy $(OutDir)\..\WinCvode\sundials\nvec_ser\*.h $(OutDir)\tcc\include\sbmlsolver
+copy $(OutDir)\..\WinCvode\sundials\config\*.h $(OutDir)\tcc\include\sbmlsolver
+"
+				Outputs="$(OutDir)\tcc\include\sbmlsolver\*.h"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libSBML.lib WinCVODE.lib"
@@ -123,6 +129,12 @@
 				RelativePath="..\..\..\src\ASTIndexNameNode.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\src\charBuffer.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\src\compiler.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\cvodedata.c">
 			</File>
 			<File
@@ -136,6 +148,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\integratorSettings.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\interpol.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\modelSimplify.c">
@@ -179,7 +194,19 @@
 				RelativePath="..\..\..\src\sbmlsolver\ASTIndexNameNode.h">
 			</File>
 			<File
+				RelativePath="..\..\..\src\sbmlsolver\charBuffer.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\compiler.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\sbmlsolver\cvodedata.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\cvodeDataStruct.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\cvodeSettingsStruct.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\daeSolver.h">
@@ -192,6 +219,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\integratorSettings.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\interpol.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\modelSimplify.h">
@@ -207,6 +237,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odemodeldatatype.h">
+			</File>
+			<File
+				RelativePath="..\..\..\src\sbmlsolver\odeModelStruct.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\sbmlsolver\odeSolver.h">

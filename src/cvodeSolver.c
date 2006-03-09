@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-24 14:09:12 raim>
-  $Id: cvodeSolver.c,v 1.28 2006/03/02 16:19:45 raimc Exp $
+  $Id: cvodeSolver.c,v 1.29 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -87,6 +87,12 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       solver->t0 = solver->t;
       IntegratorInstance_createCVODESolverStructures(engine);
     }
+
+  if (!engine->clockStarted)
+  {
+      engine->startTime = clock();
+      engine->clockStarted = 1 ;
+  }
 
   /* Forward solver is only called if not in the adjoint (backward) phase    */
   if(!opt->AdjointPhase){
@@ -237,238 +243,248 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
 
 /** creates CVODE structures and fills cvodeSolver, 
-   returns 1 on success or 0 on failure
+returns 1 on success or 0 on failure
 */
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-  int i, j, flag, neq, method, iteration;
-  realtype *ydata, *abstoldata;
+    int i, j, flag, neq, method, iteration;
+    realtype *ydata, *abstoldata;
 
-  odeModel_t *om = engine->om;
-  cvodeData_t *data = engine->data;
-  cvodeSolver_t *solver = engine->solver;
-  cvodeSettings_t *opt = engine->opt;
+    odeModel_t *om = engine->om;
+    cvodeData_t *data = engine->data;
+    cvodeSolver_t *solver = engine->solver;
+    cvodeSettings_t *opt = engine->opt;
+    CVRhsFn rhsFunction;
 
-    
- 
-  if ( !opt->AdjointPhase ) {
-    /* i.e, in the forward phase */
+    if ( !opt->AdjointPhase ) {
+        /* i.e, in the forward phase */
 
-    neq = engine->om->neq; /* number of equations */
+        neq = engine->om->neq; /* number of equations */
 
-    /*!!! should use simplified ASTs for construction !!!*/
-    /* construct jacobian, if wanted and not yet existing */
-    if ( opt->UseJacobian && om->jacob == NULL ) 
-      /* reset UseJacobian option, depending on success */
-      opt->UseJacobian = ODEModel_constructJacobian(om);
-    else if ( !opt->UseJacobian ) {
-      /* free jacobian from former runs (not necessary, frees also
-         unsuccessful jacobians from former runs ) */
-      if ( om->jacob != NULL) {
-	for ( i=0; i<om->neq; i++ ) {
-	  for ( j=0; j<om->neq; j++ )
-	    ASTNode_free(om->jacob[i][j]);
-	  free(om->jacob[i]);
-	}
-	free(om->jacob);
-	om->jacob = NULL;
-      }
-      SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-			"Jacobian matrix construction skipped.");
-      om->jacobian = opt->UseJacobian;
+        /*!!! should use simplified ASTs for construction !!!*/
+        /* construct jacobian, if wanted and not yet existing */
+        if ( opt->UseJacobian && om->jacob == NULL ) 
+            /* reset UseJacobian option, depending on success */
+            opt->UseJacobian = ODEModel_constructJacobian(om);
+        else if ( !opt->UseJacobian ) {
+            /* free jacobian from former runs (not necessary, frees also
+            unsuccessful jacobians from former runs ) */
+            if ( om->jacob != NULL) {
+                for ( i=0; i<om->neq; i++ ) {
+                    for ( j=0; j<om->neq; j++ )
+                        ASTNode_free(om->jacob[i][j]);
+                    free(om->jacob[i]);
+                }
+                free(om->jacob);
+                om->jacob = NULL;
+            }
+            SolverError_error(WARNING_ERROR_TYPE,
+                SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+                "Jacobian matrix construction skipped.");
+            om->jacobian = opt->UseJacobian;
+        }
+
+        /* CVODESolverStructures from former runs must be freed */
+        if (  solver->y != NULL )
+            IntegratorInstance_freeCVODESolverStructures(engine);
+
+        /**
+        * Allocate y, abstol vectors
+        */
+        /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
+        bytes  in 2 blocks are definitely lost !!!*/
+        solver->y = N_VNew_Serial(neq);
+        if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
+            /* Memory allocation of vector y failed */
+            SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                "N_VNew_Serial for vector y failed");
+            return 0; /* error */
+        }
+        /*!!! valgrind memcheck sensitivity:   576 (32 direct, 544 indirect)
+        bytes in 2 blocks are definitely lost !!!*/
+        solver->abstol = N_VNew_Serial(neq);
+        if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
+            /* Memory allocation of vector abstol failed */
+            SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                "N_VNew_Serial for vector abstol failed");
+            return 0; /* error */
+        }
+
+
+        /**
+        * Initialize y, abstol vectors
+        */
+        ydata      = NV_DATA_S(solver->y);
+        abstoldata = NV_DATA_S(solver->abstol);
+        for ( i=0; i<neq; i++ ) {
+            /* Set initial value vector components of y and y' */
+            ydata[i] = data->value[i];
+            /* Set absolute tolerance vector components,
+            currently the same absolute error is used for all y */ 
+            abstoldata[i] = opt->Error;       
+        }
+
+        /* set sensitivity structure to NULL */
+        solver->yS = NULL;
+        solver->senstol = NULL;
+
+        /* scalar relative tolerance: the same for all y */
+        solver->reltol = opt->RError;
+
+        /**
+        * Call CVodeCreate to create the non-linear solver memory:\n
+        *
+        Nonlinear Solver:\n
+        * CV_BDF         Backward Differentiation Formula method\n
+        * CV_ADAMS       Adams-Moulton method\n
+        Iteration Method:\n
+        * CV_NEWTON      Newton iteration method\n
+        * CV_FUNCTIONAL  functional iteration method\n
+        */
+        if ( opt->CvodeMethod == 0 )
+            method = CV_BDF;
+        else
+            method = CV_ADAMS;
+        if ( opt->IterMethod == 0 )
+            iteration = CV_NEWTON;
+        else
+            iteration = CV_FUNCTIONAL;
+
+        /*!!! valgrind memcheck sensitivity: 20,632 (1,880 direct,
+        18,752 indirect) bytes in 1 blocks are definitely lost !!!*/
+        solver->cvode_mem = CVodeCreate(method, iteration);
+        if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
+            SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                "CVodeCreate failed");
+            return 0; /* error */
+        }
+
+        if (opt->compileFunctions)
+        {
+            rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
+            if (!rhsFunction)
+                return 0; /* error */
+        }
+        else
+            rhsFunction = f ;
+
+        /** !! max. order should be set here !! */
+        /**
+        * Call CVodeMalloc to initialize the integrator memory:\n
+        *
+        * cvode_mem:  pointer to the CVode memory block returned by CVodeCreate\n
+        * f:          user's right hand side function in f(x,p,t) = dx/dt\n
+        * t0:         initial value of time\n
+        * y:         the initial dependent variable vector (called in x in the
+        *            docu)\n
+        * CV_SV:     specifies scalar relative and vector absolute tolerances\n
+        * reltol:    the scalar relative tolerance\n
+        * abstol:    pointer to the absolute tolerance vector\n
+        */
+        flag = CVodeMalloc(solver->cvode_mem, rhsFunction, solver->t0, solver->y,
+            CV_SV, solver->reltol, solver->abstol);
+        if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
+            SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+                "CVodeMalloc failed");
+            return 0; /* error ??? not required, handled by solverError ???  */
+        }
+
+        /**
+        * Link the main integrator with data for right-hand side function
+        */ 
+        flag = CVodeSetFdata(solver->cvode_mem, engine->data);
+        if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
+            /* ERROR HANDLING CODE if CVodeSetFdata failes */
+            return 0; /* error */
+        }
+
+        /**
+        * Link the main integrator with the CVDENSE linear solver
+        */
+        flag = CVDense(solver->cvode_mem, neq);
+        if (check_flag(&flag, "CVDense", 1, stderr)) {
+            /* ERROR HANDLING CODE if CVDense failes */
+            return 0; /* error */
+        }
+
+        /**
+        * Set the routine used by the CVDENSE linear solver
+        * to approximate the Jacobian matrix to ...
+        */
+        if ( opt->UseJacobian == 1 ) {
+            /* ... user-supplied routine Jac */
+            CVDenseJacFn jacODE ;
+
+            if (opt->compileFunctions)
+            {
+                jacODE = ODEModel_getCompiledCVODEJacobianFunction(om);
+                if (!jacODE)
+                    return 0; /* error */
+            }
+            else
+                jacODE = JacODE;
+
+            flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
+        }
+        else {
+            /* ... the internal default difference quotient routine CVDenseDQJac */
+            flag = CVDenseSetJacFn(solver->cvode_mem, NULL, NULL);
+        }
+
+        if ( check_flag(&flag, "CVDenseSetJacFn", 1, stderr) ) {
+            return 0; /* error */
+            /* ERROR HANDLING CODE if CVDenseSetJacFn failes */
+        }
+
+        /**
+        * Set maximum number of internal steps to be taken
+        * by the solver in its attempt to reach tout
+        */
+
+        CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
+
+
+        /* If adjoint is desired, CVadjMalloc needs to be done before
+        calling CVodeF  */
+        if(opt->DoAdjoint){
+            solver->cvadj_mem = NULL;
+            /*!!! valgrind memcheck adj_sensitivity: 627,528 (280 direct,
+            627,248 indirect) bytes in 1 blocks are definitely lost !!!*/
+            solver->cvadj_mem = CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
+            if (check_flag( (void *)solver->cvadj_mem, "CVadjMalloc", 1, stderr))
+                return(1);
+        }
+
+
+        /* set ODEs for evaluation */
+        /*!!! will need adaptation to selected sens.analysis !!!*/  
+
+        if (!opt->compileFunctions)
+            IntegratorInstance_optimizeOdes(engine);
+
+
+    } /*  if(!opt->ReadyForAdjoint) */
+    else {   /* adjoint phase*/
+
+
+        /* CVODESolverStructures from former adjoint runs must be freed */
+        if ( data->adjrun > 1 )
+            IntegratorInstance_freeCVODESolverStructures(engine);
+
+
+        flag = IntegratorInstance_createCVODESSolverStructures(engine);
+        if ( flag == 0 ) {
+            return 0;/* error */
+            /* ERROR HANDLING CODE if SensSolver construction failed */
+        }
+
     }
-    
-    /* CVODESolverStructures from former runs must be freed */
-    if (  solver->y != NULL )
-      IntegratorInstance_freeCVODESolverStructures(engine);
-    
-    /**
-     * Allocate y, abstol vectors
-     */
-    /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
-      bytes  in 2 blocks are definitely lost !!!*/
-    solver->y = N_VNew_Serial(neq);
-    if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector y failed");
-      return 0; /* error */
-    }
-    /*!!! valgrind memcheck sensitivity:   576 (32 direct, 544 indirect)
-      bytes in 2 blocks are definitely lost !!!*/
-    solver->abstol = N_VNew_Serial(neq);
-    if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector abstol failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"N_VNew_Serial for vector abstol failed");
-      return 0; /* error */
-    }
-
-    
-    /**
-     * Initialize y, abstol vectors
-     */
-    ydata      = NV_DATA_S(solver->y);
-    abstoldata = NV_DATA_S(solver->abstol);
-    for ( i=0; i<neq; i++ ) {
-      /* Set initial value vector components of y and y' */
-      ydata[i] = data->value[i];
-      /* Set absolute tolerance vector components,
-         currently the same absolute error is used for all y */ 
-      abstoldata[i] = opt->Error;       
-    }
-
-    /* set sensitivity structure to NULL */
-    solver->yS = NULL;
-    solver->senstol = NULL;
-    
-    /* scalar relative tolerance: the same for all y */
-    solver->reltol = opt->RError;
-
-    /**
-     * Call CVodeCreate to create the non-linear solver memory:\n
-     *
-     Nonlinear Solver:\n
-     * CV_BDF         Backward Differentiation Formula method\n
-     * CV_ADAMS       Adams-Moulton method\n
-     Iteration Method:\n
-     * CV_NEWTON      Newton iteration method\n
-     * CV_FUNCTIONAL  functional iteration method\n
-     */
-    if ( opt->CvodeMethod == 0 )
-      method = CV_BDF;
-    else
-      method = CV_ADAMS;
-    if ( opt->IterMethod == 0 )
-      iteration = CV_NEWTON;
-    else
-      iteration = CV_FUNCTIONAL;
-    
-    /*!!! valgrind memcheck sensitivity: 20,632 (1,880 direct,
-      18,752 indirect) bytes in 1 blocks are definitely lost !!!*/
-    solver->cvode_mem = CVodeCreate(method, iteration);
-    if (check_flag((void *)(solver->cvode_mem), "CVodeCreate", 0, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeCreate failed");
-      return 0; /* error */
-    }
-
-    /** !! max. order should be set here !! */
-    /**
-     * Call CVodeMalloc to initialize the integrator memory:\n
-     *
-     * cvode_mem:  pointer to the CVode memory block returned by CVodeCreate\n
-     * f:          user's right hand side function in f(x,p,t) = dx/dt\n
-     * t0:         initial value of time\n
-     * y:         the initial dependent variable vector (called in x in the
-     *            docu)\n
-     * CV_SV:     specifies scalar relative and vector absolute tolerances\n
-     * reltol:    the scalar relative tolerance\n
-     * abstol:    pointer to the absolute tolerance vector\n
-     */
-    flag = CVodeMalloc(solver->cvode_mem, f, solver->t0, solver->y,
-                       CV_SV, solver->reltol, solver->abstol);
-    if (check_flag(&flag, "CVodeMalloc", 1, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-			"CVodeMalloc failed");
-      return 0; /* error ??? not required, handled by solverError ???  */
-    }
-
-    /**
-     * Link the main integrator with data for right-hand side function
-     */ 
-    flag = CVodeSetFdata(solver->cvode_mem, engine->data);
-    if (check_flag(&flag, "CVodeSetFdata", 1, stderr)) {
-      /* ERROR HANDLING CODE if CVodeSetFdata failes */
-      return 0; /* error */
-    }
-    
-    /**
-     * Link the main integrator with the CVDENSE linear solver
-     */
-    flag = CVDense(solver->cvode_mem, neq);
-    if (check_flag(&flag, "CVDense", 1, stderr)) {
-      /* ERROR HANDLING CODE if CVDense failes */
-      return 0; /* error */
-    }
-
-    /**
-     * Set the routine used by the CVDENSE linear solver
-     * to approximate the Jacobian matrix to ...
-     */
-    if ( opt->UseJacobian == 1 ) {
-      /* ... user-supplied routine Jac */
-      flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
-    }
-    else {
-      /* ... the internal default difference quotient routine CVDenseDQJac */
-      flag = CVDenseSetJacFn(solver->cvode_mem, NULL, NULL);
-    }
-    
-    if ( check_flag(&flag, "CVDenseSetJacFn", 1, stderr) ) {
-      return 0; /* error */
-      /* ERROR HANDLING CODE if CVDenseSetJacFn failes */
-    }
-
-    /**
-     * Set maximum number of internal steps to be taken
-     * by the solver in its attempt to reach tout
-     */
-    
-    CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
 
 
+    engine->isValid = 1; /* 'solver' is consistant with 'data' */
 
-    if ( opt->Sensitivity ) {
-      flag = IntegratorInstance_createCVODESSolverStructures(engine);
-      if ( flag == 0 ) {
-	return 0;/* error */
-	/* ERROR HANDLING CODE if SensSolver construction failed */
-      }
-    }
-
-
-
-    /* If adjoint is desired, CVadjMalloc needs to be done before
-       calling CVodeF  */
-    if(opt->DoAdjoint){
-      solver->cvadj_mem = NULL;
-      /*!!! valgrind memcheck adj_sensitivity: 627,528 (280 direct,
-	627,248 indirect) bytes in 1 blocks are definitely lost !!!*/
-      solver->cvadj_mem = CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
-      if (check_flag( (void *)solver->cvadj_mem, "CVadjMalloc", 1, stderr))
-	return(1);
-    }
-
-
-    /* set ODEs for evaluation */
-    /*!!! will need adaptation to selected sens.analysis !!!*/    
-    IntegratorInstance_optimizeOdes(engine);
-
-
-  } /*  if(!opt->ReadyForAdjoint) */
-  else {   /* adjoint phase*/
-   
-
-    /* CVODESolverStructures from former adjoint runs must be freed */
-    if ( data->adjrun > 1 )
-      IntegratorInstance_freeCVODESolverStructures(engine);
- 
-  
-    flag = IntegratorInstance_createCVODESSolverStructures(engine);
-    if ( flag == 0 ) {
-      return 0;/* error */
-      /* ERROR HANDLING CODE if SensSolver construction failed */
-    }
-
-  }
-
-
-  engine->isValid = 1; /* 'solver' is consistant with 'data' */
-
-  return 1; /* 1 == OK */
+    return 1; /* 1 == OK */
 }
 
 

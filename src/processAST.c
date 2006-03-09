@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 14:13:51 raim>
-  $Id: processAST.c,v 1.36 2006/02/23 15:36:43 raimc Exp $
+  $Id: processAST.c,v 1.37 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -141,6 +141,13 @@ SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*)
 #endif
 
 /* ------------------------------------------------------------------------ */
+
+void AST_dump(const char *context, ASTNode_t *node)
+{
+    char *buffer = SBML_formulaToString(node);
+    printf("%s %s\n", context, buffer);
+    free(buffer);
+}
 
 /** Copies the passed AST, including potential SOSlib ASTNodeIndex, and
     returns the copy.
@@ -2172,4 +2179,408 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old) {
   return new;
 }
 
+void ASTNode_generateNestedExpression(charBuffer_t *expressionStream, const ASTNode_t *node)
+{
+    switch (ASTNode_getType(node))
+    {
+        /* expressions that don't need to be bracketed */
+        case AST_INTEGER :
+        case AST_REAL :
+        case AST_REAL_E :
+        case AST_RATIONAL :
+        case AST_NAME :
+        case AST_NAME_TIME :
+        case AST_CONSTANT_E :
+        case AST_CONSTANT_FALSE :
+        case AST_CONSTANT_PI :
+        case AST_CONSTANT_TRUE :
+        case AST_FUNCTION_ABS :
+        case AST_FUNCTION_ARCCOS :
+        case AST_FUNCTION_ARCCOSH :
+        case AST_FUNCTION_ARCCOT :
+        case AST_FUNCTION_ARCCOTH :
+        case AST_FUNCTION_ARCCSC :
+        case AST_FUNCTION_ARCCSCH :
+        case AST_FUNCTION_ARCSEC :
+        case AST_FUNCTION_ARCSECH :
+        case AST_FUNCTION_ARCSIN :
+        case AST_FUNCTION_ARCSINH :
+        case AST_FUNCTION_ARCTAN :
+        case AST_FUNCTION_ARCTANH :
+        case AST_FUNCTION_CEILING :
+        case AST_FUNCTION_COS :
+        case AST_FUNCTION_COSH :
+        case AST_FUNCTION_COT :
+        case AST_FUNCTION_COTH :
+        case AST_FUNCTION_CSC :
+        case AST_FUNCTION_CSCH :
+        case AST_FUNCTION_EXP :
+        case AST_FUNCTION_FACTORIAL :
+        case AST_FUNCTION_FLOOR :
+        case AST_FUNCTION_LN :
+        case AST_FUNCTION_LOG :
+        case AST_FUNCTION_ROOT :
+        case AST_FUNCTION_SEC :
+        case AST_FUNCTION_SECH :
+        case AST_FUNCTION_SIN :
+        case AST_FUNCTION_SINH :
+        case AST_FUNCTION_TAN :
+        case AST_FUNCTION_TANH :
+        case AST_LOGICAL_XOR :
+        case AST_FUNCTION :
+            generateAST(expressionStream, node);
+            break;
+
+        /* expressions that do */
+        default :
+            CharBuffer_append(expressionStream, "(") ;
+            generateAST(expressionStream, node);
+            CharBuffer_append(expressionStream, ")");
+            break;
+    }
+}
+
+void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream, const ASTNode_t *node, const char *op)
+{
+    CharBuffer_append(expressionStream,op); ;
+    ASTNode_generateNestedExpression(expressionStream, ASTNode_getChild(node, 0));
+}
+
+void ASTNode_generateNaryOperator(charBuffer_t *expressionStream, const ASTNode_t *node, const char *op)
+{
+    unsigned int i;
+    
+    for (i = 0 ; i != ASTNode_getNumChildren(node); i++)
+    {
+        ASTNode_generateNestedExpression(expressionStream, ASTNode_getChild(node, i));
+        if (i != ASTNode_getNumChildren(node) - 1)
+        {
+            CharBuffer_append(expressionStream, " ");
+            CharBuffer_append(expressionStream, op);
+            CharBuffer_append(expressionStream, " ");
+        }
+    }
+}
+
+void ASTNode_generateFunctionCall(charBuffer_t *expressionStream, const ASTNode_t *node, const char *func)
+{
+    unsigned int i;
+
+    CharBuffer_append(expressionStream, func);
+    CharBuffer_append(expressionStream, "(");
+    for (i = 0 ; i != ASTNode_getNumChildren(node); i++)
+    {
+        generateAST(expressionStream, ASTNode_getChild(node, i));
+        if (i != ASTNode_getNumChildren(node) - 1)
+            CharBuffer_append(expressionStream, ", ") ;
+    }
+    CharBuffer_append(expressionStream, ")") ;   
+}
+
+void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
+{
+    int found = 0;
+
+    if ( ASTNode_isSetIndex(n) )
+    {
+        if ( ASTNode_isSetData(n) )
+        {
+            SolverError_error(FATAL_ERROR_TYPE,
+                SOLVER_ERROR_AST_COMPILATION_FAILED_DATA_AST_NODE_NOT_SUPPORTED_YET,
+                "Compilation process ignoring data state on name node %s - Not supported yet\n",
+                ASTNode_getName(n));
+        }
+        
+        /* else */
+        {
+            CharBuffer_append(expressionStream, "value[");
+            CharBuffer_appendInt(expressionStream, ASTNode_getIndex(n));
+            CharBuffer_append(expressionStream, "]");
+        }
+
+        found++;
+    }
+
+    /* this isn't the correct behaviour for SBML strickly speaking - AMF */
+    if ( found == 0 ) {
+        if ( strcmp(ASTNode_getName(n),"time") == 0 ||
+            strcmp(ASTNode_getName(n),"Time") == 0 ||
+            strcmp(ASTNode_getName(n),"TIME") == 0 )
+        {
+                CharBuffer_append(expressionStream, "data->currenttime");
+                found++;
+        }
+    }
+
+    /* this is what we'd do if the index isn't always set - this should not be neccessary IMHO - AMF 
+    if ( found == 0 ) {
+        for ( j=0; j<data->nvalues; j++ ) {
+            if ( (strcmp(ASTNode_getName(n),data->model->names[j]) == 0) )
+            {
+                CharBuffer_append(expressionStream, "value[");
+                CharBuffer_appendInt(expressionStream, j);
+                CharBuffer_append(expressionStream, "]");
+                found++;
+            }
+        }
+    }
+    */
+
+    if ( found == 0 ) {
+        SolverError_error(FATAL_ERROR_TYPE,
+            SOLVER_ERROR_AST_COMPILATION_FAILED_MISSING_VALUE,
+            "No value found for AST_NAME %s . Defaults to Zero "
+            "to avoid program crash", ASTNode_getName(n));
+
+        CharBuffer_append(expressionStream, "0.0");
+    }
+}
+
+void generateMacros(charBuffer_t *buffer)
+{
+     /* was using "#define asech(x) log((1.0 + MySQRT(1.0 - MySQR(x))) / (x))\n"\ */
+
+     CharBuffer_append(buffer, 
+        "#define MySQR(x) ((x)*(x))\n"\
+        "#define MySQRT(x) pow((x),(.5))\n"\
+        "#define acot(x) atan(1.0/(x))\n"\
+        "#define acoth(x) (0.5*log(((x)+1.0)/((x)-1.0)))\n"\
+        "#define acsc(x) atan(1.0/MySQRT(((x)-1.0)*((x)+1.0)))\n"\
+        "#define acsch(x) log((1.0+MySQRT(1.0 + MySQR(x)))/(x))\n"\
+        "#define asec(x) atan(MySQRT(((x) - 1.0)*((x) + 1.0)))\n"\
+        "#define asech(x) acosh(1.0/(x))\n"\
+        "#define cot(x) (1.0 / tan(x))\n"\
+        "#define coth(x) (cosh(x) / sinh(x))\n"\
+        "#define csch(x) (1.0/sinh(x))\n"\
+        "#define MyLog(x,y) (log10(y)/log10(x))\n"\
+        "#define piecewise(x, y, z) ((x) ? (y) : (z))\n"\
+        "#define root(x, y) pow(y, 1.0 / (x))\n"\
+        "#define sec(x) (1.0/cos(x))\n"\
+        "#define sech(x) (1.0/cosh(x))\n"\
+        "#define acosh(x) (log((x) + (sqrt((x) - 1.0) * sqrt((x) + 1.0))))\n"\
+        "#define asinh(x) (log((x) + sqrt(((x) * (x)) + 1.0)))\n"\
+        "#define atanh(x) ((log(1.0 + (x)) - log(1.0-(x)))/2.0)\n"\
+        "#define csc(x) (1.0/sin(x))\n"\
+        "\n"\
+        "double factorial(double x)\n"\
+        "{\n"\
+        "    double result ;\n"\
+    	"    int j = floor(x);\n"\
+	    "    for(result=1;j>1;--j)\n"\
+	    "        result *= j;\n"\
+        "    return result;\n"\
+        "}\n");
+}
+
+void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
+{
+    unsigned int i;
+    
+    CharBuffer_append(expressionStream, "((");
+
+    for (i = 0 ; i != ASTNode_getNumChildren(node); i++)
+    {
+        CharBuffer_append(expressionStream, "(");
+        ASTNode_generateNestedExpression(expressionStream, ASTNode_getChild(node, i));
+        CharBuffer_append(expressionStream, " ? 1 : 0)");
+        if (i != ASTNode_getNumChildren(node) - 1)
+            CharBuffer_append(expressionStream, " + ");
+    }
+
+    CharBuffer_append(expressionStream, ") % 2) != 0");
+}
+
+void generateAST(charBuffer_t *expressionStream, const ASTNode_t *node)
+{
+    switch (ASTNode_getType(node))
+    {
+        case AST_PLUS :
+            ASTNode_generateNaryOperator(expressionStream, node, "+");
+            break;
+        case AST_TIMES :
+            ASTNode_generateNaryOperator(expressionStream, node, "*");
+            break;
+        case AST_MINUS :
+            if (ASTNode_getNumChildren(node) == 1)
+                ASTNode_generateUnaryOperator(expressionStream, node, "-");
+            else
+                ASTNode_generateNaryOperator(expressionStream, node, "-");
+            break;
+        case AST_DIVIDE : 
+            ASTNode_generateNaryOperator(expressionStream, node, "/");
+            break;
+        case AST_POWER :
+            ASTNode_generateFunctionCall(expressionStream, node, "pow");
+            break;
+        case AST_INTEGER :
+            CharBuffer_append(expressionStream, "((double)");
+            CharBuffer_appendInt(expressionStream, ASTNode_getInteger(node));
+            CharBuffer_append(expressionStream, ")");
+            break;
+        case AST_REAL :
+        case AST_REAL_E :
+        case AST_RATIONAL :
+            CharBuffer_append(expressionStream, "((double)");
+            CharBuffer_appendDouble(expressionStream, ASTNode_getReal(node));
+            CharBuffer_append(expressionStream, ")");
+            break;
+        case AST_NAME :
+            ASTNode_generateName(expressionStream, node);
+            break;
+        case AST_NAME_TIME :
+            CharBuffer_append(expressionStream, "data->currenttime");
+            break;
+        case AST_CONSTANT_E:
+            /** exp(1) is used to adjust exponentiale to machine precision */
+            CharBuffer_appendDouble(expressionStream, exp(1));
+            break;
+        case AST_CONSTANT_FALSE:
+            CharBuffer_appendDouble(expressionStream, 0.0);
+            break;
+        case AST_CONSTANT_PI:
+            /** pi = 4 * atan 1  is used to adjust Pi to machine precision */
+            CharBuffer_appendDouble(expressionStream, 4.*atan(1.));
+            break;
+        case AST_CONSTANT_TRUE:
+            CharBuffer_appendDouble(expressionStream, 1.0);
+            break;
+        case AST_FUNCTION_ABS :
+            ASTNode_generateFunctionCall(expressionStream, node, "fabs");
+            break;
+        case AST_FUNCTION_ARCCOS :
+            ASTNode_generateFunctionCall(expressionStream, node, "acos");
+            break;
+        case AST_FUNCTION_ARCCOSH :
+            ASTNode_generateFunctionCall(expressionStream, node, "acosh");
+            break;
+        case AST_FUNCTION_ARCCOT :
+            ASTNode_generateFunctionCall(expressionStream, node, "acot");
+            break;
+        case AST_FUNCTION_ARCCOTH :
+            ASTNode_generateFunctionCall(expressionStream, node, "acoth");
+            break;
+        case AST_FUNCTION_ARCCSC :
+            ASTNode_generateFunctionCall(expressionStream, node, "acsc");
+            break;
+        case AST_FUNCTION_ARCCSCH :
+            ASTNode_generateFunctionCall(expressionStream, node, "acsch");
+            break;
+        case AST_FUNCTION_ARCSEC :
+            ASTNode_generateFunctionCall(expressionStream, node, "asec");
+            break;
+        case AST_FUNCTION_ARCSECH :
+            ASTNode_generateFunctionCall(expressionStream, node, "asech");
+            break;
+        case AST_FUNCTION_ARCSIN :
+            ASTNode_generateFunctionCall(expressionStream, node, "asin");
+            break;
+        case AST_FUNCTION_ARCSINH :
+            ASTNode_generateFunctionCall(expressionStream, node, "asinh");
+            break;
+        case AST_FUNCTION_ARCTAN :
+            ASTNode_generateFunctionCall(expressionStream, node, "atan");
+            break;
+        case AST_FUNCTION_ARCTANH :
+            ASTNode_generateFunctionCall(expressionStream, node, "atanh");
+            break;
+        case AST_FUNCTION_CEILING :
+            ASTNode_generateFunctionCall(expressionStream, node, "ceil");
+            break;
+        case AST_FUNCTION_COS :
+            ASTNode_generateFunctionCall(expressionStream, node, "cos");
+            break;
+        case AST_FUNCTION_COSH :
+            ASTNode_generateFunctionCall(expressionStream, node, "cosh");
+            break;
+        case AST_FUNCTION_COT :
+            ASTNode_generateFunctionCall(expressionStream, node, "cot");
+            break;
+        case AST_FUNCTION_COTH :
+            ASTNode_generateFunctionCall(expressionStream, node, "coth");
+            break;
+        case AST_FUNCTION_CSC :
+            ASTNode_generateFunctionCall(expressionStream, node, "csc");
+            break;
+        case AST_FUNCTION_CSCH :
+            ASTNode_generateFunctionCall(expressionStream, node, "csch");
+            break;
+        case AST_FUNCTION_EXP :
+            ASTNode_generateFunctionCall(expressionStream, node, "exp");
+            break;
+        case AST_FUNCTION_FACTORIAL :
+            ASTNode_generateFunctionCall(expressionStream, node, "factorial");
+            break;
+        case AST_FUNCTION_FLOOR :
+            ASTNode_generateFunctionCall(expressionStream, node, "floor");
+            break;
+        case AST_FUNCTION_LN :
+            ASTNode_generateFunctionCall(expressionStream, node, "log");
+            break;
+        case AST_FUNCTION_LOG :
+            ASTNode_generateFunctionCall(expressionStream, node, "MyLog");
+            break;
+        case AST_FUNCTION_PIECEWISE :
+            ASTNode_generateFunctionCall(expressionStream, node, "piecewise");
+            break;
+        case AST_FUNCTION_POWER :
+            ASTNode_generateFunctionCall(expressionStream, node, "pow");
+            break;
+        case AST_FUNCTION_ROOT :
+            ASTNode_generateFunctionCall(expressionStream, node, "root");
+            break;
+        case AST_FUNCTION_SEC :
+            ASTNode_generateFunctionCall(expressionStream, node, "sec");
+            break;
+        case AST_FUNCTION_SECH :
+            ASTNode_generateFunctionCall(expressionStream, node, "sech");
+            break;
+        case AST_FUNCTION_SIN :
+            ASTNode_generateFunctionCall(expressionStream, node, "sin");
+            break;
+        case AST_FUNCTION_SINH :
+            ASTNode_generateFunctionCall(expressionStream, node, "sinh");
+            break;
+        case AST_FUNCTION_TAN :
+            ASTNode_generateFunctionCall(expressionStream, node, "tan");
+            break;
+        case AST_FUNCTION_TANH :
+            ASTNode_generateFunctionCall(expressionStream, node, "tanh");
+            break;
+        case AST_LOGICAL_AND :
+            ASTNode_generateNaryOperator(expressionStream, node, "&&");
+            break;
+        case AST_LOGICAL_NOT :
+            ASTNode_generateUnaryOperator(expressionStream, node, "!");
+            break;
+        case AST_LOGICAL_OR :
+            ASTNode_generateNaryOperator(expressionStream, node, "||");
+            break;
+        case AST_LOGICAL_XOR :
+            ASTNode_generateXOR(expressionStream, node);
+            break;
+        case AST_RELATIONAL_EQ :
+            ASTNode_generateNaryOperator(expressionStream, node, "==");
+            break;
+        case AST_RELATIONAL_GEQ :
+            ASTNode_generateNaryOperator(expressionStream, node, ">=");
+            break;
+        case AST_RELATIONAL_GT :
+            ASTNode_generateNaryOperator(expressionStream, node, ">");
+            break;
+        case AST_RELATIONAL_LEQ :
+            ASTNode_generateNaryOperator(expressionStream, node, "<=");
+            break;
+        case AST_RELATIONAL_LT :
+            ASTNode_generateNaryOperator(expressionStream, node, "<");
+            break;
+        case AST_RELATIONAL_NEQ :
+            ASTNode_generateNaryOperator(expressionStream, node, "!=");
+            break;
+        default :
+            SolverError_error(FATAL_ERROR_TYPE,
+                SOLVER_ERROR_AST_COMPILATION_FAILED_STRANGE_NODE_TYPE,
+                "Found stange node type whilst generating code.  Inserted 'YUCK' into code.");
+            break;
+    }
+}
 /* End of file */

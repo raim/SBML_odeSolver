@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:40:05 raim>
-  $Id: solverError.c,v 1.13 2005/12/15 19:54:06 raimc Exp $ 
+  $Id: solverError.c,v 1.14 2006/03/09 17:23:49 afinney Exp $ 
 */
 /* 
  *
@@ -49,6 +49,7 @@
 
 #ifdef WIN32
 #define vsnprintf _vsnprintf
+#include "windows.h"
 #endif
 
 #include <sbml/util/List.h>
@@ -329,4 +330,32 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
     
     return result ;
 }
+
+#ifdef WIN32
+void SolverError_storeLastWin32Error(const char *context)
+{
+    LPVOID lpMsgBuf;
+
+    if (!FormatMessage( 
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+            FORMAT_MESSAGE_FROM_SYSTEM | 
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            GetLastError(),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+            (LPTSTR) &lpMsgBuf,
+            0,
+            NULL ))
+    {
+        SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_WIN32_FORMAT_ERROR, "Fatal Error cause unknown - (FormatMessage failed)\n");
+        return ;
+    }
+
+    SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_WIN32_ERROR, "%s - %s", context, (const char *)lpMsgBuf);
+    
+    // Free the buffer.
+    LocalFree( lpMsgBuf );
+}
+#endif
+
 /** @} */

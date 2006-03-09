@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 16:22:14 raim>
-  $Id: SharingIntegratorInstance.c,v 1.6 2005/10/28 15:18:28 afinney Exp $
+  $Id: SharingIntegratorInstance.c,v 1.7 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -88,7 +88,9 @@ int doit(void)
     /* Setting Integration Switches: see documentation or
        example simpleIntegratorInstance.c for details on
        the passed values */
-    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0);
+    CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
+
+    //CvodeSettings_setCompileFunctions(settings, 1);
 
     integratorInstanceA = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);

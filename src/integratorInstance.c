@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-02 16:02:03 raim>
-  $Id: integratorInstance.c,v 1.56 2006/03/02 16:16:50 raimc Exp $
+  $Id: integratorInstance.c,v 1.57 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -97,6 +97,7 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
   ASSIGN_NEW_MEMORY(engine->solver, struct cvodeSolver, 0);
 
+  engine->clockStarted = 0;
 
   if (IntegratorInstance_initializeSolver(engine, data, opt, om))
     return engine;
@@ -581,10 +582,67 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 {
   /* just increase the time */
   engine->solver->t = engine->solver->tout;
+
+  if (!engine->om->compiledEventFunction)
+      ODEModel_compileCVODEFunctions(engine->om);
+
   /* ... and call the default update function */
   return IntegratorInstance_updateData(engine);  
 }
 
+SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
+{
+    int i, j, fired;
+    ASTNode_t *trigger, *assignment;
+    Event_t *e;
+    EventAssignment_t *ea;
+    variableIndex_t *vi;
+
+    cvodeSettings_t *opt = engine->opt;
+    cvodeData_t *data = engine->data;
+    odeModel_t *om = engine->om;
+
+    for ( i=0; i<om->nass; i++ )
+        data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
+
+    fired = 0;
+
+    for ( i=0; i<Model_getNumEvents(om->simple); i++ ) {
+        e = Model_getEvent(om->simple, i);
+        trigger = (ASTNode_t *) Event_getTrigger(e);
+        if ( data->trigger[i] == 0 && evaluateAST(trigger, data) ) {
+            fired++;
+            data->trigger[i] = 1;      
+            for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
+                ea = Event_getEventAssignment(e, j);
+                assignment = (ASTNode_t *) EventAssignment_getMath(ea);
+                vi = ODEModel_getVariableIndex(om,
+                    EventAssignment_getVariable(ea));
+                IntegratorInstance_setVariableValue(engine, vi,
+                    evaluateAST(assignment, data));
+                VariableIndex_free(vi);
+            }
+        }
+        else {
+            data->trigger[i] = 0;
+        }
+    }
+
+    /* check for event triggers and evaluate the triggered
+    events' assignments;
+    stop integration if requested by cvodeSettings */
+    if ( fired )
+    {
+        /* recalculate assignments - they may be dependent
+        on event assignment results */
+        for ( i=0; i<om->nass; i++ )
+            data->value[om->neq+i] =
+            evaluateAST(om->assignment[i], data);
+
+    }
+
+    return fired;
+}
 
 /** Default function for updating data, to be used by solvers after
     they have calculate x(t) and updated the time.
@@ -596,7 +654,8 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 
 int IntegratorInstance_updateData(integratorInstance_t *engine)
 {
-  int i, flag = 1;
+  int i, flag = 1, fired;
+  char *buffer;
   cvodeSolver_t *solver = engine->solver;
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;
@@ -606,24 +665,31 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
 
-  for ( i=0; i<om->nass; i++ )
-    data->value[om->neq+i] =
-      evaluateAST(om->assignment[i], data);
+  if (opt->compileFunctions)
+  {
+      fired = om->compiledEventFunction(data, &(engine->isValid));  
+  }
+  else
+      fired = IntegratorInstance_processEventsAndAssignments(engine);
 
-  /* check for event triggers and evaluate the triggered
-     events' assignments;
-     stop integration if requested by cvodeSettings */
-  if ( IntegratorInstance_checkTrigger(engine) )
-    {
-      /* recalculate assignments - they may be dependent
-	 on event assignment results */
-      for ( i=0; i<om->nass; i++ )
-	data->value[om->neq+i] =
-	  evaluateAST(om->assignment[i], data);
-
-      if (opt->HaltOnEvent) 
-	flag = 0; /* stop integration */
-    }
+  if (fired && opt->HaltOnEvent)
+  {
+      for (i = 0; i != Model_getNumEvents(om->simple); i++)
+      {
+         if (data->trigger[i])
+         {
+             buffer = SBML_formulaToString((ASTNode_t *) Event_getTrigger(Model_getEvent(om->simple, i)));
+             SolverError_error(
+               ERROR_ERROR_TYPE,
+               SOLVER_ERROR_EVENT_TRIGGER_FIRED,
+               "Event Trigger %d (%s) fired at time %g. "
+               "Aborting simulation.",
+               i, buffer, data->currenttime);
+             free(buffer);
+         }
+      }
+      flag = 0;
+  }
 
   /* store results */
   if (opt->StoreResults)
@@ -826,7 +892,6 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 
 /**************** functions that switch between solvers *****************/
 
-
 /** \brief Sets the value of a variable or parameter during an
     integration via its variableIndex.
 
@@ -856,7 +921,7 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
     /* if (om->algebraic) ?? */
     engine->isValid = 0; /* 'solver' is no longer consistant with 'data' */
   }
-  else if ( vi->index >= om->neq+om->nass ) {
+  else if (!engine->opt->compileFunctions &&  vi->index >= om->neq+om->nass ) {
     /* optimize ODEs for evaluation again, if a constant has been reset */
     IntegratorInstance_optimizeOdes(engine);
   }
@@ -1041,5 +1106,16 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
   else 
     IntegratorInstance_printCVODEStatistics(engine, f);
 }
+
+/** returns the time elapsed in seconds since the start of integration
+*/
+SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *engine)
+{
+    if (engine->clockStarted)
+        return ((double)(clock() - engine->startTime)) / CLOCKS_PER_SEC; 
+    else
+        return 0;
+}
+
 
 /*@}*/

@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.1 $
- * $Date: 2005/10/27 13:36:53 $
+ * $Revision: 1.2 $
+ * $Date: 2006/03/09 17:23:48 $
  * -----------------------------------------------------------------
  * Programmer(s): Radu Serban and Aaron Collier @ LLNL
  * -----------------------------------------------------------------
@@ -54,6 +54,7 @@ extern "C" {
 
 #include <stdio.h>
 
+#include "WinCVODE.h"
 #include "dense.h"
 #include "band.h"
 #include "spgmr.h"
@@ -179,7 +180,7 @@ extern "C" {
    * -----------------------------------------------------------------
    */
   
-  void *CVadjMalloc(void *cvode_mem, long int steps);
+  WINCVODE_API void *CVadjMalloc(void *cvode_mem, long int steps);
 
   /*
    * -----------------------------------------------------------------
@@ -199,7 +200,7 @@ extern "C" {
    * -----------------------------------------------------------------
    */
 
-  int CVodeF(void *cvadj_mem, realtype tout, N_Vector yout,
+  WINCVODE_API int CVodeF(void *cvadj_mem, realtype tout, N_Vector yout,
              realtype *tret, int itask, int *ncheckPtr);
 
   /*
@@ -242,14 +243,14 @@ extern "C" {
    * -----------------------------------------------------------------
    */
 
-  int CVodeCreateB(void *cvadj_mem, int lmmB, int iterB);
+  WINCVODE_API int CVodeCreateB(void *cvadj_mem, int lmmB, int iterB);
 
-  int CVodeMallocB(void *cvadj_mem, CVRhsFnB fB,
+  WINCVODE_API int CVodeMallocB(void *cvadj_mem, CVRhsFnB fB,
                    realtype tB0, N_Vector yB0,
                    int itolB, realtype reltolB, void *abstolB);
   
   int CVodeSetIterTypeB(void *cvadj_mem, int iterB);
-  int CVodeSetFdataB(void *cvadj_mem, void *f_dataB);
+  WINCVODE_API int CVodeSetFdataB(void *cvadj_mem, void *f_dataB);
   int CVodeSetErrFileB(void *cvadj_mem, FILE *errfpB);
   int CVodeSetMaxOrdB(void *cvadj_mem, int maxordB);
   int CVodeSetMaxNumStepsB(void *cvadj_mem, long int mxstepsB);
@@ -262,15 +263,15 @@ extern "C" {
                    realtype tB0, N_Vector yB0,
                    int itolB, realtype reltolB, void *abstolB);
     
-  int CVodeSetQuadFdataB(void *cvadj_mem, void *fQ_dataB);
+  WINCVODE_API int CVodeSetQuadFdataB(void *cvadj_mem, void *fQ_dataB);
   int CVodeSetQuadErrConB(void *cvadj_mem, booleantype errconQB,
                           int itolQB, realtype reltolQB, void *abstolQB);
-  int CVodeQuadMallocB(void *cvadj_mem, CVQuadRhsFnB fQB, N_Vector yQB0);
+  WINCVODE_API int CVodeQuadMallocB(void *cvadj_mem, CVQuadRhsFnB fQB, N_Vector yQB0);
   int CVodeQuadReInitB(void *cvadj_mem, CVQuadRhsFnB fQB, N_Vector yQB0);
   
-  int CVDenseB(void *cvadj_mem, long int nB);
+  WINCVODE_API int CVDenseB(void *cvadj_mem, long int nB);
   
-  int CVDenseSetJacFnB(void *cvadj_mem, CVDenseJacFnB djacB, void *jac_dataB);
+  WINCVODE_API int CVDenseSetJacFnB(void *cvadj_mem, CVDenseJacFnB djacB, void *jac_dataB);
   
   int CVDiagB(void *cvadj_mem);
   
@@ -319,7 +320,7 @@ extern "C" {
    * -----------------------------------------------------------------
    */
   
-  int CVodeB(void *cvadj_mem, realtype tBout, N_Vector yBout,
+  WINCVODE_API int CVodeB(void *cvadj_mem, realtype tBout, N_Vector yBout,
              realtype *tBret, int itaskB);
   
   /*
@@ -331,7 +332,7 @@ extern "C" {
    * -----------------------------------------------------------------
    */
   
-  int CVodeGetQuadB(void *cvadj_mem, N_Vector qB);
+  WINCVODE_API int CVodeGetQuadB(void *cvadj_mem, N_Vector qB);
   
   /*
    * -----------------------------------------------------------------

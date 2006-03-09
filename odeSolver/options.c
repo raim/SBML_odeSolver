@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-03 11:45:27 raim>
-  $Id: options.c,v 1.2 2005/11/03 11:04:00 raimc Exp $
+  $Id: options.c,v 1.3 2006/03/09 17:23:49 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +35,8 @@ static struct option const long_options[] =
   {"write",         no_argument,       0, 'w'},
   {"xmgrace",       no_argument,       0, 'x'},
   {"jacobianTime",  no_argument,       0, 'y'},
+  {"compile",       no_argument,       0, 'c'},
+  {"benchmark",     no_argument,       0, 'b'},
   {"error",         required_argument, 0,   0},
   {"rerror",        required_argument, 0,   0},
   {"mxstep",        required_argument, 0,   0},
@@ -69,7 +71,9 @@ void
 initializeOptions (void)
 {
   strcpy(Opt.GvFormat,   "ps");
-  strcpy(Opt.ModelPath,  "./");
+  /* was strcpy(Opt.ModelPath,  "./"); chnaged by AMF 9th March 2006 - seems unnecessary and
+    blocks full path model reference on windows at least */
+  strcpy(Opt.ModelPath,  "");
   strcpy(Opt.Parameter,  "");
   strcpy(Opt.SchemaPath, "./");
   strcpy(Opt.Schema11,   "sbml-l1v1.xsd");
@@ -99,8 +103,9 @@ initializeOptions (void)
   Opt.SteadyState     = 0;
   Opt.Validate        = 0;
   Opt.Write           = 0;
+  Opt.Compile         = 0;
+  Opt.Benchmark       = 0;
 }
-
 
 /**/
 static void
@@ -116,7 +121,7 @@ processOptions (int argc, char *argv[])
   }
   
   /* process command line options */
-  while ((c = getopt_long (argc, argv, "adefghijklmnorstvwxy",
+  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxy",
                            long_options, &option_index)) != EOF) {
     switch (c) {
     case 0:
@@ -295,6 +300,12 @@ processOptions (int argc, char *argv[])
     case 'w':
       Opt.Write = 1;
       break;
+    case 'c':
+      Opt.Compile = 1;
+      break;
+    case 'b':
+      Opt.Benchmark = 1;
+      break;
     default:
       usage (EXIT_FAILURE);
     }
@@ -356,7 +367,9 @@ usage (int status)
     " -s, --steadyState     Abort integration at steady states\n"
     " -t, --sensitivity     activate sensitivity analysis (default: no)\n"
     " -n, --event           Do not abort on event detection, but keep\n"
-    "                       integrating. ACCURACY DEPENDS ON --printstep!!\n");
+    "                       integrating. ACCURACY DEPENDS ON --printstep!!\n"
+    " -c, --compile         Compile ODE, Jacobian and Event functions\n"
+    " -b, --benchmark       Print execution duration and intergation duration\n");
 /*     "     --param <Str>     Choose a parameter to vary during batch\n" */
 /*     "                       integration, from 0 to value in 50 steps\n"); */
   fprintf(stderr,

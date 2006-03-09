@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-24 14:05:42 raim>
-  $Id: integratorSettings.c,v 1.23 2006/03/02 16:17:24 raimc Exp $
+  $Id: integratorSettings.c,v 1.24 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -179,6 +179,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   set->CvodeMethod = 0;
   set->IterMethod = 0;
   set->MaxOrder = 5;
+  set->compileFunctions = 0;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
 			    HaltOnEvent, SteadyState, StoreResults,
 			    Sensitivity, SensMethod);
@@ -217,6 +218,8 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
 
   CvodeSettings_setMethod(clone, set->CvodeMethod, set->MaxOrder);
   CvodeSettings_setIterMethod(clone, set->IterMethod);
+
+  clone->compileFunctions = set->compileFunctions;
   
   /* Unless indefinite integration is chosen, generate a TimePoints array  */
   if  ( !clone->Indefinitely ) {    
@@ -378,6 +381,12 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
   set->MaxOrder = MaxOrder;  
 }
 
+/** Sets whether the simulator uses compiled functions for computing ODEs, the Jacabian or events
+*/
+SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, int compileFunctions)
+{
+  set->compileFunctions = compileFunctions;  
+}
 
 /** Sets integration switches in cvodeSettings. WARNING: this
     function's type signature will change with time, as new settings
@@ -684,6 +693,12 @@ SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *set)
   return set->Mxstep;
 }
 
+/** returns whether the simulator will use compiled functions to compute ODEs, the Jacbian or events
+*/
+SBML_ODESOLVER_API int CvodeSettings_getCompileFunctions(cvodeSettings_t *set)
+{
+  return set->compileFunctions;
+}
 
 /** Get non-linear solver method (BDF or ADAMS-MOULTON)
 */

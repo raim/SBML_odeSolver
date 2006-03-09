@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-17 17:33:38 raim>
-  $Id: cvodedata.c,v 1.27 2006/02/17 17:07:28 raimc Exp $
+  $Id: cvodedata.c,v 1.28 2006/03/09 17:23:49 afinney Exp $
 */
 /* 
  *
@@ -79,10 +79,9 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
   ASSIGN_NEW_MEMORY(data, struct cvodeData, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->trigger, nevents, int, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->value, nvalues, double, NULL);
-  /* initialize memory for optimized ODEs */
-  ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL);
 
   data->neq = neq;
+  data->opt = NULL;
   
   data->sensitivity = NULL;
   data->p = NULL;
@@ -332,8 +331,20 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
   int i, j;
 
+  if (data->opt != NULL && data->ode && !data->opt->compileFunctions)
+  {
+      /* free ODEs */
+      for ( i=0; i<data->neq; i++ )
+          ASTNode_free(data->ode[i]);
+      free(data->ode);
+  }
+
   /* data now also depends on cvodeSettings */
   data->opt = opt;
+
+  /* initialize memory for optimized ODEs */
+  if (!data->opt->compileFunctions)
+      ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, NULL);
   
   /* initialize values */
   CvodeData_initializeValues(data);
@@ -445,10 +456,13 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   /* free event trigger flags */
   free(data->trigger);
   
-  /* free ODEs */
-  for ( i=0; i<data->neq; i++ )
-    ASTNode_free(data->ode[i]);
-  free(data->ode);
+  if (!data->opt->compileFunctions)
+  {
+      /* free ODEs */
+      for ( i=0; i<data->neq; i++ )
+          ASTNode_free(data->ode[i]);
+      free(data->ode);
+  }
 }
 
 

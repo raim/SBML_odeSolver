@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 01:01:58 raim>
-  $Id: processAST.h,v 1.9 2005/12/16 01:25:09 raimc Exp $
+  $Id: processAST.h,v 1.10 2006/03/09 17:23:50 afinney Exp $
 */
 /* 
  *
@@ -42,6 +42,7 @@
 /* own header files */
 #include "sbmlsolver/cvodedata.h"
 #include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/charBuffer.h"
 
 #define MySQR(x) ((x)*(x))
 #define MySQRT(x) pow((x),(.5))
@@ -57,6 +58,8 @@ extern "C" {
 #endif
   
   SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data);
+  SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer);
+  SBML_ODESOLVER_API void generateAST(charBuffer_t *buffer, const ASTNode_t *n);
   SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);
   SBML_ODESOLVER_API ASTNode_t *AST_simplify(ASTNode_t *f);
   SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
@@ -69,6 +72,7 @@ extern "C" {
 
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
+void AST_dump(const char *context, ASTNode_t *node);
 
 #endif
 

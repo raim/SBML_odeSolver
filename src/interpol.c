@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-17 18:00:20 raim>
-  $Id: interpol.c,v 1.2 2006/02/17 17:07:28 raimc Exp $
+  $Id: interpol.c,v 1.3 2006/03/09 17:23:49 afinney Exp $
 */
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ static int read_columns(char *file, int n_col, int *col, int *index,
 
 /* ------------------------------------------------------------------------ */
 
-PUBLIC void free_data(time_series_t* ts) {
+void free_data(time_series_t* ts) {
 
     int i;
 
@@ -59,7 +59,7 @@ PUBLIC void free_data(time_series_t* ts) {
 
 /* ------------------------------------------------------------------------ */
 
-PUBLIC void print_data(time_series_t* ts) {
+void print_data(time_series_t* ts) {
 
     int i, j;
 
@@ -99,7 +99,7 @@ PUBLIC void print_data(time_series_t* ts) {
     
 /* ------------------------------------------------------------------------ */
 
-PUBLIC void test_interpol(time_series_t* ts) {
+void test_interpol(time_series_t* ts) {
 
     double *xs, *ys;
     double x, y_spl, y_lin;
@@ -139,7 +139,7 @@ PUBLIC void test_interpol(time_series_t* ts) {
     the second derivatives for spline interpolation, and returns a
     pointer to the created data structure. */
 
-PUBLIC time_series_t *read_data(char *file, int n_var, char **var) {
+time_series_t *read_data(char *file, int n_var, char **var) {
 
     int i;
     char *name;
@@ -344,7 +344,7 @@ PRIVATE int read_columns(char *file, int n_col, int *col, int *index,
 /* call returns the cubic-spline interpolation i(x) */
 /* of the variable at the time point */
 
-PUBLIC double call(int i, double x, time_series_t *ts) {
+double call(int i, double x, time_series_t *ts) {
 
     int nt;          /* number of x and y values */
     double *xs, *ys; /* x values, y values */
@@ -404,7 +404,7 @@ PUBLIC double call(int i, double x, time_series_t *ts) {
 /* spline returns y2[0..n-1] */
 /* containing the second derivatives of the cubic-spline interpolation */
 
-PUBLIC void spline(int n, double *x, double *y, double *y2) {
+void spline(int n, double *x, double *y, double *y2) {
     
     int i;
     double p, sig, *u;
@@ -438,7 +438,7 @@ PUBLIC void spline(int n, double *x, double *y, double *y2) {
 /* spline returns the interpolated value y_ = f(x_) */
 /* and the left interval boundary j, i.e. x[j] <= x_ < x[j+1] */
 
-PUBLIC void splint(int n, double *x, double *y, double *y2,
+void splint(int n, double *x, double *y, double *y2,
 		   double x_, double *y_, int *j) {
 
     double h, b, a;
@@ -455,7 +455,7 @@ PUBLIC void splint(int n, double *x, double *y, double *y2,
 
 /* ------------------------------------------------------------------------ */
 
-PUBLIC void linint(int n, double *x, double *y,
+void linint(int n, double *x, double *y,
 		   double x_, double *y_, int *j) {
 
     double h, b, a;
@@ -476,7 +476,7 @@ PUBLIC void linint(int n, double *x, double *y,
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-PUBLIC int bisection(int n, double *x, double x_) {
+int bisection(int n, double *x, double x_) {
 
     int low, high, med;
 
@@ -502,7 +502,7 @@ PUBLIC int bisection(int n, double *x, double x_) {
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-PUBLIC void hunt(int n, double *x, double x_, int *low){
+void hunt(int n, double *x, double x_, int *low){
 
     int high, med, inc;
 

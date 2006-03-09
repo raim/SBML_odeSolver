@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 17:19:53 raim>
-  $Id: integratorInstance.h,v 1.25 2006/03/02 16:21:45 raimc Exp $ 
+  $Id: integratorInstance.h,v 1.26 2006/03/09 17:23:50 afinney Exp $ 
 */
 /* 
  *
@@ -36,6 +36,7 @@
 #ifndef _INTEGRATORINSTANCE_H_
 #define _INTEGRATORINSTANCE_H_
 
+#include <time.h>
 /* Header Files for CVODE */
 #include "nvector_serial.h"
 
@@ -95,6 +96,12 @@ extern "C" {
     cvodeSolver_t *solver;
     /** optional results structure, shared with cvodeData */
     cvodeResults_t *results; 
+
+    /** start time for integration (doesn't include initial solver setup and compilation) */
+    clock_t startTime;
+
+    /** indicates whether startTime has a valid value */
+    int clockStarted;
   };
   
   /* common to all solvers */
@@ -123,7 +130,7 @@ extern "C" {
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
   SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
-  
+  SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
   /* these functions contain solver specific switches and need to be adapted
      for any new solver, and so does the local
      integratorInstance_initialiyeSolverStructures */    

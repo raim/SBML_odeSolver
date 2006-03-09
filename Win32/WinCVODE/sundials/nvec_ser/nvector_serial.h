@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2005/11/08 16:48:42 $
+ * $Revision: 1.3 $
+ * $Date: 2006/03/09 17:23:48 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban,
  *                and Aaron Collier @ LLNL
@@ -55,7 +55,6 @@ extern "C" {
 
 #include "nvector.h"
 #include "sundialstypes.h"
-#include "WinCVODE.h"
 /*
  * -----------------------------------------------------------------
  * PART I: SERIAL implementation of N_Vector
@@ -160,7 +159,7 @@ typedef struct _N_VectorContent_Serial *N_VectorContent_Serial;
  * -----------------------------------------------------------------
  */
 
-WINCVODE_API N_Vector N_VNew_Serial(long int vec_length);
+N_Vector N_VNew_Serial(long int vec_length);
 
 /*
  * -----------------------------------------------------------------
@@ -194,7 +193,7 @@ N_Vector N_VMake_Serial(long int vec_length, realtype *v_data);
  * -----------------------------------------------------------------
  */
 
-WINCVODE_API N_Vector *N_VNewVectorArray_Serial(int count, long int vec_length);
+N_Vector *N_VNewVectorArray_Serial(int count, long int vec_length);
 
 /*
  * -----------------------------------------------------------------
@@ -216,7 +215,7 @@ N_Vector *N_VNewVectorArrayEmpty_Serial(int count, long int vec_length);
  * -----------------------------------------------------------------
  */
 
-WINCVODE_API void N_VDestroyVectorArray_Serial(N_Vector *vs, int count);
+void N_VDestroyVectorArray_Serial(N_Vector *vs, int count);
 
 /*
  * -----------------------------------------------------------------
@@ -236,7 +235,7 @@ void N_VPrint_Serial(N_Vector v);
 
 N_Vector N_VCloneEmpty_Serial(N_Vector w);
 N_Vector N_VClone_Serial(N_Vector w);
-WINCVODE_API void N_VDestroy_Serial(N_Vector v);
+void N_VDestroy_Serial(N_Vector v);
 void N_VSpace_Serial(N_Vector v, long int *lrw, long int *liw);
 realtype *N_VGetArrayPointer_Serial(N_Vector v);
 void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v);
