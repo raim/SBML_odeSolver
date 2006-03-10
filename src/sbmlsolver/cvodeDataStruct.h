@@ -3,13 +3,13 @@
 
 #include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odemodeldatatype.h"
+#include "sbmlsolver/cvodesettingsdatatype.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct ASTNode ASTNode_t;
-typedef struct cvodeSettings cvodeSettings_t ;
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel
