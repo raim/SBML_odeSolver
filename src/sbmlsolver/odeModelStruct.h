@@ -5,13 +5,12 @@
 extern "C" {
 #endif
 
+#include "sbml/SBMLTypes.h"
+  
 #include "sbmlsolver/compiler.h"
 #include "sbmlsolver/interpol.h"
 #include "sbmlsolver/cvodedatatype.h"
-
-typedef struct SBMLDocument SBMLDocument_t;
-typedef struct Model Model_t;
-typedef struct ASTNode ASTNode_t ;
+  
 typedef int (*EventFn)(cvodeData_t *, int *);
 
 /** The internal ODE Model as constructed in odeModel.c from an SBML

@@ -1,6 +1,8 @@
 #ifndef _CVODEDATASTRUCT_H_
 #define _CVODEDATASTRUCT_H_
 
+#include "sbml/SBMLTypes.h"
+
 #include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odemodeldatatype.h"
 #include "sbmlsolver/cvodesettingsdatatype.h"
@@ -9,7 +11,6 @@
 extern "C" {
 #endif
 
-typedef struct ASTNode ASTNode_t;
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel
@@ -71,7 +72,8 @@ struct cvodeData {
 
   /* Adjoint specific  */ 
   double *adjvalue;  /** The value array is used to write and read the
-			 current values of all adjoint variables \psi(t) (of which there are `neq') */  
+			 current values of all adjoint variables \psi(t)
+			 (of which there are `neq') */  
  
   /** number of adjoint runs with the one integratorInstance */
   int adjrun;
