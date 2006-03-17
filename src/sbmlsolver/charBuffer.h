@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:24:50 raim>
-  $Id: charBuffer.h,v 1.1 2006/03/09 17:23:50 afinney Exp $
+  Last changed Time-stamp: <2006-03-17 11:08:17 xtof>
+  $Id: charBuffer.h,v 1.2 2006/03/17 11:24:35 chfl Exp $
 */
 /* 
  *
