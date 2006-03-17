@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 12:57:09 raim>
-  $Id: daeSolver.c,v 1.7 2005/12/16 15:04:44 raimc Exp $
+  Last changed Time-stamp: <2006-03-17 11:52:31 xtof>
+  $Id: daeSolver.c,v 1.8 2006/03/17 11:30:27 chfl Exp $
 */
 /* 
  *
@@ -66,15 +66,12 @@
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/daeSolver.h"
 
-static int
-check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
-
 /* Prototypes of functions called by IDA */
 
-int fRes(realtype tres, N_Vector yy, N_Vector yp,
+static int fRes(realtype tres, N_Vector yy, N_Vector yp,
 	 N_Vector resval, void *rdata);
 
-int JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
+static void JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
            N_Vector resvec, realtype cj, void *jdata, DenseMat JJ,
            N_Vector tempv1, N_Vector tempv2, N_Vector tempv3);
 
@@ -93,13 +90,13 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
     
     cvodeSolver_t *solver = engine->solver;
     cvodeData_t *data = engine->data;
-    cvodeSettings_t *opt = engine->opt;
-    cvodeResults_t *results = engine->results;
+/*     cvodeSettings_t *opt = engine->opt; */
+/*     cvodeResults_t *results = engine->results; */
     odeModel_t *om = engine->om;
     
     /* !!!! calling CVODE !!!! */
-    flag = -1; //IDASolver(solver->cvode_mem, solver->tout, &(solver->t),
-		      //solver->y, solver->dy, IDA_NORMAL);
+    flag = -1; /* IDASolver(solver->cvode_mem, solver->tout, &(solver->t),
+		  solver->y, solver->dy, IDA_NORMAL); */
 
     if ( flag != IDA_SUCCESS )
       {
@@ -206,7 +203,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 int
 IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
 {
-    int i, j, flag, neq, nalg;
+    int i, flag, neq, nalg;
     realtype *ydata, *abstoldata, *dydata;
 
     odeModel_t *om = engine->om;
@@ -240,7 +237,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
   
     /* CVODESolverStructures from former runs must be freed */
     if ( data->run > 1 )
-      IntegratorInstance_freeIdaSolverStructures(engine);
+      IntegratorInstance_freeIDASolverStructures(engine);
 
     
     /*
@@ -311,7 +308,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
      * abstol     pointer to the absolute tolerance vector
      */
     flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
-		     solver->dy, IDA_SV, solver->reltol, abstol);
+		     solver->dy, IDA_SV, solver->reltol, solver->abstol);
     if (check_flag(&flag, "IDAMalloc", 1, stderr)) {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
                         "IDAMalloc failed");
@@ -365,7 +362,7 @@ void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *engine)
 static void IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
 {
     /* Free sensitivity vector yS */
-    N_VDestroySerial(engine->solver->dy);
+    N_VDestroy_Serial(engine->solver->dy);
 }
 
 /** \brief Prints some final statistics of the calls to CVODE routines
@@ -377,39 +374,6 @@ SBML_ODESOLVER_API void IntegratorInstance_printIDAStatistics(integratorInstance
   IntegratorInstance_printCVODEStatistics(engine, f);
   /* print additional IDA statistics ...*/
 }
-
-
-/*
- * check return values of SUNDIALS functions
- */
-static int check_flag(void *flagvalue, char *funcname, int opt, FILE *f)
-{
-
-  int *errflag;
-
-  /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
-  if (opt == 0 && flagvalue == NULL) {
-    fprintf(f, "\n## SUNDIALS_ERROR: %s() failed - returned NULL pointer\n",
-            funcname);
-    return(1); }
-
-  /* Check if flag < 0 */
-  else if (opt == 1) {
-    errflag = (int *) flagvalue;
-    if (*errflag < 0) {
-      fprintf(f, "\n## SUNDIALS_ERROR: %s() failed with flag = %d\n",
-              funcname, *errflag);
-      return(1); }}
-
-  /* Check if function returned NULL pointer - no memory allocated */
-  else if (opt == 2 && flagvalue == NULL) {
-    fprintf(f, "\n## MEMORY_ERROR: %s() failed - returned NULL pointer\n",
-            funcname);
-    return(1); }
-
-  return(0);
-}
-
 
 /***************** Functions Called by the CVODE Solver ******************/
 
@@ -428,7 +392,7 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
   cvodeData_t *data;
   data   = (cvodeData_t *) f_data;
   ydata  = NV_DATA_S(y);
-  dydata = NV_DATA_S(ydot);
+  dydata = NV_DATA_S(dy);
   resdata  = NV_DATA_S(r);
   
   /* update ODE variables from CVODE */
@@ -507,7 +471,6 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
     for ( j=0; j<data->model->nalg; j++ ) 
       DENSE_ELEM(J,i,j) = 1.; /* algebraic jacobian here!! */
 
-  return 0;
 }
 
 
