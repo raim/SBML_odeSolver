@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.21 2006/02/14 15:08:43 jamescclu Exp $
+# $Id: Makefile.am,v 1.22 2006/03/17 11:25:58 chfl Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -45,45 +45,55 @@ AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
 lib_LIBRARIES = libODES.a
 
 libODES_a_SOURCES = ASTIndexNameNode.cpp \
-		    cvodedata.c \
-		    drawGraph.c \
-		    cvodeSolver.c \
-		    sensSolver.c \
-		    nullSolver.c \
-		    integratorInstance.c \
-		    integratorSettings.c \
-		    modelSimplify.c \
-		    odeConstruct.c \
-		    odeModel.c \
-		    odeSolver.c \
-		    processAST.c \
-		    sbml.c \
-		    sbmlResults.c \
-		    solverError.c \
-		    interpol.c \
-		    util.c
+                    charBuffer.cpp \
+                    compiler.c \
+                    cvodedata.c \
+                    cvodeSolver.c \
+                    daeSolver.c \
+                    drawGraph.c \
+                    integratorInstance.c \
+                    integratorSettings.c \
+                    interpol.c \
+                    modelSimplify.c \
+                    nullSolver.c \
+                    odeConstruct.c \
+                    odeModel.c \
+                    odeSolver.c \
+                    processAST.c \
+                    sbml.c \
+                    sbmlResults.c \
+                    sensSolver.c \
+                    solverError.c \
+                    util.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
-		     sbmlsolver/config.h \
-		     sbmlsolver/cvodedata.h \
-		     sbmlsolver/cvodedatatype.h \
-		     sbmlsolver/drawGraph.h \
-		     sbmlsolver/exportdefs.h \
-		     sbmlsolver/cvodeSolver.h \
-		     sbmlsolver/sensSolver.h \
-		     sbmlsolver/nullSolver.h \
-		     sbmlsolver/integratorInstance.h \
-		     sbmlsolver/integratorSettings.h \
-		     sbmlsolver/modelSimplify.h \
-		     sbmlsolver/odeConstruct.h \
-		     sbmlsolver/odemodeldatatype.h \
-		     sbmlsolver/odeModel.h \
-		     sbmlsolver/odeSolver.h \
-		     sbmlsolver/processAST.h \
-		     sbmlsolver/sbml.h \
-		     sbmlsolver/sbmlResults.h \
-		     sbmlsolver/solverError.h \
-		     sbmlsolver/util.h \
+                     sbmlsolver/charBuffer.h \
+                     sbmlsolver/compiler.h \
+                     sbmlsolver/config.h \
+                     sbmlsolver/cvodedata.h \
+                     sbmlsolver/cvodeDataStruct.h \
+                     sbmlsolver/cvodedatatype.h \
+                     sbmlsolver/cvodesettingsdatatype.h \
+                     sbmlsolver/cvodeSettingsStruct.h \
+                     sbmlsolver/cvodeSolver.h \
+                     sbmlsolver/daeSolver.h \
+                     sbmlsolver/drawGraph.h \
+                     sbmlsolver/exportdefs.h \
+                     sbmlsolver/integratorInstance.h \
+                     sbmlsolver/integratorSettings.h \
                      sbmlsolver/interpol.h \
-		     sbmlsolver/variableIndex.h
+                     sbmlsolver/modelSimplify.h \
+                     sbmlsolver/nullSolver.h \
+                     sbmlsolver/odeConstruct.h \
+                     sbmlsolver/odemodeldatatype.h \
+                     sbmlsolver/odeModel.h \
+                     sbmlsolver/odeModelStruct.h \
+                     sbmlsolver/odeSolver.h \
+                     sbmlsolver/processAST.h \
+                     sbmlsolver/sbml.h \
+                     sbmlsolver/sbmlResults.h \
+                     sbmlsolver/sensSolver.h \
+                     sbmlsolver/solverError.h \
+                     sbmlsolver/util.h \
+                     sbmlsolver/variableIndex.h
 pkgconfig_DATA = libODES.pc
 
