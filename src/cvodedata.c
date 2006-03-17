@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:33:38 raim>
-  $Id: cvodedata.c,v 1.28 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2006-03-17 15:35:18 raim>
+  $Id: cvodedata.c,v 1.29 2006/03/17 14:52:14 raimc Exp $
 */
 /* 
  *
@@ -455,13 +455,15 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   
   /* free event trigger flags */
   free(data->trigger);
-  
-  if (!data->opt->compileFunctions)
-  {
-      /* free ODEs */
-      for ( i=0; i<data->neq; i++ )
+
+  if ( data->opt != NULL ) {  
+    if (!data->opt->compileFunctions)
+      {
+	/* free ODEs */
+	for ( i=0; i<data->neq; i++ )
           ASTNode_free(data->ode[i]);
-      free(data->ode);
+	free(data->ode);
+      }
   }
 }
 
