@@ -5,16 +5,13 @@
 extern "C" {
 #endif
 
+#include "sbmlsolver/compiler.h"
+#include "sbmlsolver/interpol.h"
+#include "sbmlsolver/cvodedatatype.h"
+
 typedef struct SBMLDocument SBMLDocument_t;
 typedef struct Model Model_t;
 typedef struct ASTNode ASTNode_t ;
-typedef struct compiled_code compiled_code_t;
-typedef struct ts time_series_t ;
-typedef struct cvodeData cvodeData_t ;
-typedef void (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data);
-typedef void (*CVDenseJacFn)(long int N, DenseMat J, realtype t,
-                             N_Vector y, N_Vector fy, void *jac_data,
-                             N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 typedef int (*EventFn)(cvodeData_t *, int *);
 
 /** The internal ODE Model as constructed in odeModel.c from an SBML
