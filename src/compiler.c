@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:24:50 raim>
-  $Id: compiler.c,v 1.1 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2006-03-17 11:20:03 xtof>
+  $Id: compiler.c,v 1.2 2006/03/17 11:27:48 chfl Exp $
 */
 /* 
  *
@@ -52,6 +52,7 @@ struct compiled_code
 
 compiled_code_t *Compiler_compile(const char *sourceCode)
 {
+  compiled_code_t *code = NULL;
 #ifdef WIN32
 
     char tempDir[MAX_PATH+1];
@@ -65,7 +66,6 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     char command[4*MAX_PATH];
     char *dllFileNameDot ;
     HMODULE dllHandle ;    
-    compiled_code_t *code;
 
     /*printf("Source code:\n%s\n", sourceCode);*/
 
@@ -148,22 +148,23 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     code->dllHandle = dllHandle ;
     code->dllFileName = dllFileName;
 
-	return code;
 #endif
+	return (code);
 }
 
 void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 {
+  void *result = NULL;
 #ifdef WIN32
-    void *result = GetProcAddress(code->dllHandle, symbol);
+  result = GetProcAddress(code->dllHandle, symbol);
 
-    if (result)
-        return result ;
+  if (result)
+    return result ;
 
-    SolverError_storeLastWin32Error("");
-
-    return NULL ;
+  SolverError_storeLastWin32Error("");
+  result = NULL;
 #endif
+  return (result);
 }
 
 void CompiledCode_free(compiled_code_t *code)
