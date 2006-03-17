@@ -27,6 +27,7 @@ extern "C" {
     int IterMethod;       /**< set type of nonlinear solver iteration
 			       Newton (0) or Functional (1) */
     int MaxOrder;         /**< set maximum order of ADAMS or BDF method */
+    int ResetCvodeOnEvent; /**< restart CVODE when event is triggered */
     int Sensitivity;      /**< if not 0: use CVODES for sensitivity analysis */
     int SensMethod;       /**< set sensitivity analysis method:
 			       0: SIMULTANEOUS,

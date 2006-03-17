@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-17 11:20:03 xtof>
-  $Id: compiler.c,v 1.2 2006/03/17 11:27:48 chfl Exp $
+  $Id: compiler.c,v 1.3 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -42,6 +42,9 @@
 #include <tchar.h>
 #include <stdio.h>
 
+/**
+    A structure that stores compiled code
+ */
 struct compiled_code
 {
     HMODULE dllHandle ;
@@ -50,8 +53,12 @@ struct compiled_code
 
 #endif
 
+/**
+    Returns a pointer to code that is compiled from the given source code
+*/
 compiled_code_t *Compiler_compile(const char *sourceCode)
 {
+
   compiled_code_t *code = NULL;
 #ifdef WIN32
 
@@ -152,6 +159,9 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 	return (code);
 }
 
+/**
+   returns a pointer to the function named 'symbol' in the given 'code'
+*/
 void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 {
   void *result = NULL;
@@ -167,6 +177,9 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   return (result);
 }
 
+/**
+    frees the given code
+*/
 void CompiledCode_free(compiled_code_t *code)
 {
 #ifdef WIN32

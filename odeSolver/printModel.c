@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 13:51:34 raim>
-  $Id: printModel.c,v 1.16 2006/03/02 16:22:57 raimc Exp $
+  $Id: printModel.c,v 1.17 2006/03/17 17:43:27 afinney Exp $
 */
 /* 
  *
@@ -717,26 +717,35 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   /* print concentrations */
   else {
     fprintf(f, "#t ");
-    for( i=0; i<data->nvalues; i++) fprintf(f, "%s ", om->names[i]);
+    for( i=0; i<data->nvalues; i++)
+        if (om->observablesArray[i])
+            fprintf(f, "%s ", om->names[i]);
+    
     fprintf(f, "\n");    
     fprintf(f, "##CONCENTRATIONS\n");
     for ( i=0; i<=results->nout; ++i ) {
       fprintf(f, "%g ", results->time[i]);
       
       for ( j=0; j<om->neq; j++ ) 
-	fprintf(f, "%g ", results->value[j][i]);
+        if (om->observablesArray[j])
+	        fprintf(f, "%g ", results->value[j][i]);
 
       for ( j=0; j<om->nass; j++ ) 
-	fprintf(f, "%g ", results->value[om->neq+j][i]);
+        if (om->observablesArray[om->neq+j])
+	        fprintf(f, "%g ", results->value[om->neq+j][i]);
       
       for ( j=0; j<om->nconst; j++ )
-	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
+        if (om->observablesArray[om->neq+om->nass+j])
+	        fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
 
       fprintf(f, "\n");
     }
     fprintf(f, "##CONCENTRATIONS\n");
     fprintf(f, "#t ");
-    for( i=0; i<data->nvalues; i++ ) fprintf(f, "%s ", om->names[i]);
+    for( i=0; i<data->nvalues; i++ )
+      if (om->observablesArray[i])
+        fprintf(f, "%s ", om->names[i]);
+
     fprintf(f, "\n");
   }
   

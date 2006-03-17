@@ -13,6 +13,7 @@ extern "C" {
   
 typedef int (*EventFn)(cvodeData_t *, int *);
 
+
 /** The internal ODE Model as constructed in odeModel.c from an SBML
     input file, that only contains rate rules (constructed from
     reaction network in odeConstruct.c)
@@ -60,8 +61,16 @@ struct odeModel
   /* compilation */
   CVRhsFn compiledCVODERhsFunction; /**< CVODE rhs function created by compiling code generated from model */
   CVDenseJacFn compiledCVODEJacobianFunction; /**< CVODE jacobian function created by compiling code generated from model */
-  EventFn compiledEventFunction;
+  EventFn compiledEventFunction; /**< Event function created by compiling code generated from model */
   compiled_code_t *compiledCVODEFunctionCode; /**< compiled code containing compiled functions */
+
+  /* assignment Rule Optimization */
+  List_t *observables ; /**< set of symbols that the user wishes to have computed for output (list contains char *) by default contains all species */  
+  int *observablesArray ; /**< set of symbols that the user wishes to have computed for output; indexing corresponds to 'names' */  
+
+  int *assignmentsBeforeODEs; /**< set of assignments that must be evaluated before evaluating ODEs, boolean array indexed as for 'assignment' array */
+  int *assignmentsBeforeEvents; /**< set of assignments that must be evaluated before evaluating events, boolean array indexed as for 'assignment' array */
+  int *assignmentsAfterEvents; /**< set of assignments that must be evaluated after evaluating events */
 
   /* adjoint */
   /* Given a parameter to observation map F(p),

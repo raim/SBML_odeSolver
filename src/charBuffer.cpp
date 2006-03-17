@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-26 17:24:50 raim>
-  $Id: charBuffer.cpp,v 1.1 2006/03/09 17:23:49 afinney Exp $
+  $Id: charBuffer.cpp,v 1.2 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -36,37 +36,44 @@
 
 #include <sstream>
 
+/** a buffer of unbounded length */
 struct charBuffer
 {
     std::ostringstream stream ;
     std::string string ;
 };
 
+/** create an unbounded buffer */
 charBuffer_t *CharBuffer_create()
 {
     return new charBuffer ;
 }
 
+/** free an unbounded buffer */
 void CharBuffer_free(charBuffer_t *buffer)
 {
     delete buffer;
 }
 
+/** add the given string to the end of the unbounded buffer */
 void CharBuffer_append(charBuffer_t *buffer, const char *s)
 {
     buffer->stream << s ;
 }
 
+/** add the given integer in decimal string form to the end of the given unbounded buffer */
 void CharBuffer_appendInt(charBuffer_t *buffer, int i)
 {
     buffer->stream << i ;
 }
 
+/** add the given integer in scientific string form to the end of the given unbounded buffer */
 void CharBuffer_appendDouble(charBuffer_t *buffer, double f)
 {
     buffer->stream << f ;
 }
 
+/** return the string contained in the buffer.  This string must not be freed */
 const char *CharBuffer_getBuffer(charBuffer_t *buffer)
 {
     buffer->string = buffer->stream.str();

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:38:57 raim>
-  $Id: integratorSettings.h,v 1.16 2006/03/10 09:18:49 afinney Exp $ 
+  $Id: integratorSettings.h,v 1.17 2006/03/17 17:43:30 afinney Exp $ 
 */
 /* 
  *
@@ -75,6 +75,7 @@ typedef struct timeSettings timeSettings_t;
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *, int);
 
   /* Adjoint setttings */
   SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
@@ -111,6 +112,7 @@ typedef struct timeSettings timeSettings_t;
   SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getCompileFunctions(cvodeSettings_t *);
+  SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *);
 
   SBML_ODESOLVER_API int CvodeSettings_getJacobian(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getIndefinitely(cvodeSettings_t *);

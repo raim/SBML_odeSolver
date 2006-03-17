@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-17 15:35:18 raim>
-  $Id: cvodedata.c,v 1.29 2006/03/17 14:52:14 raimc Exp $
+  $Id: cvodedata.c,v 1.30 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -344,7 +344,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
   /* initialize memory for optimized ODEs */
   if (!data->opt->compileFunctions)
-      ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, NULL);
+      ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
   
   /* initialize values */
   CvodeData_initializeValues(data);

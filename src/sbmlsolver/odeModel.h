@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:50:29 raim>
-  $Id: odeModel.h,v 1.20 2006/03/09 17:23:50 afinney Exp $ 
+  $Id: odeModel.h,v 1.21 2006/03/17 17:43:30 afinney Exp $ 
 */
 /* 
  *
@@ -59,6 +59,9 @@ extern "C" {
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(char *, char **);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocument_t *, char **);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *, char **);
   SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
   
   SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *);

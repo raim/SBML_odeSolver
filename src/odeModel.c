@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 16:23:47 raim>
-  $Id: odeModel.c,v 1.41 2006/03/17 11:35:13 chfl Exp $ 
+  $Id: odeModel.c,v 1.42 2006/03/17 17:43:29 afinney Exp $ 
 */
 /* 
  *
@@ -51,7 +51,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/processAST.h"
@@ -67,6 +66,8 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				    int nass, int nevents, int nalg);
 static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
+static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
+
 
 /** \brief Create internal model odeModel from a reaction network,
     represented as libSBML's Model_t structure.
@@ -87,9 +88,41 @@ static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 {
+    return ODEModel_createWithObservables(m, NULL);
+}
+
+/** \brief Create internal model odeModel from a reaction network,
+    represented as libSBML's Model_t structure.
+
+    'observables' is the set of symbols that the user wishes to see
+    valid at all times.  A reduced set of observables may result in
+    more optimal excution.
+
+    The input model must be of SBML level2!
+    The function at first, attempts to construct a simplified SBML
+    model, that contains all compartments, species, parameters, events
+    and rules of the input model, and constructs new ODEs as SBML
+    RateRules from the reaction network of the input model.  The
+    function then creates the structure odeModel which contains
+    variable, parameter and constant names and all formulas (ODEs and
+    assignments) as indexed AST (iAST). This structure can be used to
+    initialize and run several integration runs, each associated with
+    initial conditions in cvodeData_t. Alternatively I.1a - I.1c
+    allow to construct odeModel from higher-level data (a file, an
+    SBML document or a reaction network model, respectively).
+
+    observables is a null terminated set of null strings.  This set 
+    contains the identiers of all variables that the user wishes to
+    observe on the output of the simulator.  If observables is NULL
+    the set of species is used instead.
+*/
+
+SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char **observables)
+{
+  int i;
   Model_t *ode;
   odeModel_t *om;
- 
+  
   ode = Model_reduceToOdes(m);
   RETURN_ON_ERRORS_WITH(NULL);
 
@@ -103,10 +136,290 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
   om->compiledCVODEFunctionCode = NULL;
   om->compiledCVODEJacobianFunction = NULL;
   om->compiledCVODERhsFunction = NULL;
+  om->observables = List_create();
+
+  if (observables)
+  {
+      /* make copy */
+      int i ;
+        
+      for (i = 0; observables[i] != NULL; i++)
+      {
+          char *newObservable;
+
+          ASSIGN_NEW_MEMORY_BLOCK(newObservable, strlen(observables[i]) + 1, char, NULL);
+          strcpy(newObservable, observables[i]);
+          List_add(om->observables, newObservable);
+      }
+  }
+  else
+  {
+      /* create default list of observables from species */
+      /* AMF => if you want to expand the default observables set please
+         let me know.  If you include the reaction symbols performance will
+         be degraded in models with events */
+
+      int i ;
+
+      for (i = 0; i != Model_getNumSpecies(m); i++)
+      {
+          char *newObservable ;
+          Species_t *species = Model_getSpecies(m, i);
+
+          ASSIGN_NEW_MEMORY_BLOCK(newObservable, strlen(Species_getId(species)) + 1, char, NULL);
+          strcpy(newObservable, Species_getId(species));
+          List_add(om->observables, newObservable);
+      }
+  }
+
+  for (i = 0; i != om->neq + om->nalg + om->nass + om->nconst; i++)
+  {
+      int j ;
+        
+      om->observablesArray[i] = 0;
+
+      for (j = 0; j != List_size(om->observables); j++)
+          if (!strcmp(om->names[i], List_get(om->observables, j)))
+              om->observablesArray[i] = 1;
+  }
+
+  ODEModel_computeAssignmentRuleSets(om);
     
   return om;
 }
 
+typedef struct assignmentStage assignmentStage_t ;
+
+/** represents a step in a function which contains assignments */
+struct assignmentStage
+{
+    List_t *changedSymbols ; /**< set of symbols changed by operation */
+    int *assignmentsBeforeChange ; /**< assignments made before operation,
+                                   this is a boolean array corresponding to the odeMode_t
+                                   assignment field */
+}  ;
+
+/** creates an assignment stage structure given a set of symbols changed by an operation and
+    and a set of assignments made before the operation. 'assignmentsBeforeChange' is a boolean
+    array corresponding to the odeMode_t assignment field
+*/
+assignmentStage_t *AssignmentStage_create(List_t *changedSymbols, int *assignmentsBeforeChange)
+{
+    assignmentStage_t *result ;
+
+    ASSIGN_NEW_MEMORY_BLOCK(result, 1, assignmentStage_t, NULL);
+
+    result->changedSymbols = changedSymbols ;
+    result->assignmentsBeforeChange = assignmentsBeforeChange;
+
+    return result;
+}
+
+/** adds the contents of 'source' to the end of 'target'.  List items are only shallow copied.
+ */
+void List_append(List_t *target, List_t *source)
+{
+    int i;
+
+    for (i = 0; i != List_size(source); i++)
+        List_add(target, List_get(source, i));
+}
+
+/**
+    returns boolean result: whether the given AST is dependant on a given set of variables.
+*/
+int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om, ASTNode_t *rule, List_t *changedSet)
+{
+    int i, j;
+    List_t *symbols = List_create();
+    
+    ASTNode_getSymbols(rule, symbols);
+
+    for (j = 0; j != List_size(symbols); j++)
+    {
+        char *symbol = List_get(symbols, j);
+
+        for (i = 0; i != List_size(changedSet); i++)
+        {
+            if (!strcmp(symbol, List_get(changedSet, i)))
+            {
+                List_free(symbols);
+                return 1;
+            }
+        }
+
+        for (i = 0; i != om->nass; i++)
+        {
+            if (!strcmp(symbol, om->names[om->neq + i]) &&
+                    ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSet))
+            {
+                List_free(symbols);
+                return 1;
+            }
+        }
+    }
+
+    List_free(symbols);
+
+    return 0;
+}
+
+/** adds assignment rules from the given model to the set 'requiredRules' that are not in 'computedRules'
+    that are required to compute the given 'targetSymbol' given the set of 'changedSymbols'.
+    'requiredRules' and 'computedRules' are boolean arrays corresponding to the odeMode_t assignment field
+*/
+void ODEModel_computeAssignmentRuleSetForSymbol(
+    odeModel_t *om, char *targetSymbol, List_t *changedSymbols, int *requiredRules, int *computedRules)
+{
+    int i;
+     
+    for (i = 0; i != List_size(changedSymbols); i++)
+        if (!strcmp(targetSymbol, List_get(changedSymbols, i)))
+            return ;
+
+    for (i = 0; i != om->nass; i++)
+    {
+        if (!computedRules[i] && !requiredRules[i] && !strcmp(targetSymbol, om->names[om->neq + i]) &&
+                ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSymbols))
+        {
+            int j;
+            List_t *symbols = List_create();
+            
+            ASTNode_getSymbols(om->assignment[i], symbols);
+            requiredRules[i] = 1 ;
+
+            for (j = 0; j != List_size(symbols); j++)
+                ODEModel_computeAssignmentRuleSetForSymbol(
+                    om, (char *)List_get(symbols, j), changedSymbols, requiredRules, computedRules);
+
+            List_free(symbols);
+        }
+    }
+}
+
+/** returns a boolean array which is the set of assignment rules required to compute the set 
+    'targetSymbols' and the set of 'changes'.  'targetSymbols' is a list of char *. 'changes' is the
+    is a list of assignmentStage_t * and assumed to be in reverse order of operation execution */
+int *ODEModel_computeAssignmentRuleSet(odeModel_t *om, List_t *targetSymbols, List_t *changes)
+{
+    int *requiredRules, *computedRules ;
+    int i ;
+    List_t *changeSet = List_create();
+
+    ASSIGN_NEW_MEMORY_BLOCK(requiredRules, om->nass, int, NULL);
+    ASSIGN_NEW_MEMORY_BLOCK(computedRules, om->nass, int, NULL);
+
+    for (i = 0; i != om->nass; i++)
+    {
+        requiredRules[i] = 0 ;
+        computedRules[i] = 0 ;
+    }
+
+    /* determine the set of rules that have computed correct values despite changes */
+    for (i = 0; i != List_size(changes); i++)
+    {
+        assignmentStage_t *stage = List_get(changes, i);
+
+        List_append(changeSet, stage->changedSymbols);   
+
+        if (stage->assignmentsBeforeChange)
+        {
+            int j;
+
+            for (j = 0; j != om->nass; j++)
+            {
+                if (!computedRules[j] &&
+                        stage->assignmentsBeforeChange[j] &&
+                        !ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[j], changeSet))
+                    computedRules[j] = 1;
+            }
+        }
+    }
+
+    /* determine the set of rules that have to be computed given the changes */
+    for (i = 0; i != List_size(targetSymbols); i++)
+        ODEModel_computeAssignmentRuleSetForSymbol(
+            om, List_get(targetSymbols, i), changeSet, requiredRules, computedRules);
+
+    free(computedRules);
+    List_free(changeSet);
+
+    return requiredRules;
+}
+
+/** computes the values for the 'assignmentsBeforeODEs', 'assignmentsBeforeEvents', 'assignmentsAfterEvents'
+    fields on the given 'odeModel_t' structure */
+void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
+{
+    int i ;
+    assignmentStage_t *firstAssignmentStage, *secondAssignmentStage;
+    List_t *changes, *allVariables, *odeFunctionOfSet, *eventExpressionFunctionOfSet;
+    List_t *variablesAssignedByEvents ;
+    
+    changes = List_create();
+    odeFunctionOfSet = List_create();
+    eventExpressionFunctionOfSet = List_create();
+    variablesAssignedByEvents = List_create();
+    allVariables = List_create();
+
+    for (i = 0; i != om->neq; i++)
+    {
+        ASTNode_getSymbols(om->ode[i], odeFunctionOfSet);
+        List_add(allVariables, om->names[i]);
+    }
+
+    for (i = 0; i != Model_getNumEvents(om->simple); i++)
+    {
+        int j ;
+        Event_t *event = Model_getEvent(om->simple, i);
+
+        ASTNode_getSymbols(Event_getTrigger(event), eventExpressionFunctionOfSet);
+
+        for (j = 0; j != Event_getNumEventAssignments(event); j++) 
+        {
+            EventAssignment_t *assignment = Event_getEventAssignment(event, j);
+
+            ASTNode_getSymbols(EventAssignment_getMath(assignment), eventExpressionFunctionOfSet);
+            List_add(variablesAssignedByEvents, EventAssignment_getVariable(assignment));
+        }
+    }
+
+    List_append(allVariables, variablesAssignedByEvents);
+
+    /* first assignment stage represents the state before the start of the RHS function and
+    // and the start of the event function
+    // in both cases all variables may have changed but no assignments have been made */ 
+    firstAssignmentStage = AssignmentStage_create(allVariables, NULL);
+    List_prepend(changes, firstAssignmentStage);
+
+    /* compute set of rules required at the start of ODE RHS that is the set required to
+    // compute the variables that are used by the ODEs
+    // (the set of variables that the ODEs are a function of) */
+    om->assignmentsBeforeODEs = ODEModel_computeAssignmentRuleSet(om, odeFunctionOfSet, changes);
+
+    /* Note that the RHS doesn't need to compute the observables that's left to the event function
+
+    // compute set of rules required at the start of event function that is the set required to
+    // compute the variables that are used by all the event expressions (triggers and rhs of event assignments) */
+    om->assignmentsBeforeEvents = ODEModel_computeAssignmentRuleSet(om, eventExpressionFunctionOfSet, changes);
+
+    /* compute set of rules required by the observables 
+    // this is computed taking into account the rules already computed at the beginning of the event function
+    // only observables that have not already been computed at the beginning of the event function
+    // or are dependant on a event assignment are computed at this point.
+    // obervables thats aren't dependant on variables are not computed at all here*/
+    secondAssignmentStage = AssignmentStage_create(variablesAssignedByEvents, om->assignmentsBeforeEvents);
+    List_prepend(changes, secondAssignmentStage);
+    om->assignmentsAfterEvents = ODEModel_computeAssignmentRuleSet(om, om->observables, changes);
+    
+    free(firstAssignmentStage);
+    free(secondAssignmentStage);
+    List_free(changes);
+    List_free(allVariables);
+    List_free(odeFunctionOfSet);
+    List_free(eventExpressionFunctionOfSet);
+    List_free(variablesAssignedByEvents);
+}
 
 /* allocates memory for substructures of a new odeModel, writes
    variable and parameter names and returns a pointer to the
@@ -306,7 +619,6 @@ ODEModel_fillStructures(Model_t *ode)
     }
   }  
   
-
   om->simple = ode;
   /* set jacobian to NULL */
   om->jacob = NULL;
@@ -323,6 +635,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 
   ASSIGN_NEW_MEMORY(data, odeModel_t, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->names, neq+nalg+nass+nconst, char *, NULL)
+  ASSIGN_NEW_MEMORY_BLOCK(data->observablesArray, neq+nalg+nass+nconst, int, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL)
   ASSIGN_NEW_MEMORY_BLOCK(data->algebraic, nalg, ASTNode_t *, NULL)
@@ -339,6 +652,18 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
 {
+    return ODEModel_createFromFileWithObservables(sbmlFileName, NULL);
+}
+
+/** \brief Create internal model odeModel from an SBML file, that
+    contains level 1 or level 2 SBML.
+
+    'observables' is the set of symbols that the user wishes to see
+    valid at all times.  A reduced set of observables may result in
+    more optimal excution.
+*/
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(char *sbmlFileName, char **observables)
+{
     SBMLDocument_t *d;
     odeModel_t *om;
 
@@ -349,7 +674,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     
     RETURN_ON_ERRORS_WITH(NULL);
     
-    om = ODEModel_createFromSBML2(d);
+    om = ODEModel_createFromSBML2WithObservables(d, observables);
     /* Errors will cause the program to stop, e.g. when some
     mathematical expressions are missing. */
     RETURN_ON_ERRORS_WITH(NULL);
@@ -366,6 +691,19 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
 {
+    return ODEModel_createFromSBML2WithObservables(d, NULL);
+}
+
+/** \brief Create internal model odeModel_t from SBMLDocument containing
+    a level 2 SBML model.
+
+    'observables' is the set of symbols that the user wishes to see
+    valid at all times.  A reduced set of observables may result in
+    more optimal excution.
+
+*/
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocument_t *d, char **observables)
+{
   Model_t *m;
   odeModel_t *om;
 
@@ -379,7 +717,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
   
   m = SBMLDocument_getModel(d);
   
-  om = ODEModel_create(m);
+  om = ODEModel_createWithObservables(m, observables);
   /* Errors will cause the program to stop, e.g. when some
       mathematical expressions are missing.  */
   RETURN_ON_ERRORS_WITH(NULL);
@@ -444,6 +782,17 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   /* free compiled code */
   if (om->compiledCVODEFunctionCode)
       CompiledCode_free(om->compiledCVODEFunctionCode);
+
+  free(om->assignmentsAfterEvents);
+  free(om->assignmentsBeforeEvents);
+  free(om->assignmentsBeforeODEs);
+
+  for (i=0; i != List_size(om->observables); i++)
+      free(List_get(om->observables, i));
+
+  List_free(om->observables);
+
+  free(om->observablesArray);
 
   /* free model structure */
   free(om);
@@ -638,15 +987,26 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
       
   for ( i=0; i<om->neq; i++ ) {
     ode = copyAST(om->ode[i]);
+
+    /*AST_dump("raw ode", ode);*/
+
     /* assignment rule replacement: reverse to satisfy
        SBML specifications that variables defined by
        an assignment rule can appear in rules declared afterwards */
     for ( j=om->nass-1; j>=0; j-- )
-      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
-    
+    {
+      /*AST_dump(om->names[om->neq + j], om->assignment[j]);*/
+      AST_replaceNameByFormula(ode, om->names[om->neq + j], om->assignment[j]);
+      /*AST_dump("substituted:", ode);*/
+    }
+
+    /*AST_dump("\ndifferentiation of", ode);*/
     for ( j=0; j<om->neq; j++ ) {
-      fprime = differentiateAST(om->ode[i], om->names[j]);
+      /*printf("\nwith respect to %s\n", om->names[j]);*/
+      fprime = differentiateAST(ode, om->names[j]);
+      /*AST_dump("raw differential", fprime);*/
       simple =  simplifyAST(fprime);
+      /*AST_dump("simplified", simple);*/
       ASTNode_free(fprime);
       index = indexAST(simple, nvalues, om->names);
       ASTNode_free(simple);
@@ -1051,6 +1411,9 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
     free(vi);
 }
 
+/** appends a compilable expression for the given AST to the given buffer assuming that the
+    node has not been indexed
+ */
 void ODEModel_generateASTWithoutIndex(odeModel_t *om, charBuffer_t *buffer, ASTNode_t *node)
 {
     ASTNode_t *index = indexAST(node, om->neq + om->nass + om->nconst, om->names);
@@ -1058,6 +1421,9 @@ void ODEModel_generateASTWithoutIndex(odeModel_t *om, charBuffer_t *buffer, ASTN
     ASTNode_free(index);
 }
 
+/** appends a compilable assignment to the buffer.  The assignment is made to the 'value' array
+    item indexed by 'index'.  The value assigned is computed from the given AST.
+*/
 void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node, charBuffer_t *buffer)
 {
     CharBuffer_append(buffer, "value[");
@@ -1067,14 +1433,25 @@ void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
     CharBuffer_append(buffer, ";\n");
 }
 
-void ODEModel_generateAssignmentRuleCode(odeModel_t *om, charBuffer_t *buffer)
+/** appends compiled code for a set of assignment rules to the gievn buffer.  The assignments generated are
+    taken from the assignment rules in the given model however the set generated is determined by the
+    given 'requiredAssignments' boolean array which is indexed in the same order as the 'assignment' array 
+    on the given model.
+*/
+void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int *requiredAssignments, charBuffer_t *buffer)
 {
     int i ;
 
     for ( i=0; i<om->nass; i++ )
-        ODEModel_generateAssignmentCode(om, om->neq+i, om->assignment[i], buffer);
+        if (!requiredAssignments || requiredAssignments[i])
+            ODEModel_generateAssignmentCode(om, om->neq+i, om->assignment[i], buffer);
 }
 
+/** appends compiled code  to the given buffer
+    for the function called by the value of 'COMPILED_EVENT_FUNCTION_NAME' which
+    implements the assignment rules and events required to ensure that observables have the correct values
+    and that ODE variables are in the right state for the next intergation step.
+*/
 void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 {
     int i, j;
@@ -1091,9 +1468,11 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
         "    int fired = 0;\n"\
         "    int *trigger = data->trigger;\n");
     
-    ODEModel_generateAssignmentRuleCode(om, buffer);
+    ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeEvents, buffer);
 
     for ( i=0; i<Model_getNumEvents(om->simple); i++ ) {
+        int setIsValidFalse = 0;
+
         e = Model_getEvent(om->simple, i);
         trigger = (ASTNode_t *) Event_getTrigger(e);
 
@@ -1109,7 +1488,6 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
         CharBuffer_append(buffer, "] = 1;\n");
 
         for ( j=0; j<Event_getNumEventAssignments(e); j++ ) {
-            int setIsValidFalse = 0;
             /* generate event assignment */
             ea = Event_getEventAssignment(e, j);
             assignment = (ASTNode_t *) EventAssignment_getMath(ea);           
@@ -1135,16 +1513,15 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
             "}\n");
     }
 
-    if (om->nass)
-    {
-        CharBuffer_append(buffer, "if ( fired )\n{\n");
-        ODEModel_generateAssignmentRuleCode(om, buffer);
-        CharBuffer_append(buffer, "}\n");
-    }
+    ODEModel_generateAssignmentRuleCode(om, om->assignmentsAfterEvents, buffer);
     
     CharBuffer_append(buffer, "return fired;\n}\n");
 }
 
+/** appends compiled code  to the given buffer
+    for the function called by the value of 'COMPILED_RHS_FUNCTION_NAME' which
+    calculates the right hand side ODE values for the set of ODEs being solved.
+*/
 void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
     int i ;
@@ -1166,6 +1543,9 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
         /** update parameters: p is modified by CVODES,
             if fS could not be generated  */
 
+    /* update time  */
+    CharBuffer_append(buffer, "data->currenttime = t;\n");
+
     CharBuffer_append(buffer,
         "if ( data->p != NULL && data->opt->Sensitivity  )\n"\
         "    for ( i=0; i<data->nsens; i++ )\n"\
@@ -1182,10 +1562,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     }
 
     /** update assignment rules */
-    ODEModel_generateAssignmentRuleCode(om, buffer);
-
-    /* update time  */
-    CharBuffer_append(buffer, "data->currenttime = t;\n");
+    ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeODEs, buffer);
 
     /** evaluate ODEs f(x,p,t) = dx/dt */
     for ( i=0; i<om->neq; i++ ) 
@@ -1200,6 +1577,10 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     CharBuffer_append(buffer, "}\n");
 }
 
+/** appends compiled code to the given buffer
+    for the function called by the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
+    calculates the Jacobian for the set of ODEs being solved.
+*/
 void ODEModel_generateCVODEJacobianFunction(odeModel_t *om, charBuffer_t *buffer)
 {
     int i, j ;
@@ -1219,6 +1600,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om, charBuffer_t *buffer
         "data  = (cvodeData_t *) jac_data;\n"\
         "value = data->value ;\n"\
         "ydata = NV_DATA_S(y);\n"\
+        "data->currenttime = t;\n"\
         "\n"\
         "if ( data->p != NULL && data->opt->Sensitivity )\n"\
         "    for ( i=0; i<data->nsens; i++ )\n"\
@@ -1234,12 +1616,6 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om, charBuffer_t *buffer
         CharBuffer_appendInt(buffer, i);
         CharBuffer_append(buffer, "];\n");
     }
-
-    /** update assignment rules */
-    ODEModel_generateAssignmentRuleCode(om, buffer);
-
-    /* update time  */
-    CharBuffer_append(buffer, "data->currenttime = t;\n");
 
     /** evaluate Jacobian J = df/dx */
     for ( i=0; i<om->neq; i++ )
@@ -1259,6 +1635,9 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om, charBuffer_t *buffer
     CharBuffer_append(buffer, "}\n");
 }
 
+/** dynamically generates and complies the ODE RHS, Jacobian and Events handling functions for the given
+model.  The jacobian function is not generated if the jacobian AST expressions have not been generated.
+*/
 void ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
     charBuffer_t *buffer = CharBuffer_create();
@@ -1269,9 +1648,11 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
         "#include <math.h>\n"\
         "#include <sbmlsolver/sundialstypes.h>\n"\
         "#include <sbmlsolver/nvector.h>\n"\
-        "#include <sbmlsolver/cvodeDataStruct.h>\n"\
         "#include <sbmlsolver/nvector_serial.h>\n"\
         "#include <sbmlsolver/dense.h>\n" 
+        "#include <sbmlsolver/cvode.h>\n"\
+        "#include <sbmlsolver/cvdense.h>\n"\
+        "#include <sbmlsolver/cvodeDataStruct.h>\n"\
         "#include <sbmlsolver/cvodeSettingsStruct.h>\n"\
         "#include <sbmlsolver/odeModelStruct.h>\n"\
         "#define DLL_EXPORT __declspec(dllexport)\n");
@@ -1312,6 +1693,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
             CompiledCode_getFunction(om->compiledCVODEFunctionCode, COMPILED_RHS_FUNCTION_NAME);
 }
 
+/** returns the compiled RHS ODE function for the given model */
 SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
 {
     if (!om->compiledCVODERhsFunction)
@@ -1323,6 +1705,7 @@ SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
     return om->compiledCVODERhsFunction;
 }
 
+/** returns the compiled Jacobian function for the given model */
 SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *om)
 {
     if (!om->jacobian)

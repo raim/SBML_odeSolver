@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-16 01:01:58 raim>
-  $Id: processAST.h,v 1.11 2006/03/17 11:24:35 chfl Exp $
+  $Id: processAST.h,v 1.12 2006/03/17 17:43:30 afinney Exp $
 */
 /* 
  *
@@ -73,6 +73,7 @@ extern "C" {
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
 void AST_dump(const char *context, ASTNode_t *node);
+void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols);
 
 #endif
 

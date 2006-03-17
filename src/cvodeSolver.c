@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-17 15:48:29 raim>
-  $Id: cvodeSolver.c,v 1.30 2006/03/17 14:51:19 raimc Exp $
+  $Id: cvodeSolver.c,v 1.31 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -85,7 +85,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   if (!engine->isValid)
     {
       solver->t0 = solver->t;
-      IntegratorInstance_createCVODESolverStructures(engine);
+      if (!IntegratorInstance_createCVODESolverStructures(engine))
+        return 0 ;
     }
 
   if (!engine->clockStarted)
@@ -256,6 +257,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     cvodeSolver_t *solver = engine->solver;
     cvodeSettings_t *opt = engine->opt;
     CVRhsFn rhsFunction;
+    CVDenseJacFn jacODE ;
 
     if ( !opt->AdjointPhase ) {
         /* i.e, in the forward phase */
@@ -279,17 +281,42 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
                 free(om->jacob);
                 om->jacob = NULL;
             }
-            SolverError_error(WARNING_ERROR_TYPE,
+            /* AMF this really in the wrong place if we need at all */
+            /* SolverError_error(
+                engine->errorLog,
+                WARNING_ERROR_TYPE,
                 SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-                "Jacobian matrix construction skipped.");
+                "Jacobian matrix construction skipped."); */
             om->jacobian = opt->UseJacobian;
+        }
+
+        if (opt->compileFunctions)
+        {
+            rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
+            if (!rhsFunction)
+                return 0; /* error */
+        }
+        else
+            rhsFunction = f ;
+
+        if (opt->UseJacobian)
+        {
+            if (opt->compileFunctions)
+            {
+                jacODE = ODEModel_getCompiledCVODEJacobianFunction(om);
+                if (!jacODE)
+                    return 0; /* error */
+            }
+            else
+                jacODE = JacODE;
         }
 
         /* CVODESolverStructures from former runs must be freed */
         if (  solver->y != NULL )
             IntegratorInstance_freeCVODESolverStructures(engine);
 
-        /**
+
+      /**
         * Allocate y, abstol vectors
         */
         /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
@@ -360,15 +387,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
             return 0; /* error */
         }
 
-        if (opt->compileFunctions)
-        {
-            rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
-            if (!rhsFunction)
-                return 0; /* error */
-        }
-        else
-            rhsFunction = f ;
-
         /** !! max. order should be set here !! */
         /**
         * Call CVodeMalloc to initialize the integrator memory:\n
@@ -414,17 +432,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
         */
         if ( opt->UseJacobian == 1 ) {
             /* ... user-supplied routine Jac */
-            CVDenseJacFn jacODE ;
-
-            if (opt->compileFunctions)
-            {
-                jacODE = ODEModel_getCompiledCVODEJacobianFunction(om);
-                if (!jacODE)
-                    return 0; /* error */
-            }
-            else
-                jacODE = JacODE;
-
             flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
         }
         else {
@@ -644,6 +651,9 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   ydata  = NV_DATA_S(y);
   dydata = NV_DATA_S(ydot);
 
+  /* update time  */
+  data->currenttime = t;
+
   /** update parameters: p is modified by CVODES,
      if fS could not be generated  */
   if ( data->p != NULL && data->opt->Sensitivity  )
@@ -656,11 +666,9 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 
   /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
-
-  /* update time  */
-  data->currenttime = t;
+      if (data->model->assignmentsBeforeODEs[i])
+            data->value[data->model->neq+i] =
+                evaluateAST(data->model->assignment[i],data);
 
   /** evaluate ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<data->model->neq; i++ ) 
@@ -690,6 +698,9 @@ JacODE(long int N, DenseMat J, realtype t,
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   
+  /** update time */
+  data->currenttime = t;
+
   /** update parameters: p is modified by CVODES,
       if fS could not be generated  */
   if ( data->p != NULL && data->opt->Sensitivity )
@@ -700,13 +711,12 @@ JacODE(long int N, DenseMat J, realtype t,
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
 
-  /** update assignment rules */
+  /** update assignment rules - redundant - commented out by AMF - 13th March 2006 */
+  /*
   for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
-
-  /** update time */
-  data->currenttime = t;
+  */
 
   /** evaluate Jacobian J = df/dx */
   for ( i=0; i<data->model->neq; i++ ) 

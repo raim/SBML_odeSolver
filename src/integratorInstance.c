@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-02 16:02:03 raim>
-  $Id: integratorInstance.c,v 1.57 2006/03/09 17:23:49 afinney Exp $
+  $Id: integratorInstance.c,v 1.58 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -184,6 +184,8 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   engine->isValid = 0;
   /* set state variable vector y to NULL */
   solver->y = NULL;
+  solver->cvode_mem = NULL; /* AMF - added 16th March 06 - to avoid crunch in when freeing 
+                                half made integrator instance */
 
   return 1;
   
@@ -590,6 +592,10 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
   return IntegratorInstance_updateData(engine);  
 }
 
+/**
+   execute assignment rules and events to establish the correct state of observables
+   returns the number of events that have fired.
+*/
 SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 {
     int i, j, fired;
@@ -603,7 +609,8 @@ SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integrator
     odeModel_t *om = engine->om;
 
     for ( i=0; i<om->nass; i++ )
-        data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
+        if (om->assignmentsBeforeEvents[i])
+            data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
     fired = 0;
 
@@ -628,18 +635,10 @@ SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integrator
         }
     }
 
-    /* check for event triggers and evaluate the triggered
-    events' assignments;
-    stop integration if requested by cvodeSettings */
-    if ( fired )
-    {
-        /* recalculate assignments - they may be dependent
-        on event assignment results */
-        for ( i=0; i<om->nass; i++ )
-            data->value[om->neq+i] =
-            evaluateAST(om->assignment[i], data);
-
-    }
+    /** assignments */
+    for ( i=0; i<om->nass; i++ )
+        if (om->assignmentsAfterEvents[i])
+            data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
     return fired;
 }
@@ -671,6 +670,9 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   }
   else
       fired = IntegratorInstance_processEventsAndAssignments(engine);
+
+  if (fired && opt->ResetCvodeOnEvent)
+      engine->isValid = 0;
 
   if (fired && opt->HaltOnEvent)
   {

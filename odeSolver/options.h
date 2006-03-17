@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-03 11:24:14 raim>
-  $Id: options.h,v 1.3 2006/03/09 17:23:49 afinney Exp $
+  $Id: options.h,v 1.4 2006/03/17 17:43:27 afinney Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -46,6 +46,7 @@ typedef struct _Options {
   int Xmgrace;          /* Print results to XMGrace instead of stdout */
   int Compile;          /* Compile the rhs ode function, jacobian function and events function */
   int Benchmark;        /* print execution time statistics */
+  int ResetCvodeOnEvents; /* free and restart cvode on an event */
 } Options;
 
 Options Opt;

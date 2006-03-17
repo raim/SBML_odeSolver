@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-17 19:51:13 raim>
-  $Id: commandLine.c,v 1.18 2006/03/09 17:23:49 afinney Exp $
+  $Id: commandLine.c,v 1.19 2006/03/17 17:43:27 afinney Exp $
 */
 /* 
  *
@@ -229,6 +229,10 @@ odeSolver (int argc, char *argv[])
       SolverError_dump(); /* write out all everything including warnings */
       SolverError_haltOnErrors(); 
       printODEs(om, outfile);
+      if (Opt.Jacobian)
+          ODEModel_constructJacobian(om);
+      SolverError_dump(); /* write out all everything including warnings */
+      SolverError_haltOnErrors(); 
       printJacobian(om, outfile);
 
       ODEModel_free(om);
@@ -285,6 +289,7 @@ odeSolver (int argc, char *argv[])
    
     SolverError_dump();
     SolverError_haltOnErrors();
+    SolverError_clear();
 
 
     /** Set integration parameters:
@@ -304,6 +309,7 @@ odeSolver (int argc, char *argv[])
 				   Opt.Jacobian, 0, Opt.HaltOnEvent,
 				   Opt.SteadyState, 1, Opt.Sensitivity, 2);
     CvodeSettings_setCompileFunctions(set, Opt.Compile);
+    CvodeSettings_setResetCvodeOnEvent(set, Opt.ResetCvodeOnEvents);
 
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);
@@ -488,12 +494,16 @@ int integrator(integratorInstance_t *engine,
       fprintf(outfile, "##CONCENTRATIONS\n");
       fprintf(outfile, "#t ");      
       for ( i=0; i<data->nvalues; i++ )
-	fprintf(outfile, "%s ", om->names[i]);
+          if (om->observablesArray[i])
+	          fprintf(outfile, "%s ", om->names[i]);
+
       fprintf(outfile, "\n");
 
       fprintf(outfile, "%g ", solver->t0);
       for ( i=0; i<data->nvalues; i++ )
-	fprintf(outfile, "%g ", data->value[i]);
+          if (om->observablesArray[i])
+	          fprintf(outfile, "%g ", data->value[i]);
+
       fprintf(outfile, "\n");
     }
   }
@@ -538,7 +548,8 @@ int integrator(integratorInstance_t *engine,
 	
 	fprintf(outfile, "%g ", solver->t);
 	for ( i=0; i<engine->data->nvalues; i++ )
-	  fprintf(outfile, "%g ", engine->data->value[i]);
+          if (om->observablesArray[i])
+	            fprintf(outfile, "%g ", engine->data->value[i]);
 	fprintf(outfile, "\n");
 	
       }
@@ -569,7 +580,9 @@ int integrator(integratorInstance_t *engine,
     else {
 
       for ( i=0; i<data->nvalues; i++ )
-	fprintf(outfile, "%s ", om->names[i]);
+          if (om->observablesArray[i])
+              fprintf(outfile, "%s ", om->names[i]);
+
       fprintf(outfile, "\n");
       fprintf(outfile, "##CONCENTRATIONS\n");
     }
@@ -580,8 +593,5 @@ int integrator(integratorInstance_t *engine,
   return 0;
 
 } 
-
-
-  
 
 /* End of file */

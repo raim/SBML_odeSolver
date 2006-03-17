@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-24 14:05:42 raim>
-  $Id: integratorSettings.c,v 1.24 2006/03/09 17:23:49 afinney Exp $
+  $Id: integratorSettings.c,v 1.25 2006/03/17 17:43:29 afinney Exp $
 */
 /* 
  *
@@ -180,6 +180,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   set->IterMethod = 0;
   set->MaxOrder = 5;
   set->compileFunctions = 0;
+  set->ResetCvodeOnEvent = 0;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
 			    HaltOnEvent, SteadyState, StoreResults,
 			    Sensitivity, SensMethod);
@@ -220,6 +221,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
   CvodeSettings_setIterMethod(clone, set->IterMethod);
 
   clone->compileFunctions = set->compileFunctions;
+  clone->ResetCvodeOnEvent = set->ResetCvodeOnEvent;
   
   /* Unless indefinite integration is chosen, generate a TimePoints array  */
   if  ( !clone->Indefinitely ) {    
@@ -386,6 +388,13 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
 SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, int compileFunctions)
 {
   set->compileFunctions = compileFunctions;  
+}
+
+/** Sets whether the integrator will be freed and restarted when a event triggers
+*/
+SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set, int ResetCvodeOnEvent)
+{
+  set->ResetCvodeOnEvent = ResetCvodeOnEvent;  
 }
 
 /** Sets integration switches in cvodeSettings. WARNING: this
@@ -698,6 +707,13 @@ SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *set)
 SBML_ODESOLVER_API int CvodeSettings_getCompileFunctions(cvodeSettings_t *set)
 {
   return set->compileFunctions;
+}
+
+/** returns whether the CVODE integrator will be freed and restarted eveytime a event occurs
+*/
+SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *set)
+{
+  return set->ResetCvodeOnEvent;
 }
 
 /** Get non-linear solver method (BDF or ADAMS-MOULTON)

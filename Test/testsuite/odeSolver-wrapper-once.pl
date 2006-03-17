@@ -13,9 +13,9 @@ my $test = "";
 open(LOGFILE, ">>testlog.txt");
 print LOGFILE "\nTEST $test\n";
 
-print(LOGFILE "SBML_odeSolverApp $ARGV[1] -c --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10\n");
+print(LOGFILE "SBML_odeSolverApp $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10\n");
 open(TESTRUN,
-     "SBML_odeSolverApp $ARGV[1] -c --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10 2>> testlog.txt |");
+     "SBML_odeSolverApp $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10 2>> testlog.txt |");
 while(<TESTRUN>) {
 
     @values = split(/ /, $_);

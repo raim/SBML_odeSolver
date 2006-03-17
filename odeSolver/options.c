@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-03 11:45:27 raim>
-  $Id: options.c,v 1.3 2006/03/09 17:23:49 afinney Exp $
+  $Id: options.c,v 1.4 2006/03/17 17:43:27 afinney Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +16,8 @@
 
 static struct option const long_options[] =
 { {"all",           no_argument,       0, 'a'},
+  {"benchmark",     no_argument,       0, 'b'},
+  {"compile",       no_argument,       0, 'c'},
   {"determinant",   no_argument,       0, 'd'},
   {"printmodel",    no_argument,       0, 'e'},
   {"onthefly",      no_argument,       0, 'f'},
@@ -35,8 +37,7 @@ static struct option const long_options[] =
   {"write",         no_argument,       0, 'w'},
   {"xmgrace",       no_argument,       0, 'x'},
   {"jacobianTime",  no_argument,       0, 'y'},
-  {"compile",       no_argument,       0, 'c'},
-  {"benchmark",     no_argument,       0, 'b'},
+  {"resetOnEvent",  no_argument,       0, 'z'},
   {"error",         required_argument, 0,   0},
   {"rerror",        required_argument, 0,   0},
   {"mxstep",        required_argument, 0,   0},
@@ -105,6 +106,7 @@ initializeOptions (void)
   Opt.Write           = 0;
   Opt.Compile         = 0;
   Opt.Benchmark       = 0;
+  Opt.ResetCvodeOnEvents = 0;
 }
 
 /**/
@@ -121,7 +123,7 @@ processOptions (int argc, char *argv[])
   }
   
   /* process command line options */
-  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxy",
+  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxyz",
                            long_options, &option_index)) != EOF) {
     switch (c) {
     case 0:
@@ -242,6 +244,12 @@ processOptions (int argc, char *argv[])
     case 'a':
       Opt.PrintAll = 1;
       break;
+    case 'b':
+      Opt.Benchmark = 1;
+      break;
+    case 'c':
+      Opt.Compile = 1;
+      break;
     case 'h':
       usage (EXIT_SUCCESS);
       break;
@@ -300,11 +308,8 @@ processOptions (int argc, char *argv[])
     case 'w':
       Opt.Write = 1;
       break;
-    case 'c':
-      Opt.Compile = 1;
-      break;
-    case 'b':
-      Opt.Benchmark = 1;
+    case 'z':
+      Opt.ResetCvodeOnEvents = 1;
       break;
     default:
       usage (EXIT_FAILURE);
@@ -353,7 +358,7 @@ usage (int status)
 	  Opt.Schema11, Opt.Schema12, Opt.Schema21,  Opt.SchemaPath);
   fprintf(stderr,
     "(1) PRINT REACTIONS AND DERIVED ODEs\n"
-    " -e, --equations       Print Reactions and derived ODE system\n"
+    " -e, --printmodel       Print Reactions and derived ODE system\n"
     " -o, --printsbml       Construct ODEs and print as SBML model\n"
     " -g, --modelgraph      Draw bipartite graph of reaction network\n"
     "                       (to .dot text file if compiled w/o graphviz)\n");
@@ -369,7 +374,8 @@ usage (int status)
     " -n, --event           Do not abort on event detection, but keep\n"
     "                       integrating. ACCURACY DEPENDS ON --printstep!!\n"
     " -c, --compile         Compile ODE, Jacobian and Event functions\n"
-    " -b, --benchmark       Print execution duration and intergation duration\n");
+    " -b, --benchmark       Print execution duration and intergation duration\n"
+    " -z, --resetOnEvent    Free and Restart CVODE when any event is triggered\n");
 /*     "     --param <Str>     Choose a parameter to vary during batch\n" */
 /*     "                       integration, from 0 to value in 50 steps\n"); */
   fprintf(stderr,
