@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-24 14:09:12 raim>
-  $Id: cvodeSolver.c,v 1.29 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2006-03-17 15:48:29 raim>
+  $Id: cvodeSolver.c,v 1.30 2006/03/17 14:51:19 raimc Exp $
 */
 /* 
  *
@@ -444,7 +444,14 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
         CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
 
-
+	if ( opt->Sensitivity ) { 	 
+	  flag = IntegratorInstance_createCVODESSolverStructures(engine);
+	  if ( flag == 0 ) { 	 
+	    return 0;/* error */ 	 
+	    /* ERROR HANDLING CODE if SensSolver construction failed */  
+	  } 	 
+	}
+	
         /* If adjoint is desired, CVadjMalloc needs to be done before
         calling CVodeF  */
         if(opt->DoAdjoint){
