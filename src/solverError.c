@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:40:05 raim>
-  $Id: solverError.c,v 1.14 2006/03/09 17:23:49 afinney Exp $ 
+  $Id: solverError.c,v 1.15 2006/03/17 11:35:13 chfl Exp $ 
 */
 /* 
  *
