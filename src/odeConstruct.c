@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 10:28:09 raim>
-  $Id: odeConstruct.c,v 1.27 2006/03/17 17:43:29 afinney Exp $
+  Last changed Time-stamp: <2006-03-19 22:09:02 xtof>
+  $Id: odeConstruct.c,v 1.28 2006/03/19 21:11:24 chfl Exp $
 */
 /* 
  *
@@ -324,7 +324,7 @@ static int Model_createOdes(Model_t *m, Model_t *ode) {
                 else if ((ASTNode_getType(math) == AST_REAL && ASTNode_getReal(math) == 0.0) ||
                             (ASTNode_getType(math) == AST_INTEGER && ASTNode_getInteger(math) == 0.0))
                 {
-                    ASTNode_free(math); // don't create redundant rate rules for species
+		  ASTNode_free(math); /* don't create redundant rate rules for species */
                 }
                 else
                 {
