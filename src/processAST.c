@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 14:13:51 raim>
-  $Id: processAST.c,v 1.39 2006/03/17 17:43:29 afinney Exp $
+  $Id: processAST.c,v 1.40 2006/03/23 18:29:34 afinney Exp $
 */
 /* 
  *
@@ -2197,6 +2197,29 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
     for (i = 0; i != ASTNode_getNumChildren(node); i++)
         ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
 }
+
+/**
+    returns boolean result: whether the given AST contains a time symbol.
+ */
+int ASTNode_containsTime(ASTNode_t *node)
+{
+    int i ;
+
+    if (ASTNode_getType(node) == AST_NAME_TIME ||
+          (ASTNode_getType(node) == AST_NAME &&
+            (strcmp(ASTNode_getName(node),"time") == 0 ||
+              strcmp(ASTNode_getName(node),"Time") == 0 ||
+              strcmp(ASTNode_getName(node),"TIME") == 0)))
+        return 1;
+
+    for (i = 0; i != ASTNode_getNumChildren(node); i++)
+        if (ASTNode_containsTime(ASTNode_getChild(node, i)))
+            return 1;
+
+    return 0;
+}
+
+
 
 /**
     appends the given AST in compilable form to the given buffer.  The form is enclosed in brackets

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 16:23:47 raim>
-  $Id: odeModel.c,v 1.42 2006/03/17 17:43:29 afinney Exp $ 
+  $Id: odeModel.c,v 1.43 2006/03/23 18:29:34 afinney Exp $ 
 */
 /* 
  *
@@ -197,13 +197,14 @@ struct assignmentStage
     int *assignmentsBeforeChange ; /**< assignments made before operation,
                                    this is a boolean array corresponding to the odeMode_t
                                    assignment field */
+    int timeChanged ; /**< the operation has changed the value of time symbol */
 }  ;
 
 /** creates an assignment stage structure given a set of symbols changed by an operation and
     and a set of assignments made before the operation. 'assignmentsBeforeChange' is a boolean
     array corresponding to the odeMode_t assignment field
 */
-assignmentStage_t *AssignmentStage_create(List_t *changedSymbols, int *assignmentsBeforeChange)
+assignmentStage_t *AssignmentStage_create(List_t *changedSymbols, int *assignmentsBeforeChange, int timeChanged)
 {
     assignmentStage_t *result ;
 
@@ -211,6 +212,7 @@ assignmentStage_t *AssignmentStage_create(List_t *changedSymbols, int *assignmen
 
     result->changedSymbols = changedSymbols ;
     result->assignmentsBeforeChange = assignmentsBeforeChange;
+    result->timeChanged = timeChanged;
 
     return result;
 }
@@ -228,11 +230,14 @@ void List_append(List_t *target, List_t *source)
 /**
     returns boolean result: whether the given AST is dependant on a given set of variables.
 */
-int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om, ASTNode_t *rule, List_t *changedSet)
+int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om, ASTNode_t *rule, List_t *changedSet, int timeChanged)
 {
     int i, j;
     List_t *symbols = List_create();
     
+    if (timeChanged && ASTNode_containsTime(rule))
+        return 1;
+
     ASTNode_getSymbols(rule, symbols);
 
     for (j = 0; j != List_size(symbols); j++)
@@ -251,7 +256,7 @@ int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om, ASTNode_t *rule, Li
         for (i = 0; i != om->nass; i++)
         {
             if (!strcmp(symbol, om->names[om->neq + i]) &&
-                    ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSet))
+                    ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSet, timeChanged))
             {
                 List_free(symbols);
                 return 1;
@@ -269,7 +274,7 @@ int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om, ASTNode_t *rule, Li
     'requiredRules' and 'computedRules' are boolean arrays corresponding to the odeMode_t assignment field
 */
 void ODEModel_computeAssignmentRuleSetForSymbol(
-    odeModel_t *om, char *targetSymbol, List_t *changedSymbols, int *requiredRules, int *computedRules)
+    odeModel_t *om, char *targetSymbol, List_t *changedSymbols, int *requiredRules, int *computedRules, int timeChanged)
 {
     int i;
      
@@ -280,7 +285,7 @@ void ODEModel_computeAssignmentRuleSetForSymbol(
     for (i = 0; i != om->nass; i++)
     {
         if (!computedRules[i] && !requiredRules[i] && !strcmp(targetSymbol, om->names[om->neq + i]) &&
-                ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSymbols))
+                ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i], changedSymbols, timeChanged))
         {
             int j;
             List_t *symbols = List_create();
@@ -290,7 +295,7 @@ void ODEModel_computeAssignmentRuleSetForSymbol(
 
             for (j = 0; j != List_size(symbols); j++)
                 ODEModel_computeAssignmentRuleSetForSymbol(
-                    om, (char *)List_get(symbols, j), changedSymbols, requiredRules, computedRules);
+                    om, (char *)List_get(symbols, j), changedSymbols, requiredRules, computedRules, timeChanged);
 
             List_free(symbols);
         }
@@ -303,7 +308,7 @@ void ODEModel_computeAssignmentRuleSetForSymbol(
 int *ODEModel_computeAssignmentRuleSet(odeModel_t *om, List_t *targetSymbols, List_t *changes)
 {
     int *requiredRules, *computedRules ;
-    int i ;
+    int i, timeChanged = 0 ;
     List_t *changeSet = List_create();
 
     ASSIGN_NEW_MEMORY_BLOCK(requiredRules, om->nass, int, NULL);
@@ -321,6 +326,7 @@ int *ODEModel_computeAssignmentRuleSet(odeModel_t *om, List_t *targetSymbols, Li
         assignmentStage_t *stage = List_get(changes, i);
 
         List_append(changeSet, stage->changedSymbols);   
+        timeChanged = timeChanged || stage->timeChanged ;
 
         if (stage->assignmentsBeforeChange)
         {
@@ -330,7 +336,7 @@ int *ODEModel_computeAssignmentRuleSet(odeModel_t *om, List_t *targetSymbols, Li
             {
                 if (!computedRules[j] &&
                         stage->assignmentsBeforeChange[j] &&
-                        !ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[j], changeSet))
+                        !ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[j], changeSet, timeChanged))
                     computedRules[j] = 1;
             }
         }
@@ -339,7 +345,7 @@ int *ODEModel_computeAssignmentRuleSet(odeModel_t *om, List_t *targetSymbols, Li
     /* determine the set of rules that have to be computed given the changes */
     for (i = 0; i != List_size(targetSymbols); i++)
         ODEModel_computeAssignmentRuleSetForSymbol(
-            om, List_get(targetSymbols, i), changeSet, requiredRules, computedRules);
+            om, List_get(targetSymbols, i), changeSet, requiredRules, computedRules, timeChanged);
 
     free(computedRules);
     List_free(changeSet);
@@ -388,8 +394,8 @@ void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
 
     /* first assignment stage represents the state before the start of the RHS function and
     // and the start of the event function
-    // in both cases all variables may have changed but no assignments have been made */ 
-    firstAssignmentStage = AssignmentStage_create(allVariables, NULL);
+    // in both cases all variables may have changed (including time) but no assignments have been made */ 
+    firstAssignmentStage = AssignmentStage_create(allVariables, NULL, 1 /* time has changed */);
     List_prepend(changes, firstAssignmentStage);
 
     /* compute set of rules required at the start of ODE RHS that is the set required to
@@ -407,8 +413,9 @@ void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
     // this is computed taking into account the rules already computed at the beginning of the event function
     // only observables that have not already been computed at the beginning of the event function
     // or are dependant on a event assignment are computed at this point.
-    // obervables thats aren't dependant on variables are not computed at all here*/
-    secondAssignmentStage = AssignmentStage_create(variablesAssignedByEvents, om->assignmentsBeforeEvents);
+    // obervables that aren't dependant on variables are not computed at all here*/
+    secondAssignmentStage =
+      AssignmentStage_create(variablesAssignedByEvents, om->assignmentsBeforeEvents, 0 /* time has not changed */);
     List_prepend(changes, secondAssignmentStage);
     om->assignmentsAfterEvents = ODEModel_computeAssignmentRuleSet(om, om->observables, changes);
     
