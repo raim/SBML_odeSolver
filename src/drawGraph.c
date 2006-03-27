@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-23 14:22:30 raim>
-  $Id: drawGraph.c,v 1.21 2006/02/23 15:34:58 raimc Exp $
+  Last changed Time-stamp: <2006-03-27 16:05:38 raim>
+  $Id: drawGraph.c,v 1.22 2006/03/27 14:37:25 raimc Exp $
 */
 /* 
  *
@@ -714,6 +714,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
     r = agnode(g,name);
     a = agnodeattr(g, "shape", "ellipse");    
     agxset(r, a->index, "box");
+
+    if ( Reaction_getFast(re) ) {
+      a = agnodeattr(g, "color", "");
+      agxset(r, a->index, "red");
+      a = agnodeattr(g, "fontcolor", "");
+      agxset(r, a->index, "red");
+    }
     
     sprintf(label, "%s", Reaction_isSetName(re) ?
 	    Reaction_getName(re) : Reaction_getId(re));
