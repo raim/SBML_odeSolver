@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-19 22:09:02 xtof>
-  $Id: odeConstruct.c,v 1.28 2006/03/19 21:11:24 chfl Exp $
+  $Id: odeConstruct.c,v 1.29 2006/04/07 12:27:19 raimc Exp $
 */
 /* 
  *
@@ -91,6 +91,9 @@ Model_reduceToOdes(Model_t *m) {
      create rate rules from reactions */
   Model_copyOdes(m, ode);
 
+  /** C.4.c: Copy Assignment Rules to new model */
+  Model_copyAssignmentRules(m, ode);
+    
   /** !!! supress ODE construction for algebraic rule
          defined variables !!! */
   
@@ -118,9 +121,6 @@ Model_reduceToOdes(Model_t *m) {
   /** C.4.b: Copy AlgebraicRules to new model and create error */
   Model_copyAlgebraicRules(m, ode);
 
-  /** C.4.c: Copy Assignment Rules to new model */
-  Model_copyAssignmentRules(m, ode);
-    
   /** C.5: replace function definitions in all formulas */
   ODE_replaceFunctionDefinitions(ode);
     
