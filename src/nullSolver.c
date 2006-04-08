@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-17 17:47:30 raim>
-  $Id: nullSolver.c,v 1.8 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-04-07 23:14:31 raim>
+  $Id: nullSolver.c,v 1.9 2006/04/08 18:32:21 raimc Exp $
 */
 /* 
  *
@@ -170,43 +170,25 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
      * for KINSol
      */
     solver->y = N_VNew_Serial(neq);
-    if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for vector y failed");
-      return 0; /* error */
-    }
-
+    CVODE_HANDLE_ERROR((void *)solver->y,
+		       "N_VNew_Serial for vector y failed", 0);
+    
     /* scaling factor for y, diagonal elements of a matrix Du,
        such that Du*u vector has all components roughly of the
        same magnitude as y close to a solution */
     solver->abstol = N_VNew_Serial(neq);
-    if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for scaling vector abstol failed");
-      return 0; /* error */
-    }
+    CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0);
     
     /* scaling factor for f(y), diagonal elements of a matrix Df,
        such that Df*f(u) vector has all components of roughly the
        same magnitude as y (?)not too close(?) to a solution  */
-    solver->abstol = N_VNew_Serial(neq);
-    if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for scaling vector abstol failed");
-      return 0; /* error */
-    }
+/*     solver->abstol = N_VNew_Serial(neq); */
+/*     CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0); */
     
     /* constraints for solutions */
     constraints = N_VNew_Serial(neq);
-    if (check_flag((void *)constraints, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for constraints vector dy failed");
-      return 0; /* error */
-    }
+    CVODE_HANDLE_ERROR((void *)constraints,
+		       "N_VNew_Serial for constraints", 0);
     
 
     /*
@@ -231,10 +213,8 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
      *
      */
     solver->cvode_mem = KINCreate();
-    if (check_flag((void *)(solver->cvode_mem), "KINCreate", 0, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "KINCreate failed");
-    }
+    CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "KINCreate", 0);
+
 
     /*
      * Call KINMalloc to initialize the integrator memory:
@@ -243,38 +223,26 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
      * y          the dependent variable vector
      */
     flag = KINMalloc(solver->cvode_mem, func, solver->y);
-    if (check_flag(&flag, "KINMalloc", 1, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "KINMalloc failed");
-      return 0; /* error ??? not required, handled by solverError ???  */
-    }
+    CVODE_HANDLE_ERROR(&flag, "KINMalloc", 1);
 
     /* for debugging */
     KINSetPrintLevel(solver->cvode_mem, 1);
 
     /* set constraints for solutions */
     flag = KINSetConstraints(solver->cvode_mem, constraints);
-    if (check_flag(&flag, "KINSetConstraints", 1, stderr)) {
-      /* ERROR HANDLING CODE if KINSetFdata failes */
-      return 0;
-    }
+    CVODE_HANDLE_ERROR(&flag, "KINSetConstraints", 1);
+
     N_VDestroy_Serial(constraints);
    
     /* 
      * Link the solver with data for right-hand side function
      */ 
     flag = KINSetFdata(solver->cvode_mem, engine->data);
-    if (check_flag(&flag, "KINSetFdata", 1, stderr)) {
-      /* ERROR HANDLING CODE if KINSetFdata failes */
-       return 0;
-   }
+    CVODE_HANDLE_ERROR(&flag, "KINSetFdata", 1);
     
    /* Call KINSpgmr to specify the linear solver KINSPGMR  */
     flag = KINSpgmr(solver->cvode_mem, 100);
-    if (check_flag(&flag, "KINSpgmr", 1, stderr)) {
-      /* ERROR HANDLING CODE if KINSetFdata failes */
-      return 0;
-    }    
+    CVODE_HANDLE_ERROR(&flag, "KINSpgmr", 1);
     
    /*
      * Set the routine used by the KINDense linear solver
@@ -289,10 +257,7 @@ IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
       
     }
     
-    if ( check_flag(&flag, "KINSpgmrSetJacTimesVecFn", 1, stderr) ) {
-      /* ERROR HANDLING CODE if KINDenseSetJacFn failes */
-      return 0;
-    }
+    CVODE_HANDLE_ERROR(&flag, "KINSpgmrSetJacTimesVecFn", 1);
      
     return 1; /* OK */
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-02 16:02:03 raim>
-  $Id: integratorInstance.c,v 1.58 2006/03/17 17:43:29 afinney Exp $
+  Last changed Time-stamp: <2006-04-08 18:00:07 raim>
+  $Id: integratorInstance.c,v 1.59 2006/04/08 18:32:21 raimc Exp $
 */
 /* 
  *
@@ -91,13 +91,31 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 
   data->run = 0;
 
-   data->adjrun = 0;
+  data->adjrun = 0;
 
     
   ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
   ASSIGN_NEW_MEMORY(engine->solver, struct cvodeSolver, 0);
 
   engine->clockStarted = 0;
+
+  /* set state variable vector y to NULL for first run */
+  engine->solver->y = NULL;
+  engine->solver->cvode_mem = NULL;
+  engine->solver->abstol = NULL;
+  /* set sensitivity structure to NULL */
+  engine->solver->yS = NULL;
+  engine->solver->senstol = NULL;
+  engine->solver->q = NULL;
+  /* set IDA structure to NULL */
+  engine->solver->dy = NULL;
+  /* set adjoint sensitivity structures to NULL */
+  engine->solver->cvadj_mem = NULL;
+  engine->solver->yA = NULL;
+  engine->solver->qA = NULL;
+  engine->solver->abstolA = NULL;
+  engine->solver->abstolQA = NULL;
+
 
   if (IntegratorInstance_initializeSolver(engine, data, opt, om))
     return engine;
@@ -108,8 +126,9 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 
 /* initializes the solver */
 static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
-					cvodeData_t *data,
-					cvodeSettings_t *opt, odeModel_t *om)
+					       cvodeData_t *data,
+					       cvodeSettings_t *opt,
+					       odeModel_t *om)
 {
   int i;
   cvodeSolver_t *solver = engine->solver;
@@ -125,67 +144,63 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
   /* initialize the solver's time settings */
   
-
-
-  if(!opt->AdjointPhase){
-
-    /* set initial time, first output time and number of time steps */
-    solver->t0 = opt->TimePoints[0];      /* initial time           */
+  if ( !opt->AdjointPhase )
+    {
+      /* set initial time, first output time and number of time steps */
+      solver->t0 = opt->TimePoints[0];      /* initial time           */
   
-    /* first output time as passed to CVODE */
-    if ( opt->Indefinitely )
-      solver->tout = opt->Time;      
-    else 
-      solver->tout = opt->TimePoints[1];
+      /* first output time as passed to CVODE */
+      if ( opt->Indefinitely )
+	solver->tout = opt->Time;      
+      else 
+	solver->tout = opt->TimePoints[1];
 
-    solver->nout = opt->PrintStep;     /* number of output steps */
-    solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
-				       when starting from odeModel */
-    /* set up loop variables */
-    solver->iout=1;         /* counts integration steps, start with 1 */
+      solver->nout = opt->PrintStep;     /* number of output steps */
+      solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
+					   when starting from odeModel */
+      /* set up loop variables */
+      solver->iout=1;        /* counts integration steps, start with 1 */
 
 
-    /* write initial conditions to results structure */
-    if ( opt->StoreResults ) {
-      results->time[0] = data->currenttime;
-      for ( i=0; i<data->nvalues; i++ )
-	results->value[i][0] = data->value[i];
+      /* write initial conditions to results structure */
+      if ( opt->StoreResults )
+	{
+	  results->time[0] = data->currenttime;
+	  for ( i=0; i<data->nvalues; i++ )
+	    results->value[i][0] = data->value[i];
+	}
+
+      /* count adjoint integration runs with this integratorInstance */
+      data->run++;
+
     }
+  else    
+    { /* Adjoint Phase */
+      solver->t0 = opt->AdjTimePoints[0]; 
+      solver->tout = opt->AdjTimePoints[1]; 
+      solver->nout = opt->AdjPrintStep;     /* number of output steps */
+      solver->t = opt->AdjTimePoints[0];    /* CVODE current time, always 0,
+					       when starting from odeModel */
+      /* set up loop variables */
+      solver->iout=1;  
 
-    /* count adjoint integration runs with this integratorInstance */
-    data->run++;
-  
-  }
-  else{
+      /* write adjoint initial conditions to results structure */
+      /* Need to look into modifying data values? */
+      if ( opt->AdjStoreResults )
+	{
+	  results->time[0] = data->currenttime;
+	  for ( i=0; i<data->nvalues; i++ )
+	    results->value[i][0] = data->value[i];
+	}
 
-     solver->t0 = opt->AdjTimePoints[0]; 
-     solver->tout = opt->AdjTimePoints[1]; 
-     solver->nout = opt->AdjPrintStep;     /* number of output steps */
-     solver->t = opt->AdjTimePoints[0];    /* CVODE current time, always 0,
-				              when starting from odeModel */
-    /* set up loop variables */
-    solver->iout=1;  
+      /* count integration runs with this integratorInstance */
+      data->adjrun++;
 
-    /* write adjoint initial conditions to results structure */
-    /* Need to look into modifying data values? */
-    if ( opt->AdjStoreResults ) {
-      results->time[0] = data->currenttime;
-      for ( i=0; i<data->nvalues; i++ )
-	results->value[i][0] = data->value[i];
     }
-
-    /* count integration runs with this integratorInstance */
-    data->adjrun++;
-    
-  }
 
   /* set flag to 0 to indicate that solver structures need to be
      created before integration */
   engine->isValid = 0;
-  /* set state variable vector y to NULL */
-  solver->y = NULL;
-  solver->cvode_mem = NULL; /* AMF - added 16th March 06 - to avoid crunch in when freeing 
-                                half made integrator instance */
 
   return 1;
   
@@ -205,8 +220,6 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 {
   cvodeData_t *data;
     
-  
-
   data = CvodeData_create(om);
   RETURN_ON_FATALS_WITH(NULL);
 
@@ -383,8 +396,8 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
 
 
 /**  \brief Prints the current adjoint integration data,
-
-    The first value is the current time, followed by adjoint ODE variable values.
+    The first value is the current time, followed by adjoint
+    ODE variable values.
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *engine)
@@ -604,7 +617,6 @@ SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integrator
     EventAssignment_t *ea;
     variableIndex_t *vi;
 
-    cvodeSettings_t *opt = engine->opt;
     cvodeData_t *data = engine->data;
     odeModel_t *om = engine->om;
 

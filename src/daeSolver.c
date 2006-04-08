@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-17 11:52:31 xtof>
-  $Id: daeSolver.c,v 1.8 2006/03/17 11:30:27 chfl Exp $
+  Last changed Time-stamp: <2006-04-07 23:08:54 raim>
+  $Id: daeSolver.c,v 1.9 2006/04/08 18:32:21 raimc Exp $
 */
 /* 
  *
@@ -244,26 +244,14 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
      * Allocate y, abstol vectors
      */
     solver->y = N_VNew_Serial(neq + nalg);
-    if (check_flag((void *)solver->y, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for vector y failed");
-      return 0; /* error */
-    }
+    CVODE_HANDLE_ERROR((void *)solver->y, "N_VNew_Serial for vector y", 0);
+    
     solver->dy = N_VNew_Serial(neq + nalg);
-    if (check_flag((void *)solver->dy, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector y failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for vector dy failed");
-      return 0; /* error */
-    }
+    CVODE_HANDLE_ERROR((void *)solver->dy, "N_VNew_Serial for vector dy", 0);
+		       
     solver->abstol = N_VNew_Serial(neq + nalg);
-    if (check_flag((void *)solver->abstol, "N_VNew_Serial", 0, stderr)) {
-      /* Memory allocation of vector abstol failed */
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "N_VNew_Serial for vector abstol failed");
-      return 0; /* error */
-    }
+    CVODE_HANDLE_ERROR((void *)solver->abstol,
+		       "N_VNew_Serial for vector abstol", 0);
     
     /*
      * Initialize y, abstol vectors
@@ -290,10 +278,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
      *
      */
     solver->cvode_mem = IDACreate();
-    if (check_flag((void *)(solver->cvode_mem), "IDACreate", 0, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "IDACreate failed");
-    }
+    CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "IDACreate", 0);
 
     /*
      * Call IDAMalloc to initialize the integrator memory:
@@ -309,26 +294,20 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
      */
     flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
 		     solver->dy, IDA_SV, solver->reltol, solver->abstol);
-    if (check_flag(&flag, "IDAMalloc", 1, stderr)) {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
-                        "IDAMalloc failed");
-      return 0; /* error ??? not required, handled by solverError ???  */
-    }
+    CVODE_HANDLE_ERROR(&flag, "IDAMalloc", 1);
+
     /* 
      * Link the main integrator with data for right-hand side function
      */ 
     flag = IDASetRdata(solver->cvode_mem, engine->data);
-    if (check_flag(&flag, "SetFdata", 1, stderr)) {
-      /* ERROR HANDLING CODE if IDASetFdata failes */
-    }
+    CVODE_HANDLE_ERROR(&flag, "IDASetRdata", 1);
     
     /*
      * Link the main integrator with the IDADENSE linear solver
      */
     flag = IDADense(solver->cvode_mem, neq);
-    if (check_flag(&flag, "CVDense", 1, stderr)) {
-      /* ERROR HANDLING CODE if CVDense fails */
-    }
+    CVODE_HANDLE_ERROR(&flag, "IDADense", 1);
+
 
     /*
      * Set the routine used by the IDADense linear solver
@@ -344,9 +323,7 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
       flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);
     }
     
-    if ( check_flag(&flag, "IDADenseSetJacFn", 1, stderr) ) {
-      /* ERROR HANDLING CODE if IDADenseSetJacFn failes */
-    }
+    CVODE_HANDLE_ERROR(&flag, "IDADenseSetJacFn", 1);
      
     return 1; /* OK */
 }

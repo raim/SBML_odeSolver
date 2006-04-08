@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-19 22:09:02 xtof>
-  $Id: odeConstruct.c,v 1.29 2006/04/07 12:27:19 raimc Exp $
+  Last changed Time-stamp: <2006-04-08 10:27:57 raim>
+  $Id: odeConstruct.c,v 1.30 2006/04/08 18:32:21 raimc Exp $
 */
 /* 
  *
@@ -462,7 +462,8 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
                 /* replace local parameters by their value,
                 before adding to ODE */
                 if (kl)
-                    AST_replaceNameByParameters(reactant, KineticLaw_getListOfParameters(kl));
+		  AST_replaceNameByParameters(reactant,
+					      KineticLaw_getListOfParameters(kl));
 
                 /* Add reactant expression to ODE  */
                 if ( ode == NULL )
@@ -502,7 +503,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
                     ASTNode_setReal(ASTNode_getChild(reactant,0),
                         SpeciesReference_getStoichiometry(sref));
                 }
-                ASTNode_addChild(reactant, reactionSymbol);
+                ASTNode_addChild(reactant, copyAST(reactionSymbol));
 
                 /* replace local parameters by their value,
                 before adding to ODE */
@@ -523,6 +524,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
                 }	  
             }
         }
+	ASTNode_free(reactionSymbol);
     }
 
     /* Divide ODE by Name of the species' compartment.

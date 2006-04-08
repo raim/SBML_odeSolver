@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:27:25 raim>
-  $Id: sensSolver.h,v 1.6 2006/02/14 15:07:29 jamescclu Exp $
+  Last changed Time-stamp: <2006-04-07 23:30:44 raim>
+  $Id: sensSolver.h,v 1.7 2006/04/08 18:32:24 raimc Exp $
 */
 /* 
  *
@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
   /* CVODES SOLVER */  
-  SBML_ODESOLVER_API void IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
 
   
 

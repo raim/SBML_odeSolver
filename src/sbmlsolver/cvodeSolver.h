@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-04 17:01:29 raim>
-  $Id: cvodeSolver.h,v 1.5 2005/11/04 16:23:44 raimc Exp $
+  Last changed Time-stamp: <2006-04-08 09:16:06 raim>
+  $Id: cvodeSolver.h,v 1.6 2006/04/08 18:32:24 raimc Exp $
 */
 /* 
  *
@@ -42,14 +42,20 @@
 extern "C" {
 #endif
 
+
+#define CVODE_HANDLE_ERROR(_flag, _function, _type) \
+{  if (check_flag(_flag, _function, _type)) { \
+    return(0); }}
+  
   /* CVODE SOLVER */
   SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_printCVODEStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstance_t *, FILE *f);
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
-  int check_flag(void *flagvalue, char *funcname, int opt, FILE *f);
+  void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *);
+  int check_flag(void *flagvalue, char *funcname, int opt);
   void f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
   void JacODE(long int N, DenseMat J, realtype t,
 	      N_Vector y, N_Vector fy, void *jac_data,

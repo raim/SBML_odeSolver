@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 20:33:39 raim>
-  $Id: solverError.h,v 1.15 2006/03/17 11:24:35 chfl Exp $ 
+  Last changed Time-stamp: <2006-04-07 21:39:44 raim>
+  $Id: solverError.h,v 1.16 2006/04/08 18:32:24 raimc Exp $ 
 */
 /* 
  *
@@ -132,15 +132,20 @@ typedef enum errorType
 } errorType_t;
 
 #define RETURN_ON_ERRORS_WITH(x) \
-{if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE)) return (x); }
+{if (SolverError_getNum(ERROR_ERROR_TYPE) || \
+SolverError_getNum(FATAL_ERROR_TYPE)) return (x); }
 
 #define RETURN_ON_FATALS_WITH(x) \
 {if (SolverError_getNum(FATAL_ERROR_TYPE)) return (x); }
 
 #define ASSIGN_NEW_MEMORY_BLOCK(_ref, _num, _type, _return) \
-{ (_ref) = (_type *)SolverError_calloc(_num, sizeof(_type)); RETURN_ON_FATALS_WITH(_return) }
+{ (_ref) = (_type *)SolverError_calloc(_num, sizeof(_type)); \
+RETURN_ON_FATALS_WITH(_return) }
 
-#define ASSIGN_NEW_MEMORY(_ref, _type, _return) ASSIGN_NEW_MEMORY_BLOCK(_ref, 1, _type, _return)
+#define ASSIGN_NEW_MEMORY(_ref, _type, _return) \
+ASSIGN_NEW_MEMORY_BLOCK(_ref, 1, _type, _return)
+
+
 
 /* get number of stored errors  of given type */
 SBML_ODESOLVER_API int SolverError_getNum(errorType_t); 
