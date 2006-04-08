@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-08 18:02:50 raim>
-  $Id: odeModel.c,v 1.44 2006/04/08 18:32:21 raimc Exp $ 
+  Last changed Time-stamp: <2006-04-08 20:48:50 raim>
+  $Id: odeModel.c,v 1.45 2006/04/08 18:50:05 raimc Exp $ 
 */
 /* 
  *
@@ -1143,10 +1143,8 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
     /* assignment rule replacement: reverse to satisfy
        SBML specifications that variables defined by
        an assignment rule can appear in rules declared afterwards */
-    for ( j=om->nass-1; j>=0; j-- ){
-      AST_replaceNameByFormula(ode, om->names[j], om->assignment[j]);
-      /* printf("%d  S: %s\n", j, SBML_formulaToString(ode)); */
-    }
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
     
     for ( j=0; j<om->nsens; j++ ) {
       /* differentiate d(dYi/dt) / dPj */
@@ -1159,8 +1157,6 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
       /* check if the AST contains a failure notice */
       names = ASTNode_getListOfNodes(index,
 				     (ASTNodePredicate) ASTNode_isName);
-
-     /*  printf("%d  S: %s\n", om->nass, SBML_formulaToString(om->jacob_sens[i][j])); */
 
       for ( k=0; k<List_size(names); k++ ) 
 	if ( strcmp(ASTNode_getName(List_get(names,k)),
