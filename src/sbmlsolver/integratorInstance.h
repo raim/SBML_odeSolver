@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-23 17:19:53 raim>
-  $Id: integratorInstance.h,v 1.26 2006/03/09 17:23:50 afinney Exp $ 
+  $Id: integratorInstance.h,v 1.27 2006/04/11 13:10:45 afinney Exp $ 
 */
 /* 
  *
@@ -102,6 +102,9 @@ extern "C" {
 
     /** indicates whether startTime has a valid value */
     int clockStarted;
+
+    /** indicates that events should be processed at the end of this time step */
+    int processEvents;
   };
   
   /* common to all solvers */
@@ -131,11 +134,13 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
   SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
+  SBML_ODESOLVER_API double *IntegratorInstance_getValues(integratorInstance_t *);
   /* these functions contain solver specific switches and need to be adapted
      for any new solver, and so does the local
      integratorInstance_initialiyeSolverStructures */    
   SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *, variableIndex_t *, double);
   SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);

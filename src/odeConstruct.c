@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 10:27:57 raim>
-  $Id: odeConstruct.c,v 1.30 2006/04/08 18:32:21 raimc Exp $
+  $Id: odeConstruct.c,v 1.31 2006/04/11 13:10:45 afinney Exp $
 */
 /* 
  *
@@ -81,7 +81,7 @@ Model_reduceToOdes(Model_t *m) {
 
   int errors;
   Model_t *ode;
-  
+
   errors = 0;
 
   /** C.1: Initialize a new model */  
@@ -524,7 +524,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
                 }	  
             }
         }
-	ASTNode_free(reactionSymbol);
+        ASTNode_free(reactionSymbol);
     }
 
     /* Divide ODE by Name of the species' compartment.

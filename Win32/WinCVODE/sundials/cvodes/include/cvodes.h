@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.4 $
- * $Date: 2006/03/09 17:23:48 $
+ * $Revision: 1.5 $
+ * $Date: 2006/04/11 13:09:34 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban
  *                and Dan Shumaker @ LLNL
@@ -513,7 +513,7 @@ WINCVODE_API int CVodeMalloc(void *cvode_mem, CVRhsFn f,
  * -----------------------------------------------------------------
  */
 
-int CVodeReInit(void *cvode_mem, CVRhsFn f,
+WINCVODE_API int CVodeReInit(void *cvode_mem, CVRhsFn f,
                 realtype t0, N_Vector y0,
                 int itol, realtype reltol, void *abstol);
 
@@ -626,7 +626,7 @@ WINCVODE_API int CVodeQuadMalloc(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
  * -----------------------------------------------------------------
  */
 
-int CVodeQuadReInit(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
+WINCVODE_API int CVodeQuadReInit(void *cvode_mem, CVQuadRhsFn fQ, N_Vector yQ0);
 
 /*
  * -----------------------------------------------------------------
@@ -764,7 +764,7 @@ WINCVODE_API int CVodeSensMalloc(void *cvode_mem, int Ns, int ism, N_Vector *yS0
  * -----------------------------------------------------------------
  */
 
-int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *yS0);
+WINCVODE_API int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *yS0);
 
 /*
  * -----------------------------------------------------------------

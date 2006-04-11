@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.1 $
- * $Date: 2005/10/27 13:45:31 $
+ * $Revision: 1.2 $
+ * $Date: 2006/04/11 13:10:45 $
  * ----------------------------------------------------------------- 
  * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, Radu Serban,
  *                and Aaron Collier @ LLNL
@@ -119,7 +119,7 @@ N_Vector N_VNewEmpty_Serial(long int length)
  * Function to create a new serial vector 
  */
 
-WINCVODE_API N_Vector N_VNew_Serial(long int length)
+N_Vector N_VNew_Serial(long int length)
 {
   N_Vector v;
   realtype *data;
@@ -344,7 +344,7 @@ N_Vector N_VClone_Serial(N_Vector w)
   return(v);
 }
 
-WINCVODE_API void N_VDestroy_Serial(N_Vector v)
+void N_VDestroy_Serial(N_Vector v)
 {
   if (NV_OWN_DATA_S(v) == TRUE)
     free(NV_DATA_S(v));

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:50:29 raim>
-  $Id: odeModel.h,v 1.21 2006/03/17 17:43:30 afinney Exp $ 
+  $Id: odeModel.h,v 1.22 2006/04/11 13:10:45 afinney Exp $ 
 */
 /* 
  *
@@ -56,10 +56,10 @@ extern "C" {
 
   typedef struct variableIndex variableIndex_t;
 
-  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *);
-  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(char *, char **);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char *, char **);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocument_t *, char **);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *, char **);
   SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
@@ -78,8 +78,10 @@ extern "C" {
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *);

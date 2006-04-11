@@ -1,7 +1,7 @@
 /*
  * -----------------------------------------------------------------
- * $Revision: 1.2 $
- * $Date: 2006/03/09 17:23:48 $
+ * $Revision: 1.3 $
+ * $Date: 2006/04/11 13:09:34 $
  * -----------------------------------------------------------------
  * Programmer(s): Radu Serban and Aaron Collier @ LLNL
  * -----------------------------------------------------------------
@@ -259,7 +259,7 @@ extern "C" {
   int CVodeSetMinStepB(void *cvadj_mem, realtype hminB);
   int CVodeSetMaxStepB(void *cvadj_mem, realtype hmaxB);
   
-  int CVodeReInitB(void *cvadj_mem, CVRhsFnB fB,
+  WINCVODE_API int CVodeReInitB(void *cvadj_mem, CVRhsFnB fB,
                    realtype tB0, N_Vector yB0,
                    int itolB, realtype reltolB, void *abstolB);
     

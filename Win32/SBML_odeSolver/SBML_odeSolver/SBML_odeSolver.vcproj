@@ -83,6 +83,7 @@
 copy $(OutDir)\..\WinCvode\sundials\shared\include\*.h $(OutDir)\tcc\include\sbmlsolver
 copy $(OutDir)\..\WinCvode\sundials\nvec_ser\*.h $(OutDir)\tcc\include\sbmlsolver
 copy $(OutDir)\..\WinCvode\sundials\config\*.h $(OutDir)\tcc\include\sbmlsolver
+copy $(OutDir)\..\WinCvode\WinCVODE\*.h $(OutDir)\tcc\include\sbmlsolver
 "
 				Outputs="$(OutDir)\tcc\include\sbmlsolver\*.h"/>
 			<Tool

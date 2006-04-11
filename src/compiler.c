@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-17 11:20:03 xtof>
-  $Id: compiler.c,v 1.3 2006/03/17 17:43:29 afinney Exp $
+  $Id: compiler.c,v 1.4 2006/04/11 13:10:45 afinney Exp $
 */
 /* 
  *
@@ -72,7 +72,12 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     FILE *cFile;
     char command[4*MAX_PATH];
     char *dllFileNameDot ;
-    HMODULE dllHandle ;    
+    HMODULE dllHandle, solverHandle ;
+#ifdef _DEBUG
+    char *solverFileName = "SBML_odeSolverD.dll";
+#else
+    char *solverFileName = "SBML_odeSolver.dll";
+#endif
 
     /*printf("Source code:\n%s\n", sourceCode);*/
 
@@ -83,8 +88,16 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
         return NULL;
     }
 
+    solverHandle = GetModuleHandle(solverFileName);
+
+    if (!solverHandle)
+    {
+        SolverError_storeLastWin32Error("Trying to get handle of solver dll");
+        return NULL;
+    }
+
     /* compute tcc path from the path to this dll */
-    if( !GetModuleFileName( NULL, tccFileName, MAX_PATH ) )
+    if( !GetModuleFileName( solverHandle, tccFileName, MAX_PATH ) )
     {
         SolverError_storeLastWin32Error("Trying find location of the soslib dll");
         return NULL ;

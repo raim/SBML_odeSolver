@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-17 10:59:47 xtof>
-  $Id: compiler.h,v 1.2 2006/03/17 11:24:35 chfl Exp $
+  $Id: compiler.h,v 1.3 2006/04/11 13:10:45 afinney Exp $
 */
 /* 
  *
@@ -35,6 +35,12 @@
 #ifndef _COMPILER_H_
 #define _COMPILER_H_
 
+#include "sbmlsolver/exportdefs.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct compiled_code compiled_code_t ;
 
 /**
@@ -42,20 +48,24 @@ typedef struct compiled_code compiled_code_t ;
  *   On windows this creates a DLL and loads it
  *   On Liunx it will use libtcc and in memory compilation -- this is better!!
  */
-compiled_code_t *Compiler_compile(const char *sourceCode);
+SBML_ODESOLVER_API compiled_code_t *Compiler_compile(const char *sourceCode);
 
 /**
  * get pointer to given function corresponding to the symbol in the compiled code
  *   On windows use WIN32 API to locate function in dll
  *   On Linux use libtcc to locate function
  */
-void *CompiledCode_getFunction(compiled_code_t *, const char *symbol);
+SBML_ODESOLVER_API void *CompiledCode_getFunction(compiled_code_t *, const char *symbol);
 
 /**
  * discard compiled code - don't call this until you have stopped calling the functions returned by getFunction.
  *   On windows use Win32 to unlink dll and delete dll
  *   On Linux use libtcc to discard in memory code
  */
-void CompiledCode_free(compiled_code_t *);
+SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 18:00:07 raim>
-  $Id: integratorInstance.c,v 1.59 2006/04/08 18:32:21 raimc Exp $
+  $Id: integratorInstance.c,v 1.60 2006/04/11 13:10:45 afinney Exp $
 */
 /* 
  *
@@ -97,6 +97,9 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
   ASSIGN_NEW_MEMORY(engine->solver, struct cvodeSolver, 0);
 
+  engine->solver->cvode_mem = NULL;
+  engine->solver->y = NULL;
+  engine->solver->abstol = NULL;
   engine->clockStarted = 0;
 
   /* set state variable vector y to NULL for first run */
@@ -598,7 +601,7 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
   /* just increase the time */
   engine->solver->t = engine->solver->tout;
 
-  if (!engine->om->compiledEventFunction)
+  if (engine->processEvents && engine->opt->compileFunctions && !engine->om->compiledEventFunction)
       ODEModel_compileCVODEFunctions(engine->om);
 
   /* ... and call the default update function */
@@ -676,33 +679,36 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
 
-  if (opt->compileFunctions)
+  if (engine->processEvents)
   {
-      fired = om->compiledEventFunction(data, &(engine->isValid));  
-  }
-  else
-      fired = IntegratorInstance_processEventsAndAssignments(engine);
+    if (opt->compileFunctions)
+    {
+        fired = om->compiledEventFunction(data, &(engine->isValid));  
+    }
+    else
+        fired = IntegratorInstance_processEventsAndAssignments(engine);
 
-  if (fired && opt->ResetCvodeOnEvent)
-      engine->isValid = 0;
+    if (fired && opt->ResetCvodeOnEvent)
+        engine->isValid = 0;
 
-  if (fired && opt->HaltOnEvent)
-  {
-      for (i = 0; i != Model_getNumEvents(om->simple); i++)
-      {
-         if (data->trigger[i])
-         {
-             buffer = SBML_formulaToString((ASTNode_t *) Event_getTrigger(Model_getEvent(om->simple, i)));
-             SolverError_error(
-               ERROR_ERROR_TYPE,
-               SOLVER_ERROR_EVENT_TRIGGER_FIRED,
-               "Event Trigger %d (%s) fired at time %g. "
-               "Aborting simulation.",
-               i, buffer, data->currenttime);
-             free(buffer);
-         }
-      }
-      flag = 0;
+    if (fired && opt->HaltOnEvent)
+    {
+        for (i = 0; i != Model_getNumEvents(om->simple); i++)
+        {
+          if (data->trigger[i])
+          {
+              buffer = SBML_formulaToString((ASTNode_t *) Event_getTrigger(Model_getEvent(om->simple, i)));
+              SolverError_error(
+                ERROR_ERROR_TYPE,
+                SOLVER_ERROR_EVENT_TRIGGER_FIRED,
+                "Event Trigger %d (%s) fired at time %g. "
+                "Aborting simulation.",
+                i, buffer, data->currenttime);
+              free(buffer);
+          }
+        }
+        flag = 0;
+    }
   }
 
   /* store results */
@@ -989,6 +995,7 @@ void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
 {
+    engine->processEvents = 1;
      
     /* switch between solvers, the called functions are
      required to update ODE variables, that is data->values
@@ -1007,6 +1014,25 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
     /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
 }
 
+SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing(integratorInstance_t *engine)
+{
+    engine->processEvents = 0;
+    /* switch between solvers, the called functions are
+     required to update ODE variables, that is data->values
+     with index i:  0 <= i < neq
+     and use the default update IntegratorInstance_updateData(engine)
+     afterwards */
+    
+
+    /* for models without ODEs, we just need to increase the time */
+    if ( engine->om->neq == 0 ) 
+      return IntegratorInstance_simpleOneStep(engine);
+    /* call CVODE Solver */
+    else 
+      return IntegratorInstance_cvodeOneStep(engine);
+    /* upcoming solvers */
+    /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
+}
 
 /**  \brief Prints the current state of the solver
 */
@@ -1131,5 +1157,9 @@ SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstan
         return 0;
 }
 
+double *IntegratorInstance_getValues(integratorInstance_t *engine)
+{
+    return engine->data->value;
+}
 
 /*@}*/

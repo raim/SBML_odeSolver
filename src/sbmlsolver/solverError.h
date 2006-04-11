@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-07 21:39:44 raim>
-  $Id: solverError.h,v 1.16 2006/04/08 18:32:24 raimc Exp $ 
+  $Id: solverError.h,v 1.17 2006/04/11 13:10:45 afinney Exp $ 
 */
 /* 
  *
@@ -75,6 +75,7 @@ typedef enum errorCode
     SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL = 20000,
     SOLVER_ERROR_EVENT_TRIGGER_FIRED = 20001,
     SOLVER_ERROR_CVODE_MALLOC_FAILED = 20002,
+    SOLVER_ERROR_CVODE_REINIT_FAILED = 20003,
 
     /** 2X1XX - AST Processing Failures in processAST.c */
     /** AST evaluation in evaluateAST */

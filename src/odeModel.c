@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-09 00:29:36 raim>
-  $Id: odeModel.c,v 1.46 2006/04/10 07:31:18 raimc Exp $ 
+  $Id: odeModel.c,v 1.47 2006/04/11 13:10:45 afinney Exp $ 
 */
 /* 
  *
@@ -719,7 +719,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
     Conversion of level 1 to level 2 models is done internally.
 */
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *sbmlFileName)
 {
   return ODEModel_createFromFileWithObservables(sbmlFileName, NULL);
 }
@@ -731,7 +731,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(char *sbmlFileName)
     valid at all times.  A reduced set of observables may result in
     more optimal excution.
 */
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(char *sbmlFileName, char **observables)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char *sbmlFileName, char **observables)
 {
   SBMLDocument_t *d;
   odeModel_t *om;
@@ -1303,6 +1303,12 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *
 
 /** @} */
 
+/** returns the number of symbols in the model
+    this number is the size of the values array returned by IntegratorInstance_getValues */
+int ODEModel_getNumberOfValues(odeModel_t *om)
+{
+    return om->neq + om->nconst + om->nass;
+}
 
 /*! \defgroup variableIndex Variables + Parameters
   \ingroup odeModel
@@ -1452,6 +1458,11 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
 SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 {
   free(vi);
+}
+
+int VariableIndex_getIndex(variableIndex_t *vi)
+{
+  return vi->index ;
 }
 
 /** appends a compilable expression for the given AST to the given buffer

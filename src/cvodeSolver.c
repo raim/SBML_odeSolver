@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 17:48:46 raim>
-  $Id: cvodeSolver.c,v 1.32 2006/04/08 18:32:21 raimc Exp $
+  $Id: cvodeSolver.c,v 1.33 2006/04/11 13:10:45 afinney Exp $
 */
 /* 
  *
@@ -321,7 +321,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* CVODESolverStructures from former runs must be freed */
       /* if (  solver->y != NULL ) */
 /* 	IntegratorInstance_freeCVODESolverStructures(engine); */
-
 
       /**
        * Allocate y, abstol vectors
