@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 15:01:37 raim>
-  $Id: integratorInstance.c,v 1.61 2006/04/19 13:13:01 raimc Exp $
+  Last changed Time-stamp: <2006-04-19 16:01:53 raim>
+  $Id: integratorInstance.c,v 1.62 2006/04/19 14:02:48 raimc Exp $
 */
 /* 
  *
@@ -77,6 +77,9 @@ IntegratorInstance_initializeSolver(integratorInstance_t *,
 static integratorInstance_t *
 IntegratorInstance_allocate(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 
+/* handles event executions */
+static int
+IntegratorInstance_processEventsAndAssignments(integratorInstance_t *);
 
 
 /***************** functions common to all solvers ************************/
@@ -601,11 +604,12 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
   return IntegratorInstance_updateData(engine);  
 }
 
-/** Executes assignment rules and event assignments (if fired)
-    to establish the correct state of observables,
-    sets trigger flags and returns the number of events that have fired.
+/* Executes assignment rules and event assignments (if fired)
+   to establish the correct state of observables,
+   sets trigger flags and returns the number of events that have fired.
 */
-SBML_ODESOLVER_API int IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
+static int
+IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 {
   int i, j, fired;
   ASTNode_t *trigger, *assignment;
