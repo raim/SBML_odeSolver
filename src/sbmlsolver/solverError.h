@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-07 21:39:44 raim>
-  $Id: solverError.h,v 1.17 2006/04/11 13:10:45 afinney Exp $ 
+  Last changed Time-stamp: <2006-04-12 14:35:12 raim>
+  $Id: solverError.h,v 1.18 2006/04/19 13:14:18 raimc Exp $ 
 */
 /* 
  *
@@ -59,6 +59,7 @@ typedef enum errorCode
     SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED = 10005,
     SOLVER_ERROR_MODEL_NOT_SIMPLIFIED = 10006,
     SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED = 10007,
+    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND = 10008,
 
     /** 1xx30 - SBML input model failures in sbml.c */
     SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH = 10030,
