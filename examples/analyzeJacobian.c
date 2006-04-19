@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-07 16:55:23 raim>
-  $Id: analyzeJacobian.c,v 1.5 2006/03/07 15:58:35 raimc Exp $
+  Last changed Time-stamp: <2006-04-19 15:06:16 raim>
+  $Id: analyzeJacobian.c,v 1.6 2006/04/19 13:12:12 raimc Exp $
 */
 /* 
  *
@@ -143,9 +143,9 @@ int main(void)
       printf("entry in the jacobian can change its sign, depending ");
       printf("on concentrations!\n");
       /* finally draw a `species interaction graph' of the jacobian' */
-      drawJacoby(data, "jacobian", "jpg");      
+      drawJacoby(data, "jacobian", "gif");      
       printf("Take a look at jacobian interaction graph in");
-      printf("file jacobian_jm.jpg that has just been constructed.\n");
+      printf("file jacobian_jm.gif that has just been constructed.\n");
       printf("If you have compiled w/o graphviz, you just have a textfile");
       printf(" jacobian.dot\n");
       printf("Thx and good bye!\n");
