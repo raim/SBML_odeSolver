@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-23 17:18:52 raim>
-  $Id: odeSolver.c,v 1.40 2006/03/02 16:20:49 raimc Exp $
+  Last changed Time-stamp: <2006-04-12 14:43:05 raim>
+  $Id: odeSolver.c,v 1.41 2006/04/19 10:25:59 raimc Exp $
 */
 /* 
  *
@@ -69,8 +69,8 @@ static int SBMLResults_createSens(SBMLResults_t *, cvodeData_t *);
     settings and returns the SBMLResults structure.
 */
 
-SBML_ODESOLVER_API SBMLResults_t *
-SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
+SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set)
+{
 
   SBMLDocument_t *d2 = NULL;
   Model_t *m = NULL;
@@ -79,24 +79,22 @@ SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
   */
-  if ( SBMLDocument_getLevel(d) != 2 ) {
+  if ( SBMLDocument_getLevel(d) != 2 )
+  {
     d2 = convertModel(d);
     m = SBMLDocument_getModel(d2);    
   }
-  else {
-    m = SBMLDocument_getModel(d);
-  }  
+  else m = SBMLDocument_getModel(d);
+
   RETURN_ON_FATALS_WITH(NULL);
 
   /** Call Model_odeSolver */
   results = Model_odeSolver(m, set);
   
   /** free temporary level 2 version of the document */
-  if ( d2 != NULL ) {
-    SBMLDocument_free(d2);
-  }
+  if ( d2 != NULL ) SBMLDocument_free(d2);
   
-  return results;
+  return(results);
   
 }
 
@@ -108,9 +106,7 @@ SBML_odeSolver(SBMLDocument_t *d, cvodeSettings_t *set) {
     varied parameter (columns) and each of its values (rows).
 */
 
-SBML_ODESOLVER_API SBMLResultsMatrix_t *
-SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
-		    varySettings_t *vs) 
+SBML_ODESOLVER_API SBMLResultsMatrix_t *SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set, varySettings_t *vs) 
 {
 
   SBMLDocument_t *d2 = NULL;
@@ -120,21 +116,19 @@ SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
   /** Convert SBML Document level 1 to level 2, and
       get the contained model
   */
-  if ( SBMLDocument_getLevel(d) != 2 ) {
+  if ( SBMLDocument_getLevel(d) != 2 )
+  {
     d2 = convertModel(d);
     m = SBMLDocument_getModel(d2);    
   }
-  else {
-    m = SBMLDocument_getModel(d);
-  }  
+  else m = SBMLDocument_getModel(d);
+
   RETURN_ON_FATALS_WITH(NULL);
 
   /** Call Model_odeSolverBatch */  
   resM = Model_odeSolverBatch(m, set, vs);
   /** free temporary level 2 version of the document */
-  if ( d2 != NULL ) {
-    SBMLDocument_free(d2);
-  }
+  if ( d2 != NULL ) SBMLDocument_free(d2);
   
   return resM;
     
@@ -147,8 +141,7 @@ SBML_odeSolverBatch(SBMLDocument_t *d, cvodeSettings_t *set,
 
 */
 
-SBML_ODESOLVER_API SBMLResults_t *
-Model_odeSolver(Model_t *m, cvodeSettings_t *set)
+SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *set)
 {
   odeModel_t *om;
   integratorInstance_t *ii; 
@@ -185,10 +178,9 @@ Model_odeSolver(Model_t *m, cvodeSettings_t *set)
       The function will also handle events and
       check for steady states.
   */
-  while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode) {
+  while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
     if (!IntegratorInstance_integrateOneStep(ii))
       errorCode = IntegratorInstance_handleError(ii);
-  }  
   RETURN_ON_FATALS_WITH(NULL);
 
   /** finally, map cvode results back to SBML compartments, species
@@ -213,9 +205,8 @@ Model_odeSolver(Model_t *m, cvodeSettings_t *set)
 
 */
 
-SBML_ODESOLVER_API SBMLResultsMatrix_t *
-Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
-		      varySettings_t *vs) {
+SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set, varySettings_t *vs)
+{
 
 
   int i, j;
@@ -250,11 +241,12 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
   RETURN_ON_FATALS_WITH(NULL);
       
   /** now, work through the passed parameters in varySettings */
-  for ( i=0; i<vs->nrparams; i++ ) {
-
+  for ( i=0; i<vs->nrparams; i++ )
+  {
     /* get the index for parameter i
     ** modified after suggestion by Norihiro Kikuchi ** */ 
-    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) {
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 )
+    {
       ASSIGN_NEW_MEMORY_BLOCK(local_param,
 			      strlen(vs->id[i]) + strlen(vs->rid[i]) + 4,
 			      char , 0);
@@ -262,20 +254,26 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
       vi = ODEModel_getVariableIndex(om, local_param);
       free(local_param);
     }
-    else
-      vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    else vi = ODEModel_getVariableIndex(om, vs->id[i]);
     
     if ( vi == NULL )
-      return NULL;
+    {
+      SolverError_error(FATAL_ERROR_TYPE,
+			SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			"The requested parameter %s %s could not be found"
+			" for parameter scan in batch function",
+			vs->id[i],
+			(vs->rid[i] == NULL) ? "" : vs->rid[i] );
+      return (NULL);
+    }
   
     /* then, work through all values for this parameter */
-    for ( j=0; j<vs->nrdesignpoints; j++ ) {
-
+    for ( j=0; j<vs->nrdesignpoints; j++ )
+    {
       /* Set the value!*/
       IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
 
- 
-      /** .... the integrator loop can be started, that invokes
+       /** .... the integrator loop can be started, that invokes
 	  CVODE to move one time step and store results. These
 	  functions will also handle events and check for steady states. */
       errorCode = 0;
@@ -318,11 +316,8 @@ Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set,
     odeSolverBatch
 */
 
-SBML_ODESOLVER_API SBMLResultsMatrix_t *
-Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
-			 varySettings_t *vs) {
-
-
+SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set, varySettings_t *vs)
+{
   int i, j; /* k, l;*/
   odeModel_t *om;
   integratorInstance_t *ii;
@@ -355,11 +350,12 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
   RETURN_ON_FATALS_WITH(NULL);
       
   /** now, work through the passed parameters in varySettings */
-  for ( i=0; i<vs->nrparams; i++ ) {
-
+  for ( i=0; i<vs->nrparams; i++ )
+  {
     /* get the index for parameter i
     ** modified after suggestion by Norihiro Kikuchi ** */ 
-    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) {
+    if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 )
+    {
       ASSIGN_NEW_MEMORY_BLOCK(local_param,
 			      strlen(vs->id[i]) + strlen(vs->rid[i]) + 4,
 			      char , 0);
@@ -367,18 +363,15 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
       vi = ODEModel_getVariableIndex(om, local_param);
       free(local_param);
     }
-    else
-      vi = ODEModel_getVariableIndex(om, vs->id[i]);
+    else vi = ODEModel_getVariableIndex(om, vs->id[i]);
     
-    if ( vi == NULL )
-      return NULL;
+    if ( vi == NULL )return NULL;
   
     /* then, work through all values for this parameter */
-    for ( j=0; j<vs->nrdesignpoints; j++ ) {
-
+    for ( j=0; j<vs->nrdesignpoints; j++ )
+    {
       /* Set the value!*/
       IntegratorInstance_setVariableValue(ii, vi, vs->params[i][j]);
-
  
       /** .... the integrator loop can be started, that invokes
 	  CVODE to move one time step and store results. These
@@ -387,7 +380,6 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
       while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
 	if (!IntegratorInstance_integrateOneStep(ii))
 	  errorCode = IntegratorInstance_handleError(ii);
-  
       RETURN_ON_FATALS_WITH(NULL);
         
       /** map cvode results back to SBML compartments, species and
@@ -396,6 +388,7 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
       IntegratorInstance_reset(ii);
     }
   }
+
   /** localize parameters again, unfortunately the new globalized
      parameter cannot be freed currently  */
   for ( i=0; i<vs->nrparams; i++ )
@@ -414,8 +407,8 @@ Model_odeSolverBatchFull(Model_t *m, cvodeSettings_t *set,
 
 }
 
-static int globalizeParameter(Model_t *m, char *id, char *rid) {
-
+static int globalizeParameter(Model_t *m, char *id, char *rid)
+{
   int i, found;
   Reaction_t *r;
   KineticLaw_t *kl;
@@ -425,8 +418,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid) {
  
   r = Model_getReactionById (m, (const char *) rid);
   
-  if ( r == NULL )
-    return 0;
+  if ( r == NULL ) return(0);
   
   kl = Reaction_getKineticLaw(r);
   math = (ASTNode_t *)KineticLaw_getMath(kl);
@@ -437,13 +429,15 @@ static int globalizeParameter(Model_t *m, char *id, char *rid) {
 
   found = 0;
   
-  for ( i=0; i<KineticLaw_getNumParameters(kl); i++ ) {
+  for ( i=0; i<KineticLaw_getNumParameters(kl); i++ )
+  {
     p = KineticLaw_getParameter(kl, i);
-    if ( strcmp(Parameter_getId(p), id) == 0 ) {
+    if ( strcmp(Parameter_getId(p), id) == 0 )
+    {
       p_global = Model_createParameter(m);
       Parameter_setConstant(p_global, 1);
       Parameter_setId(p_global, newname);
-      if (Parameter_isSetValue(p)) 
+      if (Parameter_isSetValue(p))
 	Parameter_setValue(p_global, Parameter_getValue(p));
       if(Parameter_isSetUnits(p)) 
 	Parameter_setUnits(p_global, Parameter_getUnits(p));
@@ -453,11 +447,11 @@ static int globalizeParameter(Model_t *m, char *id, char *rid) {
     }
   }
   free(newname);
-  return found;
+  return (found);
 }
 
-static int localizeParameter(Model_t *m, char *id, char *rid) {
-
+static int localizeParameter(Model_t *m, char *id, char *rid)
+{
   int found;
   Reaction_t *r;
   KineticLaw_t *kl;
@@ -468,8 +462,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
   
   r = Model_getReactionById (m, (const char *) rid);
   
-  if ( r == NULL )
-    return 0;
+  if ( r == NULL ) return 0;
   
   kl = Reaction_getKineticLaw(r);
   math = (ASTNode_t *)KineticLaw_getMath(kl);  
@@ -480,7 +473,8 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
   /* just freeing the last parameter, one for each `rid',
      only if the globalized parameter is present */
   found = 0;
-  if ( Model_getParameterById(m, newname) != NULL ) {
+  if ( Model_getParameterById(m, newname) != NULL )
+  {
     found = 1;
     pl = Model_getListOfParameters(m);
     p = (Parameter_t *) ListOf_remove(pl, ListOf_getNumItems(pl) - 1);
@@ -504,8 +498,8 @@ static int localizeParameter(Model_t *m, char *id, char *rid) {
 */
 
 
-SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii) {
-
+SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii)
+{
   int i, j, k, flag;
   Reaction_t *r;
   KineticLaw_t *kl;
@@ -519,10 +513,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
   cvodeResults_t *cv_results = ii->results;
 
   /* check if data is available */
-  if ( data == NULL ) 
-    return NULL;
-  else if ( cv_results == NULL ) 
-    return NULL;
+  if ( data == NULL ) return(NULL);
+  else if ( cv_results == NULL ) return(NULL);
 
   sbml_results = SBMLResults_create(m, cv_results->nout+1);
 
@@ -530,7 +522,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
 
   ASSIGN_NEW_MEMORY_BLOCK(kls, Model_getNumReactions(m), ASTNode_t *, NULL);
 
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     kl = Reaction_getKineticLaw(r);
     kls[i] = copyAST(KineticLaw_getMath(kl));
@@ -540,19 +533,19 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
   
   
   /*  filling results for each calculated timepoint.  */
-  for ( i=0; i<sbml_results->time->timepoints; i++ ) {
-    
+  for ( i=0; i<sbml_results->time->timepoints; i++ )
+  {    
     /* writing time steps */
     sbml_results->time->values[i] = cv_results->time[i];
     
     /* updating time and values in cvodeData_t *for calculations */
     data->currenttime = cv_results->time[i]; 
-    for ( j=0; j<data->nvalues; j++ ) 
-      data->value[j] = cv_results->value[j][i]; 
+    for ( j=0; j<data->nvalues; j++ ) data->value[j] = cv_results->value[j][i];
 
     /* filling time courses for SBML species  */
     tcA = sbml_results->species;  
-    for ( j=0; j<tcA->num_val; j++ ) {
+    for ( j=0; j<tcA->num_val; j++ )
+    {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
@@ -562,7 +555,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
     
     /* filling variable compartment time courses */
     tcA = sbml_results->compartments;  
-    for ( j=0; j<tcA->num_val; j++ ) {
+    for ( j=0; j<tcA->num_val; j++ )
+    {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
@@ -572,7 +566,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
 
     /* filling variable parameter time courses */
     tcA = sbml_results->parameters;  
-    for ( j=0; j<tcA->num_val; j++ ) {
+    for ( j=0; j<tcA->num_val; j++ )
+    {
       tc = tcA->tc[j];
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ ) 
@@ -582,7 +577,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
 
     /* filling reaction flux time courses */
     tcA = sbml_results->fluxes;
-    for ( j=0; j<tcA->num_val; j++ ) {
+    for ( j=0; j<tcA->num_val; j++ )
+    {
       tc = tcA->tc[j];
       tc->values[i] = evaluateAST(kls[j], data);
     }
@@ -590,8 +586,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
   }
 
   /* freeing temporary kinetic law ASTs */
-  for ( i=0; i<Model_getNumReactions(m); i++ ) 
-    ASTNode_free(kls[i]);
+  for ( i=0; i<Model_getNumReactions(m); i++ ) ASTNode_free(kls[i]);
   free(kls);
 
   /* filling sensitivities */
@@ -600,13 +595,11 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
     flag = SBMLResults_createSens(sbml_results, data);
   if ( flag == 0)
     sbml_results->nsens = 0;
- 
-  
+   
   return(sbml_results);
 }
 
-static int SBMLResults_createSens(SBMLResults_t *Sres,
-				  cvodeData_t *data)
+static int SBMLResults_createSens(SBMLResults_t *Sres, cvodeData_t *data)
 {
   int i, j, k;
   odeModel_t *om = data->model;
@@ -616,15 +609,18 @@ static int SBMLResults_createSens(SBMLResults_t *Sres,
   Sres->nsens = res->nsens;
   
   ASSIGN_NEW_MEMORY_BLOCK(Sres->param, res->nsens, char *, 0);  
-  for ( i=0; i<res->nsens; i++ ) {
+  for ( i=0; i<res->nsens; i++ )
+  {
     ASSIGN_NEW_MEMORY_BLOCK(Sres->param[i],
 			    strlen(om->names[om->index_sens[i]]+1), char, 0);
     sprintf(Sres->param[i], om->names[om->index_sens[i]]);
   }
-  for ( i=0; i<res->neq; i++ ) {
+  for ( i=0; i<res->neq; i++ )
+  {
     tc = SBMLResults_getTimeCourse(Sres, om->names[i]);
     ASSIGN_NEW_MEMORY_BLOCK(tc->sensitivity, res->nsens, double *, 0);
-    for ( j=0; j<res->nsens; j++ ) {
+    for ( j=0; j<res->nsens; j++ )
+    {
       ASSIGN_NEW_MEMORY_BLOCK(tc->sensitivity[j], res->nout, double, 0);
       for ( k=0; k<res->nout; k++ )
 	tc->sensitivity[j][k] = res->sensitivity[i][j][k];
@@ -632,7 +628,7 @@ static int SBMLResults_createSens(SBMLResults_t *Sres,
 /* 	     om->names[om->index_sens[j]]); */ 
     }    
   }
-  return 1;
+  return(1);
 }
 
 /** @} */
@@ -653,8 +649,7 @@ static int SBMLResults_createSens(SBMLResults_t *Sres,
     for each parameter.
 */
 
-SBML_ODESOLVER_API 
-varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
+SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
 {
   int i;
   varySettings_t *vs;
@@ -662,14 +657,14 @@ varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
   ASSIGN_NEW_MEMORY_BLOCK(vs->id, nrparams, char *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(vs->rid, nrparams, char *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(vs->params, nrparams, double *, NULL);
-  for ( i=0; i<nrparams; i++ ) {
+  for ( i=0; i<nrparams; i++ ) 
     ASSIGN_NEW_MEMORY_BLOCK(vs->params[i], nrdesignpoints, double, NULL);
-  } 
+
   vs->nrdesignpoints = nrdesignpoints;
   vs->nrparams = nrparams;
   /* set conuter to 0, will be used as counter in addParameters */
   vs->cnt_params = 0;
-  return vs;
+  return(vs);
 }
 
 
@@ -681,21 +676,20 @@ varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints)
 
 */
 
-SBML_ODESOLVER_API 
-int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
-			      double start, double end)
+SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid, double start, double end)
 {
   int j;
   double value;
 
   /* calculating default internal parameter array */
-  for ( j=0; j<vs->nrdesignpoints; j++ ) {
+  for ( j=0; j<vs->nrdesignpoints; j++ )
+  {
     value = start + j*((end-start)/(vs->nrdesignpoints-1));
     VarySettings_setValue(vs, vs->cnt_params, j, value);
   }  
   VarySettings_setName(vs, vs->cnt_params, id, rid);
   /* count and return already filled parametervalues */
-  return vs->cnt_params++;  
+  return(vs->cnt_params++);  
 }
 
 
@@ -706,10 +700,9 @@ int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid,
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API 
-const char *VarySettings_getName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *vs, int i)
 {   
-  return (const char *) vs->id[i];
+  return((const char *) vs->id[i]);
 }
 
 
@@ -722,10 +715,9 @@ const char *VarySettings_getName(varySettings_t *vs, int i)
     Returns NULL, if the parameter is global.
 */
 
-SBML_ODESOLVER_API 
-const char *VarySettings_getReactionName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, int i)
 {   
-  return (const char *) vs->rid[i];
+  return((const char *) vs->rid[i]);
 }
 
 
@@ -738,31 +730,26 @@ const char *VarySettings_getReactionName(varySettings_t *vs, int i)
     be varied. For global parameters rid must be passed as NULL.
 */
 
-SBML_ODESOLVER_API 
-int VarySettings_setName(varySettings_t *vs, int i,
-				  char *id, char *rid)
+SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *vs, int i, char *id, char *rid)
 {
 
   /* free if parameter nr. i has already been set */
-  if ( vs->id[i] != NULL )
-    free(vs->id[i]);
-  if  ( vs->rid[i] != NULL )
-    free(vs->rid[i]);
+  if ( vs->id[i] != NULL ) free(vs->id[i]);
+  if  ( vs->rid[i] != NULL ) free(vs->rid[i]);
   
   /* setting parameter reaction id: local parameters will be
      `globalized' in the input model */
-  if ( rid != NULL  && strlen(rid) > 0 ) {
+  if ( rid != NULL  && strlen(rid) > 0 )
+  {
     ASSIGN_NEW_MEMORY_BLOCK(vs->rid[i], strlen(rid)+1, char, 0);
     sprintf(vs->rid[i], "%s", rid);    
   }
-  else 
-    vs->rid[i] = NULL;
+  else vs->rid[i] = NULL;
 
   ASSIGN_NEW_MEMORY_BLOCK(vs->id[i], strlen(id)+1, char, 0);
   sprintf(vs->id[i], "%s", id);
   
-
-  return 1;
+  return(1);
 }
 
 /** Get the jth value of the ith parameter,
@@ -773,10 +760,9 @@ int VarySettings_setName(varySettings_t *vs, int i,
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API
-double VarySettings_getValue(varySettings_t *vs, int i, int j)
+SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *vs, int i, int j)
 {
-  return vs->params[i][j];
+  return(vs->params[i][j]);
 }
 
 
@@ -788,8 +774,7 @@ double VarySettings_getValue(varySettings_t *vs, int i, int j)
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API
-void VarySettings_setValue(varySettings_t *vs, int i, int j, double value)
+SBML_ODESOLVER_API void VarySettings_setValue(varySettings_t *vs, int i, int j, double value)
 {
   vs->params[i][j] = value;
 }
@@ -804,11 +789,11 @@ SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *vs)
   printf("\n");
   printf("Design Series for %d Parameter(s) and %d values:",
 	 vs->nrparams, vs->nrdesignpoints);fflush(stdout);
-  for ( i=0; i<vs->nrparams; i++ ) {
+  for ( i=0; i<vs->nrparams; i++ )
+  {
     printf("\n%d. %s: ", i, vs->id[i]);
-    for ( j=0; j<vs->nrdesignpoints; j++ ) {
+    for ( j=0; j<vs->nrdesignpoints; j++ )
       printf("%.3f ", vs->params[i][j]);
-    }    
   }
   printf("\n\n");
 }
@@ -821,7 +806,8 @@ SBML_ODESOLVER_API void VarySettings_free(varySettings_t *vs)
 {
   int i;
   
-  for ( i=0; i<vs->nrparams; i++ ) {
+  for ( i=0; i<vs->nrparams; i++ )
+  {
     free(vs->id[i]);
     free(vs->rid[i]);
     free(vs->params[i]);
@@ -835,16 +821,16 @@ SBML_ODESOLVER_API void VarySettings_free(varySettings_t *vs)
 
 
 /* adds arrays of parameters and predefined values not used at the moment */
-int VarySettings_addParameterSet(varySettings_t *vs,
-				 double **designpoints, char **id, char **rid)
+int VarySettings_addParameterSet(varySettings_t *vs, double **designpoints, char **id, char **rid)
 {
   int i, j;
-  for ( i=0; i<vs->nrparams; i++ ) {
+  for ( i=0; i<vs->nrparams; i++ )
+  {
     VarySettings_setName(vs, i, id[i], rid[i]);
     for ( j=0; j<vs->nrdesignpoints; j++ )
       VarySettings_setValue(vs, i, j, designpoints[i][j]);
   }
-  return (i+1);
+  return(i+1);
 }
 
 
