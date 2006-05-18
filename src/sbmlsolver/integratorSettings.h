@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-12-15 20:38:57 raim>
-  $Id: integratorSettings.h,v 1.17 2006/03/17 17:43:30 afinney Exp $ 
+  $Id: integratorSettings.h,v 1.18 2006/05/18 08:36:07 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -79,7 +79,9 @@ typedef struct timeSettings timeSettings_t;
 
   /* Adjoint setttings */
   SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
+  SBML_ODESOLVER_API void CvodeSettings_unsetDoAdj(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *); 
+  SBML_ODESOLVER_API void CvodeSettings_unsetAdjPhase(cvodeSettings_t *); 
   SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *, double Error, double RError);
   SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *, double);

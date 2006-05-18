@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-02-24 14:05:42 raim>
-  $Id: integratorSettings.c,v 1.25 2006/03/17 17:43:29 afinney Exp $
+  $Id: integratorSettings.c,v 1.26 2006/05/18 08:36:07 stefan_tbi Exp $
 */
 /* 
  *
@@ -283,15 +283,23 @@ SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *set)
   set->DoAdjoint = 1;
 }
 
+/* Sets flag that tells solver that the adjoint solution is desired   */
+SBML_ODESOLVER_API void CvodeSettings_unsetDoAdj(cvodeSettings_t *set) 
+{
+  set->DoAdjoint = 0;
+}
+
 /* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
 SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *set) 
 {
   set->AdjointPhase = 1;
 }
 
-
-
-
+/* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
+SBML_ODESOLVER_API void CvodeSettings_unsetAdjPhase(cvodeSettings_t *set) 
+{
+  set->AdjointPhase = 0;
+}
 
 /** Sets absolute and relative error tolerances and maximum number of
     internal steps during CVODE adjoint integration 
