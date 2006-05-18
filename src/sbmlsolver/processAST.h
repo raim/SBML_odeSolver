@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 01:01:58 raim>
-  $Id: processAST.h,v 1.13 2006/03/23 18:29:37 afinney Exp $
+  Last changed Time-stamp: <2006-05-12 11:44:11 xtof>
+  $Id: processAST.h,v 1.14 2006/05/18 08:23:54 stefan_tbi Exp $
 */
 /* 
  *
@@ -66,15 +66,16 @@ extern "C" {
   SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f);
   SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
 
-#ifdef __cplusplus
-}
-#endif
-
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
 void AST_dump(const char *context, ASTNode_t *node);
 void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols);
 int ASTNode_containsTime(ASTNode_t *node);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
 /* End of file */
