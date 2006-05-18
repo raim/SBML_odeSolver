@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-07 16:56:51 raim>
-  $Id: adj_sensitivity.c,v 1.4 2006/03/07 15:58:35 raimc Exp $
+  $Id: adj_sensitivity.c,v 1.5 2006/05/18 08:28:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -149,7 +149,7 @@ main (int argc, char *argv[]){
 
   /* forward quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
-  if (flag==1)
+  if (flag!=1)
     return(EXIT_FAILURE);
 
   fprintf(stderr, "\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
@@ -210,7 +210,7 @@ main (int argc, char *argv[]){
   
   /* adjoint quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
-  if (flag==1) return(EXIT_FAILURE);
+  if (flag!=1) return(EXIT_FAILURE);
   
   fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
   for(i=0;i<om->n_adj_sens;i++)
