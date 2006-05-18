@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 09:16:06 raim>
-  $Id: cvodeSolver.h,v 1.6 2006/04/08 18:32:24 raimc Exp $
+  $Id: cvodeSolver.h,v 1.7 2006/05/18 08:33:17 stefan_tbi Exp $
 */
 /* 
  *
@@ -55,6 +55,7 @@ extern "C" {
   int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *);
+  void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *);
   int check_flag(void *flagvalue, char *funcname, int opt);
   void f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
   void JacODE(long int N, DenseMat J, realtype t,

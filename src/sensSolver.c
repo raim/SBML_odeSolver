@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 17:40:15 raim>
-  $Id: sensSolver.c,v 1.24 2006/04/08 18:32:22 raimc Exp $
+  $Id: sensSolver.c,v 1.25 2006/05/18 08:33:17 stefan_tbi Exp $
 */
 /* 
  *
@@ -345,7 +345,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	      CVODE_HANDLE_ERROR((void *) solver->q,
 				 "N_VNew_Serial for vector q", 0);
 
-	      /* Init solver->qA = 0.0;*/
+	      /* Init solver->q = 0.0;*/
 	      for(i=0; i<om->nconst; i++) NV_Ith_S(solver->q, i) = 0.0;
  
 	      flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
@@ -353,8 +353,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	    }
 	  else
 	    {
+	      /* Init solver->q = 0.0;*/
+	      for(i=0; i<om->nconst; i++) NV_Ith_S(solver->q, i) = 0.0;
+ 
 	      flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
-	      CVODE_HANDLE_ERROR(&flag, "CVodeReInit", 1);
+	      CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	    }
 
 	  flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
@@ -458,19 +461,38 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
       CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
 
-      solver->qA = N_VNew_Serial(om->n_adj_sens);
-      CVODE_HANDLE_ERROR((void *) solver->qA,
-			 "N_VNew_Serial for vector qA failed", 0);
+      if ( solver->qA == NULL )
+	{
+	  solver->qA = N_VNew_Serial(om->n_adj_sens);
+	  CVODE_HANDLE_ERROR((void *) solver->qA,
+			       "N_VNew_Serial for vector qA failed", 0);
 
-      /* Init solver->qA = 0.0;*/
-      for( i=0; i<om->n_adj_sens; i++ )
-	NV_Ith_S(solver->qA, i) = 0.0;
+	  /* Init solver->qA = 0.0;*/
+	  for( i=0; i<om->n_adj_sens; i++ )
+	      NV_Ith_S(solver->qA, i) = 0.0;
   
+	  flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMallocB", 1);
+      
+	}
+      else
+	{
+	  /* Init solver->qA = 0.0;*/
+	  for( i=0; i<om->n_adj_sens; i++ )
+	      NV_Ith_S(solver->qA, i) = 0.0;
+  
+	  flag = CVodeQuadReInitB(solver->cvadj_mem, fQA, solver->qA);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);
+	}
+
       /*  Allocate abstolQA vector */
-      solver->abstolQA = N_VNew_Serial(engine->om->neq);
-      CVODE_HANDLE_ERROR((void *)solver->abstolQA,
+      if ( solver->abstolQA == NULL )
+	{
+	    solver->abstolQA = N_VNew_Serial(engine->om->neq);
+	    CVODE_HANDLE_ERROR((void *)solver->abstolQA,
 			 "N_VNew_Serial for vector quad abstol failed", 0);
-    
+	}
+      
       abstoldata = NV_DATA_S(solver->abstolQA);
       for ( i=0; i<engine->om->neq; i++ )
 	{
@@ -481,9 +503,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
       solver->reltolQA = solver->reltolA;
  
-      flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
-      CVODE_HANDLE_ERROR(&flag, "CVodeQuadMallocB", 1);
-
       flag = CVodeSetQuadFdataB(solver->cvadj_mem, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdataB", 1);
 

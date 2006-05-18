@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-08 17:48:46 raim>
-  $Id: cvodeSolver.c,v 1.33 2006/04/11 13:10:45 afinney Exp $
+  $Id: cvodeSolver.c,v 1.34 2006/05/18 08:33:17 stefan_tbi Exp $
 */
 /* 
  *
@@ -502,13 +502,14 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 {
   
-  /* Free the y, abstol vectors */
+  /* Free the y vector */
   if (engine->solver->y != NULL)
     {
       N_VDestroy_Serial(engine->solver->y);
       engine->solver->y = NULL;
     }
     
+  /* Free the abstol vector */
   if (engine->solver->abstol != NULL)
     {
       N_VDestroy_Serial(engine->solver->abstol);
@@ -522,9 +523,19 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
       engine->solver->cvode_mem = NULL;
     }
 
+  /* Free the adjoint memory */
+  if (engine->solver->cvadj_mem != NULL)
+    {
+      CVadjFree(engine->solver->cvadj_mem);
+      engine->solver->cvadj_mem = NULL;
+    }
+
   /* Free Forward Sensitivity structures */
   IntegratorInstance_freeForwardSensitivity(engine);
 
+  /* Adjoint related  */
+  IntegratorInstance_freeAdjointSensitivity(engine);
+    
   /* Free IDA vector dy */
   if (engine->solver->dy != NULL)
     {
@@ -532,36 +543,6 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
       engine->solver->dy = NULL;
     }
       
-  /* Adjoint related  */
-    
-  /* Free adjoint sensitivity vector yA */
-  if (engine->solver->yA != NULL)
-    {
-      N_VDestroy_Serial(engine->solver->yA);
-      engine->solver->yA = NULL;
-    }
-
-  /* Free adjoint sensitivity quad vector qA */
-  if (engine->solver->qA != NULL)
-    {
-      N_VDestroy_Serial(engine->solver->qA);
-      engine->solver->qA = NULL;
-    }
-
-  /* Free adjoint sensitivity quad vector abstolQA */
-  if (engine->solver->abstolA != NULL)
-    {
-      N_VDestroy_Serial(engine->solver->abstolA);
-      engine->solver->abstolA = NULL;
-    }
-
-  /* Free adjoint sensitivity quad vector abstolQA */
-  if (engine->solver->abstolQA != NULL)
-    {
-      N_VDestroy_Serial(engine->solver->abstolQA);
-      engine->solver->abstolQA = NULL;
-    }
-
 }
 
 
@@ -588,6 +569,40 @@ void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
       N_VDestroy_Serial(engine->solver->q);
       engine->solver->q = NULL;
     }
+  
+}
+
+
+void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *engine)
+{
+  /* Free adjoint sensitivity vector yA */
+  if (engine->solver->yA != NULL)
+    {
+      N_VDestroy_Serial(engine->solver->yA);
+      engine->solver->yA = NULL;
+    }
+
+  /* Free adjoint sensitivity quad vector qA */
+  if (engine->solver->qA != NULL)
+    {
+      N_VDestroy_Serial(engine->solver->qA);
+      engine->solver->qA = NULL;
+    }
+
+  /* Free adjoint sensitivity quad vector abstolA */
+  if (engine->solver->abstolA != NULL)
+    {
+      N_VDestroy_Serial(engine->solver->abstolA);
+      engine->solver->abstolA = NULL;
+    }
+
+  /* Free adjoint sensitivity quad vector abstolQA */
+  if (engine->solver->abstolQA != NULL)
+    {
+      N_VDestroy_Serial(engine->solver->abstolQA);
+      engine->solver->abstolQA = NULL;
+    }
+
 }
 
 
