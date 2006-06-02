@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-27 16:05:38 raim>
-  $Id: drawGraph.c,v 1.22 2006/03/27 14:37:25 raimc Exp $
+  $Id: drawGraph.c,v 1.23 2006/06/02 11:47:52 stefan_tbi Exp $
 */
 /* 
  *
@@ -785,7 +785,9 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       a = agnodeattr(g, "URL", "");
       agxset(s, a->index, label);
       
-      e = agedge(g,s,r);
+      e = agedge(g,s,r);      
+/*       a = agedgeattr(g, "arrowhead", ""); */
+/*       agxset(e, a->index, "lnormal"); */
       a = agedgeattr(g, "label", "");
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
@@ -801,10 +803,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 	  agxset (e, a->index, name);
 	}
       }
+      
       if ( reversible == 1 ) {
+	a = agedgeattr(g, "arrowhead", "");
+	agxset(e, a->index, "diamond");
 	a = agedgeattr(g, "arrowtail", "");
-	agxset(e, a->index, "onormal");
-      }      
+	agxset(e, a->index, "odiamond");
+      }
     }
     
     for ( j=0; j<Reaction_getNumProducts(re); j++ ) {
@@ -830,7 +835,10 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       agxset(s, a->index, label);
             
       e = agedge(g,r,s);
+/*       a = agedgeattr(g, "arrowhead", ""); */
+/*       agxset(e, a->index, "lnormal"); */
       a = agedgeattr(g, "label", "");
+      
       if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
 	math = SpeciesReference_getStoichiometryMath(sref);
 	if ( (strcmp(SBML_formulaToString(math),"1") !=
@@ -844,10 +852,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 	  agxset (e, a->index,name);
 	}
       }
+      
       if ( reversible == 1 ) {
+	a = agedgeattr(g, "arrowhead", "");
+	agxset(e, a->index, "diamond");
 	a = agedgeattr(g, "arrowtail", "");
-	agxset(e, a->index, "onormal");
-      }      
+	agxset(e, a->index, "odiamond");
+      }
     }   
   }
 
