@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 14:22:35 raim>
-  $Id: cvodedata.c,v 1.31 2006/04/19 13:13:01 raimc Exp $
+  Last changed Time-stamp: <2006-06-07 14:59:26 raim>
+  $Id: cvodedata.c,v 1.32 2006/06/07 14:34:38 raimc Exp $
 */
 /* 
  *
@@ -172,11 +172,35 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   for ( i=0; i<data->nvalues; i++ )
   {
     if ( (s = Model_getSpeciesById(ode, om->names[i])) )
-      data->value[i] = Species_getInitialConcentration(s);
+    {
+      if ( Species_isSetInitialConcentration(s) )
+	data->value[i] = Species_getInitialConcentration(s);
+      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			  "No value found for species %s",
+			  om->names[i]);
+    }
     else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
-      data->value[i] = Compartment_getSize(c);
+    {
+      if ( Compartment_isSetSize(c) )
+	data->value[i] = Compartment_getSize(c);
+      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			  "No value found for compartment %s",
+			  om->names[i]);      
+    }
     else if ((p = Model_getParameterById(ode, om->names[i])) )
-      data->value[i] = Parameter_getValue(p);
+    {
+      if ( Parameter_isSetValue(p) )
+	data->value[i] = Parameter_getValue(p);
+      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			  "No value found for parameter %s",
+			  om->names[i]);      	
+    }
   }
   /* initialize assigned parameters */
   for ( i=0; i<om->nass; i++ ) 

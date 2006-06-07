@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-08 10:27:57 raim>
-  $Id: odeConstruct.c,v 1.31 2006/04/11 13:10:45 afinney Exp $
+  Last changed Time-stamp: <2006-06-07 14:26:52 raim>
+  $Id: odeConstruct.c,v 1.32 2006/06/07 14:34:39 raimc Exp $
 */
 /* 
  *
@@ -144,67 +144,91 @@ Model_copyInits(Model_t *old)
   ASTNode_t *math;
 
   new = Model_create();
-  
+
   if ( Model_isSetId(old) )
     Model_setId(new, Model_getId(old));
   if ( Model_isSetName(old) )
     Model_setId(new, Model_getName(old));
 
-  for ( i=0; i<Model_getNumCompartments(old); i++) {
-    c = Model_getCompartment(old, i);
-    c_new = Compartment_createWith(Compartment_getId(c),
-				   Compartment_getSize(c),
-				   Compartment_getUnits(c),
-				   Compartment_getOutside(c));
+  for ( i=0; i<Model_getNumCompartments(old); i++)
+  {
+    c = Model_getCompartment(old, i);    
+    c_new = Compartment_create();
+    /* copy existing attributes  */
     Compartment_setConstant(c_new, Compartment_getConstant(c));
     Compartment_setSpatialDimensions(c_new,
-				     Compartment_getSpatialDimensions(c));
+				     Compartment_getSpatialDimensions(c));    
+    if ( Compartment_isSetId(c) )
+      Compartment_setId(c_new, Compartment_getId(c));
     if ( Compartment_isSetName(c) )
       Compartment_setName(c_new, Compartment_getName(c));
+    if ( Compartment_isSetSize(c) )
+      Compartment_setSize(c_new, Compartment_getSize(c));
+    if ( Compartment_isSetUnits(c) )
+      Compartment_setUnits(c_new, Compartment_getUnits(c));
+    if ( Compartment_isSetOutside(c) )
+      Compartment_setOutside(c_new, Compartment_getOutside(c));
+    
     Model_addCompartment(new, c_new);
   }
   
-  for ( i=0; i<Model_getNumParameters(old); i++) {
+  for ( i=0; i<Model_getNumParameters(old); i++)
+  {
     p = Model_getParameter(old, i);
-    p_new = Parameter_createWith(Parameter_getId(p),
-				 Parameter_getValue(p),
-				 Parameter_getUnits(p));
+    p_new = Parameter_create();
+    /* copy existing attributes  */
     Parameter_setConstant(p_new, Parameter_getConstant(p));
-
+    if ( Parameter_isSetId(p) )
+      Parameter_setId(p_new, Parameter_getId(p));
     if ( Parameter_isSetName(p) )
       Parameter_setName(p_new, Parameter_getName(p));
+    if ( Parameter_isSetValue(p) )
+      Parameter_setValue(p_new, Parameter_getValue(p));
+    if ( Parameter_isSetUnits(p) )
+      Parameter_setUnits(p_new, Parameter_getUnits(p));
+
     Model_addParameter(new, p_new);
   }
   
-  for ( i=0; i<Model_getNumSpecies(old); i++) {
+  for ( i=0; i<Model_getNumSpecies(old); i++)
+  {
     s = Model_getSpecies(old, i);
-    s_new = Species_createWith(Species_getId(s),
-			       Species_getCompartment(s),
-			       0.0,
-			       Species_getSubstanceUnits(s),
-			       Species_getBoundaryCondition(s),
-			       Species_getCharge(s));
+    s_new = Species_create();
+    /* copy existing attributes  */
+    Species_setBoundaryCondition(s_new, Species_getBoundaryCondition(s));
     Species_setConstant(s_new, Species_getConstant(s));
     Species_setHasOnlySubstanceUnits(s_new,
 				     Species_getHasOnlySubstanceUnits(s));
-    Species_setSpatialSizeUnits(s_new,
-				Species_getSpatialSizeUnits(s));
-			
-    if ( Species_isSetInitialConcentration(s) ) {
+    if ( Species_isSetId(s) )
+      Species_setId(s_new, Species_getId(s));
+    if ( Species_isSetName(s) ) 
+      Species_setName(s_new, Species_getName(s));
+    if ( Species_isSetCompartment(s) )
+      Species_setCompartment(s_new, Species_getCompartment(s));
+    if ( Species_isSetSubstanceUnits(s) )
+      Species_setSubstanceUnits(s_new, Species_getSubstanceUnits(s));
+    if ( Species_isSetSpatialSizeUnits(s) )
+      Species_setSpatialSizeUnits(s_new,
+				  Species_getSpatialSizeUnits(s));
+    if ( Species_isSetUnits(s) )
+      Species_setUnits(s_new, Species_getUnits(s));
+    if ( Species_isSetCharge(s) )
+      Species_setCharge(s_new, Species_getCharge(s));    
+
+    /* convert initial amount to concentration */
+    if ( Species_isSetInitialConcentration(s) )
       Species_setInitialConcentration(s_new,
 				      Species_getInitialConcentration(s));
-    }
     else {
       c = Model_getCompartmentById(old, Species_getCompartment(s));
       Species_setInitialConcentration(s_new,
 				      Species_getInitialAmount(s)/
 				      Compartment_getSize(c));
-    }
-    if ( Species_isSetName(s) ) {
-      Species_setName(s_new, Species_getName(s));
-    }
+    }    
+
     Model_addSpecies(new, s_new);
   }
+  
   /* Function Definitions  */
   for ( i=0; i<Model_getNumFunctionDefinitions(old); i++ ) {
     f = Model_getFunctionDefinition(old, i);
