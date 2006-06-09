@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-07 23:14:31 raim>
-  $Id: nullSolver.c,v 1.9 2006/04/08 18:32:21 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 15:57:48 raim>
+  $Id: nullSolver.c,v 1.10 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -33,16 +33,16 @@
  *     Lukas Endler
  */
 /*! \defgroup nullSolver KINSOL Root Finder:  f(x,p,t) = dx/dt = 0
-    \ingroup integrator
-    \brief NOT FUNCTIONAL YET: An interface to SUNDIALS KinSolver
-    to find a local root of a system of non-linear equations.
+  \ingroup integrator
+  \brief NOT FUNCTIONAL YET: An interface to SUNDIALS KinSolver
+  to find a local root of a system of non-linear equations.
 
-    This code is working. It is, however, not functional. The
-    KinSolver interface could be used to locally search for steady
-    states. It would need better input settings. The example file
-    `findRoot' in the examples folder can be used to play with
-    settings and develop this functionality. Contact us, if you want
-    to help!
+  This code is working. It is, however, not functional. The
+  KinSolver interface could be used to locally search for steady
+  states. It would need better input settings. The example file
+  `findRoot' in the examples folder can be used to play with
+  settings and develop this functionality. Contact us, if you want
+  to help!
 */
 /** @{ */
 
@@ -73,51 +73,52 @@ static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
 
 /* The Hot Stuff! */
 /** 
-*/
+ */
 
 SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engine)
 {
-    int i, flag;
-    realtype *ydata = NULL;
+  int i, flag;
+  realtype *ydata = NULL;
     
-    cvodeSolver_t *solver = engine->solver;
-    cvodeData_t *data = engine->data;
-    odeModel_t *om = engine->om;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeData_t *data = engine->data;
+  odeModel_t *om = engine->om;
 
-    /* IntegratorInstance_freeCVODESolverStructures(engine); */
-    printf("HALLO NULLSTELLE\n");
-    if (!IntegratorInstance_createKINSolverStructures(engine))
-      return 0;
-    printf("HALLO KINSOL\n");
+  /* IntegratorInstance_freeCVODESolverStructures(engine); */
+  printf("HALLO NULLSTELLE\n");
+  if (!IntegratorInstance_createKINSolverStructures(engine))
+    return 0;
+  printf("HALLO KINSOL\n");
     
-    /* !!!! calling KINSOL !!!! */
-    flag = KINSol(solver->cvode_mem, solver->y,
-		  KIN_LINESEARCH, 
-		  solver->abstol, solver->abstol);
-    /* !!! should use different scalings, first is D*y second
-       is D*f(y) !!!*/
-    printf("THX KINSOL\n");
+  /* !!!! calling KINSOL !!!! */
+  flag = KINSol(solver->cvode_mem, solver->y, KIN_LINESEARCH, 
+		solver->abstol, solver->abstol);
+  /* !!! should use different scalings, first is D*y second
+     is D*f(y) !!!*/
+  printf("THX KINSOL\n");
 
-    if ( flag != KIN_SUCCESS )
-      {SolverError_error(ERROR_ERROR_TYPE,
-			 SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,	 
-			 "Null Solver not successful with flag %d.", flag);
-	/* return 0 ;  *//* Error */
-      }
+  if ( flag != KIN_SUCCESS )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,	 
+		      "Null Solver not successful with flag %d.", flag);
+    /* return 0 ;  *//* Error */
+  }
     
-    ydata = NV_DATA_S(solver->y);
+  ydata = NV_DATA_S(solver->y);
 
     
-    /* update cvodeData with foun steady state values */    
-    for ( i=0; i<om->neq; i++ ) {
-      data->value[i] = ydata[i];
-      printf("%s = %g,  f(%s): %g\n",
-	     om->names[i], data->value[i], om->names[i],
-	     evaluateAST(data->model->ode[i], data));
-    }
-    /* IntegratorInstance_freeKINSolverStructures(engine); */
-    return 1/* IntegratorInstance_updateData(engine) */; /* correct ?*/
-
+  /* update cvodeData with foun steady state values */    
+  for ( i=0; i<om->neq; i++ )
+  {
+    data->value[i] = ydata[i];
+    printf("%s = %g,  f(%s): %g\n",
+	   om->names[i], data->value[i], om->names[i],
+	   evaluateAST(data->model->ode[i], data));
+  }
+  /* IntegratorInstance_freeKINSolverStructures(engine); */
+  /* update data? */
+  return 1; /* correct ?*/
 }
 
 
@@ -128,138 +129,141 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
    return 1 => success
    return 0 => failure
 */
-int
-IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
+int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
 {
-    int i, flag, neq;
-    realtype *ydata, *scale, *constr;
-    N_Vector constraints;
+  int i, flag, neq;
+  realtype *ydata, *scale, *constr;
+  N_Vector constraints;
     
-    odeModel_t *om = engine->om;
-    cvodeData_t *data = engine->data;
-    cvodeSolver_t *solver = engine->solver;
-    cvodeSettings_t *opt = engine->opt;
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeSettings_t *opt = engine->opt;
 
-    neq = engine->om->neq; /* number of equations */
+  neq = engine->om->neq; /* number of equations */
 
-     /* construct jacobian, if wanted and not yet existing */
-    if ( opt->UseJacobian && om->jacob == NULL ) 
-      /* reset UseJacobian option, depending on success */
-      opt->UseJacobian = ODEModel_constructJacobian(om);
-    else if ( !opt->UseJacobian ) {
-      /* free jacobian from former runs (not necessary, frees also
-         unsuccessful jacobians from former runs ) */
-      if ( om->jacob != NULL) {
-        for ( i=0; i<om->neq; i++ )
-          free(om->jacob[i]);
-        free(om->jacob);
-        om->jacob = NULL;
-      }
-      SolverError_error(WARNING_ERROR_TYPE,
-                        SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-                        "Jacobian matrix construction skipped.");
-      om->jacobian = opt->UseJacobian;
+  /* construct jacobian, if wanted and not yet existing */
+  if ( opt->UseJacobian && om->jacob == NULL ) 
+    /* reset UseJacobian option, depending on success */
+    opt->UseJacobian = ODEModel_constructJacobian(om);
+  else if ( !opt->UseJacobian )
+  {
+    /* free jacobian from former runs (not necessary, frees also
+       unsuccessful jacobians from former runs ) */
+    if ( om->jacob != NULL)
+    {
+      for ( i=0; i<om->neq; i++ )
+	free(om->jacob[i]);
+      free(om->jacob);
+      om->jacob = NULL;
     }
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+		      "Jacobian matrix construction skipped.");
+    om->jacobian = opt->UseJacobian;
+  }
   
-    /* CVODESolverStructures from former runs must be freed */
-    if ( data->run > 1 )
-      IntegratorInstance_freeKINSolverStructures(engine);
+  /* CVODESolverStructures from former runs must be freed */
+  if ( data->run > 1 )
+    IntegratorInstance_freeKINSolverStructures(engine);
     
-    /*
-     * Allocate y, abstol vectors, abstol is used as a scaling vector
-     * for KINSol
-     */
-    solver->y = N_VNew_Serial(neq);
-    CVODE_HANDLE_ERROR((void *)solver->y,
-		       "N_VNew_Serial for vector y failed", 0);
+  /*
+   * Allocate y, abstol vectors, abstol is used as a scaling vector
+   * for KINSol
+   */
+  solver->y = N_VNew_Serial(neq);
+  CVODE_HANDLE_ERROR((void *)solver->y,
+		     "N_VNew_Serial for vector y failed", 0);
     
-    /* scaling factor for y, diagonal elements of a matrix Du,
-       such that Du*u vector has all components roughly of the
-       same magnitude as y close to a solution */
-    solver->abstol = N_VNew_Serial(neq);
-    CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0);
+  /* scaling factor for y, diagonal elements of a matrix Du,
+     such that Du*u vector has all components roughly of the
+     same magnitude as y close to a solution */
+  solver->abstol = N_VNew_Serial(neq);
+  CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0);
     
-    /* scaling factor for f(y), diagonal elements of a matrix Df,
-       such that Df*f(u) vector has all components of roughly the
-       same magnitude as y (?)not too close(?) to a solution  */
-/*     solver->abstol = N_VNew_Serial(neq); */
-/*     CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0); */
+  /* scaling factor for f(y), diagonal elements of a matrix Df,
+     such that Df*f(u) vector has all components of roughly the
+     same magnitude as y (?)not too close(?) to a solution  */
+  /*     solver->abstol = N_VNew_Serial(neq); */
+  /*     CVODE_HANDLE_ERROR((void *)solver->abstol, "N_VNew_Serial for abstol", 0); */
     
-    /* constraints for solutions */
-    constraints = N_VNew_Serial(neq);
-    CVODE_HANDLE_ERROR((void *)constraints,
-		       "N_VNew_Serial for constraints", 0);
+  /* constraints for solutions */
+  constraints = N_VNew_Serial(neq);
+  CVODE_HANDLE_ERROR((void *)constraints,
+		     "N_VNew_Serial for constraints", 0);
     
 
-    /*
-     * Initialize y, scale and constraint vectors
+  /*
+   * Initialize y, scale and constraint vectors
+   */
+  ydata       = NV_DATA_S(solver->y);    
+  scale       = NV_DATA_S(solver->abstol);    
+  constr      = NV_DATA_S(constraints);    
+  for ( i=0; i<neq; i++ )
+  {
+    /* Set initial value vector components of y and scaling factor
      */
-    ydata       = NV_DATA_S(solver->y);    
-    scale       = NV_DATA_S(solver->abstol);    
-    constr      = NV_DATA_S(constraints);    
-    for ( i=0; i<neq; i++ ) {
-      /* Set initial value vector components of y and scaling factor
-       */
-      ydata[i]  = data->value[i];
-      scale[i]  = 0.138; /* !!!good scaling factors required!!! */
-      constr[i] = 0; /* !!!does not fit to kin_guide instructions,
+    ydata[i]  = data->value[i];
+    scale[i]  = 0.138; /* !!!good scaling factors required!!! */
+    constr[i] = 0; /* !!!does not fit to kin_guide instructions,
 		      where 1 is claimed to been y>0, while
-		     2 should mean y >= 0. Two gives however an error
-		     message !!!*/
+		      2 should mean y >= 0. Two gives however an error
+		      message !!!*/
+  }
+  /*
+   * Call KINCreate to create the solver memory:
+   *
+   */
+  solver->cvode_mem = KINCreate();
+  CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "KINCreate", 0);
 
-    }
-    /*
-     * Call KINCreate to create the solver memory:
-     *
-     */
-    solver->cvode_mem = KINCreate();
-    CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "KINCreate", 0);
 
+  /*
+   * Call KINMalloc to initialize the integrator memory:
+   * cvode_mem  pointer to the KINSOL memory block returned by KINCreate
+   * func       user's right hand side function
+   * y          the dependent variable vector
+   */
+  flag = KINMalloc(solver->cvode_mem, func, solver->y);
+  CVODE_HANDLE_ERROR(&flag, "KINMalloc", 1);
 
-    /*
-     * Call KINMalloc to initialize the integrator memory:
-     * cvode_mem  pointer to the KINSOL memory block returned by KINCreate
-     * func       user's right hand side function
-     * y          the dependent variable vector
-     */
-    flag = KINMalloc(solver->cvode_mem, func, solver->y);
-    CVODE_HANDLE_ERROR(&flag, "KINMalloc", 1);
+  /* for debugging */
+  KINSetPrintLevel(solver->cvode_mem, 1);
 
-    /* for debugging */
-    KINSetPrintLevel(solver->cvode_mem, 1);
+  /* set constraints for solutions */
+  flag = KINSetConstraints(solver->cvode_mem, constraints);
+  CVODE_HANDLE_ERROR(&flag, "KINSetConstraints", 1);
 
-    /* set constraints for solutions */
-    flag = KINSetConstraints(solver->cvode_mem, constraints);
-    CVODE_HANDLE_ERROR(&flag, "KINSetConstraints", 1);
-
-    N_VDestroy_Serial(constraints);
+  N_VDestroy_Serial(constraints);
    
-    /* 
-     * Link the solver with data for right-hand side function
-     */ 
-    flag = KINSetFdata(solver->cvode_mem, engine->data);
-    CVODE_HANDLE_ERROR(&flag, "KINSetFdata", 1);
+  /* 
+   * Link the solver with data for right-hand side function
+   */ 
+  flag = KINSetFdata(solver->cvode_mem, engine->data);
+  CVODE_HANDLE_ERROR(&flag, "KINSetFdata", 1);
     
-   /* Call KINSpgmr to specify the linear solver KINSPGMR  */
-    flag = KINSpgmr(solver->cvode_mem, 100);
-    CVODE_HANDLE_ERROR(&flag, "KINSpgmr", 1);
+  /* Call KINSpgmr to specify the linear solver KINSPGMR  */
+  flag = KINSpgmr(solver->cvode_mem, 100);
+  CVODE_HANDLE_ERROR(&flag, "KINSpgmr", 1);
+
+  /*
+   * Set the routine used by the KINDense linear solver
+   * to approximate the Jacobian matrix to ...
+   */
+  if ( opt->UseJacobian == 1 )
+  {
+    /* ... user-supplied routine JacV when working */
+    /* flag = KINSpgmrSetJacTimesVecFn(solver->cvode_mem, JacV, data); */
+  }
+  else
+  {
+    /* ... the internal default difference
+       quotient routine KINDenseDQJac */      
+  }
     
-   /*
-     * Set the routine used by the KINDense linear solver
-     * to approximate the Jacobian matrix to ...
-     */
-    if ( opt->UseJacobian == 1 ) {
-      /* ... user-supplied routine JacV when working */
-      /* flag = KINSpgmrSetJacTimesVecFn(solver->cvode_mem, JacV, data); */
-    }
-    else {
-      /* ... the internal default difference quotient routine KINDenseDQJac */
-      
-    }
-    
-    CVODE_HANDLE_ERROR(&flag, "KINSpgmrSetJacTimesVecFn", 1);
+  CVODE_HANDLE_ERROR(&flag, "KINSpgmrSetJacTimesVecFn", 1);
      
-    return 1; /* OK */
+  return 1; /* OK */
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
@@ -271,7 +275,7 @@ void IntegratorInstance_freeKINSolverStructures(integratorInstance_t *engine)
 }
 
 /** \brief Prints some final statistics of the calls to CVODE routines
-*/
+ */
 
 SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInstance_t *engine, FILE *f)
 {
@@ -301,6 +305,7 @@ static void func(N_Vector y, N_Vector dydt, void *f_data)
   /* update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
+  
   /* update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
@@ -317,9 +322,9 @@ static void func(N_Vector y, N_Vector dydt, void *f_data)
 
 
 /*
-   Jacobian Vector function. Compute J x v
-   This function is (optionally) called by KIN's integration routines
-   every time needed.
+  Jacobian Vector function. Compute J x v
+  This function is (optionally) called by KIN's integration routines
+  every time needed.
 */
 static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
 		booleantype *new_u, void *f_data)
@@ -338,16 +343,18 @@ static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
 
   /* update assignment rules */
   for ( i=0; i<data->model->nass; i++ )
-     data->value[data->model->neq+i] =
-       evaluateAST(data->model->assignment[i], data);
+    data->value[data->model->neq+i] =
+      evaluateAST(data->model->assignment[i], data);
 
   /* evaluate Jacobian */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ )
+  {
     JvData[i] = 0.0;
     for ( j=0; j<data->model->neq; j++ )
-       JvData[j] += evaluateAST(data->model->jacob[i][j], data) * vdata[j];
+      JvData[j] += evaluateAST(data->model->jacob[i][j], data) * vdata[j];
     /*!!! not sure whether this is correct, needs checking !!!*/
   }
+
   *new_u = TRUE;      
   return 0;
 }

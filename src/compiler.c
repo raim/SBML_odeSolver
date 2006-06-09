@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-17 11:20:03 xtof>
-  $Id: compiler.c,v 1.4 2006/04/11 13:10:45 afinney Exp $
+  Last changed Time-stamp: <2006-06-09 13:35:59 raim>
+  $Id: compiler.c,v 1.5 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -43,18 +43,18 @@
 #include <stdio.h>
 
 /**
-    A structure that stores compiled code
- */
+   A structure that stores compiled code
+*/
 struct compiled_code
 {
-    HMODULE dllHandle ;
-    char *dllFileName ;
+  HMODULE dllHandle ;
+  char *dllFileName ;
 };
 
 #endif
 
 /**
-    Returns a pointer to code that is compiled from the given source code
+   Returns a pointer to code that is compiled from the given source code
 */
 compiled_code_t *Compiler_compile(const char *sourceCode)
 {
@@ -62,45 +62,46 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
   compiled_code_t *code = NULL;
 #ifdef WIN32
 
-    char tempDir[MAX_PATH+1];
-    TCHAR tccFileName[MAX_PATH]; 
-    int i;
-    int result;
-    char *cFileName;
-    char *dllFileName;
-    char *outFileName;
-    FILE *cFile;
-    char command[4*MAX_PATH];
-    char *dllFileNameDot ;
-    HMODULE dllHandle, solverHandle ;
+  char tempDir[MAX_PATH+1];
+  TCHAR tccFileName[MAX_PATH]; 
+  int i;
+  int result;
+  char *cFileName;
+  char *dllFileName;
+  char *outFileName;
+  FILE *cFile;
+  char command[4*MAX_PATH];
+  char *dllFileNameDot ;
+  HMODULE dllHandle, solverHandle ;
 #ifdef _DEBUG
-    char *solverFileName = "SBML_odeSolverD.dll";
+  char *solverFileName = "SBML_odeSolverD.dll";
 #else
-    char *solverFileName = "SBML_odeSolver.dll";
+  char *solverFileName = "SBML_odeSolver.dll";
 #endif
 
-    /*printf("Source code:\n%s\n", sourceCode);*/
+  /*printf("Source code:\n%s\n", sourceCode);*/
 
-    /* avoid creating files in current directory if environment variables not set */
-    if (!GetTempPath(MAX_PATH+1, tempDir))
-    {
-        SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
-        return NULL;
-    }
+  /* avoid creating files in current directory if environment
+     variables not set */
+  if (!GetTempPath(MAX_PATH+1, tempDir))
+  {
+    SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
+    return NULL;
+  }
 
-    solverHandle = GetModuleHandle(solverFileName);
-
+  solverHandle = GetModuleHandle(solverFileName);
+    
     if (!solverHandle)
     {
-        SolverError_storeLastWin32Error("Trying to get handle of solver dll");
-        return NULL;
+      SolverError_storeLastWin32Error("Trying to get handle of solver dll");
+      return NULL;
     }
 
     /* compute tcc path from the path to this dll */
     if( !GetModuleFileName( solverHandle, tccFileName, MAX_PATH ) )
     {
-        SolverError_storeLastWin32Error("Trying find location of the soslib dll");
-        return NULL ;
+      SolverError_storeLastWin32Error("Trying find location of the soslib dll");
+      return NULL ;
     }
 
     for (i = strlen(tccFileName); i != -1 && tccFileName[i] != '\\'; i--);
@@ -115,14 +116,15 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     if (!cFile)
     {
-        SolverError_storeLastWin32Error("Unable to open C source file for write");
-        return NULL;
+      SolverError_storeLastWin32Error("Unable to open C source file for write");
+      return NULL;
     }
 
     fprintf(cFile, sourceCode);
     fclose(cFile);
 
-    sprintf(command, "%s -o %s -shared %s > %s", tccFileName, dllFileName, cFileName, outFileName);
+    sprintf(command, "%s -o %s -shared %s > %s",
+	    tccFileName, dllFileName, cFileName, outFileName);
 
     /*printf("Command:\n%s\n", command);*/
 
@@ -130,18 +132,19 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     if (result == -1)
     {
-        SolverError_storeLastWin32Error("Whilst running compile command");
-        remove(cFileName);
-        free(cFileName);
-        return NULL ;
+      SolverError_storeLastWin32Error("Whilst running compile command");
+      remove(cFileName);
+      free(cFileName);
+      return NULL ;
     }
     else if (result != 0)
     {
-        SolverError_error(
-            ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED, "Compile command failed - returned %d", result);
-        remove(cFileName);
-        free(cFileName);
-        return NULL ;
+      SolverError_error(
+			ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"Compile command failed - returned %d", result);
+      remove(cFileName);
+      free(cFileName);
+      return NULL ;
     }
 
     remove(cFileName);
@@ -149,7 +152,8 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     remove(outFileName);
     free(outFileName);
 
-    ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) + 2), char, NULL);
+    ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) + 2),
+			    char, NULL);
 
     strcpy(dllFileNameDot, dllFileName);
     strcat(dllFileNameDot, ".");
@@ -159,8 +163,8 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     if (!dllHandle)
     {
-        SolverError_storeLastWin32Error("While loading compiled dll");
-        return NULL;
+      SolverError_storeLastWin32Error("While loading compiled dll");
+      return NULL;
     }
 
     ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
@@ -169,7 +173,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     code->dllFileName = dllFileName;
 
 #endif
-	return (code);
+    return (code);
 }
 
 /**
@@ -191,14 +195,14 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 }
 
 /**
-    frees the given code
+   frees the given code
 */
 void CompiledCode_free(compiled_code_t *code)
 {
 #ifdef WIN32
-    FreeLibrary(code->dllHandle);
-    remove(code->dllFileName);
-    free(code->dllFileName);
-    free(code);
+  FreeLibrary(code->dllHandle);
+  remove(code->dllFileName);
+  free(code->dllFileName);
+  free(code);
 #endif
 }

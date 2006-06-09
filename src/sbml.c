@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-14 14:50:46 raim>
-  $Id: sbml.c,v 1.14 2006/02/17 17:07:28 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 18:11:25 raim>
+  $Id: sbml.c,v 1.15 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -48,81 +48,82 @@
 
 void storeSBMLError(errorType_t type, const ParseMessage_t *pm)
 {
-    SolverError_error(type, ParseMessage_getId(pm),
-		      (char*) ParseMessage_getMessage(pm)); 
+  SolverError_error(type, ParseMessage_getId(pm),
+		    (char*) ParseMessage_getMessage(pm)); 
 }
 
-/** C.0: Loads, validates and parses an SBML file,
-    also converts SBML level 1 to level 2 files,
-    return NULL if errors were encountered during libSBML
-    validation and consistency check, stores libSBML warngings
-*/
+/** Loads, validates and parses an SBML file
+    
+also converts SBML level 1 to level 2 files,
+return NULL if errors were encountered during libSBML
+validation and consistency check, stores libSBML warngings */
 SBMLDocument_t *
 parseModel(char *file, int printMessage, int validate, char *schemaPath,
 	   char *schema11FileName,
 	   char *schema12FileName,
 	   char *schema21FileName)
 {
-    unsigned int i, errors ;
-    SBMLDocument_t *d;
-    SBMLDocument_t *d2;
-    SBMLReader_t *sr;
+  unsigned int i, errors ;
+  SBMLDocument_t *d;
+  SBMLDocument_t *d2;
+  SBMLReader_t *sr;
 
-    if ( validate ) {
-        if (  printMessage ) {
-            fprintf(stderr, "Validating SBML.\n");
-            fprintf(stderr, "This can take a while for SBML level 2.\n");
-        }
-        sr = newSBMLReader(schemaPath,
-			   schema11FileName,
-			   schema12FileName,
-			   schema21FileName);
+  if ( validate )
+  {
+    if (  printMessage )
+    {
+      fprintf(stderr, "Validating SBML.\n");
+      fprintf(stderr, "This can take a while for SBML level 2.\n");
     }
-    else {
-        sr = SBMLReader_create();
-    }
-
-    d = SBMLReader_readSBML(sr, file);
-    SBMLReader_free(sr);
+    sr = newSBMLReader(schemaPath,
+		       schema11FileName,
+		       schema12FileName,
+		       schema21FileName);
+  }
+  else
+    sr = SBMLReader_create();
     
-    errors = 0;
-    if ( validate ) {
-      errors = SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d);
-    }
+
+  d = SBMLReader_readSBML(sr, file);
+  SBMLReader_free(sr);
     
-    if (SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0)
-        SBMLDocument_checkConsistency(d);
-        /* AMF 9th Dec 2005 added back because inconsistent models can cause the
-           solver to crash despite the consistancy check causing memory leaks - talk to Ben B! */
-
-    /* check for warnings and errors */
-    for (i =0 ; i != SBMLDocument_getNumWarnings(d); i++)
-        storeSBMLError(WARNING_ERROR_TYPE, SBMLDocument_getWarning(d, i)); 
-
-    for (i =0 ; i != SBMLDocument_getNumErrors(d); i++)
-        storeSBMLError(ERROR_ERROR_TYPE, SBMLDocument_getError(d, i)); 
-
-    for (i =0 ; i != SBMLDocument_getNumFatals(d); i++)
-        storeSBMLError(FATAL_ERROR_TYPE, SBMLDocument_getFatal(d, i)); 
-
-    RETURN_ON_ERRORS_WITH(NULL);
+  errors = 0;
+  if ( validate ) 
+    errors = SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d);
     
-    /* convert level 1 models to level 2 */
-    if ( SBMLDocument_getLevel(d) == 1 ) {      
-        d2 = convertModel(d);
-        SBMLDocument_free(d);
-        if ( printMessage )
-            fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
-        return (d2);
-    }
-    return (d);
+    
+  if ( SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0 )
+    SBMLDocument_checkConsistency(d);
+  /* AMF 9th Dec 2005 added back because inconsistent models can
+     cause the solver to crash despite the consistancy check
+     causing memory leaks - talk to Ben B! */  
+
+  /* check for warnings and errors */
+  for ( i =0 ; i != SBMLDocument_getNumWarnings(d); i++ )
+    storeSBMLError(WARNING_ERROR_TYPE, SBMLDocument_getWarning(d, i)); 
+
+  for ( i =0 ; i != SBMLDocument_getNumErrors(d); i++ )
+    storeSBMLError(ERROR_ERROR_TYPE, SBMLDocument_getError(d, i)); 
+
+  for ( i =0 ; i != SBMLDocument_getNumFatals(d); i++ )
+    storeSBMLError(FATAL_ERROR_TYPE, SBMLDocument_getFatal(d, i)); 
+
+  RETURN_ON_ERRORS_WITH(NULL);
+    
+  /* convert level 1 models to level 2 */
+  if ( SBMLDocument_getLevel(d) == 1 )
+  {      
+    d2 = convertModel(d);
+    SBMLDocument_free(d);
+    if ( printMessage )
+      fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
+    return (d2);
+  }
+  return (d);
 }
 
-SBMLReader_t *
-newSBMLReader (char *schemaPath,
-	       char *schema11,
-	       char *schema12,
-	       char *schema21)
+SBMLReader_t *newSBMLReader (char *schemaPath,
+			     char *schema11, char *schema12, char *schema21)
 {
   SBMLReader_t *sr;
   char *schema[3];
@@ -134,9 +135,9 @@ newSBMLReader (char *schemaPath,
   sr = SBMLReader_create();
 
   SBMLReader_setSchemaValidationLevel(sr, XML_SCHEMA_VALIDATION_BASIC);
-/*   SBMLReader_setSchemaFilenameL1v1(sr, schema[0]); */
-/*   SBMLReader_setSchemaFilenameL1v2(sr, schema[1]); */
-/*   SBMLReader_setSchemaFilenameL2v1(sr, schema[2]); */
+  /*   SBMLReader_setSchemaFilenameL1v1(sr, schema[0]); */
+  /*   SBMLReader_setSchemaFilenameL1v2(sr, schema[1]); */
+  /*   SBMLReader_setSchemaFilenameL2v1(sr, schema[2]); */
 
   free(schema[0]);
   free(schema[1]);
@@ -145,8 +146,7 @@ newSBMLReader (char *schemaPath,
   return (sr);  
 }
 
-SBMLDocument_t *
-convertModel (SBMLDocument_t *d1)
+SBMLDocument_t *convertModel (SBMLDocument_t *d1)
 {
   char *model;
   SBMLDocument_t *d2;

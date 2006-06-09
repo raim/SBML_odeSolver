@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-07 23:08:54 raim>
-  $Id: daeSolver.c,v 1.9 2006/04/08 18:32:21 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 13:46:21 raim>
+  $Id: daeSolver.c,v 1.10 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -221,7 +221,8 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     else if ( !opt->UseJacobian ) {
       /* free jacobian from former runs (not necessary, frees also
          unsuccessful jacobians from former runs ) */
-      if ( om->jacob != NULL) {
+      if ( om->jacob != NULL)
+      {
         for ( i=0; i<om->neq; i++ )
           free(om->jacob[i]);
         free(om->jacob);
@@ -260,7 +261,8 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
     abstoldata = NV_DATA_S(solver->abstol);
     dydata     = NV_DATA_S(solver->dy);
     
-    for ( i=0; i<neq; i++ ) {
+    for ( i=0; i<neq; i++ )
+    {
       /* Set initial value vector components of y and y' */
       ydata[i] = data->value[i];
       /* Set absolute tolerance vector components,
@@ -313,15 +315,13 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
      * Set the routine used by the IDADense linear solver
      * to approximate the Jacobian matrix to ...
      */
-    if ( opt->UseJacobian == 1 ) {
+    if ( opt->UseJacobian == 1 ) 
       /* ... user-supplied routine JacRes : put JacRes instead of NULL
         when working */
       flag = IDADenseSetJacFn(solver->cvode_mem, NULL, data);
-    }
-    else {
+    else 
       /* ... the internal default difference quotient routine IDADenseDQJac */
-      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);
-    }
+      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);    
     
     CVODE_HANDLE_ERROR(&flag, "IDADenseSetJacFn", 1);
      
@@ -336,7 +336,8 @@ void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *engine)
 }
 
 /* frees only sensitivity structure, not used at the moment  */
-static void IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
+static void
+IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
 {
     /* Free sensitivity vector yS */
     N_VDestroy_Serial(engine->solver->dy);
@@ -373,17 +374,17 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
   resdata  = NV_DATA_S(r);
   
   /* update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
-  }
+
   /* update algebraic constraint defined variables */
 
   
   /* update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) {
+  for ( i=0; i<data->model->nass; i++ ) 
     data->value[data->model->neq+i] =
       evaluateAST(data->model->assignment[i],data);
-  }
+
   /* update time  */
   data->currenttime = t;
 

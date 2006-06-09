@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-12 14:43:05 raim>
-  $Id: odeSolver.c,v 1.41 2006/04/19 10:25:59 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 16:41:40 raim>
+  $Id: odeSolver.c,v 1.42 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -77,8 +77,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *d, cvodeSetting
   SBMLResults_t *results;
   
   /** Convert SBML Document level 1 to level 2, and
-      get the contained model
-  */
+      get the contained model   */
   if ( SBMLDocument_getLevel(d) != 2 )
   {
     d2 = convertModel(d);
@@ -178,10 +177,12 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
       The function will also handle events and
       check for steady states.
   */
-  while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
-    if (!IntegratorInstance_integrateOneStep(ii))
+  while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+    if ( !IntegratorInstance_integrateOneStep(ii) )
       errorCode = IntegratorInstance_handleError(ii);
-  RETURN_ON_FATALS_WITH(NULL);
+  /* !!! on fatals: above created structures should be freed before return
+     !!! */
+  RETURN_ON_FATALS_WITH(NULL); 
 
   /** finally, map cvode results back to SBML compartments, species
       and parameters  */
@@ -207,8 +208,6 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
 
 SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch (Model_t *m, cvodeSettings_t *set, varySettings_t *vs)
 {
-
-
   int i, j;
   odeModel_t *om;
   integratorInstance_t *ii;
@@ -277,10 +276,11 @@ SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch (Model_t *m, cvodeS
 	  CVODE to move one time step and store results. These
 	  functions will also handle events and check for steady states. */
       errorCode = 0;
-      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
-	if (!IntegratorInstance_integrateOneStep(ii))
+      while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+	if ( !IntegratorInstance_integrateOneStep(ii) )
 	  errorCode = IntegratorInstance_handleError(ii);
-  
+      /* !!! on fatals: above created structures should be freed before return
+	 !!! */      
       RETURN_ON_FATALS_WITH(NULL);
         
       /** map cvode results back to SBML compartments, species and
@@ -289,6 +289,7 @@ SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch (Model_t *m, cvodeS
       IntegratorInstance_reset(ii);
     }
   }
+  
   /** localize parameters again, unfortunately the new globalized
      parameter cannot be freed currently  */
   for ( i=0; i<vs->nrparams; i++ )
@@ -377,8 +378,8 @@ SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatchFull(Model_t *m, cvo
 	  CVODE to move one time step and store results. These
 	  functions will also handle events and check for steady states. */
       errorCode = 0;
-      while (!IntegratorInstance_timeCourseCompleted(ii) && !errorCode)
-	if (!IntegratorInstance_integrateOneStep(ii))
+      while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+	if ( !IntegratorInstance_integrateOneStep(ii) )
 	  errorCode = IntegratorInstance_handleError(ii);
       RETURN_ON_FATALS_WITH(NULL);
         
@@ -586,14 +587,15 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
   }
 
   /* freeing temporary kinetic law ASTs */
-  for ( i=0; i<Model_getNumReactions(m); i++ ) ASTNode_free(kls[i]);
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+    ASTNode_free(kls[i]);
   free(kls);
 
   /* filling sensitivities */
   flag = 0;
   if ( cv_results->nsens > 0 )
     flag = SBMLResults_createSens(sbml_results, data);
-  if ( flag == 0)
+  if ( flag == 0 )
     sbml_results->nsens = 0;
    
   return(sbml_results);
@@ -624,9 +626,7 @@ static int SBMLResults_createSens(SBMLResults_t *Sres, cvodeData_t *data)
       ASSIGN_NEW_MEMORY_BLOCK(tc->sensitivity[j], res->nout, double, 0);
       for ( k=0; k<res->nout; k++ )
 	tc->sensitivity[j][k] = res->sensitivity[i][j][k];
-      /* printf("Hallo sens fuer %s / %s \n", om->names[i], */
-/* 	     om->names[om->index_sens[j]]); */ 
-    }    
+    } 
   }
   return(1);
 }

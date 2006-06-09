@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-24 14:05:42 raim>
-  $Id: integratorSettings.c,v 1.26 2006/05/18 08:36:07 stefan_tbi Exp $
+  Last changed Time-stamp: <2006-06-09 15:13:54 raim>
+  $Id: integratorSettings.c,v 1.27 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -53,45 +53,6 @@ static int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *, int);
 
 
 /** Creates a settings structure with default values
-
-DEFAULT INTEGRATION SETTINGS ARE
-
-1) CVODE SPECIFIC SETTINGS:
-
-absolute error tolerance for each output time:   1e-18
-
-relative error tolerance for each output time:   1e-10
-
-max. nr. of steps to reach next output time:     10000
-
-Nonlinear solver method:                         0: BDF
-
-          Maximum Order:                         5
-
-Iteration method:                                0: NEWTON
-
-Sensitivity:                                     0: no
-
-     method:                                     0: simultaneous
-
-2) SOSlib SPECIFIC SETTINGS:
-
-Jacobian matrix: 1: generate Jacobian
-
-Indefinitely:    0: finite integration
-
-Event Handling:  0: keep integrating
-
-Steady States:   0: keep integrating
-
-Store Results:   1: store results (only for finite integration)
-
-3) TIME SETTINGS:
-
-endtime: 1
-
-steps:   10
-
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
@@ -187,10 +148,10 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
 
   /* 2. Setting Requested Time Series */
   /* Unless indefinite integration, generate a TimePoints array  */
-  if  ( !Indefinitely ) {    
+  if  ( !Indefinitely ) 
     /* ... generate default TimePoint array */
     CvodeSettings_setTime(set, Time, PrintStep);
-  }
+
 
  
   /* Default: not doing adjoint solution  */
@@ -227,9 +188,8 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
   if  ( !clone->Indefinitely ) {    
     ASSIGN_NEW_MEMORY_BLOCK(clone->TimePoints,clone->PrintStep+1,double,NULL);
     /* copy TimePoint array */
-    for ( i=0; i<=clone->PrintStep; i++ ) {
-      clone->TimePoints[i] = set->TimePoints[i];
-    }
+    for ( i=0; i<=clone->PrintStep; i++ ) 
+      clone->TimePoints[i] = set->TimePoints[i];    
   }
   return clone;
 }
@@ -358,7 +318,8 @@ SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *set, int CvodeM
 {
   /* CvodeMethod == 0: default BDF method
      Method == 1: Adams-Moulton method */
-  if ( 0 <= CvodeMethod &&  CvodeMethod < 2 ) {
+  if ( 0 <= CvodeMethod &&  CvodeMethod < 2 )
+  {
     set->CvodeMethod = CvodeMethod;
     set->MaxOrder = MaxOrder;
   }
@@ -427,7 +388,9 @@ SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJ
    the passed array timeseries. Returns 1, if sucessful and 0, if
    not. */
 
-static int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *timeseries, int PrintStep)
+static int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
+				       double *timeseries,
+				       int PrintStep)
 {
   int i;
   free(set->TimePoints);
@@ -447,7 +410,10 @@ static int CvodeSettings_setTimeSeries(cvodeSettings_t *set, double *timeseries,
    the passed array timeseries. Returns 1, if sucessful and 0, if
    not. */
 
-static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseries, int AdjPrintStep, double EndTime)
+static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
+					  double *timeseries,
+					  int AdjPrintStep,
+					  double EndTime)
 {
   int i;
 
@@ -481,9 +447,10 @@ SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTim
 {
   int i, j;
   double *timeseries;
-  ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);  
-  for ( i=1; i<=PrintStep; i++ )
-    timeseries[i-1] = i * EndTime/PrintStep;
+  ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);
+  
+  for ( i=1; i<=PrintStep; i++ ) timeseries[i-1] = i * EndTime/PrintStep;
+  
   j = CvodeSettings_setTimeSeries(set, timeseries, PrintStep);
   free(timeseries);
   return j;
@@ -505,7 +472,6 @@ SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double End
   /* Adjoint time series goes backwards, from EndTime to 0 */
   for ( i=1; i<=PrintStep; i++ )
     timeseries[i-1] = (PrintStep - i) * EndTime/PrintStep;
-
  
   j = CvodeSettings_setAdjTimeSeries(set, timeseries, PrintStep, EndTime);
 
@@ -527,7 +493,8 @@ SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double End
 
 SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *set, int i, double time)
 {
-  if ( 0 < i && i <= set->PrintStep ) {
+  if ( 0 < i && i <= set->PrintStep )
+  {
     set->TimePoints[i] = time;
     return 1;
   }
@@ -636,10 +603,8 @@ SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *set, int i)
 
 SBML_ODESOLVER_API double CvodeSettings_getEndTime(cvodeSettings_t *set)
 {
-  if ( !set->Indefinitely )
-    return set->Time;
-  else
-    return -1.;
+  if ( !set->Indefinitely ) return set->Time;
+  else return -1.;
 }
 
 
@@ -649,10 +614,8 @@ SBML_ODESOLVER_API double CvodeSettings_getEndTime(cvodeSettings_t *set)
 
 SBML_ODESOLVER_API double CvodeSettings_getTimeStep(cvodeSettings_t *set)
 {
-  if ( !set->Indefinitely )
-    return set->TimePoints[1];
-  else
-    return set->Time;
+  if ( !set->Indefinitely ) return set->TimePoints[1];
+  else return set->Time;
 }
 
 
@@ -662,10 +625,8 @@ SBML_ODESOLVER_API double CvodeSettings_getTimeStep(cvodeSettings_t *set)
 
 SBML_ODESOLVER_API int CvodeSettings_getPrintsteps(cvodeSettings_t *set)
 {
-  if ( !set->Indefinitely )
-    return set->PrintStep;
-  else
-    return -1;
+  if ( !set->Indefinitely ) return set->PrintStep;
+  else return -1;
 }
 
 
@@ -676,10 +637,8 @@ SBML_ODESOLVER_API int CvodeSettings_getPrintsteps(cvodeSettings_t *set)
 
 SBML_ODESOLVER_API double CvodeSettings_getTime(cvodeSettings_t *set, int i)
 {
-  if ( !set->Indefinitely )
-    return set->TimePoints[i];
-  else
-    return i * set->Time;
+  if ( !set->Indefinitely ) return set->TimePoints[i];
+  else return i * set->Time;
 }
 
 
@@ -835,13 +794,10 @@ SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
 /** Frees cvodeSettings.
 */
 
-SBML_ODESOLVER_API 
-void CvodeSettings_free(cvodeSettings_t *set)
+SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *set)
 {
-  if ( set->TimePoints != NULL )
-    free(set->TimePoints);
-  if ( set->AdjTimePoints != NULL )
-    free(set->AdjTimePoints);
+  if ( set->TimePoints != NULL ) free(set->TimePoints);
+  if ( set->AdjTimePoints != NULL ) free(set->AdjTimePoints);
   free(set);
 }
 
@@ -851,8 +807,7 @@ void CvodeSettings_free(cvodeSettings_t *set)
     and fills rest with default values
 */
 
-cvodeSettings_t *
-CvodeSettings_createFromTimeSettings(timeSettings_t *time)
+cvodeSettings_t *CvodeSettings_createFromTimeSettings(timeSettings_t *time)
 {
   return CvodeSettings_createWithTime(time->tend, time->nout);
 }
@@ -861,8 +816,7 @@ CvodeSettings_createFromTimeSettings(timeSettings_t *time)
 
 /* for when timeSettings might become a separate structure,
  not used at the moment */
-timeSettings_t *
-TimeSettings_create(double t0, double tend, int nout) {
+timeSettings_t *TimeSettings_create(double t0, double tend, int nout) {
 
   timeSettings_t *time;
   

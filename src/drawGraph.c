@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-27 16:05:38 raim>
-  $Id: drawGraph.c,v 1.23 2006/06/02 11:47:52 stefan_tbi Exp $
+  Last changed Time-stamp: <2006-06-09 14:58:36 raim>
+  $Id: drawGraph.c,v 1.24 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -96,17 +96,15 @@ static int drawModelTxt(Model_t *m, char *file);
     Please see the graphviz documentation for other available formats.
 */
 
-SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
-
+SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format)
+{
   /** if SOSlib has been compiled without graphviz, the graph will be
       written to a text file in graphviz' dot format */
 #if !USE_GRAPHVIZ
 
-  SolverError_error(
-		    WARNING_ERROR_TYPE,
-		    SOLVER_ERROR_NO_GRAPHVIZ,
-		    "odeSolver has been compiled without GRAPHIZ functionality. ",
-		    "Graphs are printed to stdout in the graphviz' .dot format.");
+  SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_NO_GRAPHVIZ,
+		    "odeSolver has been compiled without GRAPHIZ. ",
+		    "Graphs are printed to stdout in graphviz' .dot format.");
 
   drawJacobyTxt(data, file);
 
@@ -177,10 +175,12 @@ SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
     if negative.
   */
 
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
-      if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
-	
+  for ( i=0; i<data->model->neq; i++ )
+  {
+    for ( j=0; j<data->model->neq; j++ )
+    {
+      if ( evaluateAST(data->model->jacob[i][j], data) != 0 )
+      {	
 	sprintf(name, "%s", data->model->names[j]);
 	r = agnode(g,name);
 	agset(r, "label", data->model->names[j]);
@@ -202,10 +202,9 @@ SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
 	a = agedgeattr(g, "label", "");
 	sprintf(name, "%g",  evaluateAST(data->model->jacob[i][j], data)); 
 	agxset (e, a->index, name);
-
-
 	
-	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
+	if ( evaluateAST(data->model->jacob[i][j], data) < 0 )
+	{
 	  a = agedgeattr(g, "arrowhead", "");
 	  agxset(e, a->index, "tee");
 	  a = agedgeattr(g, "color", "");
@@ -269,8 +268,8 @@ SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format) {
 
 #if !USE_GRAPHVIZ
 
-static int
-drawJacobyTxt(cvodeData_t *data, char *file) {
+static int drawJacobyTxt(cvodeData_t *data, char *file)
+{
 
   int i, j;
   char filename[WORDSIZE];
@@ -298,24 +297,26 @@ drawJacobyTxt(cvodeData_t *data, char *file) {
   */
 
 
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
-      if ( evaluateAST(data->model->jacob[i][j], data) != 0 ) {
+  for ( i=0; i<data->model->neq; i++ )
+  {
+    for ( j=0; j<data->model->neq; j++ )
+    {
+      if ( evaluateAST(data->model->jacob[i][j], data) != 0 )
+      {
 	fprintf(f ,"%s->%s [label=\"%g\" ",
 		data->model->names[j],
 		data->model->names[i],
 		evaluateAST(data->model->jacob[i][j],
 			    data));
-	if ( evaluateAST(data->model->jacob[i][j], data) < 0 ) {
+	if ( evaluateAST(data->model->jacob[i][j], data) < 0 )
 	  fprintf(f ,"arrowhead=tee color=red];\n");
-	}
-	else {
+	else
 	  fprintf(f ,"];\n");
-	}
       }
     }
   }
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ )
+  {
     fprintf(f ,"%s [label=\"%s\"];", data->model->names[i],
 	    data->model->names[i]);
   }   
@@ -351,17 +352,17 @@ drawJacobyTxt(cvodeData_t *data, char *file) {
     Please see the graphviz documentation for other available formats.
 */
 
-SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *format, double threshold) {
+SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *format, double threshold)
+{
 
   /** if SOSlib has been compiled without graphviz, the graph will be
       written to a text file in graphviz' dot format */
 
 #if !USE_GRAPHVIZ
 
-  SolverError_error(WARNING_ERROR_TYPE,
-		    SOLVER_ERROR_NO_GRAPHVIZ,
-		 "odeSolver has been compiled without GRAPHIZ functionality. ",
-		 "Graphs are printed to stdout in the graphviz' .dot format.");
+  SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_NO_GRAPHVIZ,
+		    "odeSolver has been compiled without GRAPHIZ. ",
+		    "Graphs are printed to stdout in graphviz' .dot format.");
 
   drawSensitivityTxt(data, file, threshold);
 
@@ -419,11 +420,9 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
 
   /* set graph label */
   if ( Model_isSetName(om->m) )
-    sprintf(label, "%s at time %g",  Model_getName(om->m),
-	    data->currenttime);
+    sprintf(label, "%s at time %g", Model_getName(om->m), data->currenttime);
   else if ( Model_isSetId(om->m) )
-    sprintf(label, "%s at time %g",  Model_getId(om->m),
-	    data->currenttime);
+    sprintf(label, "%s at time %g", Model_getId(om->m), data->currenttime);
   else
     sprintf(label, "label=\"at time %g\";\n", data->currenttime);
 
@@ -437,11 +436,14 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
     if negative.
   */
   ASSIGN_NEW_MEMORY_BLOCK(highest, data->nsens, double, 0);  
-  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);  
-  for ( j=0; j<data->nsens; j++ ) {
+  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);
+  
+  for ( j=0; j<data->nsens; j++ )
+  {
     highest[j] = 0;
     lowest[j] = 0;
-    for ( i=0; i<om->neq; i++ ) {
+    for ( i=0; i<om->neq; i++ )
+    {
       if ( data->sensitivity[i][j] > highest[j] )
 	highest[j] = data->sensitivity[i][j];
       if ( data->sensitivity[i][j] < lowest[j] )
@@ -449,11 +451,13 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
     }
   }
 
-  for ( i=0; i<om->neq; i++ ) {
-    for ( j=0; j<data->nsens; j++ ) {
+  for ( i=0; i<om->neq; i++ )
+  {
+    for ( j=0; j<data->nsens; j++ )
+    {
       if ( (data->sensitivity[i][j] > threshold*highest[j]) ||
-	   (data->sensitivity[i][j] < threshold*lowest[j]) ) {
-	
+	   (data->sensitivity[i][j] < threshold*lowest[j]) )
+      {	
 	sprintf(name, "%s", om->names[om->index_sens[j]]);
 	r = agnode(g,name);
 	agset(r, "label", om->names[om->index_sens[j]]);
@@ -478,7 +482,8 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
 
 
 	
-	if ( data->sensitivity[i][j] < 0 ) {
+	if ( data->sensitivity[i][j] < 0 )
+	{
 	  a = agedgeattr(g, "arrowhead", "");
 	  agxset(e, a->index, "tee");
 	  a = agedgeattr(g, "color", "");
@@ -542,8 +547,8 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
 
 #if !USE_GRAPHVIZ
 
-static int
-drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
+static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
+{
 
   int i, j;
   char filename[WORDSIZE];
@@ -576,11 +581,14 @@ drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
   */
 
   ASSIGN_NEW_MEMORY_BLOCK(highest, data->nsens, double, 0);  
-  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);  
-  for ( j=0; j<data->nsens; j++ ) {
+  ASSIGN_NEW_MEMORY_BLOCK(lowest, data->nsens, double, 0);
+  
+  for ( j=0; j<data->nsens; j++ )
+  {
     highest[j] = 0;
     lowest[j] = 0;
-    for ( i=0; i<om->neq; i++ ) {
+    for ( i=0; i<om->neq; i++ )
+    {
       if ( data->sensitivity[i][j] > highest[j] )
 	highest[j] = data->sensitivity[i][j];
       if ( data->sensitivity[i][j] < lowest[j] )
@@ -588,33 +596,32 @@ drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
     }
   }
   
-  for ( i=0; i<om->neq; i++ ) {
-    for ( j=0; j<data->nsens; j++ ) {
+  for ( i=0; i<om->neq; i++ )
+  {
+    for ( j=0; j<data->nsens; j++ )
+    {
       if ( (data->sensitivity[i][j] > threshold*highest[j]) ||
-	   (data->sensitivity[i][j] < threshold*lowest[j]) ) {
-	
+	   (data->sensitivity[i][j] < threshold*lowest[j]) )
+      {	
 	fprintf(f ,"%s->%s [label=\"%g\" ",
 		om->names[om->index_sens[j]],
 		om->names[i],
 		data->sensitivity[i][j]);
 	
-	if ( data->sensitivity[i][j] < 0 ) {
+	if ( data->sensitivity[i][j] < 0 ) 
 	  fprintf(f ,"arrowhead=tee color=red];\n");
-	}
-	else {
+	else 
 	  fprintf(f ,"];\n");
-	}
       }
     }
   }
-  for ( i=0; i<om->neq; i++ ) {
-    fprintf(f ,"%s [label=\"%s\"];", om->names[i],
-	    om->names[i]);
-  }
-  for ( i=0; i<data->nsens; i++ ) {
+  for ( i=0; i<om->neq; i++ )
+    fprintf(f ,"%s [label=\"%s\"];", om->names[i], om->names[i]);
+  
+  for ( i=0; i<data->nsens; i++ ) 
     fprintf(f ,"%s [label=\"%s\"];", om->names[om->index_sens[i]],
 	    om->names[om->index_sens[i]]);
-  }  
+
   fprintf(f, "}\n");
   return 1;
 }
@@ -641,17 +648,16 @@ drawSensitivityTxt(cvodeData_t *data, char *file, double threshold) {
     graphviz documentation for other available formats.
 */
 
-SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
+SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
+{
   
   /** if SOSlib has been compiled without graphviz, the graph will be
       written to a text file in graphviz' dot format */  
 #if !USE_GRAPHVIZ
 
-  SolverError_error(
-		    WARNING_ERROR_TYPE,
-		    SOLVER_ERROR_NO_GRAPHVIZ,
-		    "odeSolver has been compiled without GRAPHIZ functionality. ",
-		    "Graphs are printed to stdout in the graphviz' .dot format.");
+  SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_NO_GRAPHVIZ,
+		    "odeSolver has been compiled without GRAPHIZ. ",
+		    "Graphs are printed to stdout in graphviz' .dot format.");
   drawModelTxt(m, file);
   
 #else
@@ -706,8 +712,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
   a = agraphattr(g, "overlap", "");
   agxset(g, a->index, "scale");
 
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
-
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     re = Model_getReaction(m,i);
     reversible = Reaction_getReversible(re);
     sprintf(name, "%s", Reaction_getId(re));
@@ -715,7 +721,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
     a = agnodeattr(g, "shape", "ellipse");    
     agxset(r, a->index, "box");
 
-    if ( Reaction_getFast(re) ) {
+    if ( Reaction_getFast(re) )
+    {
       a = agnodeattr(g, "color", "");
       agxset(r, a->index, "red");
       a = agnodeattr(g, "fontcolor", "");
@@ -730,8 +737,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
     a = agnodeattr(g, "URL", "");
     agxset(r, a->index, label);
     
-    for ( j=0; j<Reaction_getNumModifiers(re); j++ ) {
-
+    for ( j=0; j<Reaction_getNumModifiers(re); j++ )
+    {
       mref = Reaction_getModifier(re,j);
       sp = Model_getSpeciesById(m, ModifierSpeciesReference_getSpecies(mref));
       
@@ -741,11 +748,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
-      if ( Species_getBoundaryCondition(sp) ) {
+      if ( Species_getBoundaryCondition(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "blue");
       }
-      if ( Species_getConstant(sp) ) {
+      if ( Species_getConstant(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "green4");
       }
@@ -761,8 +770,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       agxset(e, a->index, "odot");
     }
 
-    for ( j=0; j<Reaction_getNumReactants(re); j++ ) {
-
+    for ( j=0; j<Reaction_getNumReactants(re); j++ )
+    {
       sref = Reaction_getReactant(re,j);
       sp = Model_getSpeciesById(m, SpeciesReference_getSpecies(sref));
       
@@ -772,11 +781,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
-      if ( Species_getBoundaryCondition(sp) ) {
+      if ( Species_getBoundaryCondition(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "blue");
       }
-      if ( Species_getConstant(sp) ) {
+      if ( Species_getConstant(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "green4");
       }
@@ -786,25 +797,23 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       agxset(s, a->index, label);
       
       e = agedge(g,s,r);      
-/*       a = agedgeattr(g, "arrowhead", ""); */
-/*       agxset(e, a->index, "lnormal"); */
       a = agedgeattr(g, "label", "");
       
-      if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
+      if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
+      {
 	math = SpeciesReference_getStoichiometryMath(sref);
-	if ( (strcmp(SBML_formulaToString(math),"1") !=
-	      0) ) {
-	  agxset (e, a->index, SBML_formulaToString(math));
-	}
+	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
+	  agxset (e, a->index, SBML_formulaToString(math));	
       }
-      else {
-	if ( SpeciesReference_getStoichiometry(sref) != 1 ) {
+      else
+	if ( SpeciesReference_getStoichiometry(sref) != 1 )
+	{
 	  sprintf(name, "%g", SpeciesReference_getStoichiometry(sref));
 	  agxset (e, a->index, name);
-	}
-      }
+	}      
       
-      if ( reversible == 1 ) {
+      if ( reversible == 1 )
+      {
 	a = agedgeattr(g, "arrowhead", "");
 	agxset(e, a->index, "diamond");
 	a = agedgeattr(g, "arrowtail", "");
@@ -812,7 +821,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       }
     }
     
-    for ( j=0; j<Reaction_getNumProducts(re); j++ ) {
+    for ( j=0; j<Reaction_getNumProducts(re); j++ )
+    {
       sref = Reaction_getProduct(re,j);
       sp = Model_getSpeciesById(m, SpeciesReference_getSpecies(sref));
       sprintf(name,"%s", Species_getId(sp));
@@ -821,11 +831,13 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 	      Species_getName(sp) : Species_getId(sp));
       agset(s, "label", label);
 
-      if ( Species_getBoundaryCondition(sp) ) {
+      if ( Species_getBoundaryCondition(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "blue");
       }
-      if ( Species_getConstant(sp) ) {
+      if ( Species_getConstant(sp) )
+      {
 	a = agnodeattr(g, "color", "");
 	agxset(s, a->index, "green4");
       }
@@ -835,25 +847,23 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
       agxset(s, a->index, label);
             
       e = agedge(g,r,s);
-/*       a = agedgeattr(g, "arrowhead", ""); */
-/*       agxset(e, a->index, "lnormal"); */
       a = agedgeattr(g, "label", "");
       
-      if ( SpeciesReference_isSetStoichiometryMath(sref) ) {
+      if ( SpeciesReference_isSetStoichiometryMath(sref) )
+      {
 	math = SpeciesReference_getStoichiometryMath(sref);
-	if ( (strcmp(SBML_formulaToString(math),"1") !=
-	      0) ) {
-	  agxset (e, a->index, SBML_formulaToString(math));
-	}
+	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
+	  agxset (e, a->index, SBML_formulaToString(math));	
       }
-      else {
-	if ( SpeciesReference_getStoichiometry(sref) != 1 ) {
+      else      
+	if ( SpeciesReference_getStoichiometry(sref) != 1 )
+	{
 	  sprintf(name, "%g",SpeciesReference_getStoichiometry(sref));
 	  agxset (e, a->index,name);
 	}
-      }
       
-      if ( reversible == 1 ) {
+      if ( reversible == 1 )
+      {
 	a = agedgeattr(g, "arrowhead", "");
 	agxset(e, a->index, "diamond");
 	a = agedgeattr(g, "arrowtail", "");
@@ -918,9 +928,8 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format) {
 
 #if !USE_GRAPHVIZ
 
-static int
-drawModelTxt(Model_t *m, char *file) {
-
+static int drawModelTxt(Model_t *m, char *file)
+{
   Species_t *s;
   Reaction_t *re;
   const ASTNode_t *math;
@@ -940,67 +949,69 @@ drawModelTxt(Model_t *m, char *file) {
 	  Model_getName(m) : (Model_isSetId(m) ? Model_getId(m) : "noId") );
   fprintf(f ,"overlap=scale;\n");
  
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
-    
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {    
     re = Model_getReaction(m,i);
     reversible = Reaction_getReversible(re);
     
-    for ( j=0; j<Reaction_getNumModifiers(re); j++ ) {
+    for ( j=0; j<Reaction_getNumModifiers(re); j++ )
+    {
       mref = Reaction_getModifier(re,j);
       fprintf(f ,"%s->%s [style=dashed arrowhead=odot];\n",
 	      ModifierSpeciesReference_getSpecies(mref), Reaction_getId(re));
     }
-    for ( j=0; j<Reaction_getNumReactants(re); j++ ) {
+
+    for ( j=0; j<Reaction_getNumReactants(re); j++ )
+    {
       sref = Reaction_getReactant(re,j);
       fprintf(f ,"%s->%s [label=\"",
 	      SpeciesReference_getSpecies(sref), Reaction_getId(re));
       
-      if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
+      if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
+      {
 	math = SpeciesReference_getStoichiometryMath(sref);
-	if ( (strcmp(SBML_formulaToString(math),"1") !=
-	      0) ) {
+	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  fprintf(f ,"%s", SBML_formulaToString(math));
-	}	
       }
-      else {
-	if ( SpeciesReference_getStoichiometry(sref) != 1) {
+      else 
+	if ( SpeciesReference_getStoichiometry(sref) != 1)
 	  fprintf(f ,"%g",SpeciesReference_getStoichiometry(sref));
-	}
-      }
-      if ( reversible == 1 ) {
+	
+      
+      if ( reversible == 1 ) 
 	fprintf(f ,"\" arrowtail=onormal];\n");
-      }
-      else {
+      else 
 	fprintf(f ,"\" ];\n");
-      }
+
     }
-    for ( j=0; j<Reaction_getNumProducts(re); j++ ) {
+
+    for ( j=0; j<Reaction_getNumProducts(re); j++ )
+    {
       sref = Reaction_getProduct(re,j);
       fprintf(f ,"%s->%s [label=\"",
 	      Reaction_getId(re), SpeciesReference_getSpecies(sref));
-      if ( (SpeciesReference_isSetStoichiometryMath(sref)) ) {
+      if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
+      {
 	math = SpeciesReference_getStoichiometryMath(sref);
-	if ( (strcmp(SBML_formulaToString(math),"1") !=
-	      0) ) {
+	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  fprintf(f ,"%s ", SBML_formulaToString(math));
-	}
+	
       }
-      else {
-	if ( SpeciesReference_getStoichiometry(sref) != 1) {
-	  fprintf(f ,"%g ",SpeciesReference_getStoichiometry(sref));
-	}
-      }
-      if ( reversible == 1 ) {
+      else 
+	if ( SpeciesReference_getStoichiometry(sref) != 1) 
+	  fprintf(f ,"%g ",SpeciesReference_getStoichiometry(sref));	
+      
+      if ( reversible == 1 ) 
 	fprintf(f ,"\" arrowtail=onormal];\n");
-      }
-      else {
+      else 
 	fprintf(f ,"\" ];\n");
-      }    
 
     }
     
   }
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     re = Model_getReaction(m,i);
     fprintf(f ,"%s [label=\"%s\" shape=box];\n",
 	    Reaction_getId(re),
@@ -1008,7 +1019,8 @@ drawModelTxt(Model_t *m, char *file) {
 	    Reaction_getName(re) : Reaction_getId(re));
   }
 
-  for ( i=0; i<Model_getNumSpecies(m); i++) {
+  for ( i=0; i<Model_getNumSpecies(m); i++)
+  {
     s = Model_getSpecies(m, i);
     fprintf(f ,"%s [label=\"%s\"];",
 	    Species_getId(s),

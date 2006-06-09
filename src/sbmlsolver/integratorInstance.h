@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-23 17:19:53 raim>
-  $Id: integratorInstance.h,v 1.27 2006/04/11 13:10:45 afinney Exp $ 
+  Last changed Time-stamp: <2006-05-10 11:27:04 raim>
+  $Id: integratorInstance.h,v 1.28 2006/06/09 17:04:35 raimc Exp $ 
 */
 /* 
  *
@@ -80,7 +80,7 @@ extern "C" {
   /** the main structure for numerical integration */
   struct integratorInstance
   {
-    /** implies that the 'data' field state is consistant with the 'solver' field */
+    /** implies that the 'data' field state is consistant with the 'solver' field */ 
     int isValid; 
 
     /** the ODE Model as passed for construction of cvodeData and

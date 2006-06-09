@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:57:34 raim>
-  $Id: modelSimplify.c,v 1.14 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2006-06-09 15:54:52 raim>
+  $Id: modelSimplify.c,v 1.15 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -56,44 +56,36 @@
 /** Replaces all AST_NAME types with `name' appearing in the formula 
     'math' by the `newname'
 */
-SBML_ODESOLVER_API void
-AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname) {
-
+SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname)
+{
   int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
-  for ( i=0; i<List_size(names); i++ ) {
-    if ( strcmp(ASTNode_getName(List_get(names,i)), name) == 0 ) {
-      ASTNode_setName(List_get(names,i), newname);
-    }
-  }
+  for ( i=0; i<List_size(names); i++ )
+    if ( strcmp(ASTNode_getName(List_get(names,i)), name) == 0 )
+      ASTNode_setName(List_get(names,i), newname);  
 
-  List_free(names);
-  
+  List_free(names);  
 }
 
 /** Replaces all AST_NAME types with `name' appearing in the formula
     'math' by the value 'x'.
 */
 
-SBML_ODESOLVER_API void
-AST_replaceNameByValue(ASTNode_t *math, const char *name, double x) {
-
+SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x)
+{
   int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
-  for ( i=0; i<List_size(names); i++ ) {
-    if ( strcmp(ASTNode_getName(List_get(names,i)), name) == 0 ) {
-      ASTNode_setReal(List_get(names,i), x);
-    }
-  }
+  for ( i=0; i<List_size(names); i++ )
+    if ( strcmp(ASTNode_getName(List_get(names,i)), name) == 0 ) 
+      ASTNode_setReal(List_get(names,i), x);  
 
-  List_free(names);
-  
+  List_free(names);  
 }
 
 /** Replaces all parameters appearing in the formula
@@ -101,25 +93,22 @@ AST_replaceNameByValue(ASTNode_t *math, const char *name, double x) {
     list 'lp'.
 */
 
-SBML_ODESOLVER_API void
-AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp) {
-
+SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp)
+{
   int i,j;
   Parameter_t *p;
   List_t *names;
 
-  for ( i=0; i<ListOf_getNumItems(lp); i++ ) {
+  for ( i=0; i<ListOf_getNumItems(lp); i++ )
+  {
     p = ListOf_get(lp, i);
     names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
-    for ( j=0; j<List_size(names); j++ ) {
-      if ( strcmp(ASTNode_getName(List_get(names,j)),
-                  Parameter_getId(p)) == 0 ) {
-        if ( Parameter_getConstant(p) == 1 ) {
-          ASTNode_setReal(List_get(names,j), Parameter_getValue(p));
-        }
-      }
-    }
+    for ( j=0; j<List_size(names); j++ )    
+      if ( strcmp(ASTNode_getName(List_get(names,j)), Parameter_getId(p))==0 )
+        if ( Parameter_getConstant(p) == 1 ) 
+          ASTNode_setReal(List_get(names,j), Parameter_getValue(p));           
+    
     List_free(names);
   }
 }
@@ -137,10 +126,11 @@ SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *na
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
-  for ( i=0; i<List_size(names); i++ ) {
+  for ( i=0; i<List_size(names); i++ )
+  {
     old = List_get(names,i);
-    if ( strcmp(ASTNode_getName(old), name) == 0 ) {
-
+    if ( strcmp(ASTNode_getName(old), name) == 0 )
+    {
       /*
 	works just like function copyAST, see processAST.c,
 	which could probably be used instead if their was
@@ -153,24 +143,20 @@ SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *na
 	a segmentation fault when run under valgrind --tool=memcheck
       */
 
-      if ( ASTNode_isName(formula) ) {
-	ASTNode_setName(old, ASTNode_getName(formula));
-      }
-      else if ( ASTNode_isInteger(formula) ) {
+      if ( ASTNode_isName(formula) )
+	ASTNode_setName(old, ASTNode_getName(formula));      
+      else if ( ASTNode_isInteger(formula) ) 
 	ASTNode_setInteger(old, ASTNode_getInteger(formula));
-      }
-      else if ( ASTNode_isReal(formula) ) {
-	ASTNode_setReal(old, ASTNode_getReal(formula));
-      }  
-      else {
+      else if ( ASTNode_isReal(formula) )
+	ASTNode_setReal(old, ASTNode_getReal(formula));      
+      else
+      {
 	ASTNode_setType(old, ASTNode_getType(formula)); 
 	/* a user defined function has a name that must be set */
-      	if ( ASTNode_getType(formula) == AST_FUNCTION ) {
-	  ASTNode_setName(old, ASTNode_getName(formula));
-	}
-	for ( j=0; j<ASTNode_getNumChildren(formula); j++ ) {
-	  ASTNode_addChild(old, copyAST(ASTNode_getChild(formula,j)));
-	}
+      	if ( ASTNode_getType(formula) == AST_FUNCTION ) 
+	  ASTNode_setName(old, ASTNode_getName(formula));	
+	for ( j=0; j<ASTNode_getNumChildren(formula); j++ ) 
+	  ASTNode_addChild(old, copyAST(ASTNode_getChild(formula,j)));	
       }
     }
   }
@@ -183,55 +169,47 @@ SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *na
     function.
 */
 
-SBML_ODESOLVER_API void
-AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
-	 const ASTNode_t *function) {
-  
+SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const char *name, const ASTNode_t *function)
+{  
   int i, j;  
   ASTNode_t *old, *new;
   List_t *names;
-
-  /*AST_dump("function:", function);
-  AST_dump("replacing:", math);*/
-
+ 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isFunction);
 
-  for ( i=0; i<List_size(names); i++ ) {
+  for ( i=0; i<List_size(names); i++ )
+  {
     new     = copyAST(ASTNode_getRightChild(function));
     old = List_get(names,i);
     /* if `old' is the searched function defintion ... */
-    if ( strcmp(ASTNode_getName(old), name) == 0 ) {
-
+    if ( strcmp(ASTNode_getName(old), name) == 0 )
+    {
       /* replace the arguments of the function definition copied to `new', 
          with the arguments passed by the function call(s) in `math' */
-      for ( j=0; j<(ASTNode_getNumChildren(function)-1); j++ ) {
+      for ( j=0; j<(ASTNode_getNumChildren(function)-1); j++ )
 	AST_replaceNameByFormula(new,
-				 ASTNode_getName(ASTNode_getChild(function,
-								  j)),
+				 ASTNode_getName(ASTNode_getChild(function,j)),
 				 ASTNode_getChild(old, j));
-      }
+
 
       /* copy the `new' function defintion with replaced parameters
 	 into the `old' function call */
       
       /* first set possible names or numbers */
-      if ( ASTNode_isName(new) ) {
+      if ( ASTNode_isName(new) ) 
 	ASTNode_setName(old, ASTNode_getName(new));
-	
-      }
-      else if ( ASTNode_isInteger(new) ) {
+      else if ( ASTNode_isInteger(new) ) 
 	ASTNode_setInteger(old, ASTNode_getInteger(new));
-      }
-      else if ( ASTNode_isReal(new) ) {
+      else if ( ASTNode_isReal(new) ) 
 	ASTNode_setReal(old, ASTNode_getReal(new));
-      }
+
       /* ... if none of the above, just set the AST Type ... */
-      else {
+      else
+      {
 	ASTNode_setType(old, ASTNode_getType(new));
 	/* (a user defined function has a name that must be set) */
-	if ( ASTNode_getType(new) == AST_FUNCTION ) {
+	if ( ASTNode_getType(new) == AST_FUNCTION ) 
 	  ASTNode_setName(old, ASTNode_getName(new));
-	}
 	/* ... and exchange the children. That should be it! */
 	ASTNode_swapChildren(old, new);
       }
@@ -246,10 +224,8 @@ AST_replaceFunctionDefinition(ASTNode_t *math, const char *name,
 
 /** Replace all constants of a model in an AST math */
 
-SBML_ODESOLVER_API void
-AST_replaceConstants(Model_t *m, ASTNode_t *math) {
-
-
+SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
+{
   int i, j, found;
   Parameter_t *p;
   Compartment_t *c;
@@ -260,10 +236,10 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
   SBMLTypeCode_t type;
   FunctionDefinition_t *f;
 
-  /** Step R.1: replace Assignment Rules
+  /** Step R.1: Replace Assignment Rules\n      
       Parameters, compartments or species defined by
       assignment rules in the model will be replaced
-      by the assignment expression in the AST formula      
+      by the assignment expression in the AST formula.
   */
 
   /**
@@ -271,26 +247,29 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
      assignment rules can be used is subsequent assignments.
      Thus this direction should catch all assignments.
   */
-  for ( i=(Model_getNumRules(m)-1); i>=0; i-- ) {
+  for ( i=(Model_getNumRules(m)-1); i>=0; i-- )
+  {
     rl = Model_getRule(m, i);
     type = SBase_getTypeCode((SBase_t *)rl);
-    if ( type == SBML_ASSIGNMENT_RULE ) {
+    if ( type == SBML_ASSIGNMENT_RULE )
+    {
       ar = (AssignmentRule_t *)rl;
-      if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) {
+      if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) 
 	AST_replaceNameByFormula(math,
 				 AssignmentRule_getVariable(ar),
 				 Rule_getMath(rl));
-      }
+      
     }
   }
 
  
-  /** Step R.2: replace Function Definitions
+  /** Step R.2: replace Function Definitions\n
       All Function Definitions will be replaced
       by the full expression
   */
   
-  for ( i=0; i<Model_getNumFunctionDefinitions(m); i++ ) {
+  for ( i=0; i<Model_getNumFunctionDefinitions(m); i++ )
+  {
     f = Model_getFunctionDefinition(m, i);
     AST_replaceFunctionDefinition(math,
 				  FunctionDefinition_getId(f),
@@ -301,13 +280,12 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
       in rate rules, algebraic rules and events
       by their value.
   */
-  for ( i=0; i<Model_getNumParameters(m); i++) {
+  for ( i=0; i<Model_getNumParameters(m); i++)
+  {
     p = Model_getParameter(m, i);
-    if ( Parameter_getConstant(p) ) {
-      AST_replaceNameByValue(math,
-			     Parameter_getId(p),
-			     Parameter_getValue(p));
-    }
+    if ( Parameter_getConstant(p) ) 
+      AST_replaceNameByValue(math, Parameter_getId(p), Parameter_getValue(p));
+    
   }
   
   /** Steps R.4: replacing all constant compartments
@@ -315,13 +293,14 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
       by their size
   */
 
-  for ( i=0; i<Model_getNumCompartments(m); i++) {
+  for ( i=0; i<Model_getNumCompartments(m); i++)
+  {
     c = Model_getCompartment(m, i);
-    if ( Compartment_getConstant(c) ) {
+    if ( Compartment_getConstant(c) ) 
       AST_replaceNameByValue(math,
 			     Compartment_getId(c),
 			     Compartment_getSize(c));
-    }
+    
   }
   /** Steps R.5: replacing all species that
       are defined as either constant or boundary
@@ -330,48 +309,46 @@ AST_replaceConstants(Model_t *m, ASTNode_t *math) {
       Species that are set by an assignment rules
       have already been replaced above in Step R.1
   */
-  for ( i=0; i<Model_getNumSpecies(m); i++) {
+  for ( i=0; i<Model_getNumSpecies(m); i++)
+  {
     found = 0;
     s = Model_getSpecies(m, i);
     c = Model_getCompartmentById(m, Species_getCompartment(s));
-    if ( Species_getConstant(s) ) {
+    if ( Species_getConstant(s) )    
       AST_replaceNameByValue(math,
 			     Species_getId(s),
 			     Species_isSetInitialConcentration(s) ?
 			     Species_getInitialConcentration(s) :
 			     Species_getInitialAmount(s) /
-			     Compartment_getSize(c));
-    }
-    else if ( Species_getBoundaryCondition(s) ) {
-      for ( j=0; j<Model_getNumRules(m); j++ ) {
+			     Compartment_getSize(c));    
+    else if ( Species_getBoundaryCondition(s) )
+    {
+      for ( j=0; j<Model_getNumRules(m); j++ )
+      {
 	rl = Model_getRule(m, j);
 	type = SBase_getTypeCode((SBase_t *)rl);
-	if ( type == SBML_RATE_RULE ) {
+	if ( type == SBML_RATE_RULE )
+	{
 	  rr = (RateRule_t *)rl;
-	  if ( Rule_isSetMath(rl) && RateRule_isSetVariable(rr) ) {
-	    if ( strcmp(RateRule_getVariable(rr), Species_getId(s)) ==0 ) {
+	  if ( Rule_isSetMath(rl) && RateRule_isSetVariable(rr) )
+	    if ( strcmp(RateRule_getVariable(rr), Species_getId(s)) == 0 )
 	      ++found;
-	    }
-	  }
 	}
-	else if ( type == SBML_ASSIGNMENT_RULE ) {
+	else if ( type == SBML_ASSIGNMENT_RULE )
+	{
 	  ar = (AssignmentRule_t *)rl;	  
-	  if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) {
-	    if ( strcmp(AssignmentRule_getVariable(ar), Species_getId(s))
-		 == 0 ) {
-	      ++found;
-	    }
-	  }
+	  if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) 
+	    if ( strcmp(AssignmentRule_getVariable(ar),Species_getId(s))== 0 ) 
+	      ++found;	  
 	}
       }
-      if ( found == 0 ) {
+      if ( found == 0 ) 
 	AST_replaceNameByValue(math,
 			       Species_getId(s),
 			       Species_isSetInitialConcentration(s) ?
 			       Species_getInitialConcentration(s) :
 			       Species_getInitialAmount(s) /
-			       Compartment_getSize(c));
-      }    
+			       Compartment_getSize(c));      
     }
   }
 } 

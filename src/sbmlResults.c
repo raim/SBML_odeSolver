@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 18:30:31 raim>
-  $Id: sbmlResults.c,v 1.16 2005/12/16 17:35:55 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 18:14:24 raim>
+  $Id: sbmlResults.c,v 1.17 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -32,6 +32,7 @@
  * Contributor(s):
  *     
  */
+
 /*! \defgroup sbmlResults SBML Results Interface
     \ingroup odeSolver
     
@@ -57,14 +58,14 @@ static timeCourseArray_t *TimeCourseArray_create(int names, int timepoints);
 static void TimeCourseArray_free(timeCourseArray_t *);
 static timeCourse_t *TimeCourse_create(int timepoints);
 static void TimeCourse_free(timeCourse_t *);
-static timeCourse_t *TimeCourseArray_getTimeCourse(const char *, timeCourseArray_t *);
+static timeCourse_t *TimeCourseArray_getTimeCourse(const char *,
+						   timeCourseArray_t *);
 static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *);
 
 
 /*** results as returned by _odeSolver ***/
 
-/* The function
-   SBMLResults SBMLResults_create(Model_t *m, int timepoints)
+/* The function SBMLResults SBMLResults_create(Model_t *m, int timepoints)
    allocates memory for simulation results (time courses) mapped back
    on SBML structures (i.e. species, and non-constant compartments
    and parameters. It takes CvodeData as an argument, that has to
@@ -94,7 +95,8 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
 
   
   /* Writing species names */
-  for ( i=0; i<Model_getNumSpecies(m); i++) {
+  for ( i=0; i<Model_getNumSpecies(m); i++)
+  {
     s = Model_getSpecies(m, i);
     tc = results->species->tc[i];
     ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Species_getId(s))+1, char, NULL);
@@ -109,9 +111,11 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
   
   results->compartments = TimeCourseArray_create(num_compartments, timepoints);
   /* Writing variable compartment names */
-  for ( i=0; i<Model_getNumCompartments(m); i++) {
+  for ( i=0; i<Model_getNumCompartments(m); i++)
+  {
     c = Model_getCompartment(m, i);
-    if ( ! Compartment_getConstant(c) ) {
+    if ( ! Compartment_getConstant(c) )
+    {
       tc = results->compartments->tc[i];
       ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Compartment_getId(c))+1,
 			      char, NULL);
@@ -127,9 +131,11 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
   
   results->parameters = TimeCourseArray_create(num_parameters, timepoints);
   /* Writing variable parameter names */
-  for ( i=0; i<Model_getNumParameters(m); i++) {
+  for ( i=0; i<Model_getNumParameters(m); i++)
+  {
     p = Model_getParameter(m, i);
-    if ( ! Parameter_getConstant(p) ) {
+    if ( ! Parameter_getConstant(p) )
+    {
       tc = results->parameters->tc[i];
       ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1,
 			      char, NULL);
@@ -141,7 +147,8 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
   num_reactions = Model_getNumReactions(m);
   results->fluxes = TimeCourseArray_create(num_reactions, timepoints);
   /* Writing reaction names */
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     tc = results->fluxes->tc[i];
     ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Reaction_getId(r))+1, char, NULL);
@@ -246,7 +253,8 @@ static timeCourse_t *TimeCourseArray_getTimeCourse(const char *id, timeCourseArr
 {
   int i;
   timeCourse_t *tc;
-  for ( i=0; i<tcA->num_val; i++ ) {
+  for ( i=0; i<tcA->num_val; i++ )
+  {
     tc = tcA->tc[i];
     if ( strcmp(id, tc->name) == 0 )
       return tc;
@@ -361,16 +369,20 @@ void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
     printf("## No Values.\n");
   else if ( tcA->num_val == 0 ) 
     printf("## No Values.\n");
-  else {    
+  else
+  {    
     printf("#time ");
-    for ( j=0; j<tcA->num_val; j++) {
+    for ( j=0; j<tcA->num_val; j++)
+    {
       tc = tcA->tc[j];
       printf("%s ", tc->name);
     }
     printf("\n");
-    for ( i=0; i<time->timepoints; i++ ) {
+    for ( i=0; i<time->timepoints; i++ )
+    {
       printf("%g ", time->values[i]);
-      for ( j=0; j<tcA->num_val; j++) {
+      for ( j=0; j<tcA->num_val; j++)
+      {
 	tc = tcA->tc[j];
 	printf("%g ", tc->values[i]);
       }
@@ -454,7 +466,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix
 SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
 {
   int i, j;  
-  for ( i=0; i<resM->i; i++ ) {
+  for ( i=0; i<resM->i; i++ )
+  {
     for ( j=0; j<resM->j; j++ )
       SBMLResults_free(resM->results[i][j]);
     free(resM->results[i]);
@@ -472,10 +485,9 @@ SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
   ASSIGN_NEW_MEMORY(resM->results, struct _SBMLResults **, NULL);
   resM -> i = nrparams;
   resM -> j = nrdesignpoints;
-  for ( i=0; i<nrparams; i++ ) {
+  for ( i=0; i<nrparams; i++ )
     ASSIGN_NEW_MEMORY_BLOCK(resM->results[i], nrdesignpoints,
-			    struct _SBMLResults *, NULL);
-  }
+			    struct _SBMLResults *, NULL);  
   return(resM);
 }
 

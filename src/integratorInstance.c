@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 16:01:53 raim>
-  $Id: integratorInstance.c,v 1.62 2006/04/19 14:02:48 raimc Exp $
+  Last changed Time-stamp: <2006-06-09 15:08:31 raim>
+  $Id: integratorInstance.c,v 1.63 2006/06/09 17:04:35 raimc Exp $
 */
 /* 
  *
@@ -97,11 +97,9 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
     
   data = CvodeData_create(om);
   RETURN_ON_FATALS_WITH(NULL);
-
  
   CvodeData_initialize(data, opt, om);
   RETURN_ON_FATALS_WITH(NULL);
-  
   
   return IntegratorInstance_allocate(data, opt, om);
       
@@ -147,9 +145,7 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   integratorInstance_t *engine;
 
   data->run = 0;
-
   data->adjrun = 0;
-
     
   ASSIGN_NEW_MEMORY(engine, struct integratorInstance, NULL);
   ASSIGN_NEW_MEMORY(engine->solver, struct cvodeSolver, 0);
@@ -241,7 +237,8 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
   }
   else    
-  { /* Adjoint Phase */
+  {
+    /* Adjoint Phase */
     solver->t0 = opt->AdjTimePoints[0]; 
     solver->tout = opt->AdjTimePoints[1]; 
     solver->nout = opt->AdjPrintStep;     /* number of output steps */
@@ -261,15 +258,13 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
     /* count integration runs with this integratorInstance */
     data->adjrun++;
-
   }
 
   /* set flag to 0 to indicate that solver structures need to be
      created before integration */
   engine->isValid = 0;
 
-  return 1;
-  
+  return 1;  
 }
 
 
@@ -300,10 +295,8 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
   odeModel_t *model = target->om;
 
   if (model == source->om)
-  {
     for ( i=0; i<sourceData->nvalues; i++ )
       targetData->value[i] = sourceData->value[i];
-  }
   else
     SolverError_error(
 		      ERROR_ERROR_TYPE,
@@ -539,11 +532,6 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 	for ( k=0; k<=results->nout; k++ )
 	  results->sensitivity[i][j][k] = iResults->sensitivity[i][j][k];
   }
-
-
-  /*   if ( iResults->sensitivity != NULL ) { */
-    
-  /*   } */
 
   return results;  
 }
@@ -883,19 +871,20 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   dy_var = 0.0;
   dy_std = 0.0;
   
-  for ( i=0; i<om->neq; i++ ) {
+  for ( i=0; i<om->neq; i++ ) 
     dy_mean += fabs(evaluateAST(om->ode[i],data));
-  }
+
   dy_mean = dy_mean / om->neq;
-  for ( i=0; i<om->neq; i++ ) {
+  for ( i=0; i<om->neq; i++ ) 
     dy_var += MySQR(evaluateAST(om->ode[i],data) - dy_mean);
-  }
+
   dy_var = dy_var / (om->neq -1);
   dy_std = MySQRT(dy_var);
 
   /* stop integrator if mean + std of rates of change are lower than
      1e-11 */
-  if ( (dy_mean + dy_std) < 1e-11 ) {
+  if ( (dy_mean + dy_std) < 1e-11 )
+  {
     data->steadystate = 1;
     SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_MESSAGE_STEADYSTATE_FOUND,
@@ -905,7 +894,8 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 		      data->currenttime, dy_mean, dy_std);
     return(1) ;
   }
-  else {
+  else
+  {
     data->steadystate = 0;
     return(0);
   }  
@@ -939,18 +929,15 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
   if ( engine->solver->t == 0.0 && data->results != NULL )
     data->results->value[vi->index][0] = value;
   
-  if ( vi->index < om->neq ) {
-    /* if (om->algebraic) ?? */
+  if ( vi->index < om->neq ) 
     engine->isValid = 0; /* 'solver' is no longer consistant with 'data' */
-  }
-  else if (!engine->opt->compileFunctions &&  vi->index >= om->neq+om->nass ) {
+  else if (!engine->opt->compileFunctions &&  vi->index >= om->neq+om->nass ) 
     /* optimize ODEs for evaluation again, if a constant has been reset */
     IntegratorInstance_optimizeOdes(engine);
-  }
 }
 
-/** internal function used for optimization of ODEs; will handle the
-    case of sensitivity analysis, where ODEs can not be optimized; */
+/* internal function used for optimization of ODEs; will handle the
+   case of sensitivity analysis, where ODEs can not be optimized; */
 /*!!! will need adaptation to selected sens.analysis !!!*/
 
 void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
@@ -967,21 +954,24 @@ void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
   
   /*!!! will need adaptation to selected sens.analysis !!!*/
 
-  for ( i=0; i<om->neq; i++ ) {
-    if ( !opt->Sensitivity  || om->sensitivity ) {
+  for ( i=0; i<om->neq; i++ )
+  {
+    if ( !opt->Sensitivity  || om->sensitivity )
+    {
       /* optimize each ODE: replace nconst and simplifyAST */
       tmp = copyAST(om->ode[i]);
-      for ( j=0; j<om->nconst; j++ ) {
+      for ( j=0; j<om->nconst; j++ ) 
 	AST_replaceNameByValue(tmp,
 			       om->names[om->neq+om->nass+j],
 			       data->value[om->neq+om->nass+j]);
-      }
+      
       if ( data->ode[i] != NULL )
 	ASTNode_free(data->ode[i]);	
       data->ode[i] = simplifyAST(tmp);
       ASTNode_free(tmp);
     }
-    else {
+    else
+    {
       if ( data->ode[i] != NULL )
 	ASTNode_free(data->ode[i]);
       data->ode[i] = copyAST(om->ode[i]);
@@ -1014,6 +1004,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
   /* call CVODE Solver */
   else 
     return IntegratorInstance_cvodeOneStep(engine);
+  
   /* upcoming solvers */
   /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
 }
@@ -1040,6 +1031,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing
   /* call CVODE Solver */
   else 
     return IntegratorInstance_cvodeOneStep(engine);
+
   /* upcoming solvers */
   /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
 }
@@ -1065,13 +1057,15 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
 
   /* solver specific switches */
   /* CVODE */
-  if (om->neq) {
+  if (om->neq)
+  {
     printf("CVODE Error Settings:\n");
     /* currently the same abs. error for all y */
     printf("absolute error tolerance: %g\n", engine->opt->Error);
     printf("relative error tolerance: %g\n", solver->reltol);
     printf("max. internal step nr.:   %d\n", engine->opt->Mxstep);
   }
+  
   /* if (om->algebraic) ?? */
   /* if (opt->Sensitivity) ?? */ 
   printf("\n");
@@ -1084,10 +1078,8 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
 SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 {
   /* solver specific switches */
-  if (engine->om->neq) {
-    /* the same for CVODES and CVODE */
+  if (engine->om->neq) 
     IntegratorInstance_freeCVODESolverStructures(engine);
-  }
 
   /* if (om->algebraic) ?? */
   /* if (opt->Sensitivity) ?? */
@@ -1118,13 +1110,13 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
   /* if (om->algebraic) ?? */
   /* if (opt->Sensitivity) ?? */
   
-  if ( errorCode ) {
-        
+  if ( errorCode )
+  {        
     /* on flag CV_CONV_FAILURE
        try again, but now with/without generated Jacobian matrix  */
     if ( errorCode == CV_CONV_FAILURE && data->run == 1 &&
-	 opt->StoreResults) {
-      
+	 opt->StoreResults)
+    {      
       SolverError_error(WARNING_ERROR_TYPE,
 			SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN,
 			"Rerun with %s Jacobian matrix.",
