@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-05-12 11:44:11 xtof>
-  $Id: processAST.h,v 1.14 2006/05/18 08:23:54 stefan_tbi Exp $
+  Last changed Time-stamp: <2006-06-12 11:52:06 raim>
+  $Id: processAST.h,v 1.15 2006/06/12 10:25:58 raimc Exp $
 */
 /* 
  *
@@ -65,12 +65,13 @@ extern "C" {
   SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
   SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f);
   SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
+  SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
 
-ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
-SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
-void AST_dump(const char *context, ASTNode_t *node);
-void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols);
-int ASTNode_containsTime(ASTNode_t *node);
+  
+  ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
+  void AST_dump(const char *context, ASTNode_t *node);
+  void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols);
+  int ASTNode_containsTime(ASTNode_t *node);
 
 #ifdef __cplusplus
 }

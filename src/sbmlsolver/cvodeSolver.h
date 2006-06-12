@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-08 09:16:06 raim>
-  $Id: cvodeSolver.h,v 1.7 2006/05/18 08:33:17 stefan_tbi Exp $
+  Last changed Time-stamp: <2006-06-12 11:25:31 raim>
+  $Id: cvodeSolver.h,v 1.8 2006/06/12 10:25:57 raimc Exp $
 */
 /* 
  *
@@ -43,9 +43,9 @@ extern "C" {
 #endif
 
 
-#define CVODE_HANDLE_ERROR(_flag, _function, _type) \
-{  if (check_flag(_flag, _function, _type)) { \
-    return(0); }}
+#define CVODE_HANDLE_ERROR(_flag, _function, _type)	\
+  {  if (check_flag(_flag, _function, _type)) {		\
+      return(0); }}
   
   /* CVODE SOLVER */
   SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *);

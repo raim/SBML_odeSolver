@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-21 18:09:54 raim>
-  $Id: cvodedata.h,v 1.32 2006/03/09 17:23:50 afinney Exp $
+  Last changed Time-stamp: <2006-06-12 11:08:24 raim>
+  $Id: cvodedata.h,v 1.33 2006/06/12 10:25:57 raimc Exp $
 */
 /* 
  *
@@ -52,11 +52,12 @@
 /** Stores CVODE specific integration results, data correspond
     to the respective values in cvodeData */
 struct cvodeResults {
-  int nout;        /**< counter for calculated time steps (without
-		        initial conditions), this number can be lower
-		        then the same variable in cvodeData, in case
-		        the integration is prematurely stopped. */
-  double *time;    /**< the time steps */
+   /** counter for calculated time steps (without initial conditions),
+       this number can be lower then the same variable in cvodeData,
+       in case the integration is prematurely stopped. */
+  int nout;
+  /** contains the specific time steps for an integration */
+  double *time;
 
   /** number of variables for which results exist */
   int nvalues;     

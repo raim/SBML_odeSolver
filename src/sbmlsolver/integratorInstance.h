@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-05-10 11:27:04 raim>
-  $Id: integratorInstance.h,v 1.28 2006/06/09 17:04:35 raimc Exp $ 
+  Last changed Time-stamp: <2006-06-12 11:39:56 raim>
+  $Id: integratorInstance.h,v 1.29 2006/06/12 10:25:57 raimc Exp $ 
 */
 /* 
  *
@@ -56,16 +56,23 @@ extern "C" {
   /** Solver State Information */
   struct cvodeSolver
   {
-    double t, tout, t0;
-    int iout, nout;  /**< above data are required by all solvers */    
-    realtype reltol, atol1;
-    N_Vector y, abstol, senstol;
-    void *cvode_mem; /**< above data are used by the CVode Solver */    
-    int nsens;
-    N_Vector *yS;    /**< sensitivities vector specific */    
-    N_Vector dy;     /**< IDA specific data: current ODE values dx/dt */
-
-    N_Vector q; /**< forward sensitivity quadratures of integral functional */ 
+    double t0;        /**< initial time of last solver initialization */
+    double t;         /**< current time of the integrator */
+    double tout;      /**< next time of the integrator */
+    int nout;         /**< number of requested time steps */    
+    int iout;         /**< time step counter ( < nout ) */
+    realtype reltol;  /**< relative error tolerance */
+    realtype atol1;   /**< absolute error tolerance */
+    N_Vector abstol;  /**< array of abs. err. tol., might once be used
+			 for individual error tolerances */
+    N_Vector y;       /**< the solution vector, x(t) ! */
+    void *cvode_mem;  /**< pointer to the CVode Solver structure */    
+    int nsens;        /**< number of requested sensitivities */
+    N_Vector *yS;     /**< the sensitivities matrix, dx(t)/dp ! */    
+    N_Vector senstol; /**< absolute tolerance for sensitivity error control */
+    N_Vector q;       /**< forward sensitivity quadratures of
+			 integral functional */ 
+    N_Vector dy;      /**< current ODE values dx/dt, IDA specific data! */
 
     /** adjoint specific */
     void *cvadj_mem;
@@ -80,7 +87,8 @@ extern "C" {
   /** the main structure for numerical integration */
   struct integratorInstance
   {
-    /** implies that the 'data' field state is consistant with the 'solver' field */ 
+    /** implies that the 'data' field state is consistant with the
+	'solver' field */ 
     int isValid; 
 
     /** the ODE Model as passed for construction of cvodeData and
@@ -97,13 +105,14 @@ extern "C" {
     /** optional results structure, shared with cvodeData */
     cvodeResults_t *results; 
 
-    /** start time for integration (doesn't include initial solver setup and compilation) */
+    /** start time of integration clock (doesn't include initial solver setup
+	and compilation) */
     clock_t startTime;
-
     /** indicates whether startTime has a valid value */
     int clockStarted;
 
-    /** indicates that events should be processed at the end of this time step */
+    /** indicates that events should be processed at the end of
+	this time step */
     int processEvents;
   };
   

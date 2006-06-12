@@ -1,8 +1,8 @@
 /*
  * Filename    : util.c
- * Revision    : $Id: util.h,v 1.3 2005/10/28 09:04:12 afinney Exp $
+ * Revision    : $Id: util.h,v 1.4 2006/06/12 10:25:58 raimc Exp $
  * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/sbmlsolver/util.h,v $
-*/
+ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -55,15 +55,15 @@ extern "C" {
 #endif
   
   /** get values from cvodeResults */
-SBML_ODESOLVER_API char *get_line(FILE *fp);
+  SBML_ODESOLVER_API char *get_line(FILE *fp);
                                                                                
-SBML_ODESOLVER_API char *concat (char *a, char *b);
+  SBML_ODESOLVER_API char *concat (char *a, char *b);
 
-SBML_ODESOLVER_API void fatal (FILE *hdl, char *fmt, ...);
-SBML_ODESOLVER_API void Warn  (FILE *hdl, char *fmt, ...);
+  SBML_ODESOLVER_API void fatal (FILE *hdl, char *fmt, ...);
+  SBML_ODESOLVER_API void Warn  (FILE *hdl, char *fmt, ...);
 
-SBML_ODESOLVER_API void *xalloc (size_t nmemb, size_t size);
-SBML_ODESOLVER_API void xfree (void *ptr);
+  SBML_ODESOLVER_API void *xalloc (size_t nmemb, size_t size);
+  SBML_ODESOLVER_API void xfree (void *ptr);
 
 #ifdef __cplusplus
 }

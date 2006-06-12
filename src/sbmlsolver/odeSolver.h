@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-14 14:56:11 raim>
-  $Id: odeSolver.h,v 1.20 2006/02/17 17:07:32 raimc Exp $
+  Last changed Time-stamp: <2006-06-12 11:51:32 raim>
+  $Id: odeSolver.h,v 1.21 2006/06/12 10:25:57 raimc Exp $
 */
 /* 
  *
@@ -91,17 +91,18 @@ extern "C" {
 
   SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
   SBML_ODESOLVER_API void VarySettings_free();
+
+
+/* not part of official API */
+int VarySettings_addParameterSeries(varySettings_t *,
+				    char *id, char *rid, double *designpoints);
+int VarySettings_addParameterSet(varySettings_t *,
+				 double **designpoints, char **id, char **rid);
+
  
 #ifdef __cplusplus
 }
 #endif
-
-/* not part of official API */
-int VarySettings_addParameterSeries(varySettings_t *, char *id, char *rid, double *designpoints);
-int VarySettings_addParameterSet(varySettings_t *,
-				 double **designpoints, char **id, char **rid);
-
-
 
 #endif
 

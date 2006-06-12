@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-17 11:08:17 xtof>
-  $Id: charBuffer.h,v 1.2 2006/03/17 11:24:35 chfl Exp $
+  Last changed Time-stamp: <2006-06-12 11:04:54 raim>
+  $Id: charBuffer.h,v 1.3 2006/06/12 10:25:56 raimc Exp $
 */
 /* 
  *
@@ -39,14 +39,14 @@
 extern "C" {
 #endif
 
-typedef struct charBuffer charBuffer_t;
+  typedef struct charBuffer charBuffer_t;
 
-charBuffer_t *CharBuffer_create();
-void CharBuffer_free(charBuffer_t *);
-void CharBuffer_append(charBuffer_t *, const char *);
-void CharBuffer_appendInt(charBuffer_t *, int);
-void CharBuffer_appendDouble(charBuffer_t *, double);
-const char *CharBuffer_getBuffer(charBuffer_t *);
+  charBuffer_t *CharBuffer_create();
+  void CharBuffer_free(charBuffer_t *);
+  void CharBuffer_append(charBuffer_t *, const char *);
+  void CharBuffer_appendInt(charBuffer_t *, int);
+  void CharBuffer_appendDouble(charBuffer_t *, double);
+  const char *CharBuffer_getBuffer(charBuffer_t *);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 20:50:29 raim>
-  $Id: odeModel.h,v 1.22 2006/04/11 13:10:45 afinney Exp $ 
+  Last changed Time-stamp: <2006-06-12 11:45:59 raim>
+  $Id: odeModel.h,v 1.23 2006/06/12 10:25:57 raimc Exp $ 
 */
 /* 
  *
@@ -96,6 +96,7 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
   SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *om);
+  
 #ifdef __cplusplus
 }
 #endif

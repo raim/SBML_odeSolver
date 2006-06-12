@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 20:38:57 raim>
-  $Id: integratorSettings.h,v 1.18 2006/05/18 08:36:07 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2006-06-12 11:43:49 raim>
+  $Id: integratorSettings.h,v 1.19 2006/06/12 10:25:57 raimc Exp $ 
 */
 /* 
  *
@@ -46,7 +46,7 @@ extern "C" {
 #include "sbmlsolver/cvodesettingsdatatype.h"
 
   /* structures */
-typedef struct timeSettings timeSettings_t;
+  typedef struct timeSettings timeSettings_t;
 
   /** NOT USED CURRENTLY!
       timeSettings: start- and end times, timesteps, number of timesteps */

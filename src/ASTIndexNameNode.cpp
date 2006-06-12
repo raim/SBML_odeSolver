@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:45:23 raim>
-  $Id: ASTIndexNameNode.cpp,v 1.4 2006/02/14 15:08:43 jamescclu Exp $
+  Last changed Time-stamp: <2006-06-12 11:03:17 raim>
+  $Id: ASTIndexNameNode.cpp,v 1.5 2006/06/12 10:25:55 raimc Exp $
 */
 /* 
  *
@@ -52,32 +52,32 @@ ASTIndexNameNode::~ASTIndexNameNode(void)
 */
 ASTNode_t *ASTNode_createIndexName(void)
 {
-    return new ASTIndexNameNode();
+  return new ASTIndexNameNode();
 }
 
 /** Returns the index of an indexed AST_NAME node (ASTIndexNameNode)
-*/
+ */
 unsigned int ASTNode_getIndex(ASTNode_t *node)
 {
-    return static_cast<ASTIndexNameNode*>(node)->getIndex();
+  return static_cast<ASTIndexNameNode*>(node)->getIndex();
 }
 
 /** Sets the index of an indexed AST_NAME node (ASTIndexNameNode)
-*/
+ */
 void ASTNode_setIndex(ASTNode_t *node, unsigned int index)
 {
-    static_cast<ASTIndexNameNode*>(node)->setIndex(index);
+  static_cast<ASTIndexNameNode*>(node)->setIndex(index);
 }
 
 /*! \addtogroup simplifyAST
-@{
+  @{
 */
 
 /** Returns true (1) if the ASTNode is an ASTIndexNameNode
-*/
+ */
 SBML_ODESOLVER_API int ASTNode_isIndexName(ASTNode_t *node)
 {
-    return dynamic_cast<ASTIndexNameNode*>(node) != 0;
+  return dynamic_cast<ASTIndexNameNode*>(node) != 0;
 }
 
 /** Returns true (1) if the an indexed ASTNode (ASTIndexNameNode) has
@@ -85,7 +85,7 @@ SBML_ODESOLVER_API int ASTNode_isIndexName(ASTNode_t *node)
 */
 SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
 {
-    return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetIndex();
+  return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetIndex();
 }
 
 
@@ -96,14 +96,14 @@ SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
 */
 SBML_ODESOLVER_API unsigned int ASTNode_isSetData(ASTNode_t *node)
 {
-    return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetData();
+  return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetData();
 }
 
 /** Sets the data of an indexed AST_NAME node (ASTIndexNameNode)
-*/
+ */
 void ASTNode_setData(ASTNode_t *node)
 {
-    static_cast<ASTIndexNameNode*>(node)->setData();
+  static_cast<ASTIndexNameNode*>(node)->setData();
 }
 
 

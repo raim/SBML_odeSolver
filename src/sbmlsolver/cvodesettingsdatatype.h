@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-26 17:03:39 raim>
-  $Id: cvodesettingsdatatype.h,v 1.1 2006/03/10 09:18:49 afinney Exp $ 
+  Last changed Time-stamp: <2006-06-12 11:19:38 raim>
+  $Id: cvodesettingsdatatype.h,v 1.2 2006/06/12 10:25:57 raimc Exp $ 
 */
 
 #ifndef _CVODESETTINGSDATATYPE_H_
@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-typedef struct cvodeSettings cvodeSettings_t;
+  typedef struct cvodeSettings cvodeSettings_t;
   
 #ifdef __cplusplus
 }

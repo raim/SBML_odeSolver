@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-17 10:59:47 xtof>
-  $Id: compiler.h,v 1.3 2006/04/11 13:10:45 afinney Exp $
+  Last changed Time-stamp: <2006-06-12 11:06:24 raim>
+  $Id: compiler.h,v 1.4 2006/06/12 10:25:57 raimc Exp $
 */
 /* 
  *
@@ -41,28 +41,34 @@
 extern "C" {
 #endif
 
-typedef struct compiled_code compiled_code_t ;
+  typedef struct compiled_code compiled_code_t ;
 
-/**
- * create compiled code from C source 
- *   On windows this creates a DLL and loads it
- *   On Liunx it will use libtcc and in memory compilation -- this is better!!
- */
-SBML_ODESOLVER_API compiled_code_t *Compiler_compile(const char *sourceCode);
+  /**
+   * create compiled code from C source
+   
+   *   On windows this creates a DLL and loads it
+   *   On Liunx it will use libtcc and in memory compilation
+   *   -- this is better!!
+   */
+  SBML_ODESOLVER_API compiled_code_t *Compiler_compile(const char *sourceCode);
 
-/**
- * get pointer to given function corresponding to the symbol in the compiled code
- *   On windows use WIN32 API to locate function in dll
- *   On Linux use libtcc to locate function
- */
-SBML_ODESOLVER_API void *CompiledCode_getFunction(compiled_code_t *, const char *symbol);
+  /**
+   * get pointer to given function corresponding to the symbol
+   * in the compiled code
+   
+   *   On windows use WIN32 API to locate function in dll
+   *   On Linux use libtcc to locate function
+   */
+  SBML_ODESOLVER_API void *CompiledCode_getFunction(compiled_code_t *, const char *symbol);
 
-/**
- * discard compiled code - don't call this until you have stopped calling the functions returned by getFunction.
- *   On windows use Win32 to unlink dll and delete dll
- *   On Linux use libtcc to discard in memory code
- */
-SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
+  /**
+   * discard compiled code - don't call this until you have stopped
+   * calling the functions returned by getFunction.
+   
+   *   On windows use Win32 to unlink dll and delete dll
+   *   On Linux use libtcc to discard in memory code
+   */
+  SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
 
 #ifdef __cplusplus
 }
