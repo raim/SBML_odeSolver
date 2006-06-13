@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 18:21:36 raim>
-  $Id: sensSolver.c,v 1.26 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:55:39 raim>
+  $Id: sensSolver.c,v 1.27 2006/06/13 15:07:48 raimc Exp $
 */
 /* 
  *
@@ -50,7 +50,7 @@
 #include "cvdense.h"
 #include "nvector_serial.h"  
 
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"

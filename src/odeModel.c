@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 16:36:18 raim>
-  $Id: odeModel.c,v 1.48 2006/06/09 17:04:35 raimc Exp $ 
+  Last changed Time-stamp: <2006-06-13 12:57:31 raim>
+  $Id: odeModel.c,v 1.49 2006/06/13 15:07:47 raimc Exp $ 
 */
 /* 
  *
@@ -44,7 +44,8 @@
 */
 /*@{*/
 
-#include "sbmlsolver/odeModel.h"
+
+
 
 #include <string.h>
 #include <malloc.h>
@@ -54,9 +55,10 @@
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/processAST.h"
-#include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/odeModel.h"
+#include "sbmlsolver/variableIndex.h"
 
 #define COMPILED_RHS_FUNCTION_NAME "rhs"
 #define COMPILED_JACOBIAN_FUNCTION_NAME "jac"

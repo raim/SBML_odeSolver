@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 13:44:22 raim>
-  $Id: cvodeSolver.c,v 1.35 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:54:31 raim>
+  $Id: cvodeSolver.c,v 1.36 2006/06/13 15:07:47 raimc Exp $
 */
 /* 
  *
@@ -52,7 +52,7 @@
 #include "cvdense.h"
 #include "nvector_serial.h"  
 
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"

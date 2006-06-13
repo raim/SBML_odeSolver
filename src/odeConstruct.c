@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 16:09:50 raim>
-  $Id: odeConstruct.c,v 1.33 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:55:26 raim>
+  $Id: odeConstruct.c,v 1.34 2006/06/13 15:07:47 raimc Exp $
 */
 /* 
  *
@@ -55,7 +55,7 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/processAST.h"

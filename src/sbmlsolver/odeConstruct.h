@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 12:47:43 raim>
-  $Id: odeConstruct.h,v 1.9 2005/10/27 12:36:13 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:09:24 raim>
+  $Id: odeConstruct.h,v 1.10 2006/06/13 15:07:48 raimc Exp $
 */
 /* 
  *
@@ -36,7 +36,7 @@
 #ifndef _ODECONSTRUCT_H_
 #define _ODECONSTRUCT_H_
 
-#include "cvodedata.h"
+#include "cvodeData.h"
 #include "sbmlsolver/exportdefs.h"
 
 #ifdef __cplusplus

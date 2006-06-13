@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.22 2006/03/17 11:25:58 chfl Exp $
+# $Id: Makefile.am,v 1.23 2006/06/13 15:07:47 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -47,7 +47,7 @@ lib_LIBRARIES = libODES.a
 libODES_a_SOURCES = ASTIndexNameNode.cpp \
                     charBuffer.cpp \
                     compiler.c \
-                    cvodedata.c \
+                    cvodeData.c \
                     cvodeSolver.c \
                     daeSolver.c \
                     drawGraph.c \
@@ -69,11 +69,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
                      sbmlsolver/charBuffer.h \
                      sbmlsolver/compiler.h \
                      sbmlsolver/config.h \
-                     sbmlsolver/cvodedata.h \
-                     sbmlsolver/cvodeDataStruct.h \
-                     sbmlsolver/cvodedatatype.h \
-                     sbmlsolver/cvodesettingsdatatype.h \
-                     sbmlsolver/cvodeSettingsStruct.h \
+                     sbmlsolver/cvodeData.h \
                      sbmlsolver/cvodeSolver.h \
                      sbmlsolver/daeSolver.h \
                      sbmlsolver/drawGraph.h \
@@ -84,9 +80,7 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
                      sbmlsolver/modelSimplify.h \
                      sbmlsolver/nullSolver.h \
                      sbmlsolver/odeConstruct.h \
-                     sbmlsolver/odemodeldatatype.h \
                      sbmlsolver/odeModel.h \
-                     sbmlsolver/odeModelStruct.h \
                      sbmlsolver/odeSolver.h \
                      sbmlsolver/processAST.h \
                      sbmlsolver/sbml.h \

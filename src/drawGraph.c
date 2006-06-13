@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 14:58:36 raim>
-  $Id: drawGraph.c,v 1.24 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:54:45 raim>
+  $Id: drawGraph.c,v 1.25 2006/06/13 15:07:47 raimc Exp $
 */
 /* 
  *
@@ -56,7 +56,7 @@
 #endif
 
 /* own header files */
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/drawGraph.h"
 #include "sbmlsolver/solverError.h"

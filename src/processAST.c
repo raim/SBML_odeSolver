@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 18:08:56 raim>
-  $Id: processAST.c,v 1.41 2006/06/09 17:01:26 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 16:59:34 raim>
+  $Id: processAST.c,v 1.42 2006/06/13 15:07:47 raimc Exp $
 */
 /* 
  *
@@ -57,7 +57,7 @@
 #include "config.h"
 #endif
 
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/ASTIndexNameNode.h"
 #include "sbmlsolver/solverError.h"
@@ -501,6 +501,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       log10(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_PIECEWISE:
+    /** Piecewise: WRONG; can have more arguments ! */
     if ( evaluateAST(child(n,0),data) ) 
       result = evaluateAST(child(n,1),data);
     else 
@@ -882,10 +883,13 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       /* result */
       fprime = sum;
       break;
-    case AST_FUNCTION_ABS:             /** ABS: WRONG */
-      /* f(x)=abs(a(x)) => f' = sig(a)*a'
-	  WRONG: CAN RESULT IN A DISCONTINUOUS FUNCTION! */ 
-      ASTNode_setType(fprime, ASTNode_getType(f)); /* WRONG !!! */
+    case AST_FUNCTION_ABS:             
+      /** f(x)=abs(a(x)) => f' = sig(a)*a'\n
+	  CAN RESULT IN A DISCONTINUOUS FUNCTION! */ 
+      ASTNode_setType(fprime, AST_TIMES);      
+      ASTNode_addChild(fprime, ASTNode_create());
+      ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_PIECEWISE);
+      /**!! construct  piecewise node here !!!*/
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
 

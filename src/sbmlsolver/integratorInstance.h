@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:39:56 raim>
-  $Id: integratorInstance.h,v 1.29 2006/06/12 10:25:57 raimc Exp $ 
+  Last changed Time-stamp: <2006-06-13 14:09:10 raim>
+  $Id: integratorInstance.h,v 1.30 2006/06/13 15:07:48 raimc Exp $ 
 */
 /* 
  *
@@ -42,9 +42,8 @@
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/cvodedatatype.h"
 #include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 
 #ifdef __cplusplus
 extern "C" {

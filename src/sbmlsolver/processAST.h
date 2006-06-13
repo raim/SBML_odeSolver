@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:52:06 raim>
-  $Id: processAST.h,v 1.15 2006/06/12 10:25:58 raimc Exp $
+  Last changed Time-stamp: <2006-06-13 14:09:50 raim>
+  $Id: processAST.h,v 1.16 2006/06/13 15:07:49 raimc Exp $
 */
 /* 
  *
@@ -40,7 +40,7 @@
 #include <sbml/SBMLTypes.h>
 
 /* own header files */
-#include "sbmlsolver/cvodedata.h"
+#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/charBuffer.h"
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-02-23 13:51:34 raim>
-  $Id: printModel.c,v 1.17 2006/03/17 17:43:27 afinney Exp $
+  Last changed Time-stamp: <2006-06-13 14:55:53 raim>
+  $Id: printModel.c,v 1.18 2006/06/13 15:07:46 raimc Exp $
 */
 /* 
  *
@@ -50,7 +50,7 @@
 
 /* Own Header Files */
 #include "../src/sbmlsolver/util.h"
-#include "../src/sbmlsolver/cvodedata.h"
+#include "../src/sbmlsolver/cvodeData.h"
 #include "../src/sbmlsolver/modelSimplify.h"
 #include "../src/sbmlsolver/processAST.h"
 
