@@ -1,12 +1,13 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2005-12-15 18:00:54 raim>
-# $Id: simple.sh,v 1.10 2006/06/14 08:59:47 chfl Exp $
+# Last changed Time-stamp: <2006-06-14 11:10:36 xtof>
+# $Id: simple.sh,v 1.11 2006/06/14 13:04:49 chfl Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
 PERL=$(which perl)
-SOLVER="../odeSolver/odeSolver"
+SOLVER=odeSolver/odeSolver
+SOLVERBASE=".."
 TIME=1e4
 ABSE=1e-7
 RELE=1e-3
@@ -14,13 +15,16 @@ JAC=
 NOLEG=
 
 # process command-line arguments
-while getopts "e:hjr:t:x" opt; do
+while getopts "b:e:hjr:t:x" opt; do
     case $opt in
+	b)  SOLVERBASE=$OPTARG
+	    ;;
 	e)
 	    ABSE=$OPTARG
 	    ;;
 	h)
 	    echo $USAGE
+	    echo "       -b S  set solver base directory to S"
 	    echo "       -e N  set absolute error to N"
 	    echo "       -h    display this help message"
 	    echo "       -j    use jacobian matrix"
@@ -61,10 +65,10 @@ set -e
 if test -x $GR; then \rm $GR; fi
 
 # show command line
-echo "$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
+echo "${SOLVERBASE}/$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
 
 # integrate
-OK=$($SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
+OK=$($SOLVERBASE/$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
 if [ $OK ]; then
   echo ""
   echo "!!! Error: something went wrong during integration !!!"
@@ -76,7 +80,7 @@ fi
 if test -x $PERL; then
   if test -x $XMGR; then
     # add a legend an display results with xmgrace
-    $PERL ../scripts/xmgracefile.pl $NOLEG $GR | $XMGR -nxy -&
+    $PERL $SOLVERBASE/scripts/xmgracefile.pl $NOLEG $GR | $XMGR -nxy -&
   else
     echo "!!! ERROR: Xmgrace not found !!!"
     exit 1
