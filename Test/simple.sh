@@ -1,7 +1,7 @@
 #!/bin/sh
 # -*-Bash-*-
 # Last changed Time-stamp: <2005-12-15 18:00:54 raim>
-# $Id: simple.sh,v 1.9 2005/12/15 17:01:47 raimc Exp $
+# $Id: simple.sh,v 1.10 2006/06/14 08:59:47 chfl Exp $
 
 USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
@@ -61,7 +61,7 @@ set -e
 if test -x $GR; then \rm $GR; fi
 
 # show command line
-echo "$SOLVER $XML $JAC --time=$TIMEE --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
+echo "$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
 
 # integrate
 OK=$($SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
