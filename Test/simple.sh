@@ -1,21 +1,23 @@
 #!/bin/sh
 # -*-Bash-*-
-# Last changed Time-stamp: <2006-06-14 11:10:36 xtof>
-# $Id: simple.sh,v 1.11 2006/06/14 13:04:49 chfl Exp $
+# Last changed Time-stamp: <2006-06-15 14:01:40 xtof>
+# $Id: simple.sh,v 1.12 2006/06/15 12:57:24 chfl Exp $
 
-USAGE="Usage: $0 [-e N] [-h] [-j] [-r N] [-t N] [-x] FOO.xml ..."
+USAGE="Usage: $0 [-b S] [-e N] [-h] [-j] [-m N] [-r N] [-t N] [-x] FOO.xml ..."
 XMGR=$(which xmgrace)
 PERL=$(which perl)
 SOLVER=odeSolver/odeSolver
 SOLVERBASE=".."
-TIME=1e4
-ABSE=1e-7
-RELE=1e-3
+TIME=1e5
+ABSE=1e-9
+RELE=1e-4
+MAXS=1e4
+PRINTS=1e2
 JAC=
 NOLEG=
 
 # process command-line arguments
-while getopts "b:e:hjr:t:x" opt; do
+while getopts "b:e:hjm:p:r:t:x" opt; do
     case $opt in
 	b)  SOLVERBASE=$OPTARG
 	    ;;
@@ -28,6 +30,8 @@ while getopts "b:e:hjr:t:x" opt; do
 	    echo "       -e N  set absolute error to N"
 	    echo "       -h    display this help message"
 	    echo "       -j    use jacobian matrix"
+	    echo "       -m N  set maxstep to N"
+	    echo "       -p N  set printstep to N"
 	    echo "       -r N  set relative error to N"
 	    echo "       -t N  set integration time to N"
 	    echo "       -x    don't display legend in xmgrace"
@@ -35,6 +39,12 @@ while getopts "b:e:hjr:t:x" opt; do
 	    ;;
 	j)
 	    JAC=-j
+	    ;;
+	m)
+	    MAXS=$OPTARG
+	    ;;
+	p)
+	    PRINTS=$OPTARG
 	    ;;
 	r)
 	    RELE=$OPTARG
@@ -65,10 +75,10 @@ set -e
 if test -x $GR; then \rm $GR; fi
 
 # show command line
-echo "${SOLVERBASE}/$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
+echo "${SOLVERBASE}/$SOLVER $XML $JAC --time=$TIME --mxstep=$MAXS --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR"
 
 # integrate
-OK=$($SOLVERBASE/$SOLVER $XML $JAC --time=$TIME --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
+OK=$($SOLVERBASE/$SOLVER $XML $JAC --time=$TIME --mxstep=$MAXS --printstep=100 --error=$ABSE --rerror=$RELE -l > $GR)
 if [ $OK ]; then
   echo ""
   echo "!!! Error: something went wrong during integration !!!"
