@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 16:59:34 raim>
-  $Id: processAST.c,v 1.42 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2006-06-16 16:52:20 raim>
+  $Id: processAST.c,v 1.43 2006/06/16 15:01:47 raimc Exp $
 */
 /* 
  *
@@ -501,11 +501,33 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       log10(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_PIECEWISE:
-    /** Piecewise: WRONG; can have more arguments ! */
-    if ( evaluateAST(child(n,0),data) ) 
-      result = evaluateAST(child(n,1),data);
-    else 
-      result = evaluateAST(child(n,2),data);
+    /** Piecewise: */
+    found = 0;
+    /** Go through n pieces with 2 AST children for each piece, */
+    for ( i=0; i<(childnum-1); i=i+2 )
+    {
+      if ( evaluateAST(child(n, i+1), data) )
+      {
+	found++;
+	result = evaluateAST(child(n, i), data);
+      }
+    }
+    /** odd number of AST children: if no piece was true, otherwise remains */
+    /* i should be equal to childnum for even number piecewise AST
+       and equal to childnum-1 for odd numbered piecewise ASTs */
+    if ( i == childnum-1 && found == 0 )
+    {
+      found++;
+      result = evaluateAST(child(n, i), data);
+    }
+    if ( found == 0 )
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_PIECEWISE,
+			"Piecewise function failed; no true piece");
+    if ( found > 1 )
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_PIECEWISE,
+			"Piecewise function failed; several true pieces");
     break;
   case AST_FUNCTION_POWER:
     result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
@@ -885,11 +907,41 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       break;
     case AST_FUNCTION_ABS:             
       /** f(x)=abs(a(x)) => f' = sig(a)*a'\n
-	  CAN RESULT IN A DISCONTINUOUS FUNCTION! */ 
-      ASTNode_setType(fprime, AST_TIMES);      
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_PIECEWISE);
-      /**!! construct  piecewise node here !!!*/
+	  RESULTS IN A DISCONTINUOUS FUNCTION!\n
+          sig(a) is set to 0 if a==0, while it is actually not defined */ 
+      ASTNode_setType(fprime, AST_TIMES);
+      /* piecewise node for signum function, sig(a) */
+      helper = ASTNode_create();
+      ASTNode_setType(helper, AST_FUNCTION_PIECEWISE);
+      /* -1 if a < 0 */
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(helper, 0), -1);
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setType(ASTNode_getChild(helper, 1), AST_RELATIONAL_LT);
+      ASTNode_addChild(ASTNode_getChild(helper, 1),
+		       copyAST(ASTNode_getChild(f,0)));
+      ASTNode_addChild(ASTNode_getChild(helper, 1), ASTNode_create());
+      ASTNode_setInteger(child2(helper,1,1), 0);      
+      /* 0 if a = 0; ACTUALLY sig(a) is not defined for a==0 !! */
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(helper, 2), 0);
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setType(ASTNode_getChild(helper, 3), AST_RELATIONAL_EQ);
+      ASTNode_addChild(ASTNode_getChild(helper, 3),
+		       copyAST(ASTNode_getChild(f,0)));
+      ASTNode_addChild(ASTNode_getChild(helper, 3), ASTNode_create());
+      ASTNode_setInteger(child2(helper,3,1), 0);      
+      /* +1 if a > 0 */
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setInteger(ASTNode_getChild(helper, 4), 1);
+      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_setType(ASTNode_getChild(helper, 5), AST_RELATIONAL_GT);
+      ASTNode_addChild(ASTNode_getChild(helper, 5),
+		       copyAST(ASTNode_getChild(f,0)));
+      ASTNode_addChild(ASTNode_getChild(helper, 5), ASTNode_create());
+      ASTNode_setInteger(child2(helper,5,1), 0);      
+      /* multiply: sig(a) * a' */		       
+      ASTNode_addChild(fprime, helper);
       ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
       break;
 
@@ -1504,6 +1556,12 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 		      "differentiateAST: unknown ASTNode type");
     ASTNode_setName(fprime, "differentiation_failed");
   }
+
+/*   printf(" f(%s)= %s; df/dx= %s\n", */
+/* 	 x, */
+/* 	 SBML_formulaToString(f), */
+/* 	 SBML_formulaToString(fprime)); */
+  
   /* return fprime; */
   simple = simplifyAST(fprime);
   ASTNode_free(fprime);
@@ -2152,7 +2210,7 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
   int i ;
 
   if ( ASTNode_getType(node) == AST_NAME )
-    List_add(symbols, ASTNode_getName(node));
+    List_add(symbols, (char*) ASTNode_getName(node));
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
@@ -2304,9 +2362,9 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
 {
   int found = 0;
 
-  if ( ASTNode_isSetIndex(n) )
+  if ( ASTNode_isSetIndex((ASTNode_t *)n) )
   {
-    if ( ASTNode_isSetData(n) )
+    if ( ASTNode_isSetData((ASTNode_t *)n) )
     {
       SolverError_error(FATAL_ERROR_TYPE,
 			SOLVER_ERROR_AST_COMPILATION_FAILED_DATA_AST_NODE_NOT_SUPPORTED_YET,
@@ -2318,7 +2376,7 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
     /* else */
     {
       CharBuffer_append(expressionStream, "value[");
-      CharBuffer_appendInt(expressionStream, ASTNode_getIndex(n));
+      CharBuffer_appendInt(expressionStream, ASTNode_getIndex((ASTNode_t *)n));
       CharBuffer_append(expressionStream, "]");
     }
 

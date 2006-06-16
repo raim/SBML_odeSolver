@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:56:42 raim>
-  $Id: solverError.h,v 1.19 2006/06/12 10:25:58 raimc Exp $ 
+  Last changed Time-stamp: <2006-06-16 15:32:09 raim>
+  $Id: solverError.h,v 1.20 2006/06/16 15:01:48 raimc Exp $ 
 */
 /* 
  *
@@ -87,6 +87,7 @@ extern "C" {
       SOLVER_ERROR_AST_EVALUATION_FAILED_LAMBDA = 20104,
       SOLVER_ERROR_AST_EVALUATION_FAILED_FUNCTION = 20105,
       SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL = 20106,
+      SOLVER_ERROR_AST_EVALUATION_FAILED_PIECEWISE = 20107,
       /** AST differentiation in differentiateAST */
       SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_CONSTANT = 20110,
       SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_OPERATOR = 20111,
