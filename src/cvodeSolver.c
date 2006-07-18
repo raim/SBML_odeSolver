@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:54:31 raim>
-  $Id: cvodeSolver.c,v 1.36 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:42:42 raim>
+  $Id: cvodeSolver.c,v 1.37 2006/07/18 09:44:20 raimc Exp $
 */
 /* 
  *
@@ -371,11 +371,11 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      * CV_NEWTON      Newton iteration method\n
      * CV_FUNCTIONAL  functional iteration method\n
      */
-    if ( opt->CvodeMethod == 0 ) method = CV_BDF;
-    else method = CV_ADAMS;
+    if ( opt->CvodeMethod == 1 ) method = CV_ADAMS;
+    else method = CV_BDF;
     
-    if ( opt->IterMethod == 0 ) iteration = CV_NEWTON;
-    else iteration = CV_FUNCTIONAL;
+    if ( opt->IterMethod == 1 ) iteration = CV_FUNCTIONAL;
+    else iteration = CV_NEWTON;
 
     /* !!! valgrind memcheck sensitivity: 20,632 (1,880 direct,
        18,752 indirect) bytes in 1 blocks are definitely lost !!! */
