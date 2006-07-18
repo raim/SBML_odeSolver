@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 19:51:13 raim>
-  $Id: commandLine.c,v 1.19 2006/03/17 17:43:27 afinney Exp $
+  Last changed Time-stamp: <2006-07-18 11:08:04 raim>
+  $Id: commandLine.c,v 1.20 2006/07/18 09:12:16 raimc Exp $
 */
 /* 
  *
@@ -94,10 +94,12 @@ odeSolver (int argc, char *argv[])
       then option '-i' will redirect you to the
       interactive mode
   */
-  if ( Opt.InterActive ) {
+  if ( Opt.InterActive )
+  {
     interactive(); /* try it, it's fun :) */
   }   
-  else {
+  else
+  {
     /* --model, --mpath: Read filename and path
       Read model path and model name from command-line
       options '--model' and '--mpath'.
@@ -112,7 +114,8 @@ odeSolver (int argc, char *argv[])
 
     if (strlen(Opt.ModelPath) == 0)
     {
-        ASSIGN_NEW_MEMORY_BLOCK(sbmlFilename, strlen(Opt.ModelFile) + 1, char, EXIT_FAILURE);
+        ASSIGN_NEW_MEMORY_BLOCK(sbmlFilename,
+				strlen(Opt.ModelFile) + 1, char, EXIT_FAILURE);
         strcpy(sbmlFilename, Opt.ModelFile);
     }
     else
@@ -127,23 +130,24 @@ odeSolver (int argc, char *argv[])
 	Then the model will be retrieved from the document
 	and used for further processing.	
     */
-    if ( (d = parseModelWithArguments(sbmlFilename)) == 0 ) {
+    if ( (d = parseModelWithArguments(sbmlFilename)) == 0 )
+    {
         if ( Opt.Validate )
-            SolverError_error(
-                WARNING_ERROR_TYPE,
-                SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH,
-                "Please make sure that path >%s< contains"
-                "the correct SBML schema for validation."
-                "Or try running without validation.", Opt.SchemaPath);
+            SolverError_error(WARNING_ERROR_TYPE,
+			      SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH,
+			      "Please make sure that path >%s< contains"
+			      "the correct SBML schema for validation."
+			      "Or try running without validation.",
+			      Opt.SchemaPath);
 
-        SolverError_error(
-            ERROR_ERROR_TYPE,
-            SOLVER_ERROR_CANNOT_PARSE_MODEL,
-            "Can't parse Model >%s<", sbmlFilename);
+        SolverError_error(ERROR_ERROR_TYPE,
+			  SOLVER_ERROR_CANNOT_PARSE_MODEL,
+			  "Can't parse Model >%s<", sbmlFilename);
         SolverError_dump();
         SolverError_haltOnErrors();
     }
-    else {
+    else
+    {
       m = SBMLDocument_getModel(d);
     }
     
@@ -155,13 +159,15 @@ odeSolver (int argc, char *argv[])
 	any of the following actions and many other
 	command-line options.
     */
-    if ( Opt.DrawReactions == 1 ) {
+    if ( Opt.DrawReactions == 1 )
+    {
       if ( Opt.PrintMessage ) 
 	fprintf(stderr,
 		"\n\nTrying to draw reaction graph '%s_rn.%s' from the model. \nThis can take a while for big models... \n\n",
 		sbmlFilename, Opt.GvFormat);
   
-      if ( !drawModel(m, sbmlFilename, Opt.GvFormat) > 0 ) {
+      if ( !drawModel(m, sbmlFilename, Opt.GvFormat) > 0 )
+      {
 	xfree(sbmlFilename);
 	SBMLDocument_free(d);
 	fatal(stderr, "%s:%d odeSolver(): Couldn't calculate graph for >%s<",
@@ -173,13 +179,15 @@ odeSolver (int argc, char *argv[])
     }
 
     /* setting the file to write output data */
-    if ( Opt.Write && !Opt.Xmgrace ) {
+    if ( Opt.Write && !Opt.Xmgrace )
+    {
       filename = (char *) calloc(strlen(Opt.ModelPath)+
 				 strlen(Opt.ModelFile)+5, sizeof(char));
       sprintf(filename, "%s%s.dat", Opt.ModelPath, Opt.ModelFile);
       outfile = fopen(filename, "w");
     }
-    else {
+    else
+    {
       filename = "";
       outfile = stdout;
     }
@@ -194,7 +202,8 @@ odeSolver (int argc, char *argv[])
 	overruling the following actions and many command-line
 	options. 
     */
-    if ( Opt.Determinant == 1 && Opt.PrintModel == 1 ) {
+    if ( Opt.Determinant == 1 && Opt.PrintModel == 1 )
+    {
       om = ODEModel_create(m);
       det = ODEModel_constructDeterminant(om);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
@@ -217,7 +226,8 @@ odeSolver (int argc, char *argv[])
 	will NOT be printed ONLY when additionally option '-j' was
 	set. Exit afterwards.
     */    
-    if ( Opt.PrintModel == 1 ) {
+    if ( Opt.PrintModel == 1 )
+    {
       printModel(m, outfile);
       printSpecies(m, outfile);
       printReactions(m, outfile);
@@ -249,8 +259,8 @@ odeSolver (int argc, char *argv[])
 	simplified model will be printed to the given outfile or
 	to stdout. Exit afterwards.
     */
-    if ( Opt.PrintODEsToSBML == 1 ) {
-
+    if ( Opt.PrintODEsToSBML == 1 )
+    {
       ode = Model_reduceToOdes(m);
       /* slight change in behavour - halt now rather than
 	 continue with null model
@@ -305,7 +315,8 @@ odeSolver (int argc, char *argv[])
     */
 
     set = CvodeSettings_createWith(Opt.Time, Opt.PrintStep,
-				   Opt.Error, Opt.RError, Opt.Mxstep,
+				   Opt.Error, Opt.RError,
+				   Opt.Mxstep, Opt.Method, 
 				   Opt.Jacobian, 0, Opt.HaltOnEvent,
 				   Opt.SteadyState, 1, Opt.Sensitivity, 2);
     CvodeSettings_setCompileFunctions(set, Opt.Compile);

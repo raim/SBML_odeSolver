@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 16:41:40 raim>
-  $Id: odeSolver.c,v 1.42 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-06-19 09:47:11 raim>
+  $Id: odeSolver.c,v 1.43 2006/07/18 09:12:16 raimc Exp $
 */
 /* 
  *
@@ -43,9 +43,7 @@
     mapped back to SBML structures.
 
     Please see sbmlResults for interfaces to the returned result
-    structures.
-
-*/
+    structures. */
 /*@{*/
 
 #include <stdio.h>

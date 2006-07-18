@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 15:13:54 raim>
-  $Id: integratorSettings.c,v 1.27 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:06:53 raim>
+  $Id: integratorSettings.c,v 1.28 2006/07/18 09:12:16 raimc Exp $
 */
 /* 
  *
@@ -68,7 +68,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
   return CvodeSettings_createWith(Time, PrintStep,
-				  1e-18, 1e-10, 10000, 
+				  1e-18, 1e-10, 10000, 0,
 				  1, 0, 0, 0, 1, 0, 0);
 }
 
@@ -128,7 +128,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
     as new settings will be required for other solvers!
 */
 
-SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int Method, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {
 
   cvodeSettings_t *set;
@@ -137,7 +137,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   /* 1. Setting SBML ODE Solver integration parameters */
   CvodeSettings_setErrors(set, Error, RError, Mxstep);
   /* set non-linear solver defaults (BDF, Newton, max.order 5*/
-  set->CvodeMethod = 0;
+  set->CvodeMethod = Method;
   set->IterMethod = 0;
   set->MaxOrder = 5;
   set->compileFunctions = 0;

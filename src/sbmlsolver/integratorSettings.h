@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:01:29 raim>
-  $Id: integratorSettings.h,v 1.20 2006/06/13 15:07:48 raimc Exp $ 
+  Last changed Time-stamp: <2006-07-18 11:07:19 raim>
+  $Id: integratorSettings.h,v 1.21 2006/07/18 09:12:16 raimc Exp $ 
 */
 /* 
  *
@@ -140,7 +140,7 @@ extern "C" {
   /* create and free, get and set cvodeSettings */
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create();
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep);
-  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
+  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int Method, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *, double EndTime, int PrintStep);
   SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *, int, double);
   SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);

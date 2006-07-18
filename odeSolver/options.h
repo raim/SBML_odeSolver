@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:24:14 raim>
-  $Id: options.h,v 1.4 2006/03/17 17:43:27 afinney Exp $
+  Last changed Time-stamp: <2006-07-18 10:57:22 raim>
+  $Id: options.h,v 1.5 2006/07/18 09:12:16 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -31,6 +31,8 @@ typedef struct _Options {
   int InterActive;      /* Start program in interactive mode */
   int Jacobian;         /* Do not use jacobian matrix for integration */
   int Sensitivity;      /* Activate Sensitivity Analysis */
+  int Method;           /* Use BDF (default, 0) or Adams-Moulton (1)
+			   method for numerical integration */
   int PrintAll;         /* Print all given results instead of only one */
   int PrintJacobian;    /* Print out time course of the jacobian matrix */
   int PrintReactions;   /* Print out time course of the reaction rates */
@@ -44,7 +46,8 @@ typedef struct _Options {
   int Validate;         /* Validate SBML model before doing anything else */
   int Write;            /* Print results to file instead of stdout */
   int Xmgrace;          /* Print results to XMGrace instead of stdout */
-  int Compile;          /* Compile the rhs ode function, jacobian function and events function */
+  int Compile;          /* Compile the rhs ode function,
+			   jacobian function and events function */
   int Benchmark;        /* print execution time statistics */
   int ResetCvodeOnEvents; /* free and restart cvode on an event */
 } Options;
