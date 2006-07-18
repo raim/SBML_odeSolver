@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:01:26 raim>
-  $Id: options.c,v 1.5 2006/07/18 09:12:16 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:38:35 raim>
+  $Id: options.c,v 1.6 2006/07/18 09:41:06 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +44,7 @@ static struct option const long_options[] =
   {"gvformat",      required_argument, 0,   0},  
   {"printstep",     required_argument, 0,   0},
   {"method",        required_argument, 0,   0},
+  {"iteration",     required_argument, 0,   0},
   {"model",         required_argument, 0,   0},
   {"mpath",         required_argument, 0,   0},
   {"param",         required_argument, 0,   0},
@@ -184,6 +185,15 @@ processOptions (int argc, char *argv[])
           usage (EXIT_FAILURE);
         }
         else { Opt.Method = tmp; }
+      }
+      if (strcmp(long_options[option_index].name, "iteration")==0) {
+        double tmp;
+        if (sscanf(optarg, "%lf", &tmp) == 0) {
+          Warn (stderr, "%s:%d processOptions(): No Mxstep specified",
+                __FILE__, __LINE__);
+          usage (EXIT_FAILURE);
+        }
+        else { Opt.IterMethod = tmp; }
       }
       if (strcmp(long_options[option_index].name, "mxstep")==0) {
         double tmp;
@@ -400,10 +410,12 @@ usage (int status)
     "                       (now set to: %g)\n"
     "     --mxstep <Int>    Maximum step number during integration\n"
     "                       (now set to: %g)\n",
-    "     --method <0/1>   Integration method, 0: BDF, 1: Adams-Moulton\n"
-	  "                       (now set to: %d)\n",
+    "     --method <0/1>    Integration method, 0: BDF, 1: Adams-Moulton\n"
+    "                       (now set to: %d)\n",
+    "     --iteration <0/1> Iteration method, 0: Newton, 1: Functional\n"
+    "                       (now set to: %d)\n",
 	  Opt.PrintStep, Opt.Time, Opt.Error, Opt.RError,
-	  Opt.Mxstep, Opt.Method);	   
+	  Opt.Mxstep, Opt.Method, Opt.IterMethod);	   
   fprintf(stderr,
     "(3) INTEGRATION RESULTS\n"
     " -a, --all             Print all available results (y/k/r + conc.).\n"

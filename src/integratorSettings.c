@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:06:53 raim>
-  $Id: integratorSettings.c,v 1.28 2006/07/18 09:12:16 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:32:36 raim>
+  $Id: integratorSettings.c,v 1.29 2006/07/18 09:41:06 raimc Exp $
 */
 /* 
  *
@@ -68,7 +68,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
   return CvodeSettings_createWith(Time, PrintStep,
-				  1e-18, 1e-10, 10000, 0,
+				  1e-18, 1e-10, 10000, 0, 0,
 				  1, 0, 0, 0, 1, 0, 0);
 }
 
@@ -128,7 +128,7 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
     as new settings will be required for other solvers!
 */
 
-SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int Method, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int Method, int IterMethod, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {
 
   cvodeSettings_t *set;
@@ -138,8 +138,11 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   CvodeSettings_setErrors(set, Error, RError, Mxstep);
   /* set non-linear solver defaults (BDF, Newton, max.order 5*/
   set->CvodeMethod = Method;
-  set->IterMethod = 0;
-  set->MaxOrder = 5;
+  set->IterMethod = IterMethod;
+  if ( Method == 0 )
+    set->MaxOrder = 5;
+  else
+    set->MaxOrder = 12;
   set->compileFunctions = 0;
   set->ResetCvodeOnEvent = 0;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
@@ -337,14 +340,16 @@ SBML_ODESOLVER_API void CvodeSettings_setIterMethod(cvodeSettings_t *set, int i)
 {
   /* i == 0: default NEWTON iteration
      i == 1: FUNCTIONAL iteraction */
-  if ( 0 <= i && i < 1 ) set->IterMethod = i;
+  if ( 0 <= i && i < 2 ) set->IterMethod = i;
   else set->IterMethod = 0;
 }
 
 
-/** Sets maximum order of BDF or Adams-Moulton method, respectively,
-    currently this settings is not really used but defaults to 5 for BDF and
-    12 for Adams-Moulton: ASAP!
+/** NOT USED!
+
+    Sets maximum order of BDF or Adams-Moulton method, respectively,
+    currently this settings is NOT USED; defaults to 5 for BDF and 12
+    for Adams-Moulton
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxOrder)

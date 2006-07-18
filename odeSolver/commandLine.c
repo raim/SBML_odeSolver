@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:08:04 raim>
-  $Id: commandLine.c,v 1.20 2006/07/18 09:12:16 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:21:30 raim>
+  $Id: commandLine.c,v 1.21 2006/07/18 09:41:06 raimc Exp $
 */
 /* 
  *
@@ -316,7 +316,7 @@ odeSolver (int argc, char *argv[])
 
     set = CvodeSettings_createWith(Opt.Time, Opt.PrintStep,
 				   Opt.Error, Opt.RError,
-				   Opt.Mxstep, Opt.Method, 
+				   Opt.Mxstep, Opt.Method, Opt.IterMethod,
 				   Opt.Jacobian, 0, Opt.HaltOnEvent,
 				   Opt.SteadyState, 1, Opt.Sensitivity, 2);
     CvodeSettings_setCompileFunctions(set, Opt.Compile);

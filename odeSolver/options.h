@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 10:57:22 raim>
-  $Id: options.h,v 1.5 2006/07/18 09:12:16 raimc Exp $
+  Last changed Time-stamp: <2006-07-18 11:30:26 raim>
+  $Id: options.h,v 1.6 2006/07/18 09:41:06 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -33,6 +33,8 @@ typedef struct _Options {
   int Sensitivity;      /* Activate Sensitivity Analysis */
   int Method;           /* Use BDF (default, 0) or Adams-Moulton (1)
 			   method for numerical integration */
+  int IterMethod;       /* Use Newton (default, 0) or functional (1)
+			   iteration method for integration */
   int PrintAll;         /* Print all given results instead of only one */
   int PrintJacobian;    /* Print out time course of the jacobian matrix */
   int PrintReactions;   /* Print out time course of the reaction rates */
