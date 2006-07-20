@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:55:53 raim>
-  $Id: printModel.c,v 1.18 2006/06/13 15:07:46 raimc Exp $
+  Last changed Time-stamp: <2006-07-20 13:06:53 raim>
+  $Id: printModel.c,v 1.19 2006/07/20 12:00:19 raimc Exp $
 */
 /* 
  *
@@ -981,7 +981,7 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
   }  
   GracePrintf("legend 1.155, 0.85");
   GracePrintf("legend font 8");
-  GracePrintf("legend char size 0.6");
+  GracePrintf("legend char size 0.4");
 
   if(!(kls = (ASTNode_t **)calloc(Model_getNumReactions(m),
 				  sizeof(ASTNode_t *)))) 
@@ -1087,7 +1087,7 @@ static int printXMGJacobianTimeCourse ( cvodeData_t *data )
   }  
   GracePrintf("legend 1.155, 0.85");
   GracePrintf("legend font 8");
-  GracePrintf("legend char size 0.6");
+  GracePrintf("legend char size 0.4");
 
   /* evaluate jacobian matrix for each time point and print to XMGrace */
   
@@ -1322,7 +1322,7 @@ static int printXMGLegend(cvodeData_t *data, int nvalues)
 
   GracePrintf("legend 1.155, 0.85");
   GracePrintf("legend font 8");
-  GracePrintf("legend char size 0.6");
+  GracePrintf("legend char size 0.4");
 
   return 0;
 }
