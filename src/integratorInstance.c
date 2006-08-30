@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:55:02 raim>
-  $Id: integratorInstance.c,v 1.64 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2006-08-30 13:08:14 raim>
+  $Id: integratorInstance.c,v 1.65 2006/08/30 13:38:11 raimc Exp $
 */
 /* 
  *
@@ -529,7 +529,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
     CvodeResults_allocateSens(results, iResults->neq, iResults->nsens,
 			      iResults->nout);
     for ( i=0; i<results->neq; i++ )
-      for ( j=0; j<results->nsens; ++j )
+      for ( j=0; j<results->nsens; j++ )
 	for ( k=0; k<=results->nout; k++ )
 	  results->sensitivity[i][j][k] = iResults->sensitivity[i][j][k];
   }
@@ -717,7 +717,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     results->nout = solver->iout;
     results->time[solver->iout] = solver->t;
     for ( i=0; i<data->nvalues; i++ )
-      results->value[i][solver->iout] = data->value[i];
+      results->value[i][solver->iout] = data->value[i]; 
   }
           
   /* check for steady state if requested by cvodeSettings
