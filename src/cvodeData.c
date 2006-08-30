@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:54:24 raim>
-  $Id: cvodeData.c,v 1.1 2006/06/13 15:08:40 raimc Exp $
+  Last changed Time-stamp: <2006-08-30 15:13:32 raim>
+  $Id: cvodeData.c,v 1.2 2006/08/30 13:36:27 raimc Exp $
 */
 /* 
  *
@@ -194,7 +194,7 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 			  "No value found for compartment %s",
 			  om->names[i]);      
     }
-    else if ((p = Model_getParameterById(ode, om->names[i])) )
+    else if ( (p = Model_getParameterById(ode, om->names[i])) )
     {
       if ( Parameter_isSetValue(p) )
 	data->value[i] = Parameter_getValue(p);
@@ -323,7 +323,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
     {
       for ( i=0; i<results->neq; i++ )
       {
-	for ( j=0; j<results->nsens; ++j )
+	for ( j=0; j<results->nsens; j++ )
 	  free(results->sensitivity[i][j]);
 	free(results->sensitivity[i]);
       }
@@ -374,7 +374,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   data->opt = opt;
 
   /* initialize memory for optimized ODEs */
-  if (!data->opt->compileFunctions)
+  if ( !data->opt->compileFunctions )
     ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
   
   /* initialize values */
@@ -385,7 +385,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
   /* update assigned parameters, in case they depend on new time */
   for ( i=0; i<om->nass; i++ ) 
-    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+    data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
@@ -393,8 +393,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     evaluateAST(ASTNode_t *f, ,data) will
     ask the user for a value, if a a variable is unknown
   */
-  for ( i=0; i<om->neq; i++ ) 
-    evaluateAST(om->ode[i], data);
+  for ( i=0; i<om->neq; i++ ) evaluateAST(om->ode[i], data);
 
   /* evaluate event triggers and set flags with their initial state */
   for ( i=0; i<Model_getNumEvents(om->simple); i++ )
@@ -444,7 +443,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 				opt->PrintStep);
       /* write initial values for sensitivity */
       for ( i=0; i<data->results->neq; i++ )
-	for ( j=0; j<data->results->nsens; ++j )
+	for ( j=0; j<data->results->nsens; j++ )
 	  data->results->sensitivity[i][j][0] = data->sensitivity[i][j];
     }    
       
@@ -474,12 +473,11 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   int i;
 
   if ( data == NULL ) return;
+
+  /* free sensitivity structure,
+     as data->p is required only by the CVODES solver,
+     it is freed by IntegratorInstance_freeForwardSensitivity*/
   
-
-  /* free sensitivity structure */
-  if ( data->p != NULL )
-    free(data->p);
-
   if ( data->sensitivity != NULL )
   {
     for ( i=0; i<data->neq; i++ )
@@ -525,7 +523,7 @@ int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int n
   for ( i=0; i<neq; i++ )
   {
     ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity[i], nsens, double*, 0);
-    for ( j=0; j<nsens; ++j )
+    for ( j=0; j<nsens; j++ )
       ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity[i][j], nout+1, double, 0);
   }
   
@@ -571,13 +569,12 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
   
   /* The 2-D array `value' contains the time courses, that are
      calculated by ODEs (SBML species, or compartments and parameters
-     defined by rate rules.
-  */
+     defined by rate rules.  */
   ASSIGN_NEW_MEMORY_BLOCK(results->value, data->nvalues, double *, NULL);
 
   results->nvalues = data->nvalues;    
 
-  for ( i=0; i<data->nvalues; ++i )
+  for ( i=0; i<data->nvalues; i++ )
     ASSIGN_NEW_MEMORY_BLOCK(results->value[i], nout+1, double, NULL);
 
   results->sensitivity = NULL;
