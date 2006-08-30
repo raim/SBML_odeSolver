@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:55:39 raim>
-  $Id: sensSolver.c,v 1.27 2006/06/13 15:07:48 raimc Exp $
+  Last changed Time-stamp: <2006-08-30 15:34:29 raim>
+  $Id: sensSolver.c,v 1.28 2006/08/30 13:40:06 raimc Exp $
 */
 /* 
  *
@@ -105,7 +105,7 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
   data = engine->data;
   opt = engine->opt;
   results = engine->results;
- 
+
   /* getting sensitivities */
   flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     
@@ -128,10 +128,6 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
 
   return 1;
 }
-
-
-
-
 
 /* The Hot Stuff! */
 /** \brief Calls CVODES to provide adjoint sensitivities after a call to
@@ -159,6 +155,7 @@ int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
   results = engine->results;
   
   yAdata = NV_DATA_S(solver->yA);
+  
   for ( i=0; i<data->neq; i++ )
   {
     data->adjvalue[i] = yAdata[i];
@@ -184,7 +181,7 @@ int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
 int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
-  int i, j, flag, sensMethod;
+  int i, j, reinit, flag, sensMethod;
   realtype *abstoldata, *ySdata;
 
   odeModel_t *om = engine->om;
@@ -216,6 +213,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
      */
     /* free sensitivity from former runs
        (might have changed for non-default cases!) */
+    /*!!! sensitivity matrix should only be freed and reconstructed
+      when necessary - problem with data->ode ODE optimization !!!*/
     ODEModel_freeSensitivity(om);
 
     /* if jacobian matrix has been constructed successfully,
@@ -239,12 +238,48 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	om->index_sens[i] = om->neq + om->nass + i;
     }
 
-    /*!! free sensitivities if a different number of
-      sensitivities is requested !!*/
+    /*!! if the sens. problem dimension has changed since
+      the last run, free all sensitivity structures !!*/
     if ( engine->solver->nsens != data->nsens )
       IntegratorInstance_freeForwardSensitivity(engine);
       
     engine->solver->nsens = data->nsens;
+
+    /*
+     * construct sensitivity yS and  absolute tolerance senstol
+     * structures if they are not available from a previous run
+     * with the same sens. problem dimension nsens
+     */
+    
+    if ( solver->senstol == NULL )
+    {
+      solver->senstol = N_VNew_Serial(data->nsens);
+      CVODE_HANDLE_ERROR((void *)solver->senstol,
+			 "N_VNewSerial for senstol", 0);
+    }
+
+    /* remember: if yS had to be reconstructed, then also
+       the sense solver structure CVodeSens needs reconstruction
+       rather then mere re-initiation */
+    reinit = 0;
+    if ( solver->yS == NULL )
+    {
+      solver->yS = N_VNewVectorArray_Serial(data->nsens, data->neq);
+      CVODE_HANDLE_ERROR((void *)solver->yS, "N_VNewVectorArray_Serial", 0);
+      reinit = 1;
+    }
+
+    /* fill sens. and senstol data, yS and senstol:
+       yS are 0.0 in a new run or
+       old values in case of events */    
+    abstoldata = NV_DATA_S(solver->senstol);    
+    for ( j=0; j<data->nsens; j++ )
+    {
+      abstoldata[j] = 1e-4;
+      ySdata = NV_DATA_S(solver->yS[j]);
+      for ( i=0; i<data->neq; i++ )
+	ySdata[i] = data->sensitivity[i][j];      
+    }  
 
     /*
      * set forward sensitivity method
@@ -255,43 +290,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /*!!! valgrind memcheck sensitivity: 1,248 (32 direct, 1,216 indirect)
       bytes in 1 blocks are definitely lost !!!*/
-    if ( solver->yS == NULL )
+    if ( reinit == 1 )
     {
-      solver->yS = N_VNewVectorArray_Serial(data->nsens, data->neq);
-      CVODE_HANDLE_ERROR((void *)solver->yS, "N_VNewVectorArray_Serial", 0);
-
       flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,
 			     sensMethod, solver->yS);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSensMalloc", 1);
-    
+      CVODE_HANDLE_ERROR(&flag, "CVodeSensMalloc", 1);    
     }
     else
     {
       flag = CVodeSensReInit(solver->cvode_mem, sensMethod, solver->yS);
       CVODE_HANDLE_ERROR(&flag, "CVodeSensReInit", 1);	  
     }
-
-    /*
-     * (re)initialize ySdata sensitivities
-     */
-    /* absolute tolerance for sensitivity error control */
-    if ( solver->senstol == NULL )
-    {
-      solver->senstol = N_VNew_Serial(data->nsens);
-      CVODE_HANDLE_ERROR((void *)solver->senstol,
-			 "N_VNewSerial for senstol", 0);
-    }
-    
-    abstoldata = NV_DATA_S(solver->senstol);
-      
-    for ( j=0; j<data->nsens; j++ )
-    {
-      abstoldata[j] = 1e-4;
-      ySdata = NV_DATA_S(solver->yS[j]);
-      for ( i=0; i<data->neq; i++ ) ySdata[i] = data->sensitivity[i][j];
-    }
-
-
 
     /* *** set parameter values or R.H.S function fS *****/
     /* NOTES: */
@@ -312,13 +321,15 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     }
     else
     {
-      ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
+      /* data->p is only required if R.H.S. fS cannot be supplied */
+      if ( data->p == NULL )
+	ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
+      
       for ( i=0; i<data->nsens; i++ )
       {
-	/* data->p is only required if R.H.S. fS cannot be supplied */
-	/* plist[i] = i+1; */
 	data->p[i] = data->value[om->index_sens[i]]; 
-	/* pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PBAR ???*/ 
+	/* plist[i] = i+1; */
+	/* pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PLIST + PBAR ???*/ 
       }
 
       flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
@@ -424,14 +435,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
      * CV_NEWTON      Newton iteration method\n
      * CV_FUNCTIONAL  functional iteration method\n
      */
-    if ( opt->CvodeMethod == 0 )
-      method = CV_BDF;
-    else
-      method = CV_ADAMS;
-    if ( opt->IterMethod == 0 )
-      iteration = CV_NEWTON;
-    else
-      iteration = CV_FUNCTIONAL;
+    if ( opt->CvodeMethod == 1 ) method = CV_ADAMS;
+    else method = CV_BDF;
+    
+    if ( opt->IterMethod == 1 ) iteration = CV_FUNCTIONAL;
+    else iteration = CV_NEWTON;
 
     if ( data->adjrun == 1 )
     {
@@ -513,6 +521,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	 CV_SS, &(solver->reltolQA), solver->abstolQA );  */
     /*     CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1); */
 
+    /* END adjoint phase */
   } 
 
   return 1; /* OK */
@@ -603,7 +612,7 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   realtype *ydata, *ySdata, *dySdata;
   cvodeData_t *data;
   data  = (cvodeData_t *) fS_data;
-  
+
   ydata = NV_DATA_S(y);
   ySdata = NV_DATA_S(yS);
   

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:42:42 raim>
-  $Id: cvodeSolver.c,v 1.37 2006/07/18 09:44:20 raimc Exp $
+  Last changed Time-stamp: <2006-08-30 15:12:36 raim>
+  $Id: cvodeSolver.c,v 1.38 2006/08/30 13:40:06 raimc Exp $
 */
 /* 
  *
@@ -494,6 +494,18 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 /* frees N_V vector structures, and the cvode_mem solver */
 void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 {
+  /* Free Forward Sensitivity structures */
+  IntegratorInstance_freeForwardSensitivity(engine);
+
+  /* Adjoint related  */
+  IntegratorInstance_freeAdjointSensitivity(engine);
+    
+  /* Free IDA vector dy */
+  if (engine->solver->dy != NULL)
+  {
+    N_VDestroy_Serial(engine->solver->dy);
+    engine->solver->dy = NULL;
+  }
   
   /* Free the y vector */
   if (engine->solver->y != NULL)
@@ -523,25 +535,19 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
     engine->solver->cvadj_mem = NULL;
   }
 
-  /* Free Forward Sensitivity structures */
-  IntegratorInstance_freeForwardSensitivity(engine);
-
-  /* Adjoint related  */
-  IntegratorInstance_freeAdjointSensitivity(engine);
-    
-  /* Free IDA vector dy */
-  if (engine->solver->dy != NULL)
-  {
-    N_VDestroy_Serial(engine->solver->dy);
-    engine->solver->dy = NULL;
-  }
-      
 }
 
 
 void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
 {
 
+  /* free data->p vector */
+  if ( engine->data->p != NULL )
+  {
+    free(engine->data->p);
+    engine->data->p == NULL;
+  }
+  
   /* Free sensitivity vector yS */
   if (engine->solver->yS != NULL)
   {
@@ -562,6 +568,8 @@ void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
     N_VDestroy_Serial(engine->solver->q);
     engine->solver->q = NULL;
   }
+
+  CVodeSensFree(engine->solver->cvode_mem);
   
 }
 
