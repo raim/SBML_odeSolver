@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:32:36 raim>
-  $Id: integratorSettings.c,v 1.29 2006/07/18 09:41:06 raimc Exp $
+  Last changed Time-stamp: <2006-09-06 13:07:50 raim>
+  $Id: integratorSettings.c,v 1.30 2006/09/06 13:32:38 raimc Exp $
 */
 /* 
  *
@@ -49,9 +49,6 @@
 #include "sbmlsolver/solverError.h"
 
 
-static int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *, int);
-
-
 /** Creates a settings structure with default values
 */
 
@@ -67,6 +64,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
 
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep)
 {
+  /* !!! CHANGE DEFAULT VALUES HERE!!! */
   return CvodeSettings_createWith(Time, PrintStep,
 				  1e-18, 1e-10, 10000, 0, 0,
 				  1, 0, 0, 0, 1, 0, 0);
@@ -388,61 +386,6 @@ SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJ
 }
 
 
-/* Sets a predefined timeseries in cvodeSettings. Assigns memory for
-   an array of requested time points.  PrintStep must be the size of
-   the passed array timeseries. Returns 1, if sucessful and 0, if
-   not. */
-
-static int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
-				       double *timeseries,
-				       int PrintStep)
-{
-  int i;
-  free(set->TimePoints);
-  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, PrintStep+1, double, 0);    
-  set->Time = timeseries[PrintStep-1];
-  set->PrintStep = PrintStep;
-  set->TimePoints[0] = 0.0;
-  for ( i=1; i<=PrintStep; i++ ) 
-    set->TimePoints[i] = timeseries[i-1];
-  
-  return 1;
-}
-
-
-/* Sets a predefined adjoint timeseries in cvodeSettings. Assigns memory for
-   an array of requested time points.  AdjPrintStep must be the size of
-   the passed array timeseries. Returns 1, if sucessful and 0, if
-   not. */
-
-static int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
-					  double *timeseries,
-					  int AdjPrintStep,
-					  double EndTime)
-{
-  int i;
-
-  free(set->AdjTimePoints);
-  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, AdjPrintStep+1, double, 0);    
-
-  set->AdjTime = timeseries[AdjPrintStep-1];
-  set->AdjPrintStep = AdjPrintStep;
-
-  /* Adjoint is integrated backwards from EndTime to time=0.0
-     (initial time for forward)  */
-  set->AdjTimePoints[0] = EndTime;
-
-  for ( i=1; i<= AdjPrintStep; i++ ) 
-    set->AdjTimePoints[i] = timeseries[i-1];
-  
-  return 1;
-}
-
-
-
-
-
-
 /** Calculates a time point series from Endtime and Printstep and sets
     the time series in cvodeSettings. Returns 1, if sucessful and 0, if
     not.
@@ -461,7 +404,26 @@ SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTim
   return j;
 }
 
+/** Copies a predefined timeseries into cvodeSettings. Assigns memory for
+    an array of requested time points with size PrintStep + 1 (including
+    initial time 0). Returns 1, if sucessful and 0, if not. */
 
+SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
+						   double *timeseries,
+						   int PrintStep)
+{
+  int i;
+  free(set->TimePoints);
+  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, PrintStep+1, double, 0);    
+  set->Time = timeseries[PrintStep-1];
+  set->PrintStep = PrintStep;
+  set->TimePoints[0] = 0.0;
+  for ( i=1; i<=PrintStep; i++ ) 
+    set->TimePoints[i] = timeseries[i-1];
+  set->Indefinitely == 0;
+  
+  return 1;
+}
 
 /** Calculates adjoint time point series from Endtime and Printstep and sets
     the time series in cvodeSettings. Returns 1, if sucessful and 0, if
@@ -485,7 +447,33 @@ SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *set, double End
 }
 
 
+/** Copies a predefined adjoint time series into cvodeSettings.
+    Assigns memory for an array of requested time points with size
+    AdjPrintStep + 1 (including initial time EndTime).
+    Returns 1, if sucessful and 0, if  not. */
 
+SBML_ODESOLVER_API  int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
+						       double *timeseries,
+						       int AdjPrintStep,
+						       double EndTime)
+{
+  int i;
+
+  free(set->AdjTimePoints);
+  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, AdjPrintStep+1, double, 0);    
+
+  set->AdjTime = timeseries[AdjPrintStep-1];
+  set->AdjPrintStep = AdjPrintStep;
+
+  /* Adjoint is integrated backwards from EndTime to time=0.0
+     (initial time for forward)  */
+  set->AdjTimePoints[0] = EndTime;
+
+  for ( i=1; i<= AdjPrintStep; i++ ) 
+    set->AdjTimePoints[i] = timeseries[i-1];
+  
+  return 1;
+}
 
 
 /** Sets the ith time step for the integration, where
@@ -563,11 +551,12 @@ SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i
 
 
 /** Results will only be stored, if i==1 and if a finite integration
-    has been chosen (CvodeSettings_setIndefinitely(settings, 0)). The results
-    can be retrieved after integration has been finished. If i==0 or
-    infinite integration has been chosen, results can only be retrieved
-    during integration via variableIndex interface or dump functions for
-    the integratorInstance.
+    has been chosen (default value or
+    CvodeSettings_setIndefinitely(settings, 0)). The results can be
+    retrieved after integration has been finished. If i==0 or infinite
+    integration has been chosen, results can only be retrieved during
+    integration via variableIndex interface or dump functions for the
+    integratorInstance.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int i)
@@ -613,8 +602,9 @@ SBML_ODESOLVER_API double CvodeSettings_getEndTime(cvodeSettings_t *set)
 }
 
 
-/** Returns the time step of integration; if infinite integration
-    has been chosen, this is only the first time step.
+/** Returns the time step of integration; if infinite integration has
+    been chosen or a non-uniform time series has been set, this is
+    only the first time step.
 */
 
 SBML_ODESOLVER_API double CvodeSettings_getTimeStep(cvodeSettings_t *set)

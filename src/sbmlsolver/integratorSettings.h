@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:25:09 raim>
-  $Id: integratorSettings.h,v 1.22 2006/07/18 09:41:06 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-06 13:04:02 raim>
+  $Id: integratorSettings.h,v 1.23 2006/09/06 13:32:39 raimc Exp $ 
 */
 /* 
  *
@@ -56,11 +56,11 @@ extern "C" {
       as for setting sensitivity analysis
   */
   struct cvodeSettings {
-    double Time;          /**< Time to which model is integrated or if
+    double Time;          /**< End time to which model is integrated or 
 			     step size if 'Indefinitely' is true */
     int PrintStep;        /**< Number of output steps from 0 to 'Time';
 			     ignored if 'Indefinitely' */
-    double *TimePoints;   /**< Optional array of designed time-course.
+    double *TimePoints;   /**< Optional array for designed time-courses.
 			     If passed by the calling application,
 			     Time will be ignored and overruled by
 			     TimePoints[Printstep+1], otherwise TimePoints
@@ -143,6 +143,7 @@ extern "C" {
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int Method, int IterMethod, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *, double EndTime, int PrintStep);
   SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *, int, double);
+  SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *timeseries, int PrintStep);
   SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API void CvodeSettings_setErrors(cvodeSettings_t *, double Error, double RError, int Mxstep);
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
@@ -161,6 +162,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setnSaveSteps(cvodeSettings_t *, int);
   SBML_ODESOLVER_API int CvodeSettings_setAdjTime(cvodeSettings_t *, double EndTime, int PrintStep);
+  SBML_ODESOLVER_API  int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set, double *timeseries, int AdjPrintStep, double EndTime);
 
 
   SBML_ODESOLVER_API void CvodeSettings_setMethod(cvodeSettings_t *, int, int);
