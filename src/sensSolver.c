@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-08-30 15:34:29 raim>
-  $Id: sensSolver.c,v 1.28 2006/08/30 13:40:06 raimc Exp $
+  Last changed Time-stamp: <2006-09-06 11:05:06 raim>
+  $Id: sensSolver.c,v 1.29 2006/09/06 09:29:32 raimc Exp $
 */
 /* 
  *
@@ -261,12 +261,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* remember: if yS had to be reconstructed, then also
        the sense solver structure CVodeSens needs reconstruction
        rather then mere re-initiation */
-    reinit = 0;
+    reinit = 1;
     if ( solver->yS == NULL )
     {
       solver->yS = N_VNewVectorArray_Serial(data->nsens, data->neq);
       CVODE_HANDLE_ERROR((void *)solver->yS, "N_VNewVectorArray_Serial", 0);
-      reinit = 1;
+      reinit = 0;
     }
 
     /* fill sens. and senstol data, yS and senstol:
@@ -290,7 +290,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /*!!! valgrind memcheck sensitivity: 1,248 (32 direct, 1,216 indirect)
       bytes in 1 blocks are definitely lost !!!*/
-    if ( reinit == 1 )
+    if ( reinit == 0 )
     {
       flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,
 			     sensMethod, solver->yS);
