@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-08-30 15:13:32 raim>
-  $Id: cvodeData.c,v 1.2 2006/08/30 13:36:27 raimc Exp $
+  $Id: cvodeData.c,v 1.3 2006/09/27 14:45:38 jamescclu Exp $
 */
 /* 
  *
@@ -410,9 +410,14 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
        sensitivity Settings inputs */
     if ( data->sensitivity == NULL )
     {
+  
+      /** SELPAR_0: replace om->nconst with opt->nsens  */  
       CvodeData_allocateSens(data, om->neq, om->nconst);
       RETURN_ON_FATALS_WITH(0);
     }
+
+     /** SELPAR_0a: replace data->sensitivity[i][j] = 0.0 by data->sensitivity[i][j] = 1.0 when j>nsensIC  */  
+
     /* (re)set to 0.0 initial value */
     for ( i=0; i<om->neq; i++ )
       for ( j=0; j<om->nsens; j++ )

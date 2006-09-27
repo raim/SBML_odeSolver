@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-09-06 13:07:50 raim>
-  $Id: integratorSettings.c,v 1.30 2006/09/06 13:32:38 raimc Exp $
+  $Id: integratorSettings.c,v 1.31 2006/09/27 14:45:38 jamescclu Exp $
 */
 /* 
  *
@@ -44,6 +44,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/solverError.h"
@@ -153,8 +154,10 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
     /* ... generate default TimePoint array */
     CvodeSettings_setTime(set, Time, PrintStep);
 
+  /* 3. Setting no selected parameters/ICs */
+  set->sensIDs = NULL;
+  set->nsens = 0; 
 
- 
   /* Default: not doing adjoint solution  */
   set->DoAdjoint = 0;
   set->AdjointPhase = 0;
@@ -575,6 +578,32 @@ SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *set, int i
   set->Sensitivity = i;
   CvodeSettings_setSensMethod(set, 0);
 }
+
+
+
+/** Activate sensitivity analysis with 1; also sets to default
+    sensitivity method `simultaneous' (setSensMethod(set, 0);
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setSensParams(cvodeSettings_t *set, char **sensIDs, int nsens)
+{ 
+  int i;
+
+  if ( set->sensIDs!=NULL )
+    for ( i=0; i<set->nsens; i++ )
+      free(set->sensIDs[i]);
+   
+  free(set->sensIDs); 
+
+  ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs, nsens, char *, NULL);
+  for ( i=0; i<nsens; i++ )
+  {
+    ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs[i], strlen(sensIDs[i])+1, char, NULL);
+    strcpy(set->sensIDs[i], sensIDs[i]); 
+  }
+}
+
+
 
 
 /** Set method for sensitivity analysis:

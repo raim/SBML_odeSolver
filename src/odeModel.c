@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 12:57:31 raim>
-  $Id: odeModel.c,v 1.49 2006/06/13 15:07:47 raimc Exp $ 
+  $Id: odeModel.c,v 1.50 2006/09/27 14:45:38 jamescclu Exp $ 
 */
 /* 
  *
@@ -1175,8 +1175,13 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names;
 
+
   failed = 0;
+
+
   nvalues = om->neq + om->nass + om->nconst;
+
+  /** SELPAR_2: check for passed index_sens array (otherwise default as now); */
 
   om->sensitivity = 0;
   om->jacob_sens = NULL;

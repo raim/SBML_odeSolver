@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-09-06 13:04:02 raim>
-  $Id: integratorSettings.h,v 1.23 2006/09/06 13:32:39 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.24 2006/09/27 14:45:38 jamescclu Exp $ 
 */
 /* 
  *
@@ -78,6 +78,9 @@ extern "C" {
     int MaxOrder;         /**< set maximum order of ADAMS or BDF method */
     int ResetCvodeOnEvent; /**< restart CVODE when event is triggered */
     int Sensitivity;      /**< if not 0: use CVODES for sensitivity analysis */
+    char **sensIDs;       /**< ID's for parameters and initial conditions 
+			     for sensitivity analysis */ 
+    int nsens;
     int SensMethod;       /**< set sensitivity analysis method:
 			     0: SIMULTANEOUS,
 			     1: STAGGERED,
@@ -174,6 +177,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setSensParams(cvodeSettings_t *, char **, int);
   SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *);

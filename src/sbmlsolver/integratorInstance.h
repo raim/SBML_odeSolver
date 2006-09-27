@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 14:09:10 raim>
-  $Id: integratorInstance.h,v 1.30 2006/06/13 15:07:48 raimc Exp $ 
+  $Id: integratorInstance.h,v 1.31 2006/09/27 14:45:38 jamescclu Exp $ 
 */
 /* 
  *
@@ -119,6 +119,8 @@ extern "C" {
   SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);
+ 
   SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);

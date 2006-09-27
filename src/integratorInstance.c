@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-08-30 13:08:14 raim>
-  $Id: integratorInstance.c,v 1.65 2006/08/30 13:38:11 raimc Exp $
+  $Id: integratorInstance.c,v 1.66 2006/09/27 14:45:38 jamescclu Exp $
 */
 /* 
  *
@@ -136,6 +136,15 @@ SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *engine)
 {
   return IntegratorInstance_set(engine, engine->opt);
 }
+
+
+SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *engine)
+{
+   return IntegratorInstance_initializeSolver(engine,
+					     engine->data, engine->opt, engine->om);
+}
+
+
 
 /* allocate memory for a new integrator, initialize cvodeSolver
    structures from cvodeData, cvodeSettings and the odeModel */

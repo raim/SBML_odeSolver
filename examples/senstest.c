@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-08-30 15:29:21 raim>
-  $Id: senstest.c,v 1.1 2006/09/27 13:37:33 raimc Exp $
+  $Id: senstest.c,v 1.2 2006/09/27 14:45:38 jamescclu Exp $
 */
 /* 
  *
@@ -64,7 +64,7 @@ main (int argc, char *argv[]){
   /* CvodeSettings_dump(set); */
   
   /* creating the odeModel */
-  om = ODEModel_createFromFile("MAPKonlyK1.xml");
+  om = ODEModel_createFromFile("MAPK.xml");
   /* get a parameter for which we will check sensitivities */
   p = ODEModel_getVariableIndex(om, "K1");
   /* calling the integrator */
@@ -91,12 +91,13 @@ main (int argc, char *argv[]){
       /* IntegratorInstance_dumpPSensitivities(ii, p); */
       j++;
     }
-    IntegratorInstance_dumpData(ii);
-    IntegratorInstance_dumpPSensitivities(ii, p);
+   /*  IntegratorInstance_dumpData(ii); */
+   /*  IntegratorInstance_dumpPSensitivities(ii, p); */
     IntegratorInstance_reset(ii);
     i++;
   }
   
+  IntegratorInstance_dumpPSensitivities(ii, p);
   VariableIndex_free(p);
   
   
@@ -109,7 +110,11 @@ main (int argc, char *argv[]){
 
 
   y = ODEModel_getVariableIndex(om, "MAPK_P"); 
-  CvodeSettings_dump(set);
+/*   CvodeSettings_dump(set); */
+  char *sensIDs[2];  
+  sensIDs[0] = "K1";
+  sensIDs[1] = "MAPK";
+  CvodeSettings_setSensParams(set, sensIDs, 2);
 
   VariableIndex_free(y);
   /* now we have the results and can free the inputs */

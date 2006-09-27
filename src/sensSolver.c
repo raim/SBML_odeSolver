@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-09-06 11:05:06 raim>
-  $Id: sensSolver.c,v 1.29 2006/09/06 09:29:32 raimc Exp $
+  $Id: sensSolver.c,v 1.30 2006/09/27 14:45:38 jamescclu Exp $
 */
 /* 
  *
@@ -208,6 +208,10 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /*****  adding sensitivity specific structures ******/
 
+
+    /** SELPAR_1: map from cvodeSettings to om->index_sens */
+
+
     /**
      * construct sensitivity related structures
      */
@@ -226,6 +230,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if ( om->jacobian ) 
       ODEModel_constructSensitivity(om);
     else
+
     {
       om->sensitivity = 0;
       om->jacob_sens = NULL;
@@ -317,14 +322,22 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       flag = CVodeSetSensFdata(solver->cvode_mem, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensFdata", 1);
       
+      if ( data->p != NULL )
+        free(data->p);
+
       data->p = NULL;
     }
     else
     {
+       
+      
+
       /* data->p is only required if R.H.S. fS cannot be supplied */
       if ( data->p == NULL )
 	ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
       
+      
+      /** SELPAR_3: change it to zeros for i>data->nsensP for clarity */
       for ( i=0; i<data->nsens; i++ )
       {
 	data->p[i] = data->value[om->index_sens[i]]; 
