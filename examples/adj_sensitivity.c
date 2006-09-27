@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-03-07 16:56:51 raim>
-  $Id: adj_sensitivity.c,v 1.5 2006/05/18 08:28:27 stefan_tbi Exp $
+  $Id: adj_sensitivity.c,v 1.6 2006/09/27 14:42:06 jamescclu Exp $
 */
 /* 
  *
@@ -101,7 +101,7 @@ main (int argc, char *argv[]){
 
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
-  CvodeSettings_setTime(set, tout, 10);
+  CvodeSettings_setTime(set, tout, 5);
   CvodeSettings_setErrors(set, 1e-5, 1e-5, 1e7);
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
@@ -116,9 +116,9 @@ main (int argc, char *argv[]){
   CvodeSettings_setDoAdj(set);
   
   /* Do the time settings analogous to forward phase, but only reversed */
-  CvodeSettings_setAdjTime(set, tout, 10);
+  CvodeSettings_setAdjTime(set, tout, 5);
   CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
-  CvodeSettings_setnSaveSteps(set, 1000);
+  CvodeSettings_setnSaveSteps(set, 2);
    
   /* set this as a default elsewhere !!! */
   om->n_adj_sens = om->nconst;
@@ -145,7 +145,6 @@ main (int argc, char *argv[]){
     IntegratorInstance_dumpPSensitivities(ii, p);
   }
 
- /*  VariableIndex_free(p); */
 
   /* forward quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
@@ -186,14 +185,15 @@ main (int argc, char *argv[]){
   }
 
   /* Adjoint Integration */
-  CvodeSettings_setAdjPhase(set);
-   
+  /* CvodeSettings_setAdjPhase(set); */
+     CvodeSettings_setAdjPhase(ii->opt); 
+
   fprintf(stderr, "\n### Commencing adjoint integration:\n");
   /* For adjoint phase, resetting the isValid flag, 
      and create the necessary adjoint structures */
   ii->isValid = 0;
-  IntegratorInstance_set(ii, set);
-  
+  IntegratorInstance_resetAdjPhase(ii);
+
  
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
