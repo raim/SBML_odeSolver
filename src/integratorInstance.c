@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-08-30 13:08:14 raim>
-  $Id: integratorInstance.c,v 1.66 2006/09/27 14:45:38 jamescclu Exp $
+  Last changed Time-stamp: <2006-09-28 20:04:24 raim>
+  $Id: integratorInstance.c,v 1.67 2006/09/28 18:14:27 raimc Exp $
 */
 /* 
  *
@@ -454,15 +454,18 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance
 
 SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *engine, variableIndex_t *p)
 {
-  int j;
+  int i, j;
   cvodeData_t *data = engine->data;
-
+  odeModel_t *om = engine->om;
+  
   if ( data->sensitivity == NULL ) return;
 
+  /* find sensitivity for p */
+  for ( i=0; i<om->nsens && !(om->index_sens[i] == p->index); i++ );
+    
   printf("%g  ", data->currenttime);
-  /* printf("%g  ", data->value[p->index]); */
   for ( j=0; j<data->neq; j++ )
-    printf("%g ", data->sensitivity[j][p->type_index]);
+    printf("%g ", data->sensitivity[j][i]);
   printf("\n");
 }
 

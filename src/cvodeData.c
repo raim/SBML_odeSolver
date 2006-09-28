@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-08-30 15:13:32 raim>
-  $Id: cvodeData.c,v 1.3 2006/09/27 14:45:38 jamescclu Exp $
+  Last changed Time-stamp: <2006-09-28 18:50:37 raim>
+  $Id: cvodeData.c,v 1.4 2006/09/28 18:14:27 raimc Exp $
 */
 /* 
  *
@@ -408,19 +408,33 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   {
     /* the following can later be called with numbers from
        sensitivity Settings inputs */
-    if ( data->sensitivity == NULL )
-    {
-  
-      /** SELPAR_0: replace om->nconst with opt->nsens  */  
-      CvodeData_allocateSens(data, om->neq, om->nconst);
+    if ( data->sensitivity == NULL || data->nsens != opt->nsens )
+    {  
+      /** SELPAR_0: if parameters and variables for sens. anal. have
+          not been specified do it for all parameters as default case
+      */      
+      if ( data->nsens != opt->nsens  )
+      {
+	for ( i=0; i<data->neq; i++ )
+	  free(data->sensitivity[i]);
+	free(data->sensitivity);
+      }
+      if ( opt->sensIDs == NULL )
+	opt->nsens = om->nconst;
+      CvodeData_allocateSens(data, om->neq, opt->nsens);
       RETURN_ON_FATALS_WITH(0);
     }
 
-     /** SELPAR_0a: replace data->sensitivity[i][j] = 0.0 by data->sensitivity[i][j] = 1.0 when j>nsensIC  */  
+     /** IC_SELPAR_0a: replace data->sensitivity[i][j] = 0.0
+	 by data->sensitivity[i][j] = 1.0 when j>nsensIC  */
+    /* !!! maybe the following initialization needs to be moved
+           to sensSolver.c or to a place whereparameters and
+	   init. cond.  have been separated already */
 
-    /* (re)set to 0.0 initial value */
-    for ( i=0; i<om->neq; i++ )
-      for ( j=0; j<om->nsens; j++ )
+    /* (re)set to 0.0 or 1.0 initial value for parameter and
+       variable sensitivities, respectively */
+     for ( i=0; i<data->neq; i++ )
+      for ( j=0; j<data->nsens; j++ ) 
 	data->sensitivity[i][j] = 0.0;
   }
 

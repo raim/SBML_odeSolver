@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 12:57:31 raim>
-  $Id: odeModel.c,v 1.50 2006/09/27 14:45:38 jamescclu Exp $ 
+  Last changed Time-stamp: <2006-09-28 18:31:52 raim>
+  $Id: odeModel.c,v 1.51 2006/09/28 18:14:27 raimc Exp $ 
 */
 /* 
  *
@@ -67,7 +67,6 @@
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nevents, int nalg);
-static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
 
 
@@ -584,7 +583,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 			      strlen("tmp")+3,
 			      char, NULL);
       sprintf(om->names[om->neq+om->nass+om->nconst+ nalg], "tmp%d", nalg);
-      printf("tmp%d \n", nalg);
+      /* printf("tmp%d \n", nalg); */
       nalg++;
     }
   }
@@ -1171,76 +1170,82 @@ Returns 1 if successful, 0 otherwise.
 
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 {
-  int i, j, k, failed, nvalues;
+  int i, j, k, failed, success, nvalues;
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names;
 
 
   failed = 0;
-
-
+  success = 0;
   nvalues = om->neq + om->nass + om->nconst;
 
-  /** SELPAR_2: check for passed index_sens array (otherwise default as now); */
+  /** SELPAR_2: check for passed index_sens array
+      (otherwise default as now); */
 
-  om->sensitivity = 0;
   om->jacob_sens = NULL;
-  om->nsens = om->nconst;
 
-  ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
-  /*!!! non-default case:
-    these values should be passed for other cases !!!*/
-  for ( i=0; i<om->nsens; i++ )
-    om->index_sens[i] = om->neq + om->nass + i;
- 
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
-  for ( i=0; i<om->neq; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
-
-  for ( i=0; i<om->neq; i++ )
+  /* if jacobian matrix has been constructed successfully,
+     try to construct sensitivity matrix dx/dp */  
+  if ( om->jacobian )
   {
-    ode = copyAST(om->ode[i]);
-    /* assignment rule replacement: reverse to satisfy
-       SBML specifications that variables defined by
-       an assignment rule can appear in rules declared afterwards */
-    for ( j=om->nass-1; j>=0; j-- )
-      AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
     
-    for ( j=0; j<om->nsens; j++ )
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
+    for ( i=0; i<om->neq; i++ )
+      ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
+
+    for ( i=0; i<om->neq; i++ )
     {
-      /* differentiate d(dYi/dt) / dPj */
-      fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
-      simple =  simplifyAST(fprime);
-      ASTNode_free(fprime);
-      index = indexAST(simple, nvalues, om->names);
-      ASTNode_free(simple);
-      om->jacob_sens[i][j] = index;
-      /* check if the AST contains a failure notice */
-      names = ASTNode_getListOfNodes(index,
-				     (ASTNodePredicate) ASTNode_isName);
+      ode = copyAST(om->ode[i]);
+      /* assignment rule replacement: reverse to satisfy
+	 SBML specifications that variables defined by
+	 an assignment rule can appear in rules declared afterwards */
+      for ( j=om->nass-1; j>=0; j-- )
+	AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
+    
+      for ( j=0; j<om->nsens; j++ )
+      {
+	/* differentiate d(dYi/dt) / dPj */
+	fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
+	simple =  simplifyAST(fprime);
+	ASTNode_free(fprime);
+	index = indexAST(simple, nvalues, om->names);
+	ASTNode_free(simple);
+	om->jacob_sens[i][j] = index;
+	/* check if the AST contains a failure notice */
+	names = ASTNode_getListOfNodes(index,
+				       (ASTNodePredicate) ASTNode_isName);
 
-      for ( k=0; k<List_size(names); k++ ) 
-	if ( strcmp(ASTNode_getName(List_get(names,k)),
-		    "differentiation_failed") == 0 ) 
-	  failed++;
-      List_free(names);      
+	for ( k=0; k<List_size(names); k++ ) 
+	  if ( strcmp(ASTNode_getName(List_get(names,k)),
+		      "differentiation_failed") == 0 ) 
+	    failed++;
+	List_free(names);      
+      }
+      ASTNode_free(ode);
     }
-    ASTNode_free(ode);
-  }
 
-  if ( failed != 0 )
-  {
-    SolverError_error(WARNING_ERROR_TYPE,
-		      SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-		      "%d entries of the parametric `Jacobian' matrix "
-		      "could not be constructed, due to failure of "
-		      "differentiation. Cvode will use internal "
-		      "approximation instead.",
-		      failed);
-    om->sensitivity = 0;
+    if ( failed != 0 )
+    {
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+			"%d entries of the parametric `Jacobian' matrix "
+			"could not be constructed, due to failure of "
+			"differentiation. Cvode will use internal "
+			"approximation instead.",
+			failed);
+      for ( i=0; i<om->neq; i++ )
+      {
+	for ( j=0; j<om->nsens; j++ )
+	  ASTNode_free(om->jacob_sens[i][j]);
+	free(om->jacob_sens[i]);
+      }
+      free(om->jacob_sens);      
+    }
+    else success = 1;
   }
-  else  om->sensitivity = 1;
-  return om->sensitivity;
+  /* return 1 if sensitivity matrix was constructed successfully,
+     and 0 otherwise */
+  return success;
 
 }
 
@@ -1338,7 +1343,7 @@ int ODEModel_getNumberOfValues(odeModel_t *om)
 
 /* searches for the string "symbol" in the odeModel's names array
    and returns its index number, or -1 if it doesn't exist */
-static int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
+int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
 {
   int i, nvalues;
 

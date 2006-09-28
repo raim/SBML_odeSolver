@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 13:58:31 raim>
-  $Id: odeModel.h,v 1.24 2006/06/13 15:07:48 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-28 18:33:18 raim>
+  $Id: odeModel.h,v 1.25 2006/09/28 18:14:28 raimc Exp $ 
 */
 /* 
  *
@@ -97,9 +97,13 @@ extern "C" {
 
     /* forward sensitivity analysis structure
        neq x num_param */
-    int nsens;               /**< number of parameters for sens. analysis */
-    int *index_sens;         /**< indexes of parameters in char **names,
-			        char *value*/
+    int nsens;               /**< number of parameters and initial conditions
+				for sens. analysis, nsens = nsensP + nsensIC */
+    int nsensP;              /**< number of parameters for sens.anal. */
+    int nsensIC;             /**< number of init.cond. for sens.anal. */
+    int *index_sens;         /**< indexes of parameters and init.cond.
+				for sens. anal. in the main ID and data
+				arrays char **names, char *value */
     ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp  */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
@@ -199,10 +203,13 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
   SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *om);
-  
+ 
 #ifdef __cplusplus
 }
 #endif
+
+/* internal functions, not be used by calling applications */  
+int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
 
 
 #endif

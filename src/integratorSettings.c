@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-06 13:07:50 raim>
-  $Id: integratorSettings.c,v 1.31 2006/09/27 14:45:38 jamescclu Exp $
+  Last changed Time-stamp: <2006-09-28 18:10:23 raim>
+  $Id: integratorSettings.c,v 1.32 2006/09/28 18:14:27 raimc Exp $
 */
 /* 
  *
@@ -423,7 +423,7 @@ SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
   set->TimePoints[0] = 0.0;
   for ( i=1; i<=PrintStep; i++ ) 
     set->TimePoints[i] = timeseries[i-1];
-  set->Indefinitely == 0;
+  set->Indefinitely = 0;
   
   return 1;
 }
@@ -570,7 +570,7 @@ SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *set, int 
 
 
 /** Activate sensitivity analysis with 1; also sets to default
-    sensitivity method `simultaneous' (setSensMethod(set, 0);
+    sensitivity method `simultaneous' (setSensMethod(set, 0));
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *set, int i)
@@ -581,26 +581,36 @@ SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *set, int i
 
 
 
-/** Activate sensitivity analysis with 1; also sets to default
-    sensitivity method `simultaneous' (setSensMethod(set, 0);
+/** Set a list of SBML IDs of model constants or ODE variables
+    for sensitivity analysis; if NULL is passed instead of a character
+    array a former setting is freed and default sensitivty analysis
+    (for all model constants, but not for initial conditions) will be
+    performed.
 */
 
-SBML_ODESOLVER_API void CvodeSettings_setSensParams(cvodeSettings_t *set, char **sensIDs, int nsens)
+SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *set, char **sensIDs, int nsens)
 { 
   int i;
 
-  if ( set->sensIDs!=NULL )
+  if ( set->sensIDs != NULL )
     for ( i=0; i<set->nsens; i++ )
       free(set->sensIDs[i]);
-   
-  free(set->sensIDs); 
-
-  ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs, nsens, char *, NULL);
-  for ( i=0; i<nsens; i++ )
+  free(set->sensIDs);
+  set->sensIDs = NULL;
+  set->nsens = 0;
+  
+  if ( sensIDs != NULL )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs[i], strlen(sensIDs[i])+1, char, NULL);
-    strcpy(set->sensIDs[i], sensIDs[i]); 
+    ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs, nsens, char *, 0);
+    for ( i=0; i<nsens; i++ )
+    {
+      ASSIGN_NEW_MEMORY_BLOCK(set->sensIDs[i],
+			      strlen(sensIDs[i])+1, char, 0);
+      strcpy(set->sensIDs[i], sensIDs[i]);
+    }
+    set->nsens = nsens;
   }
+  return 1;
 }
 
 
@@ -820,8 +830,14 @@ SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
 
 SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *set)
 {
+  int i;
+  
   if ( set->TimePoints != NULL ) free(set->TimePoints);
   if ( set->AdjTimePoints != NULL ) free(set->AdjTimePoints);
+  if ( set->sensIDs != NULL )    
+    for ( i=0; i<set->nsens; i++ )
+      free(set->sensIDs[i]);
+  free(set->sensIDs);
   free(set);
 }
 

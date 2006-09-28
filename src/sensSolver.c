@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-06 11:05:06 raim>
-  $Id: sensSolver.c,v 1.30 2006/09/27 14:45:38 jamescclu Exp $
+  Last changed Time-stamp: <2006-09-28 19:27:11 raim>
+  $Id: sensSolver.c,v 1.31 2006/09/28 18:14:27 raimc Exp $
 */
 /* 
  *
@@ -208,47 +208,39 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /*****  adding sensitivity specific structures ******/
 
-
-    /** SELPAR_1: map from cvodeSettings to om->index_sens */
-
-
     /**
      * construct sensitivity related structures
      */
-    /* free sensitivity from former runs
-       (might have changed for non-default cases!) */
+
+
+    /* free sensitivity from former runs, it might have changed for
+       non-default cases! */
     /*!!! sensitivity matrix should only be freed and reconstructed
       when necessary - problem with data->ode ODE optimization !!!*/
     ODEModel_freeSensitivity(om);
 
-    /* if jacobian matrix has been constructed successfully,
-       construct sensitivity matrix dx/dp, sets om->sensitivity
-       to 1 if successful, 0 otherwise */
-    /*!!! this function will require additional input for
-      non-default case, via sensitivity input settings! !!!*/
-
-    if ( om->jacobian ) 
-      ODEModel_constructSensitivity(om);
-    else
-
-    {
-      om->sensitivity = 0;
-      om->jacob_sens = NULL;
-      om->nsens = om->nconst;
-
-      ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
-      /* !!! non-default case:
-	 these values should be passed for other cases !!!*/
+    /** SELPAR_1: map between cvodeSettings to om->index_sens */
+    ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, opt->nsens, int, 0);
+    om->nsens = opt->nsens; /* now nsens is equal in data, om and opt */
+    
+    /* non-default case: take parameters from input settings */	
+    if ( opt->sensIDs != NULL )
       for ( i=0; i<om->nsens; i++ )
-	om->index_sens[i] = om->neq + om->nass + i;
-    }
+	om->index_sens[i] =
+	  ODEModel_getVariableIndexFields(om, opt->sensIDs[i]);
+    /* default: take all model parameters */
+    else
+      for ( i=0; i<om->nsens; i++ )
+    	om->index_sens[i] = om->neq + om->nass + i;
 
-    /*!! if the sens. problem dimension has changed since
-      the last run, free all sensitivity structures !!*/
-    if ( engine->solver->nsens != data->nsens )
+    om->sensitivity = ODEModel_constructSensitivity(om);
+
+    /* if the sens. problem dimension has changed since
+       the last run, free all sensitivity structures */
+    if ( engine->solver->nsens != om->nsens )
       IntegratorInstance_freeForwardSensitivity(engine);
       
-    engine->solver->nsens = data->nsens;
+    engine->solver->nsens = om->nsens;
 
     /*
      * construct sensitivity yS and  absolute tolerance senstol
