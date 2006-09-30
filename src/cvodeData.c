@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 14:06:48 raim>
-  $Id: cvodeData.c,v 1.5 2006/09/30 12:11:36 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 15:07:18 raim>
+  $Id: cvodeData.c,v 1.6 2006/09/30 13:07:37 raimc Exp $
 */
 /* 
  *
@@ -67,6 +67,8 @@
 static void CvodeData_freeStructures(cvodeData_t *);
 static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq);
 static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
+static int CvodeData_createMatrices(cvodeData_t *,cvodeSettings_t *,
+				    odeModel_t *);
 
 /* static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq); */
 
@@ -444,7 +446,10 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   }
 
 
-  /* Now we should have all variables, and can allocate the
+  CvodeData_createMatrices(data, opt, om);
+
+  
+  /* RESULTS: Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */
 
   /* allow results only for finite integrations */
@@ -489,7 +494,12 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   return 1;
 }
 
-
+/* create Jacobian and sensitivity matrices */
+static int CvodeData_createMatrices(cvodeData_t *data,
+				    cvodeSettings_t *opt, odeModel_t *om)
+{
+  return 1;  
+}
 
 /* frees all internal stuff of cvodeData */
 static void CvodeData_freeStructures(cvodeData_t * data)

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 13:36:09 raim>
-  $Id: integratorInstance.c,v 1.68 2006/09/30 12:11:36 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 14:47:00 raim>
+  $Id: integratorInstance.c,v 1.69 2006/09/30 13:07:37 raimc Exp $
 */
 /* 
  *
@@ -137,8 +137,8 @@ SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *engine)
 {
-   return IntegratorInstance_initializeSolver(engine,
-					     engine->data, engine->opt, engine->om);
+   return IntegratorInstance_initializeSolver(engine, engine->data,
+					      engine->opt, engine->om);
 }
 
 

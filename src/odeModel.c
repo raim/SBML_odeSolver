@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 13:29:35 raim>
-  $Id: odeModel.c,v 1.52 2006/09/30 12:11:36 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-30 15:06:11 raim>
+  $Id: odeModel.c,v 1.53 2006/09/30 13:07:37 raimc Exp $ 
 */
 /* 
  *
@@ -1178,7 +1178,9 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   success = 0;
   nvalues = om->neq + om->nass + om->nconst;
        /* fill type array to remember whether a  */
-
+  
+  /****** 3 start move to CvodeData_initialize ******/
+  
   /* calculate how many sensitivities refer to parameters */
   nsensP = om->nsens;
   for ( i=0; i<om->nsens; i++ )
@@ -1195,6 +1197,8 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
      try to construct sensitivity matrix dx/dp */  
   if ( om->jacobian )
   {
+    
+    /****** end move to CvodeData_initialize ******/
     
     ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
     for ( i=0; i<om->neq; i++ )
