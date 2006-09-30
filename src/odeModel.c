@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 15:06:11 raim>
-  $Id: odeModel.c,v 1.53 2006/09/30 13:07:37 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-30 16:41:44 raim>
+  $Id: odeModel.c,v 1.54 2006/09/30 14:43:28 raimc Exp $ 
 */
 /* 
  *
@@ -1320,7 +1320,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variab
   /* find sensitivity parameter/variable */
   for ( i=0; i<om->nsens && !(om->index_sens[i] == vi2->index); i++ );
 
-  if ( i == engine->om->nsens ) return NULL;  
+  if ( i == om->nsens ) return NULL;  
   return ODEModel_getSensIJEntry(om, vi1->index, i);
 }
 
