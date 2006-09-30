@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-08-30 15:12:36 raim>
-  $Id: cvodeSolver.c,v 1.38 2006/08/30 13:40:06 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 14:08:44 raim>
+  $Id: cvodeSolver.c,v 1.39 2006/09/30 12:11:36 raimc Exp $
 */
 /* 
  *
@@ -269,6 +269,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
+    /****** start move to CvodeData_initialize ******/
+
     /*!!! should use simplified ASTs for construction !!!*/
     /* construct jacobian, if wanted and not yet existing */
     if ( opt->UseJacobian && om->jacob == NULL ) 
@@ -297,7 +299,10 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	 "Jacobian matrix construction skipped."); */
       om->jacobian = opt->UseJacobian;
     }
-
+    
+    /****** end move to CvodeData_initialize ******/
+    
+    /****** start move to CvodeData_initialize ******/    
     if ( opt->compileFunctions )
     {
       rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
@@ -318,6 +323,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       else
 	jacODE = JacODE;
     }
+    /****** end move to CvodeData_initialize ******/
 
     /* CVODESolverStructures from former runs must be freed */
     /* if (  solver->y != NULL ) */
@@ -468,8 +474,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
 
 
-    /* set ODEs for evaluation */
-    /*!!! will need adaptation to selected sens.analysis !!!*/  
+    /* optimize ODEs for evaluation */
     if ( !opt->compileFunctions )
       IntegratorInstance_optimizeOdes(engine);
     
@@ -478,11 +483,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
   else
     /* Adjoint Phase*/
   {   
-
     flag = IntegratorInstance_createCVODESSolverStructures(engine);
     if ( flag == 0 ) return 0; /* error */
     /* ERROR HANDLING CODE if SensSolver construction failed */
-
   }
 
   engine->isValid = 1; /* 'solver' is consistant with 'data' */
@@ -545,7 +548,7 @@ void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
   if ( engine->data->p != NULL )
   {
     free(engine->data->p);
-    engine->data->p == NULL;
+    engine->data->p = NULL;
   }
   
   /* Free sensitivity vector yS */

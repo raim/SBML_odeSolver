@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 18:50:37 raim>
-  $Id: cvodeData.c,v 1.4 2006/09/28 18:14:27 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 14:06:48 raim>
+  $Id: cvodeData.c,v 1.5 2006/09/30 12:11:36 raimc Exp $
 */
 /* 
  *
@@ -259,29 +259,33 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variabl
 }
 
 
-/** Returns the sensitivity of ODE variable y to parameter p
+/** Returns the ith (0 <= i < nsens) sensitivity of ODE variable y 
     at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
 
-    Must not be called, if sensitivity wasn't calculated!
+    Returns 0 if i >= nsens (which also happens if no sensitivity was
+    calculated).
 */
 
-SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int parameter, int timestep)
+SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int i, int timestep)
 {
-  return results->sensitivity[value][parameter][timestep];
-  /*!!! will need  adaptation to selected sens.analysis !!!*/
+  if ( i >= results->nsens ) return 0;
+  else return results->sensitivity[value][i][timestep];
 }
 
 
-/** Returns the sensitivity of ODE variable y to parameter p
+/** Returns the sensitivity of ODE variable y to parameter or variable s
     at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
 
-    Must not be called, if sensitivity wasn't calculated!
+    Returns 0 if no sensitivity has been calculated for s!
 */
 
-SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *p, int timestep)
+SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  variableIndex_t *y,  variableIndex_t *s, int timestep)
 {
-  return results->sensitivity[y->index][p->type_index][timestep];
-  /*!!! will need  adaptation to selected sens.analysis !!!*/
+  int i;
+  /* find sensitivity for s */
+  for ( i=0; i<results->nsens && !(results->index_sens[i] == s->index); i++ );
+  if ( i == results->nsens ) return 0;
+  else return results->sensitivity[y->index][i][timestep];
 }
 
 
@@ -328,6 +332,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
 	free(results->sensitivity[i]);
       }
       free(results->sensitivity);
+      free(results->index_sens);
     }
 
     if ( results->directional != NULL )
@@ -458,7 +463,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
     if  ( opt->Sensitivity )
     {
-      CvodeResults_allocateSens(data->results, om->neq, om->nconst,
+      CvodeResults_allocateSens(data->results, om->neq, data->nsens,
 				opt->PrintStep);
       /* write initial values for sensitivity */
       for ( i=0; i<data->results->neq; i++ )
@@ -538,6 +543,7 @@ int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int n
 {
   int i, j;
 
+  ASSIGN_NEW_MEMORY_BLOCK(results->index_sens, nsens, int, 0);  
   ASSIGN_NEW_MEMORY_BLOCK(results->sensitivity, neq, double **, 0);
   for ( i=0; i<neq; i++ )
   {

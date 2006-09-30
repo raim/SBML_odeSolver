@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 15:06:10 raim>
-  $Id: cvodeData.h,v 1.1 2006/06/13 15:08:40 raimc Exp $
+  Last changed Time-stamp: <2006-09-29 13:43:03 raim>
+  $Id: cvodeData.h,v 1.2 2006/09/30 12:11:37 raimc Exp $
 */
 /* 
  *
@@ -143,6 +143,7 @@ struct cvodeResults {
   int neq;
   /** number of parameters p for sens. analysis */
   int nsens;
+  int *index_sens;
   /** time course of sensitivities dx(t)/dp */
   double ***sensitivity;
   /** time course of directional sensitivities \sum_i dx(t)/dp_i \delta p_i */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 18:14:24 raim>
-  $Id: sbmlResults.c,v 1.17 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2006-09-29 13:13:17 raim>
+  $Id: sbmlResults.c,v 1.18 2006/09/30 12:11:36 raimc Exp $
 */
 /* 
  *

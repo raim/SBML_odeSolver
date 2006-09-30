@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 19:27:11 raim>
-  $Id: sensSolver.c,v 1.31 2006/09/28 18:14:27 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 14:04:02 raim>
+  $Id: sensSolver.c,v 1.32 2006/09/30 12:11:36 raimc Exp $
 */
 /* 
  *
@@ -181,7 +181,7 @@ int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
 int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
-  int i, j, reinit, flag, sensMethod;
+  int i, j, k, reinit, flag, sensMethod;
   realtype *abstoldata, *ySdata;
 
   odeModel_t *om = engine->om;
@@ -198,42 +198,67 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   if( !opt->AdjointPhase )
   {
 
-    /* realtype pbar[data->nsens+1]; */
-    /*int *plist; removed by AMF 8/11/05
-      realtype *pbar;
-
-      ASSIGN_NEW_MEMORY_BLOCK(plist, data->nsens+1, int, 0)
-      ASSIGN_NEW_MEMORY_BLOCK(pbar, data->nsens+1, realtype, 0)*/
-
-
     /*****  adding sensitivity specific structures ******/
-
-    /**
-     * construct sensitivity related structures
-     */
-
-
+    
+    /****** start move to CvodeData_initialize ******/
+    
     /* free sensitivity from former runs, it might have changed for
        non-default cases! */
     /*!!! sensitivity matrix should only be freed and reconstructed
-      when necessary - problem with data->ode ODE optimization !!!*/
+      when necessary - problem with data->ode ODE optimization? !!!*/
     ODEModel_freeSensitivity(om);
 
-    /** SELPAR_1: map between cvodeSettings to om->index_sens */
+    /* map between cvodeSettings to om->index_sens */
     ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, opt->nsens, int, 0);
-    om->nsens = opt->nsens; /* now nsens is equal in data, om and opt */
+    /* map sensitivities for parameters and sensitivity matrix */
+    ASSIGN_NEW_MEMORY_BLOCK(om->index_sensP, opt->nsens, int, 0);
+    /* set om->nsens equal to nsens in data and opt structures */
+    om->nsens = opt->nsens; 
     
-    /* non-default case: take parameters from input settings */	
+    /* non-default case: take parameters from input settings */
+    k = 0;
     if ( opt->sensIDs != NULL )
+    {
       for ( i=0; i<om->nsens; i++ )
+      {
 	om->index_sens[i] =
 	  ODEModel_getVariableIndexFields(om, opt->sensIDs[i]);
+	if ( om->index_sens[i] < om->neq )
+	  om->index_sensP[i] = -1;
+	else
+	{
+	  om->index_sensP[i] = k;
+	  k++;
+	}	
+      }
+    }
     /* default: take all model parameters */
     else
       for ( i=0; i<om->nsens; i++ )
+      {
     	om->index_sens[i] = om->neq + om->nass + i;
+	om->index_sensP[i] = i;
+      }
+
+    for ( i=0; i<data->neq; i++ )
+      for ( j=0; j<data->nsens; j++ )
+	if ( om->index_sensP[j] == -1 && om->index_sens[j] == i )
+	  data->sensitivity[i][j] = 1.0;
+	else
+	  data->sensitivity[i][j] = 0.0;  
+
+    /* store sensitivity indices */
+    if ( opt->StoreResults )
+      for ( i=0; i<om->nsens; i++ )
+      {
+	data->results->index_sens[i] = om->index_sens[i];
+	for ( j=0; j<data->results->neq; j++ )
+	  data->results->sensitivity[j][i][0] = data->sensitivity[j][i];
+      }
 
     om->sensitivity = ODEModel_constructSensitivity(om);
+
+    /****** end move to CvodeData_initialize ******/
 
     /* if the sens. problem dimension has changed since
        the last run, free all sensitivity structures */
@@ -281,6 +306,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /*
      * set forward sensitivity method
      */
+    sensMethod = 0;
     if ( opt->SensMethod == 0 ) sensMethod = CV_SIMULTANEOUS;
     else if ( opt->SensMethod == 1 ) sensMethod = CV_STAGGERED;
     else if ( opt->SensMethod == 2 ) sensMethod = CV_STAGGERED1;
@@ -321,21 +347,15 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     }
     else
     {
-       
-      
-
       /* data->p is only required if R.H.S. fS cannot be supplied */
       if ( data->p == NULL )
 	ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
       
       
-      /** SELPAR_3: change it to zeros for i>data->nsensP for clarity */
+      /** initialize data->p, use zeros for I.C. sensitivities for clarity */
       for ( i=0; i<data->nsens; i++ )
-      {
-	data->p[i] = data->value[om->index_sens[i]]; 
-	/* plist[i] = i+1; */
-	/* pbar[i] = abs(data->p[i]);  */ /*??? WHAT IS PLIST + PBAR ???*/ 
-      }
+	if ( om->index_sens[i] < om->neq ) data->p[i] = 0.0;
+	else data->p[i] = data->value[om->index_sens[i]]; 
 
       flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
@@ -388,13 +408,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   else
     /* Adjoint Phase */
   {
-
+    /****** start move to CvodeData_initialize ******/
     if (  om->jacob_sens == NULL ) 
       ODEModel_constructSensitivity(om);
 
     if (  om->jacob == NULL ) 
       opt->UseJacobian = ODEModel_constructJacobian(om);
-    
+    /****** end move to CvodeData_initialize ******/   
 
     /*  Allocate yA, abstolA vectors */
     if ( solver->yA == NULL )
@@ -620,7 +640,6 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 
   ydata = NV_DATA_S(y);
   ySdata = NV_DATA_S(yS);
-  
   dySdata = NV_DATA_S(ySdot);
 
   /** update ODE variables from CVODE */
@@ -640,9 +659,16 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   {
     dySdata[i] = 0;
     for (j=0; j<data->model->neq; j++) 
-      dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];   
-    dySdata[i] +=  evaluateAST(data->model->jacob_sens[i][iS], data);
+      dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
+    if ( data->model->index_sensP[iS] != -1 )
+      dySdata[i] +=
+	evaluateAST(data->model->jacob_sens[i][data->model->index_sensP[iS]],
+		    data);
   }
+
+/*   if ( data->opt->sensIDs !=NULL) */
+/*     printf("SENS FOR %s %d\n", data->opt->sensIDs[iS], */
+/* 	   data->model->index_sensP[iS] ); */
 
 }
 
@@ -753,7 +779,7 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
   data->currenttime = t;
 
   /* evaluate quadrature integrand: yA^T * df/dp */
-  for ( i=0; i<data->model->nconst; i++ )
+  for ( i=0; i<data->model->nsens; i++ )
   {
     dqAdata[i] = 0.0;
     for ( j=0; j<data->model->neq; j++ )

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 18:31:52 raim>
-  $Id: odeModel.c,v 1.51 2006/09/28 18:14:27 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-30 13:29:35 raim>
+  $Id: odeModel.c,v 1.52 2006/09/30 12:11:36 raimc Exp $ 
 */
 /* 
  *
@@ -412,17 +412,17 @@ void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
     int j ;
     Event_t *event = Model_getEvent(om->simple, i);
 
-    ASTNode_getSymbols(Event_getTrigger(event),
+    ASTNode_getSymbols((ASTNode_t *)Event_getTrigger(event),
 		       eventExpressionFunctionOfSet);
 
     for ( j = 0; j != Event_getNumEventAssignments(event); j++ ) 
     {
       EventAssignment_t *assignment = Event_getEventAssignment(event, j);
 
-      ASTNode_getSymbols(EventAssignment_getMath(assignment),
+      ASTNode_getSymbols((ASTNode_t *)EventAssignment_getMath(assignment),
 			 eventExpressionFunctionOfSet);
       List_add(variablesAssignedByEvents,
-	       EventAssignment_getVariable(assignment));
+	       (ASTNode_t *) EventAssignment_getVariable(assignment));
     }
   }
 
@@ -737,7 +737,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char
   SBMLDocument_t *d;
   odeModel_t *om;
 
-  d =  parseModel(sbmlFileName,
+  d =  parseModel((char *)sbmlFileName,
 		  0 /* print message */,
 		  0 /* don't validate */,
 		  0, 0, 0, 0 /* empty validation parameters */);
@@ -1170,15 +1170,22 @@ Returns 1 if successful, 0 otherwise.
 
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 {
-  int i, j, k, failed, success, nvalues;
+  int i, j, k, l, failed, success, nvalues, nsensP;
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names;
-
 
   failed = 0;
   success = 0;
   nvalues = om->neq + om->nass + om->nconst;
+       /* fill type array to remember whether a  */
 
+  /* calculate how many sensitivities refer to parameters */
+  nsensP = om->nsens;
+  for ( i=0; i<om->nsens; i++ )
+    if ( om->index_sens[i] < om->neq )
+      nsensP--;
+  om->nsensP = nsensP;
+  
   /** SELPAR_2: check for passed index_sens array
       (otherwise default as now); */
 
@@ -1191,7 +1198,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
     
     ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
     for ( i=0; i<om->neq; i++ )
-      ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], om->nsens, ASTNode_t *, 0);
+      ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], nsensP, ASTNode_t *, 0);
 
     for ( i=0; i<om->neq; i++ )
     {
@@ -1201,25 +1208,30 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 	 an assignment rule can appear in rules declared afterwards */
       for ( j=om->nass-1; j>=0; j-- )
 	AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
-    
+
+      l = 0;
       for ( j=0; j<om->nsens; j++ )
       {
-	/* differentiate d(dYi/dt) / dPj */
-	fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
-	simple =  simplifyAST(fprime);
-	ASTNode_free(fprime);
-	index = indexAST(simple, nvalues, om->names);
-	ASTNode_free(simple);
-	om->jacob_sens[i][j] = index;
-	/* check if the AST contains a failure notice */
-	names = ASTNode_getListOfNodes(index,
-				       (ASTNodePredicate) ASTNode_isName);
+	if ( !(om->index_sens[j] < om->neq) )
+	{
+	  /* differentiate d(dYi/dt) / dPj */
+	  fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
+	  simple =  simplifyAST(fprime);
+	  ASTNode_free(fprime);
+	  index = indexAST(simple, nvalues, om->names);
+	  ASTNode_free(simple);
+	  om->jacob_sens[i][l] = index;
+	  /* check if the AST contains a failure notice */
+	  names = ASTNode_getListOfNodes(index,
+					 (ASTNodePredicate) ASTNode_isName);
 
-	for ( k=0; k<List_size(names); k++ ) 
-	  if ( strcmp(ASTNode_getName(List_get(names,k)),
-		      "differentiation_failed") == 0 ) 
-	    failed++;
-	List_free(names);      
+	  for ( k=0; k<List_size(names); k++ ) 
+	    if ( strcmp(ASTNode_getName(List_get(names,k)),
+			"differentiation_failed") == 0 ) 
+	      failed++;
+	  List_free(names);
+	  l++;
+	}
       }
       ASTNode_free(ode);
     }
@@ -1235,7 +1247,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 			failed);
       for ( i=0; i<om->neq; i++ )
       {
-	for ( j=0; j<om->nsens; j++ )
+	for ( j=0; j<nsensP; j++ )
 	  ASTNode_free(om->jacob_sens[i][j]);
 	free(om->jacob_sens[i]);
       }
@@ -1264,7 +1276,7 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
   {
     for ( i=0; i<om->neq; i++ )
     {
-      for ( j=0; j<om->nsens; j++ )
+      for ( j=0; j<om->nsensP; j++ )
 	ASTNode_free(om->jacob_sens[i][j]);
       free(om->jacob_sens[i]);
     }
@@ -1273,11 +1285,12 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 }
 
 
-/**  \brief Returns the ith/jth entry of the parametric matrix
-     
-Returns NULL if either the parametric has not been constructed yet,
-or if i > neq or j > nsens. Ownership remains within the odeModel
-structure.
+/**  \brief Returns an AST of the ith/jth entry of the
+     parametric matrix 
+
+     Returns NULL if either the parametric has not been constructed yet,
+     or if i > neq or j > nsens. Ownership remains within the odeModel
+     structure.
 */
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int i, int j)
@@ -1288,19 +1301,23 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int 
 }
 
 
-/** \brief Returns the entry (d(vi1)/dt)/d(vi2) of the parametric matrix.
+/** \brief Returns an AST for the entry (d(vi1)/dt)/d(vi2) of the
+    parametric matrix.
     
-Returns NULL if either the parametric matrix has not been constructed
-yet, or if vi1 or vi2 are not an ODE variable or a constant for 
-sensitivity analysis, respectively. Ownership remains within the
-odeModel structure.
+    Returns NULL if either the parametric matrix has not been constructed
+    yet, or if vi1 is not an ODE variable or vi2 is not a parameter or
+    variable for which sensitivity analysis was requested.
+    Ownership remains within the odeModel structure.
 */
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
 {
-  /*!!! needs better solution, if sensitivity for selected params
-    will be implemented !!!*/
-  return ODEModel_getSensIJEntry(om, vi1->index, vi2->type_index);
+  int i;
+  /* find sensitivity parameter/variable */
+  for ( i=0; i<om->nsens && !(om->index_sens[i] == vi2->index); i++ );
+
+  if ( i == engine->om->nsens ) return NULL;  
+  return ODEModel_getSensIJEntry(om, vi1->index, i);
 }
 
 

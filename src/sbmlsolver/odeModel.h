@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 18:33:18 raim>
-  $Id: odeModel.h,v 1.25 2006/09/28 18:14:28 raimc Exp $ 
+  Last changed Time-stamp: <2006-09-30 13:28:11 raim>
+  $Id: odeModel.h,v 1.26 2006/09/30 12:11:37 raimc Exp $ 
 */
 /* 
  *
@@ -95,16 +95,16 @@ extern "C" {
     /** was the jacobian matrix constructed ? */
     int jacobian;
 
-    /* forward sensitivity analysis structure
-       neq x num_param */
+    /* forward sensitivity analysis structure, neq x nsens */
     int nsens;               /**< number of parameters and initial conditions
 				for sens. analysis, nsens = nsensP + nsensIC */
-    int nsensP;              /**< number of parameters for sens.anal. */
-    int nsensIC;             /**< number of init.cond. for sens.anal. */
-    int *index_sens;         /**< indexes of parameters and init.cond.
+    int *index_sens;         /**< indices of parameters and init.cond.
 				for sens. anal. in the main ID and data
 				arrays char **names, char *value */
-    ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp  */
+    int nsensP;
+    int *index_sensP;        /**< indices of sensitivity parameters in the
+				sensitivity matrix (or -1 variables) */
+    ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp, neq x nsensP */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
     /* compilation */
