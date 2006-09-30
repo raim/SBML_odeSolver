@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:38:35 raim>
-  $Id: options.c,v 1.6 2006/07/18 09:41:06 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 13:06:14 raim>
+  $Id: options.c,v 1.7 2006/09/30 14:42:41 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -410,12 +410,13 @@ usage (int status)
     "                       (now set to: %g)\n"
     "     --mxstep <Int>    Maximum step number during integration\n"
     "                       (now set to: %g)\n",
+	  Opt.PrintStep, Opt.Time, Opt.Error, Opt.RError, Opt.Mxstep);
+  fprintf(stderr,
     "     --method <0/1>    Integration method, 0: BDF, 1: Adams-Moulton\n"
-    "                       (now set to: %d)\n",
+    "                       (now set to: %d)\n"
     "     --iteration <0/1> Iteration method, 0: Newton, 1: Functional\n"
     "                       (now set to: %d)\n",
-	  Opt.PrintStep, Opt.Time, Opt.Error, Opt.RError,
-	  Opt.Mxstep, Opt.Method, Opt.IterMethod);	   
+	  Opt.Method, Opt.IterMethod); 
   fprintf(stderr,
     "(3) INTEGRATION RESULTS\n"
     " -a, --all             Print all available results (y/k/r + conc.).\n"
