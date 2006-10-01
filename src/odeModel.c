@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 13:49:13 raim>
-  $Id: odeModel.c,v 1.55 2006/10/01 14:12:51 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-01 16:23:56 raim>
+  $Id: odeModel.c,v 1.56 2006/10/01 14:24:08 raimc Exp $ 
 */
 /* 
  *
@@ -1181,7 +1181,7 @@ In an upcoming release this will only be done for selected parameters!\n
 Returns 1 if successful, 0 otherwise.
    
 */
-
+/*!!! needs repair for analytic construction outside of integrator !!!*/
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 {
   int i, j, k, l, failed, success, nvalues;
@@ -1194,67 +1194,59 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 
   om->sens = NULL;
   
-  /* if jacobian matrix has been constructed successfully,
-     try to construct sensitivity matrix dx/dp */ 
+  ASSIGN_NEW_MEMORY_BLOCK(om->sens, om->neq, ASTNode_t **, 0);
+  for ( i=0; i<om->neq; i++ )
+    ASSIGN_NEW_MEMORY_BLOCK(om->sens[i], om->nsensP, ASTNode_t *, 0);
 
-  if ( om->jacobian )
+  for ( i=0; i<om->neq; i++ )
   {
-    
-    /****** end move to CvodeData_initialize ******/
-    
-    ASSIGN_NEW_MEMORY_BLOCK(om->sens, om->neq, ASTNode_t **, 0);
-    for ( i=0; i<om->neq; i++ )
-      ASSIGN_NEW_MEMORY_BLOCK(om->sens[i], om->nsensP, ASTNode_t *, 0);
+    ode = copyAST(om->ode[i]);
+    /* assignment rule replacement: reverse to satisfy
+       SBML specifications that variables defined by
+       an assignment rule can appear in rules declared afterwards */
+    for ( j=om->nass-1; j>=0; j-- )
+      AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
 
-    for ( i=0; i<om->neq; i++ )
+    l = 0;
+    for ( j=0; j<om->nsens; j++ )
     {
-      ode = copyAST(om->ode[i]);
-      /* assignment rule replacement: reverse to satisfy
-	 SBML specifications that variables defined by
-	 an assignment rule can appear in rules declared afterwards */
-      for ( j=om->nass-1; j>=0; j-- )
-	AST_replaceNameByFormula(ode, om->names[om->neq+j], om->assignment[j]);
-
-      l = 0;
-      for ( j=0; j<om->nsens; j++ )
+      if ( !(om->index_sens[j] < om->neq) )
       {
-	if ( !(om->index_sens[j] < om->neq) )
-	{
-	  /* differentiate d(dYi/dt) / dPj */
-	  fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
-	  simple =  simplifyAST(fprime);
-	  ASTNode_free(fprime);
-	  index = indexAST(simple, nvalues, om->names);
-	  ASTNode_free(simple);
-	  om->sens[i][l] = index;
-	  /* check if the AST contains a failure notice */
-	  names = ASTNode_getListOfNodes(index,
-					 (ASTNodePredicate) ASTNode_isName);
+	/* differentiate d(dYi/dt) / dPj */
+	fprime = differentiateAST(ode, om->names[om->index_sens[j]]);
+	simple =  simplifyAST(fprime);
+	ASTNode_free(fprime);
+	index = indexAST(simple, nvalues, om->names);
+	ASTNode_free(simple);
+	om->sens[i][l] = index;
+	/* check if the AST contains a failure notice */
+	names = ASTNode_getListOfNodes(index,
+				       (ASTNodePredicate) ASTNode_isName);
 
-	  for ( k=0; k<List_size(names); k++ ) 
-	    if ( strcmp(ASTNode_getName(List_get(names,k)),
-			"differentiation_failed") == 0 ) 
-	      failed++;
-	  List_free(names);
-	  l++;
-	}
+	for ( k=0; k<List_size(names); k++ ) 
+	  if ( strcmp(ASTNode_getName(List_get(names,k)),
+		      "differentiation_failed") == 0 ) 
+	    failed++;
+	List_free(names);
+	l++;
       }
-      ASTNode_free(ode);
     }
-
-    if ( failed != 0 )
-    {
-      SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
-			"%d entries of the parametric `Jacobian' matrix "
-			"could not be constructed, due to failure of "
-			"differentiation. Cvode will use internal "
-			"approximation instead.",
-			failed);
-      ODEModel_freeSensitivity(om);
-    }
-    else success = 1;
+    ASTNode_free(ode);
   }
+
+  if ( failed != 0 )
+  {
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_ENTRIES_OF_THE_PARAMETRIC_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+		      "%d entries of the parametric `Jacobian' matrix "
+		      "could not be constructed, due to failure of "
+		      "differentiation. Cvode will use internal "
+		      "approximation instead.",
+		      failed);
+    ODEModel_freeSensitivity(om);
+  }
+  else success = 1;
+
   /* return 1 if sensitivity matrix was constructed successfully,
      and 0 otherwise */
   return success;
