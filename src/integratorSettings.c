@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 18:10:23 raim>
-  $Id: integratorSettings.c,v 1.32 2006/09/28 18:14:27 raimc Exp $
+  Last changed Time-stamp: <2006-10-01 15:46:19 raim>
+  $Id: integratorSettings.c,v 1.33 2006/10/01 13:51:06 raimc Exp $
 */
 /* 
  *
@@ -423,8 +423,6 @@ SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
   set->TimePoints[0] = 0.0;
   for ( i=1; i<=PrintStep; i++ ) 
     set->TimePoints[i] = timeseries[i-1];
-  set->Indefinitely = 0;
-  
   return 1;
 }
 
