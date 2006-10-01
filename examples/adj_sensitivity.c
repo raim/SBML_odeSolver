@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-07 16:56:51 raim>
-  $Id: adj_sensitivity.c,v 1.6 2006/09/27 14:42:06 jamescclu Exp $
+  Last changed Time-stamp: <2006-10-01 15:58:44 raim>
+  $Id: adj_sensitivity.c,v 1.7 2006/10/01 13:59:12 raimc Exp $
 */
 /* 
  *
@@ -218,6 +218,7 @@ main (int argc, char *argv[]){
   fprintf(stderr, "\n \n");
 
   /* now we have the results and can free the inputs */
+  VariableIndex_free(p);
   IntegratorInstance_free(ii);
   CvodeSettings_free(set);
   ODEModel_free(om);
