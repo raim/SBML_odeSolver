@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 15:46:19 raim>
-  $Id: integratorSettings.c,v 1.33 2006/10/01 13:51:06 raimc Exp $
+  Last changed Time-stamp: <2006-10-01 16:01:07 raim>
+  $Id: integratorSettings.c,v 1.34 2006/10/01 14:12:51 raimc Exp $
 */
 /* 
  *
@@ -358,14 +358,17 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
   set->MaxOrder = MaxOrder;  
 }
 
-/** Sets whether the simulator uses compiled functions for computing ODEs, the Jacabian or events
+/** Sets whether the simulator uses compiled functions
+    for computing ODEs, the Jacabian or events
 */
+/*!!! either implement compilation or catch during integratio */
 SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, int compileFunctions)
 {
   set->compileFunctions = compileFunctions;  
 }
 
-/** Sets whether the integrator will be freed and restarted when a event triggers
+/** Sets whether the integrator will be freed and restarted when
+    an event triggers
 */
 SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set, int ResetCvodeOnEvent)
 {

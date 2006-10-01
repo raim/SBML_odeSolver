@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 14:04:02 raim>
-  $Id: sensSolver.c,v 1.32 2006/09/30 12:11:36 raimc Exp $
+  Last changed Time-stamp: <2006-10-01 14:41:54 raim>
+  $Id: sensSolver.c,v 1.33 2006/10/01 14:12:51 raimc Exp $
 */
 /* 
  *
@@ -27,7 +27,7 @@
  *
  * The original code contained here was initially developed by:
  *
- *     Rainer Machne
+ *     Rainer Machne, James Lu and Stefan Müller
  *
  * Contributor(s):
  *
@@ -181,7 +181,7 @@ int IntegratorInstance_getAdjSens(integratorInstance_t *engine)
 int
 IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 {
-  int i, j, k, reinit, flag, sensMethod;
+  int i, j, reinit, flag, sensMethod;
   realtype *abstoldata, *ySdata;
 
   odeModel_t *om = engine->om;
@@ -199,66 +199,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   {
 
     /*****  adding sensitivity specific structures ******/
-    
-    /****** start move to CvodeData_initialize ******/
-    
-    /* free sensitivity from former runs, it might have changed for
-       non-default cases! */
-    /*!!! sensitivity matrix should only be freed and reconstructed
-      when necessary - problem with data->ode ODE optimization? !!!*/
-    ODEModel_freeSensitivity(om);
-
-    /* map between cvodeSettings to om->index_sens */
-    ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, opt->nsens, int, 0);
-    /* map sensitivities for parameters and sensitivity matrix */
-    ASSIGN_NEW_MEMORY_BLOCK(om->index_sensP, opt->nsens, int, 0);
-    /* set om->nsens equal to nsens in data and opt structures */
-    om->nsens = opt->nsens; 
-    
-    /* non-default case: take parameters from input settings */
-    k = 0;
-    if ( opt->sensIDs != NULL )
-    {
-      for ( i=0; i<om->nsens; i++ )
-      {
-	om->index_sens[i] =
-	  ODEModel_getVariableIndexFields(om, opt->sensIDs[i]);
-	if ( om->index_sens[i] < om->neq )
-	  om->index_sensP[i] = -1;
-	else
-	{
-	  om->index_sensP[i] = k;
-	  k++;
-	}	
-      }
-    }
-    /* default: take all model parameters */
-    else
-      for ( i=0; i<om->nsens; i++ )
-      {
-    	om->index_sens[i] = om->neq + om->nass + i;
-	om->index_sensP[i] = i;
-      }
-
-    for ( i=0; i<data->neq; i++ )
-      for ( j=0; j<data->nsens; j++ )
-	if ( om->index_sensP[j] == -1 && om->index_sens[j] == i )
-	  data->sensitivity[i][j] = 1.0;
-	else
-	  data->sensitivity[i][j] = 0.0;  
-
-    /* store sensitivity indices */
-    if ( opt->StoreResults )
-      for ( i=0; i<om->nsens; i++ )
-      {
-	data->results->index_sens[i] = om->index_sens[i];
-	for ( j=0; j<data->results->neq; j++ )
-	  data->results->sensitivity[j][i][0] = data->sensitivity[j][i];
-      }
-
-    om->sensitivity = ODEModel_constructSensitivity(om);
-
-    /****** end move to CvodeData_initialize ******/
 
     /* if the sens. problem dimension has changed since
        the last run, free all sensitivity structures */
@@ -351,11 +291,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       if ( data->p == NULL )
 	ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
       
-      
       /** initialize data->p, use zeros for I.C. sensitivities for clarity */
       for ( i=0; i<data->nsens; i++ )
 	if ( om->index_sens[i] < om->neq ) data->p[i] = 0.0;
-	else data->p[i] = data->value[om->index_sens[i]]; 
+	else data->p[i] = data->value[om->index_sens[i]];
+
+      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn", 1);
 
       flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
@@ -402,20 +344,10 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	   TRUE, CV_SS, reltolQ, &abstolQ); */
       /*   CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1); */
     }
-
-
   } 
   else
     /* Adjoint Phase */
   {
-    /****** start move to CvodeData_initialize ******/
-    if (  om->jacob_sens == NULL ) 
-      ODEModel_constructSensitivity(om);
-
-    if (  om->jacob == NULL ) 
-      opt->UseJacobian = ODEModel_constructJacobian(om);
-    /****** end move to CvodeData_initialize ******/   
-
     /*  Allocate yA, abstolA vectors */
     if ( solver->yA == NULL )
     {
@@ -662,7 +594,7 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
       dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
     if ( data->model->index_sensP[iS] != -1 )
       dySdata[i] +=
-	evaluateAST(data->model->jacob_sens[i][data->model->index_sensP[iS]],
+	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]],
 		    data);
   }
 
@@ -783,7 +715,7 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
   {
     dqAdata[i] = 0.0;
     for ( j=0; j<data->model->neq; j++ )
-      dqAdata[i] += yAdata[j] * evaluateAST(data->model->jacob_sens[j][i],
+      dqAdata[i] += yAdata[j] * evaluateAST(data->model->sens[j][i],
 					    data);
   }
 

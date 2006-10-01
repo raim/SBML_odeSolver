@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 14:47:00 raim>
-  $Id: integratorInstance.c,v 1.69 2006/09/30 13:07:37 raimc Exp $
+  Last changed Time-stamp: <2006-10-01 15:47:12 raim>
+  $Id: integratorInstance.c,v 1.70 2006/10/01 14:12:51 raimc Exp $
 */
 /* 
  *
@@ -461,11 +461,16 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
 
   /* find sensitivity for p */
   for ( i=0; i<om->nsens && !(om->index_sens[i] == p->index); i++ );
-  
-  printf("%g  ", data->currenttime);
-  for ( j=0; j<data->neq; j++ )
-    printf("%g ", data->sensitivity[j][i]);
-  printf("\n");
+
+  if ( i == om->nsens )
+    printf("No sensitivity requested for this ID\n");
+  else
+  {
+    printf("%g  ", data->currenttime);
+    for ( j=0; j<data->neq; j++ )
+      printf("%g ", data->sensitivity[j][i]);
+    printf("\n");
+  }
 }
 
 

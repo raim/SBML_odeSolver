@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 13:28:11 raim>
-  $Id: odeModel.h,v 1.26 2006/09/30 12:11:37 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-01 13:46:43 raim>
+  $Id: odeModel.h,v 1.27 2006/10/01 14:12:51 raimc Exp $ 
 */
 /* 
  *
@@ -104,7 +104,7 @@ extern "C" {
     int nsensP;
     int *index_sensP;        /**< indices of sensitivity parameters in the
 				sensitivity matrix (or -1 variables) */
-    ASTNode_t ***jacob_sens; /**< sensitivity matrix: df(x)/dp, neq x nsensP */
+    ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
     /* compilation */
@@ -181,10 +181,6 @@ extern "C" {
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *, variableIndex_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
@@ -199,9 +195,14 @@ extern "C" {
   SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);  
   SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *);
+  SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
-  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *om);
  
 #ifdef __cplusplus

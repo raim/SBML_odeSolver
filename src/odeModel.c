@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 16:41:44 raim>
-  $Id: odeModel.c,v 1.54 2006/09/30 14:43:28 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-01 13:49:13 raim>
+  $Id: odeModel.c,v 1.55 2006/10/01 14:12:51 raimc Exp $ 
 */
 /* 
  *
@@ -805,7 +805,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
 SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 {
 
-  int i,j;
+  int i;
 
   if(om == NULL) return;
 
@@ -829,17 +829,12 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   free(om->algebraic);
   
   /* free Jacobian matrix, if it has been constructed */
-  if ( om->jacob != NULL ) 
-  {
-    for ( i=0; i<om->neq; i++ ) 
-    {
-      for ( j=0; j<om->neq; j++ )
-	ASTNode_free(om->jacob[i][j]);
-      free(om->jacob[i]);
-    }
-    free(om->jacob);
-  }
+  ODEModel_freeJacobian(om);
 
+  /* free sensitivity structures */
+  /* free parameter/variable indices */
+  if ( om->index_sens != NULL ) free(om->index_sens);
+  if ( om->index_sensP != NULL )  free(om->index_sensP);
   ODEModel_freeSensitivity(om);
 
   /* free simplified ODE model */
@@ -1101,6 +1096,25 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 }
 
 
+/** \brief Free the Jacobian matrix of the ODEModel.    
+ */
+
+SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
+{
+  int i, j;
+  if ( om->jacob != NULL )
+  {
+    for ( i=0; i<om->neq; i++ )
+    {
+      for ( j=0; j<om->neq; j++ )
+	ASTNode_free(om->jacob[i][j]);
+      free(om->jacob[i]);
+    }
+    free(om->jacob);
+    om->jacob = NULL;
+  }
+}
+
 /**  \brief Returns the ith/jth entry of the jacobian matrix
      
 Returns NULL if either the jacobian has not been constructed yet,
@@ -1170,39 +1184,27 @@ Returns 1 if successful, 0 otherwise.
 
 SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 {
-  int i, j, k, l, failed, success, nvalues, nsensP;
+  int i, j, k, l, failed, success, nvalues;
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names;
 
   failed = 0;
   success = 0;
   nvalues = om->neq + om->nass + om->nconst;
-       /* fill type array to remember whether a  */
-  
-  /****** 3 start move to CvodeData_initialize ******/
-  
-  /* calculate how many sensitivities refer to parameters */
-  nsensP = om->nsens;
-  for ( i=0; i<om->nsens; i++ )
-    if ( om->index_sens[i] < om->neq )
-      nsensP--;
-  om->nsensP = nsensP;
-  
-  /** SELPAR_2: check for passed index_sens array
-      (otherwise default as now); */
 
-  om->jacob_sens = NULL;
-
+  om->sens = NULL;
+  
   /* if jacobian matrix has been constructed successfully,
-     try to construct sensitivity matrix dx/dp */  
+     try to construct sensitivity matrix dx/dp */ 
+
   if ( om->jacobian )
   {
     
     /****** end move to CvodeData_initialize ******/
     
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens, om->neq, ASTNode_t **, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->sens, om->neq, ASTNode_t **, 0);
     for ( i=0; i<om->neq; i++ )
-      ASSIGN_NEW_MEMORY_BLOCK(om->jacob_sens[i], nsensP, ASTNode_t *, 0);
+      ASSIGN_NEW_MEMORY_BLOCK(om->sens[i], om->nsensP, ASTNode_t *, 0);
 
     for ( i=0; i<om->neq; i++ )
     {
@@ -1224,7 +1226,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 	  ASTNode_free(fprime);
 	  index = indexAST(simple, nvalues, om->names);
 	  ASTNode_free(simple);
-	  om->jacob_sens[i][l] = index;
+	  om->sens[i][l] = index;
 	  /* check if the AST contains a failure notice */
 	  names = ASTNode_getListOfNodes(index,
 					 (ASTNodePredicate) ASTNode_isName);
@@ -1249,13 +1251,7 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
 			"differentiation. Cvode will use internal "
 			"approximation instead.",
 			failed);
-      for ( i=0; i<om->neq; i++ )
-      {
-	for ( j=0; j<nsensP; j++ )
-	  ASTNode_free(om->jacob_sens[i][j]);
-	free(om->jacob_sens[i]);
-      }
-      free(om->jacob_sens);      
+      ODEModel_freeSensitivity(om);
     }
     else success = 1;
   }
@@ -1273,18 +1269,17 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 {
   int i, j;
 
-  /* free parameter index */
-  free(om->index_sens);
   /* free parametric matrix, if it has been constructed */
-  if ( om->jacob_sens != NULL )
+  if ( om->sens != NULL )
   {
     for ( i=0; i<om->neq; i++ )
     {
       for ( j=0; j<om->nsensP; j++ )
-	ASTNode_free(om->jacob_sens[i][j]);
-      free(om->jacob_sens[i]);
+	ASTNode_free(om->sens[i][j]);
+      free(om->sens[i]);
     }
-    free(om->jacob_sens);
+    free(om->sens);
+    om->sens = NULL;
   }
 }
 
@@ -1299,9 +1294,9 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *om, int i, int j)
 {
-  if ( om->jacob_sens == NULL ) return NULL;
+  if ( om->sens == NULL ) return NULL;
   if ( i >= om->neq || j >= om->nsens ) return NULL;  
-  return (const ASTNode_t *) om->jacob_sens[i][j];
+  return (const ASTNode_t *) om->sens[i][j];
 }
 
 

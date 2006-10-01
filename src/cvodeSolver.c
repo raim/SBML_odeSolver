@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 14:08:44 raim>
-  $Id: cvodeSolver.c,v 1.39 2006/09/30 12:11:36 raimc Exp $
+  Last changed Time-stamp: <2006-09-30 20:17:58 raim>
+  $Id: cvodeSolver.c,v 1.40 2006/10/01 14:12:51 raimc Exp $
 */
 /* 
  *
@@ -251,7 +251,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 int
 IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 {
-  int i, j, flag, neq, method, iteration;
+  int i, flag, neq, method, iteration;
   realtype *ydata, *abstoldata;
 
   odeModel_t *om = engine->om;
@@ -269,40 +269,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
-    /****** start move to CvodeData_initialize ******/
-
-    /*!!! should use simplified ASTs for construction !!!*/
-    /* construct jacobian, if wanted and not yet existing */
-    if ( opt->UseJacobian && om->jacob == NULL ) 
-      /* reset UseJacobian option, depending on success */
-      opt->UseJacobian = ODEModel_constructJacobian(om);
-    else if ( !opt->UseJacobian )
-    {
-      /* free jacobian from former runs (not necessary, frees also
-	 unsuccessful jacobians from former runs ) */
-      if ( om->jacob != NULL)
-      {
-	for ( i=0; i<om->neq; i++ )
-	{
-	  for ( j=0; j<om->neq; j++ )
-	    ASTNode_free(om->jacob[i][j]);
-	  free(om->jacob[i]);
-	}
-	free(om->jacob);
-	om->jacob = NULL;
-      }
-      /* AMF this really in the wrong place if we need at all */
-      /* SolverError_error(
-	 engine->errorLog,
-	 WARNING_ERROR_TYPE,
-	 SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-	 "Jacobian matrix construction skipped."); */
-      om->jacobian = opt->UseJacobian;
-    }
-    
-    /****** end move to CvodeData_initialize ******/
-    
-    /****** start move to CvodeData_initialize ******/    
     if ( opt->compileFunctions )
     {
       rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
@@ -323,7 +289,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       else
 	jacODE = JacODE;
     }
-    /****** end move to CvodeData_initialize ******/
 
     /* CVODESolverStructures from former runs must be freed */
     /* if (  solver->y != NULL ) */
