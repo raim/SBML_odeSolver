@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 16:23:56 raim>
-  $Id: odeModel.c,v 1.56 2006/10/01 14:24:08 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-01 16:56:38 raim>
+  $Id: odeModel.c,v 1.57 2006/10/01 15:04:14 raimc Exp $ 
 */
 /* 
  *
@@ -537,8 +537,11 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   om->nconst = nconst;
   om->nass = nass;
 
-  om->nsens = 0;     /*         sensitivity parameters can be chosen later */
-  om->n_adj_sens = 0; /* adjoint sensitivity parameters can be chosen later */
+  /* sensitivity structures are filled later */
+  om->index_sens = NULL;
+  om->index_sensP = NULL;
+  om->nsens = 0;      
+  om->n_adj_sens = 0; /* adjoint sensitivity default value */
 
 
   /* 
@@ -1193,6 +1196,23 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   nvalues = om->neq + om->nass + om->nconst;
 
   om->sens = NULL;
+
+
+  /* fill with default parameters if none specified */
+  if ( om->index_sens == NULL )
+  {
+    om->nsens = om->nconst;
+    om->nsensP = om->nconst;
+    ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, om->nsens, int, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->index_sensP, om->nsens, int, 0);
+    for ( i=0; i<om->nsens; i++ )
+    {
+      /* index_sens: map between cvodeSettings and om->index_sens */
+      om->index_sens[i] = om->neq + om->nass + i;
+      /* index_sensP: set index for the optional sensitivity matrix */
+      om->index_sensP[i] = i;
+    }
+  }
   
   ASSIGN_NEW_MEMORY_BLOCK(om->sens, om->neq, ASTNode_t **, 0);
   for ( i=0; i<om->neq; i++ )
