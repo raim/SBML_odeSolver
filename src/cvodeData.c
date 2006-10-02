@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 15:24:44 raim>
-  $Id: cvodeData.c,v 1.8 2006/10/02 14:07:37 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 16:47:30 raim>
+  $Id: cvodeData.c,v 1.9 2006/10/02 14:53:01 raimc Exp $
 */
 /* 
  *
@@ -104,6 +104,8 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 {
   int i;
   
+  ASSIGN_NEW_MEMORY_BLOCK(data->p, nsens, realtype, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(data->p_orig, nsens, realtype, 0);
   ASSIGN_NEW_MEMORY_BLOCK(data->sensitivity, neq, double *, 0);
   for ( i=0; i<neq; i++ )
     ASSIGN_NEW_MEMORY_BLOCK(data->sensitivity[i], nsens, double, 0);
@@ -517,7 +519,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
     /* set om->nsens equal to nsens in input option */
     om->nsens = opt->nsens;
   }
-
+  
   /* 3: map odeModel indices */
   /* 3a: non-default case: read in parameters and variables */
   k = 0;
