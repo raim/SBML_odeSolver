@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:22:38 raim>
-  $Id: printODEModel.c,v 1.4 2005/10/27 14:52:50 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 17:29:35 raim>
+  $Id: printODEModel.c,v 1.5 2006/10/02 15:30:24 raimc Exp $
 */
 /* 
  *
@@ -76,7 +76,7 @@ int main(void)
     printf("Assigned Variables:\n");
     for ( i=0; i<ODEModel_getNumAssignments(model); i++ ){
       vi = ODEModel_getAssignedVariableIndex(model, i);
-      formula = SBML_formulaToString(ODEModel_getOde(model, vi));
+      formula = SBML_formulaToString(ODEModel_getAssignment(model, vi));
       printf("%s = %s \n", ODEModel_getVariableName(model, vi), formula);
       free(formula);
       VariableIndex_free(vi);
