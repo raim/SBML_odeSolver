@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 14:31:31 raim>
-  $Id: senstest.c,v 1.3 2006/10/01 14:02:24 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 16:51:52 raim>
+  $Id: senstest.c,v 1.4 2006/10/02 14:53:35 raimc Exp $
 */
 /* 
  *
@@ -52,7 +52,7 @@ main (int argc, char *argv[]){
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, 30, 10);
-  CvodeSettings_setErrors(set, 1e-9, 1e-4, 1e9);
+  CvodeSettings_setErrors(set, 1e-9, 1e-6, 1e9);
   CvodeSettings_setMethod(set, 0, 5);
   /*   CvodeSettings_setStoreResults(set, 0); */
   CvodeSettings_setJacobian(set, 1); /* for testing only */
@@ -80,13 +80,14 @@ main (int argc, char *argv[]){
 
   
   i = 0;
+  printf("Default case 1, with analytic matrices\n");
+  printf("Param %s:\n", ODEModel_getVariableName(om, p));
   while ( i < 10 ) {
     while( !IntegratorInstance_timeCourseCompleted(ii) )
      if ( !IntegratorInstance_integrateOneStep(ii) )
        break;
     
    /*  IntegratorInstance_dumpData(ii); */
-    printf("Param default: %s\n", ODEModel_getVariableName(om, p));
     IntegratorInstance_dumpPSensitivities(ii, p);
 
     IntegratorInstance_reset(ii);
@@ -116,25 +117,25 @@ main (int argc, char *argv[]){
     if ( !IntegratorInstance_integrateOneStep(ii) )
       break;
 
+  printf("Selected parameter case 1, analytic matrices.\n");
   y = ODEModel_getVariableIndex(om, "K1");   
-  printf("Param 2: %s\n", ODEModel_getVariableName(om, y));
+  printf("Param %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);
   VariableIndex_free(y);
   
   
   y = ODEModel_getVariableIndex(om, "MAPK_PP");   
-  printf("Param 2: %s\n", ODEModel_getVariableName(om, y));
+  printf("Variable %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);
   VariableIndex_free(y);
   
   y = ODEModel_getVariableIndex(om, "MKKK");
-  printf("Sens. for variable : %s\n", ODEModel_getVariableName(om, y));
+  printf("Sens. for variable %s:\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpYSensitivities(ii, y);
   VariableIndex_free(y);
 
  /*  IntegratorInstance_dumpData(ii); */
-  printf("\n\nNow with internal approximation of matrices: \n"); 
-      /* deactivate matrices */
+  /* deactivate matrices */
   CvodeSettings_setJacobian(set, 0);
   char *sensIDs2[4];  
   sensIDs2[3] = "V1";
@@ -146,24 +147,25 @@ main (int argc, char *argv[]){
   IntegratorInstance_integrate(ii);
 
   /*   IntegratorInstance_dumpData(ii); */
+  printf("\nSelected parameter case 2, internal approximation of matrices.\n");
   
   y = ODEModel_getVariableIndex(om, "MAPK_PP");   
-  printf("Param 3,ic: %s\n", ODEModel_getVariableName(om, y));
+  printf("Param %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);  
   VariableIndex_free(y);
   
   y = ODEModel_getVariableIndex(om, "K1");
-  printf("Param 3,ic: %s\n", ODEModel_getVariableName(om, y));
+  printf("Param %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);
   VariableIndex_free(y);
 
   y = ODEModel_getVariableIndex(om, "V1");
-  printf("Param 3,ic: %s\n", ODEModel_getVariableName(om, y));
+  printf("Param %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);
   VariableIndex_free(y);
 
   y = ODEModel_getVariableIndex(om, "MKKK_P");   
-  printf("Param 3,ic: %s\n", ODEModel_getVariableName(om, y));
+  printf("Param %s\n", ODEModel_getVariableName(om, y));
   IntegratorInstance_dumpPSensitivities(ii, y);  
   VariableIndex_free(y);
 
@@ -173,7 +175,9 @@ main (int argc, char *argv[]){
   VariableIndex_free(y);  
 
   /* switch to default sens. again and run iteration */
-  printf("\n\nSwitching back to analytic matrices and default sens.: \n"); 
+  printf("\n\nDefault case 2, switching between approx. and analytic\n");
+  printf("\nSwitching back to analytic matrices and default sens.\n\n"); 
+  printf("Param %s:\n", ODEModel_getVariableName(om, p));
   CvodeSettings_setJacobian(set, 1);
   CvodeSettings_setSensParams(set, NULL, 4);
   IntegratorInstance_reset(ii);  
@@ -194,7 +198,7 @@ main (int argc, char *argv[]){
 
     if(i==5 )
     {
-      printf("Now again with internal approximation of matrices: \n"); 
+      printf("\nNow again with internal approximation of matrices: \n\n"); 
       /* deactivate matrices */
       CvodeSettings_setJacobian(set, 0);
     }
