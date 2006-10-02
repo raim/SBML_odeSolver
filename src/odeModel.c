@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 16:56:38 raim>
-  $Id: odeModel.c,v 1.57 2006/10/01 15:04:14 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-02 17:27:37 raim>
+  $Id: odeModel.c,v 1.58 2006/10/02 15:28:59 raimc Exp $ 
 */
 /* 
  *
@@ -958,7 +958,7 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
 
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, variableIndex_t *vi)
 {
-  if ( om->neq <= vi->index && vi->index < om->nass )
+  if (  0 <= vi->type_index && vi->type_index < om->nass )
     return (const ASTNode_t *) om->assignment[vi->type_index];  
   else return NULL;
 }
