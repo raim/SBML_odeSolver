@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-29 13:43:03 raim>
-  $Id: cvodeData.h,v 1.2 2006/09/30 12:11:37 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 15:26:33 raim>
+  $Id: cvodeData.h,v 1.3 2006/10/02 14:07:38 raimc Exp $
 */
 /* 
  *
@@ -91,9 +91,10 @@ struct cvodeData {
   int nsens;
   /** current values of sensitivities dx(t)/dp */
   double **sensitivity; 
-  /** current values of parameters in sensitivity analysis, required
-      and filled only if no r.h.s function fS is available */
+  /** current and original values of parameters in sensitivity analysis,
+      required and filled only if no r.h.s function fS is available */
   realtype *p;
+  realtype *p_orig;
   
   /** cvode settings: start- and end times, timesteps, number of timesteps,
       error tolerances, maximum number of steps, etc... */

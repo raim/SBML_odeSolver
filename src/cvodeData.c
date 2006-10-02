@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 14:44:49 raim>
-  $Id: cvodeData.c,v 1.7 2006/10/01 14:12:51 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 15:24:44 raim>
+  $Id: cvodeData.c,v 1.8 2006/10/02 14:07:37 raimc Exp $
 */
 /* 
  *
@@ -91,7 +91,7 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
   
   data->sensitivity = NULL;
   data->p = NULL;
-  
+  data->p_orig  = NULL;
 
   /* Adjoint specific */
   ASSIGN_NEW_MEMORY_BLOCK(data->adjvalue, nvalues, double, NULL);

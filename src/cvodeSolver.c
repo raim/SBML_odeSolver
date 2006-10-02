@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-30 20:17:58 raim>
-  $Id: cvodeSolver.c,v 1.40 2006/10/01 14:12:51 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 16:04:18 raim>
+  $Id: cvodeSolver.c,v 1.41 2006/10/02 14:07:37 raimc Exp $
 */
 /* 
  *
@@ -696,7 +696,7 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 
   /** update parameters: p is modified by CVODES,
       if fS could not be generated  */
-  if ( data->p != NULL && data->opt->Sensitivity  )
+  if ( data->opt->Sensitivity && !data->model->sensitivity )
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p[i];
 
@@ -713,6 +713,11 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /** evaluate ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<data->model->neq; i++ ) 
     dydata[i] = evaluateAST(data->ode[i],data);
+
+  /** reset parameters */
+  if ( data->opt->Sensitivity && !data->model->sensitivity )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->model->index_sens[i]] = data->p_orig[i];
 
 }
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 14:41:54 raim>
-  $Id: sensSolver.c,v 1.33 2006/10/01 14:12:51 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 15:59:45 raim>
+  $Id: sensSolver.c,v 1.34 2006/10/02 14:07:37 raimc Exp $
 */
 /* 
  *
@@ -276,36 +276,37 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, fS);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn", 1);
-      
+
       flag = CVodeSetSensFdata(solver->cvode_mem, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensFdata", 1);
       
-      if ( data->p != NULL )
-        free(data->p);
-
+      if ( data->p != NULL ) free(data->p);
+      if ( data->p_orig != NULL ) free(data->p_orig);
       data->p = NULL;
+      data->p_orig  = NULL;
     }
     else
     {
       /* data->p is only required if R.H.S. fS cannot be supplied */
       if ( data->p == NULL )
 	ASSIGN_NEW_MEMORY_BLOCK(data->p, data->nsens, realtype, 0);
+      if ( data->p_orig == NULL )
+	ASSIGN_NEW_MEMORY_BLOCK(data->p_orig, data->nsens, realtype, 0);
       
-      /** initialize data->p, use zeros for I.C. sensitivities for clarity */
+      /** initialize data->p */
       for ( i=0; i<data->nsens; i++ )
-	if ( om->index_sens[i] < om->neq ) data->p[i] = 0.0;
-	else data->p[i] = data->value[om->index_sens[i]];
+	data->p[i] = data->p_orig[i] = data->value[om->index_sens[i]];
 
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn", 1);
-
-      flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
       
       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRho", 1);
-      
-    }
+    }    
+    
+    /* setting data->p, which is null if analytic matrices are available */
+    flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
     
     /*     CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
     /* 			   solver->reltol, &solver->senstol); */
