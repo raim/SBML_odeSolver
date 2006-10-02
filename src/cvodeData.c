@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 16:47:30 raim>
-  $Id: cvodeData.c,v 1.9 2006/10/02 14:53:01 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 17:16:43 raim>
+  $Id: cvodeData.c,v 1.10 2006/10/02 15:19:12 raimc Exp $
 */
 /* 
  *
@@ -103,7 +103,6 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
 static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 {
   int i;
-  
   ASSIGN_NEW_MEMORY_BLOCK(data->p, nsens, realtype, 0);
   ASSIGN_NEW_MEMORY_BLOCK(data->p_orig, nsens, realtype, 0);
   ASSIGN_NEW_MEMORY_BLOCK(data->sensitivity, neq, double *, 0);
@@ -495,7 +494,9 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
       for ( i=0; i<data->neq; i++ )
 	free(data->sensitivity[i]);
       free(data->sensitivity);
-      data->sensitivity = NULL;
+      free(data->p);
+      free(data->p_orig);
+      data->p = data->p_orig = data->sensitivity = NULL;
     }
     if ( om->index_sens != NULL  ) /* redundant condition?? */
     {
@@ -508,7 +509,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
 
   /* 2: create cvodeData and odeModel structures */
   if ( data->sensitivity == NULL )
-  {  
+  {
     CvodeData_allocateSens(data, om->neq, opt->nsens);
     RETURN_ON_FATALS_WITH(0);
   }
@@ -607,16 +608,15 @@ static void CvodeData_freeStructures(cvodeData_t * data)
 
   if ( data == NULL ) return;
 
-  /* free sensitivity structure,
-     as data->p is required only by the CVODES solver,
-     it is freed by IntegratorInstance_freeForwardSensitivity*/
-  
+  /* free sensitivity structure */  
   if ( data->sensitivity != NULL )
   {
     for ( i=0; i<data->neq; i++ )
       free(data->sensitivity[i]);
     free(data->sensitivity);
   }
+  if ( data->p != NULL ) free(data->p);
+  if ( data->p_orig != NULL ) free(data->p_orig);
 	   
   /* free adjoint structure*/
   if ( data->adjvalue != NULL ) 

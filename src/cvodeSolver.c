@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 16:04:18 raim>
-  $Id: cvodeSolver.c,v 1.41 2006/10/02 14:07:37 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 17:03:40 raim>
+  $Id: cvodeSolver.c,v 1.42 2006/10/02 15:19:13 raimc Exp $
 */
 /* 
  *
@@ -509,13 +509,6 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
 void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
 {
 
-  /* free data->p vector */
-  if ( engine->data->p != NULL )
-  {
-    free(engine->data->p);
-    engine->data->p = NULL;
-  }
-  
   /* Free sensitivity vector yS */
   if (engine->solver->yS != NULL)
   {

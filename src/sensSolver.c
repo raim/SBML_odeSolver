@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 16:50:35 raim>
-  $Id: sensSolver.c,v 1.35 2006/10/02 14:53:02 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 17:09:23 raim>
+  $Id: sensSolver.c,v 1.36 2006/10/02 15:19:13 raimc Exp $
 */
 /* 
  *
@@ -287,11 +287,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       
       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRho", 1);
-    }    
-    
+ 
+    }
+
     /* initializing and setting data->p */
     for ( i=0; i<data->nsens; i++ )
       data->p[i] = data->p_orig[i] = data->value[om->index_sens[i]];
+
     flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
     
