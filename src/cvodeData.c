@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 17:16:43 raim>
-  $Id: cvodeData.c,v 1.10 2006/10/02 15:19:12 raimc Exp $
+  Last changed Time-stamp: <2006-10-02 17:40:33 raim>
+  $Id: cvodeData.c,v 1.11 2006/10/02 15:43:20 raimc Exp $
 */
 /* 
  *
@@ -71,6 +71,7 @@ static int CvodeData_createMatrices(cvodeData_t *,cvodeSettings_t *,
 				    odeModel_t *);
 static int CvodeData_initializeSensitivities(cvodeData_t *,cvodeSettings_t *,
 				    odeModel_t *);
+static void CvodeData_freeSensitivities(cvodeData_t *);
 /* static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq); */
 
 
@@ -490,14 +491,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
   if ( data->nsens != opt->nsens )
   {
     if ( data->sensitivity != NULL ) 
-    {
-      for ( i=0; i<data->neq; i++ )
-	free(data->sensitivity[i]);
-      free(data->sensitivity);
-      free(data->p);
-      free(data->p_orig);
-      data->p = data->p_orig = data->sensitivity = NULL;
-    }
+      CvodeData_freeSensitivities(data);
     if ( om->index_sens != NULL  ) /* redundant condition?? */
     {
       free(om->index_sens);
@@ -602,13 +596,11 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
 
 
 /* frees all internal stuff of cvodeData */
-static void CvodeData_freeStructures(cvodeData_t * data)
+static void CvodeData_freeSensitivities(cvodeData_t * data)
 {
   int i;
 
-  if ( data == NULL ) return;
-
-  /* free sensitivity structure */  
+  /* free forward sensitivity */  
   if ( data->sensitivity != NULL )
   {
     for ( i=0; i<data->neq; i++ )
@@ -618,11 +610,23 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   if ( data->p != NULL ) free(data->p);
   if ( data->p_orig != NULL ) free(data->p_orig);
 	   
-  /* free adjoint structure*/
-  if ( data->adjvalue != NULL ) 
-    free(data->adjvalue );
+  data->p = data->p_orig = NULL;
+  data->sensitivity = NULL;
+}
+  
+/* frees all internal stuff of cvodeData */
+static void CvodeData_freeStructures(cvodeData_t * data)
+{
+  int i;
 
+  if ( data == NULL ) return;
 
+  /* free sensitivity structure */  
+  CvodeData_freeSensitivities(data);
+
+  /* free adjoint sensitivity */
+  if ( data->adjvalue != NULL ) free(data->adjvalue );
+  
   /* free results structure */
   CvodeResults_free(data->results);
 
