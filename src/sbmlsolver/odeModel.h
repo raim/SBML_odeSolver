@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 13:46:43 raim>
-  $Id: odeModel.h,v 1.27 2006/10/01 14:12:51 raimc Exp $ 
+  $Id: odeModel.h,v 1.28 2006/10/03 14:52:40 jamescclu Exp $ 
 */
 /* 
  *
@@ -149,8 +149,7 @@ extern "C" {
        computes the adjoint operator applied to the vector v, F'*(p)v.
        v is given by a symbolic expression involving x and observation data. */
 
-    int n_adj_sens;          /**< number of parameters for
-				adj. sens. analysis */
+    
     int *index_adj_sens;
 
     int observation_type;    /**< 0: continuous data observed

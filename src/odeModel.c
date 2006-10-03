@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:27:37 raim>
-  $Id: odeModel.c,v 1.58 2006/10/02 15:28:59 raimc Exp $ 
+  $Id: odeModel.c,v 1.59 2006/10/03 14:56:12 jamescclu Exp $ 
 */
 /* 
  *
@@ -541,7 +541,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   om->index_sens = NULL;
   om->index_sensP = NULL;
   om->nsens = 0;      
-  om->n_adj_sens = 0; /* adjoint sensitivity default value */
+ 
 
 
   /* 

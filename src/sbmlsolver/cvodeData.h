@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 15:26:33 raim>
-  $Id: cvodeData.h,v 1.3 2006/10/02 14:07:38 raimc Exp $
+  $Id: cvodeData.h,v 1.4 2006/10/03 14:52:40 jamescclu Exp $
 */
 /* 
  *
@@ -153,9 +153,7 @@ struct cvodeResults {
   /** Adjoint specific stuff */
 
   /** dimension of the adjoint solution  */
-  int nadjeq;
-  /** number of parameters p for adjoint sens. analysis */
-  int nadjsens; 
+ /*  int nadjeq; */
   /**  the time series of all adjoint variables */
   double **adjvalue;
 

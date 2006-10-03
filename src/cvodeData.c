@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:40:33 raim>
-  $Id: cvodeData.c,v 1.11 2006/10/02 15:43:20 raimc Exp $
+  $Id: cvodeData.c,v 1.12 2006/10/03 14:56:12 jamescclu Exp $
 */
 /* 
  *
@@ -431,9 +431,10 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     RETURN_ON_FATALS_WITH(0);
   }
 
-  /* create structures for sensitivity analysis */
-  if ( opt->Sensitivity )
+  /* create structures for forward/adjoint sensitivity analysis */
+  if (( opt->Sensitivity ) || ( opt->DoAdjoint ))
     CvodeData_initializeSensitivities(data, opt, om);
+
 
   /* now finally, Jacobian and sensitivity matrices can
      be constructed correctly */
@@ -583,7 +584,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
     if  ( opt->DoAdjoint )
     {
       CvodeResults_allocateAdjSens(data->results, om->neq,
-				   om->n_adj_sens, opt->PrintStep);
+				   om->nsens, opt->PrintStep);
       /* write initial values for adj sensitivity */
       /*!!! data->adjvalue HAS NO VALUE YET!!! */
       for ( i=0; i<data->results->neq; i++ )
@@ -686,8 +687,7 @@ int CvodeResults_allocateAdjSens(cvodeResults_t *results, int neq, int nadjsens,
   for ( i=0; i<neq; i++ ) 
     ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue[i], nout+1, double, 0);
 
-  results->nadjeq = neq;
-  results->nadjsens = nadjsens;    
+ 
 
   return 1;
 }

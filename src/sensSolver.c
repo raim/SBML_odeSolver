@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.36 2006/10/02 15:19:13 raimc Exp $
+  $Id: sensSolver.c,v 1.37 2006/10/03 14:56:12 jamescclu Exp $
 */
 /* 
  *
@@ -43,6 +43,8 @@
 /*@{*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 
 /* Header Files for CVODE */
 #include "cvodes.h"    
@@ -58,6 +60,10 @@
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
+#include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/interpol.h"
+#include "sbmlsolver/variableIndex.h"
+
 
 
 /* 
@@ -308,12 +314,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     {
       if ( solver->q == NULL )
       {
-	solver->q = N_VNew_Serial(om->nconst);
+	solver->q = N_VNew_Serial(om->nsens);
 	CVODE_HANDLE_ERROR((void *) solver->q,
 			   "N_VNew_Serial for vector q", 0);
 
 	/* Init solver->q = 0.0;*/
-	for(i=0; i<om->nconst; i++) NV_Ith_S(solver->q, i) = 0.0;
+	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->q, i) = 0.0;
  
 	flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
 	CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
@@ -321,7 +327,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       else
       {
 	/* Init solver->q = 0.0;*/
-	for(i=0; i<om->nconst; i++) NV_Ith_S(solver->q, i) = 0.0;
+	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->q, i) = 0.0;
  
 	flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
 	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
@@ -417,12 +423,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     if ( solver->qA == NULL )
     {
-      solver->qA = N_VNew_Serial(om->n_adj_sens);
+      solver->qA = N_VNew_Serial(om->nsens);
       CVODE_HANDLE_ERROR((void *) solver->qA,
 			 "N_VNew_Serial for vector qA failed", 0);
 
       /* Init solver->qA = 0.0;*/
-      for( i=0; i<om->n_adj_sens; i++ )
+      for( i=0; i<om->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
       flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
@@ -432,7 +438,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else
     {
       /* Init solver->qA = 0.0;*/
-      for( i=0; i<om->n_adj_sens; i++ )
+      for( i=0; i<om->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
       flag = CVodeQuadReInitB(solver->cvadj_mem, fQA, solver->qA);
@@ -512,17 +518,85 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
 }
 
 
+SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorInstance_t *engine, char *v_file)
+{
+
+  FILE *fp;
+  char *line, *token;
+  int i;
+  ASTNode_t **vector_v, *tempAST;
+  odeModel_t *om = engine->om;
+ 
+/*   vector_v = space(om->neq * sizeof(ASTNode_t *)); */
+
+  ASSIGN_NEW_MEMORY_BLOCK(vector_v, om->neq, ASTNode_t *, 0);
+
+
+  if ((fp = fopen(v_file, "r")) == NULL)
+    fatal(stderr, "read_v_file(): file not found");
+
+  /* loop over lines */
+  for (i=0; (line = get_line(fp)) != NULL; i++){
+    /* read column 0 */
+    token = strtok(line, " ");
+    /* skip empty lines and comment lines */
+    if (token == NULL || *token == '#'){
+      free(line);
+      i--;
+      continue;
+    }
+    /* check variable order */
+    if ( i == om->neq )
+       SolverError_error(   FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_VECTOR_V_FAILED,
+			    "Inconsistent number of variables (>) "
+			    "in setting vector_v");
+    
+    if ( strcmp(token, om->names[i]) != 0 )
+        SolverError_error(  FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_VECTOR_V_FAILED,
+			    "Inconsistent variable order "
+			    "in setting vector_v"); 
+    
+    /* read column 1 */
+    token = strtok(NULL, "");
+    tempAST = SBML_parseFormula(token);
+
+    vector_v[i] = indexAST(tempAST, om->neq, om->names);
+    ASTNode_free(tempAST);
+    free(line);
+  }
+
+  if (i < om->neq)
+    fatal(stderr, "read_v_file(): inconsistent number of variables (<)");
+
+  om->vector_v = vector_v;
+  
+  return 1;
+}
+
+
 /* Perform quadrature of forward and/or adjoint sensitivity  */
 int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
 {
   int flag;
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
+  int iS;
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  
 
   if( opt->AdjointPhase )
   {
     flag = CVodeGetQuadB(solver->cvadj_mem, solver->qA);
     CVODE_HANDLE_ERROR(&flag, "CVodeGetQuadB", 1);
+
+    /* For adj sensitivity components corresponding to IC as parameter */
+    for( iS=0; iS<engine->om->nsens; iS++  )
+      if ( data->model->index_sensP[iS] == -1 ){
+        NV_Ith_S(solver->qA, iS) = - data->adjvalue[ data->model->index_sens[iS] ];
+      }
   }
   else
   {
@@ -704,8 +778,10 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
   for ( i=0; i<data->model->nsens; i++ )
   {
     dqAdata[i] = 0.0;
+
+   if ( data->model->index_sensP[i] != -1 )
     for ( j=0; j<data->model->neq; j++ )
-      dqAdata[i] += yAdata[j] * evaluateAST(data->model->sens[j][i],
+      dqAdata[i] += yAdata[j] * evaluateAST(data->model->sens[j][ data->model->index_sensP[i]  ],
 					    data);
   }
 
@@ -753,7 +829,7 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 
 
   /* evaluate quadrature integrand: (y-ydata) * yS_i for each i */
-  for(i=0; i<data->model->nconst; i++)
+  for(i=0; i<data->model->nsens; i++)
   {
     dqdata[i] = 0.0;
     for(j=0; j<data->model->neq; j++)
