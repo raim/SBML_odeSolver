@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.18 2006/09/27 13:37:33 raimc Exp $
+# $Id: Makefile.am,v 1.19 2006/10/03 14:46:41 jamescclu Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -35,7 +35,7 @@ bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
                simpleIntInst changeIntInst ASTIndexTest \
                ParameterScanner Sense \
                printODEs analyzeJacobian analyzeSens \
-	       root senstest
+	       root senstest adjsenstest
 printODEs_SOURCES = printODEModel.c
 printODEs_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
@@ -66,6 +66,13 @@ sensitivity_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       -lstdc++ -lxerces-c -lm
 senstest_SOURCES = senstest.c
 senstest_LDADD   = -L../src -L/@prefix@/lib -lODES \
+                      @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                      @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
+                      @SBML_LDFLAGS@ @SBML_LIBS@ \
+                      @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
+                      -lstdc++ -lxerces-c -lm
+adjsenstest_SOURCES = adjsenstest.c
+adjsenstest_LDADD   = -L../src -L/@prefix@/lib -lODES \
                       @GRACE_LDFLAGS@ @GRACE_LIBS@ \
                       @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                       @SBML_LDFLAGS@ @SBML_LIBS@ \
