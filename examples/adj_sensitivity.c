@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 15:58:44 raim>
-  $Id: adj_sensitivity.c,v 1.7 2006/10/01 13:59:12 raimc Exp $
+  $Id: adj_sensitivity.c,v 1.8 2006/10/04 06:35:02 jamescclu Exp $
 */
 /* 
  *
@@ -120,8 +120,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
   CvodeSettings_setnSaveSteps(set, 2);
    
-  /* set this as a default elsewhere !!! */
-  om->n_adj_sens = om->nconst;
+ 
  
   /* get the last parameter (for which we will check sensitivities) */
   p = ODEModel_getConstantIndex(om, om->nconst-1);
@@ -213,7 +212,7 @@ main (int argc, char *argv[]){
   if (flag!=1) return(EXIT_FAILURE);
   
   fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
-  for(i=0;i<om->n_adj_sens;i++)
+  for(i=0;i<om->nsens;i++)
     fprintf(stderr, "dJ/dp_%d = %0.10g ", i, NV_Ith_S(ii->solver->qA, i));
   fprintf(stderr, "\n \n");
 
