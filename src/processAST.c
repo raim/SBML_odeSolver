@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 17:38:34 raim>
-  $Id: processAST.c,v 1.44 2006/09/06 17:24:16 raimc Exp $
+  Last changed Time-stamp: <2006-10-05 17:24:13 raim>
+  $Id: processAST.c,v 1.45 2006/10/05 15:26:25 raimc Exp $
 */
 /* 
  *
@@ -65,17 +65,17 @@
 #include "sbmlsolver/interpol.h"
 
 
-static double acosh(double x)
+static double aCosh(double x)
 {
   return log(x + (sqrt(x - 1) * sqrt(x + 1)));
 }
 
-static double asinh(double x)
+static double aSinh(double x)
 {
   return log(x + sqrt((x * x) + 1));
 }
 
-static double atanh(double x)
+static double aTanh(double x)
 {
   return (log(1 + x) - log(1-x))/2 ;
 }
@@ -402,7 +402,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     result = acos(evaluateAST(child(n,0),data)) ;
     break;
   case AST_FUNCTION_ARCCOSH:
-    result = acosh(evaluateAST(child(n,0),data));
+    result = aCosh(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCCOT:
     /** arccot x =  arctan (1 / x) */
@@ -437,13 +437,13 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     result = asin(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCSINH:
-    result = asinh(evaluateAST(child(n,0),data));
+    result = aSinh(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCTAN:
     result = atan(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCTANH:
-    result = atanh(evaluateAST(child(n,0),data));
+    result = aTanh(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_CEILING:
     result = ceil(evaluateAST(child(n,0),data));
