@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 17:40:33 raim>
-  $Id: cvodeData.c,v 1.12 2006/10/03 14:56:12 jamescclu Exp $
+  Last changed Time-stamp: <2006-10-12 11:00:03 raim>
+  $Id: cvodeData.c,v 1.13 2006/10/12 09:03:54 raimc Exp $
 */
 /* 
  *
@@ -180,37 +180,49 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 
   for ( i=0; i<data->nvalues; i++ )
   {
-    if ( (s = Model_getSpeciesById(ode, om->names[i])) )
+    /* 1: distinguish between SBML-based or direct odeModel */
+    /* 1a SBML based initialization */
+    if ( om->values == NULL )
     {
-      if ( Species_isSetInitialConcentration(s) )
-	data->value[i] = Species_getInitialConcentration(s);
-      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	SolverError_error(FATAL_ERROR_TYPE,
-			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			  "No value found for species %s",
-			  om->names[i]);
+      if ( (s = Model_getSpeciesById(ode, om->names[i])) )
+      {
+	if ( Species_isSetInitialConcentration(s) )
+	  data->value[i] = Species_getInitialConcentration(s);
+	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	  SolverError_error(FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			    "No value found for species %s",
+			    om->names[i]);
+      }
+      else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
+      {
+	if ( Compartment_isSetSize(c) )
+	  data->value[i] = Compartment_getSize(c);
+	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	  SolverError_error(FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			    "No value found for compartment %s",
+			    om->names[i]);      
+      }
+      else if ( (p = Model_getParameterById(ode, om->names[i])) )
+      {
+	if ( Parameter_isSetValue(p) )
+	  data->value[i] = Parameter_getValue(p);
+	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
+	  SolverError_error(FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+			    "No value found for parameter %s",
+			    om->names[i]);      	
+      }
     }
-    else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
+    else if ( om->values != NULL )
     {
-      if ( Compartment_isSetSize(c) )
-	data->value[i] = Compartment_getSize(c);
-      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	SolverError_error(FATAL_ERROR_TYPE,
-			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			  "No value found for compartment %s",
-			  om->names[i]);      
-    }
-    else if ( (p = Model_getParameterById(ode, om->names[i])) )
-    {
-      if ( Parameter_isSetValue(p) )
-	data->value[i] = Parameter_getValue(p);
-      else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	SolverError_error(FATAL_ERROR_TYPE,
-			  SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			  "No value found for parameter %s",
-			  om->names[i]);      	
+      /* 1b direct odeModel creation from ODEs */
+      for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
+	data->value[i] = om->values[i];
     }
   }
+ 
   /* initialize assigned parameters */
   for ( i=0; i<om->nass; i++ ) 
     data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
@@ -586,7 +598,6 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
       CvodeResults_allocateAdjSens(data->results, om->neq,
 				   om->nsens, opt->PrintStep);
       /* write initial values for adj sensitivity */
-      /*!!! data->adjvalue HAS NO VALUE YET!!! */
       for ( i=0; i<data->results->neq; i++ )
 	data->results->adjvalue[i][0] = data->adjvalue[i];
     }

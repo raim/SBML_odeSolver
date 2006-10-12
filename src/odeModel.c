@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 17:27:37 raim>
-  $Id: odeModel.c,v 1.59 2006/10/03 14:56:12 jamescclu Exp $ 
+  Last changed Time-stamp: <2006-10-12 11:03:04 raim>
+  $Id: odeModel.c,v 1.60 2006/10/12 09:03:54 raimc Exp $ 
 */
 /* 
  *
@@ -800,6 +800,64 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
   return om;
 }
 
+
+/** Create odeModel directly.
+
+    This function allows to create the internal odeModel structure
+    independently from SBML. The formulae, both ODEs and assignments,
+    can be passed as libSBML ASTs. neq is the number of ODEs, nass is
+    the number of assignments, where the passed array f contains both
+    ODEs and assignments in this order. The passed names and value arrays
+    are of size neq+nass+nconst and contains names and values of
+    ODE variables, assigned variables and model parameters in this order.
+*/
+
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values)
+{
+  int i, nvalues;
+  odeModel_t *om;
+
+  nvalues = neq + nass + nconst;
+  
+  /* allocate odeModel structure and set values */
+  om = ODEModel_allocate(neq, nconst, nass, 0, 0);
+  om->neq    = neq;
+  om->nass   = nass;
+  om->nconst = nconst;
+
+  /* set SBML input to NULL */
+  om->d = NULL;
+  om->m = om->simple = NULL;
+  
+  /* set ODEs */
+  for ( i=0; i<neq; i++ )    
+    om->ode[i] = indexAST(f[i], nvalues, names);
+
+  /* set assignments */
+  for ( i=0; i<nass; i++ )
+    om->assignment[i] = indexAST(f[neq+i], nvalues, names);
+  
+  /* set names and values */
+  for ( i=0; i<neq+nass+nconst; i++ )
+    strcpy(om->names[i], names[i]);
+
+  /* set values */
+  for ( i=0; i<neq+nass+nconst; i++ )
+    om->values[i] = values[i];
+
+  return om;
+  
+}
+
+/** Set an SBML model that contains a list of events, temporary function
+    for direct odeModel_t creation via ODEModel_createFromODEs.
+    DON'T USE WHEN CREATING odeModel_t FROM SBML INPUT.
+*/
+
+SBML_ODESOLVER_API void ODEModel_setEvents(odeModel_t *om, Model_t *events)
+{
+  om->simple = events;
+}
 
 
 /** \brief Frees the odeModel structures
