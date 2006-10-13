@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 15:47:12 raim>
-  $Id: integratorInstance.c,v 1.70 2006/10/01 14:12:51 raimc Exp $
+  Last changed Time-stamp: <2006-10-13 04:44:45 raim>
+  $Id: integratorInstance.c,v 1.71 2006/10/13 05:21:27 raimc Exp $
 */
 /* 
  *
@@ -636,7 +636,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
   fired = 0;
 
   /** now go through all events: \n */
-  for ( i=0; i<Model_getNumEvents(om->simple); i++ )
+  for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
     trigger = (ASTNode_t *) Event_getTrigger(e);
@@ -709,7 +709,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 
     if ( fired && opt->HaltOnEvent )
     {
-      for ( i=0; i!=Model_getNumEvents(om->simple); i++ )
+      for ( i=0; i!= data->nevents; i++ )
       {
 	if ( data->trigger[i] )
 	{
@@ -824,7 +824,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 
   fired = 0;
 
-  for ( i=0; i<Model_getNumEvents(om->simple); i++ )
+  for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
     trigger = (ASTNode_t *) Event_getTrigger(e);

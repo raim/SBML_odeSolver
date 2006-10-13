@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-17 13:10:00 raim>
-  $Id: ParameterScanner.c,v 1.9 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2006-10-01 17:01:14 raim>
+  $Id: ParameterScanner.c,v 1.10 2006/10/13 05:21:27 raimc Exp $
 */
 /* 
  *
@@ -120,7 +120,7 @@ int doit(int argc, char *argv[])
     CvodeSettings_setSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
     CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
     CvodeSettings_setStoreResults(settings, 0);     /* don't Store time course history */
-    CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
+    CvodeSettings_setCompileFunctions(settings, 0); /* compile model */ 
 
     printf("set xlabel 'time'\n");
     printf("set ylabel '%s'\n", parameterStr);

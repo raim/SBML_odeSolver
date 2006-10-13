@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 15:26:33 raim>
-  $Id: cvodeData.h,v 1.4 2006/10/03 14:52:40 jamescclu Exp $
+  Last changed Time-stamp: <2006-10-13 04:48:42 raim>
+  $Id: cvodeData.h,v 1.5 2006/10/13 05:21:28 raimc Exp $
 */
 /* 
  *
@@ -102,7 +102,9 @@ struct cvodeData {
   
   /** trigger flags: check if triggers were active or not
       at the previous time step */
+  int nevents;
   int *trigger;
+
   /** steady state flag: check if steady state was found */
   int steadystate; 
 

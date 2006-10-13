@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-12 11:03:04 raim>
-  $Id: odeModel.c,v 1.60 2006/10/12 09:03:54 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-13 07:16:57 raim>
+  $Id: odeModel.c,v 1.61 2006/10/13 05:21:27 raimc Exp $ 
 */
 /* 
  *
@@ -146,6 +146,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   RETURN_ON_ERRORS_WITH(NULL);
   
   om->m = m;
+  om->values = NULL; /* this is only used for SBML independent use */
   om->d = NULL; /* will be set if created from file */
   om->compiledCVODEFunctionCode = NULL;
   om->compiledCVODEJacobianFunction = NULL;
@@ -407,22 +408,25 @@ void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
     List_add(allVariables, om->names[i]);
   }
 
-  for ( i = 0; i != Model_getNumEvents(om->simple); i++ )
+  if ( om->simple != NULL )
   {
-    int j ;
-    Event_t *event = Model_getEvent(om->simple, i);
-
-    ASTNode_getSymbols((ASTNode_t *)Event_getTrigger(event),
-		       eventExpressionFunctionOfSet);
-
-    for ( j = 0; j != Event_getNumEventAssignments(event); j++ ) 
+    for ( i = 0; i != Model_getNumEvents(om->simple); i++ )
     {
-      EventAssignment_t *assignment = Event_getEventAssignment(event, j);
+      int j ;
+      Event_t *event = Model_getEvent(om->simple, i);
 
-      ASTNode_getSymbols((ASTNode_t *)EventAssignment_getMath(assignment),
+      ASTNode_getSymbols((ASTNode_t *)Event_getTrigger(event),
 			 eventExpressionFunctionOfSet);
-      List_add(variablesAssignedByEvents,
-	       (ASTNode_t *) EventAssignment_getVariable(assignment));
+      
+      for ( j = 0; j != Event_getNumEventAssignments(event); j++ ) 
+      {
+	EventAssignment_t *assignment = Event_getEventAssignment(event, j);
+
+	ASTNode_getSymbols((ASTNode_t *)EventAssignment_getMath(assignment),
+			   eventExpressionFunctionOfSet);
+	List_add(variablesAssignedByEvents,
+		 (ASTNode_t *) EventAssignment_getVariable(assignment));
+      }
     }
   }
 
@@ -702,18 +706,21 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nalg, int nevents)
 {
-  odeModel_t *data;
+  odeModel_t *om;
 
-  ASSIGN_NEW_MEMORY(data, odeModel_t, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(data->names,
+  ASSIGN_NEW_MEMORY(om, odeModel_t, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->names,
 			  neq + nalg + nass + nconst, char *, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(data->observablesArray,
+  ASSIGN_NEW_MEMORY_BLOCK(om->observablesArray,
 			  neq + nalg + nass + nconst, int, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(data->ode, neq, ASTNode_t *, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(data->assignment, nass, ASTNode_t *, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(data->algebraic, nalg, ASTNode_t *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignment, nass, ASTNode_t *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
 
-  return data ;
+  /* currently only required for SBML independent input */
+  ASSIGN_NEW_MEMORY_BLOCK(om->values, neq, double, NULL);
+  
+  return om ;
 }
 
 
@@ -814,7 +821,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values)
 {
-  int i, nvalues;
+  int i, j, nvalues;
   odeModel_t *om;
 
   nvalues = neq + nass + nconst;
@@ -839,11 +846,41 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   
   /* set names and values */
   for ( i=0; i<neq+nass+nconst; i++ )
+  {
+    ASSIGN_NEW_MEMORY_BLOCK(om->names[i], strlen(names[i]) + 1, char, NULL);
     strcpy(om->names[i], names[i]);
+  }
 
   /* set values */
   for ( i=0; i<neq+nass+nconst; i++ )
     om->values[i] = values[i];
+  om->compiledCVODEFunctionCode = NULL;
+  om->compiledCVODEJacobianFunction = NULL;
+  om->compiledCVODERhsFunction = NULL;
+  om->observables = List_create();
+
+  
+
+    /* create default list of observables from species */
+  for ( i = 0; i <neq+nass+nconst; i++ )
+  {
+    char *newObservable ;
+
+    ASSIGN_NEW_MEMORY_BLOCK(newObservable, strlen(names[i]) + 1, char, NULL);
+      strcpy(newObservable, names[i]);
+      List_add(om->observables, newObservable);
+  }
+
+  for ( i = 0; i <neq+nass+nconst; i++ )
+  {        
+    om->observablesArray[i] = 0;
+
+    for ( j = 0; j != List_size(om->observables); j++ )
+      if ( !strcmp(om->names[i], List_get(om->observables, j)) )
+	om->observablesArray[i] = 1;
+  }
+
+  ODEModel_computeAssignmentRuleSets(om);
 
   return om;
   
@@ -902,8 +939,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   if ( om->simple != NULL ) Model_free(om->simple); 
 
   /* free document, if model was constructed from file */
-  if ( om->d != NULL ) SBMLDocument_free(om->d);    
+  if ( om->d != NULL ) SBMLDocument_free(om->d);
 
+  /* free values structure from SBML independent odeModel */
+  if ( om->values != NULL ) free(om->values);
+  
   /* free compiled code */
   if (om->compiledCVODEFunctionCode)
     CompiledCode_free(om->compiledCVODEFunctionCode);
@@ -1645,51 +1685,54 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
     
   ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeEvents, buffer);
 
-  for ( i=0; i<Model_getNumEvents(om->simple); i++ )
+  if ( om->simple != NULL )
   {
-    int setIsValidFalse = 0;
-
-    e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Event_getTrigger(e);
-
-    CharBuffer_append(buffer, "if ((trigger[");
-    CharBuffer_appendInt(buffer, i);
-    CharBuffer_append(buffer, "] == 0) && (");
-    ODEModel_generateASTWithoutIndex(om, buffer, trigger);
-    CharBuffer_append(buffer, "))\n"\
-		      "{\n"\
-		      "    fired++;\n"\
-		      "    trigger[");
-    CharBuffer_appendInt(buffer, i);
-    CharBuffer_append(buffer, "] = 1;\n");
-
-    for ( j=0; j<Event_getNumEventAssignments(e); j++ )
+    for ( i=0; i<Model_getNumEvents(om->simple); i++ )
     {
-      /* generate event assignment */
-      ea = Event_getEventAssignment(e, j);
-      assignment = (ASTNode_t *) EventAssignment_getMath(ea);           
-      vi = ODEModel_getVariableIndex(om, EventAssignment_getVariable(ea));
-      CharBuffer_append(buffer, "    ");
-      ODEModel_generateAssignmentCode(om, vi->index, assignment, buffer);
-      VariableIndex_free(vi);
-
-      /* identify cases which modify variables computed by solver which
-	 set the solver into an invalid state */
-      if ( vi->index < om->neq && !setIsValidFalse )
+      int setIsValidFalse = 0;
+      
+      e = Model_getEvent(om->simple, i);
+      trigger = (ASTNode_t *) Event_getTrigger(e);
+      
+      CharBuffer_append(buffer, "if ((trigger[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "] == 0) && (");
+      ODEModel_generateASTWithoutIndex(om, buffer, trigger);
+      CharBuffer_append(buffer, "))\n"\
+			"{\n"\
+			"    fired++;\n"\
+			"    trigger[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "] = 1;\n");
+      
+      for ( j=0; j<Event_getNumEventAssignments(e); j++ )
       {
-	CharBuffer_append(buffer, "    *odeVarIsValid = 0;\n");
-	setIsValidFalse = 1 ;
+	/* generate event assignment */
+	ea = Event_getEventAssignment(e, j);
+	assignment = (ASTNode_t *) EventAssignment_getMath(ea);           
+	vi = ODEModel_getVariableIndex(om, EventAssignment_getVariable(ea));
+	CharBuffer_append(buffer, "    ");
+	ODEModel_generateAssignmentCode(om, vi->index, assignment, buffer);
+	VariableIndex_free(vi);
+	
+	/* identify cases which modify variables computed by solver which
+	   set the solver into an invalid state */
+	if ( vi->index < om->neq && !setIsValidFalse )
+	{
+	  CharBuffer_append(buffer, "    *odeVarIsValid = 0;\n");
+	  setIsValidFalse = 1 ;
+	}
       }
+      
+      CharBuffer_append(buffer, "}\n"\
+			"else {\n"\
+			"    trigger[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "] = 0;\n"\
+			"}\n");
     }
-
-    CharBuffer_append(buffer, "}\n"\
-		      "else {\n"\
-		      "    trigger[");
-    CharBuffer_appendInt(buffer, i);
-    CharBuffer_append(buffer, "] = 0;\n"\
-		      "}\n");
   }
-
+  /*!!! check if problem arose through SBML independent code */
   ODEModel_generateAssignmentRuleCode(om, om->assignmentsAfterEvents, buffer);
     
   CharBuffer_append(buffer, "return fired;\n}\n");

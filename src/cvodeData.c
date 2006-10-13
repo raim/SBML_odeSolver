@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-12 11:00:03 raim>
-  $Id: cvodeData.c,v 1.13 2006/10/12 09:03:54 raimc Exp $
+  Last changed Time-stamp: <2006-10-13 04:48:15 raim>
+  $Id: cvodeData.c,v 1.14 2006/10/13 05:21:27 raimc Exp $
 */
 /* 
  *
@@ -136,7 +136,8 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
   neq    = om->neq;
   nconst = om->nconst;
   nass   = om->nass;
-  nevents = Model_getNumEvents(om->simple);
+  if ( om->simple != NULL ) nevents = Model_getNumEvents(om->simple);
+  else nevents = 0;
   nvalues = neq + nconst + nass;
 
   /* allocate memory for current integration data storage */
@@ -144,6 +145,7 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
   RETURN_ON_FATALS_WITH(NULL);
 
   data->nvalues = nvalues;
+  data->nevents = nevents;
 
   /* set pointer to input model */
   data->model = om ;
@@ -419,7 +421,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   for ( i=0; i<om->neq; i++ ) evaluateAST(om->ode[i], data);
 
   /* evaluate event triggers and set flags with their initial state */
-  for ( i=0; i<Model_getNumEvents(om->simple); i++ )
+  for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
     trigger = (ASTNode_t *) Event_getTrigger(e);
