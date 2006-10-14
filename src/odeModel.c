@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-13 07:16:57 raim>
-  $Id: odeModel.c,v 1.61 2006/10/13 05:21:27 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-14 06:54:21 raim>
+  $Id: odeModel.c,v 1.62 2006/10/14 05:10:27 raimc Exp $ 
 */
 /* 
  *
@@ -68,6 +68,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nevents, int nalg);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
+static void ODEModel_setEvents(odeModel_t *, Model_t *);
 
 
 typedef struct assignmentStage assignmentStage_t ;
@@ -146,11 +147,9 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   RETURN_ON_ERRORS_WITH(NULL);
   
   om->m = m;
-  om->values = NULL; /* this is only used for SBML independent use */
-  om->d = NULL; /* will be set if created from file */
-  om->compiledCVODEFunctionCode = NULL;
-  om->compiledCVODEJacobianFunction = NULL;
-  om->compiledCVODERhsFunction = NULL;
+  om->values = NULL; /*!!! this is only used for SBML independent use */
+  om->d = NULL;      /* will be set if created from file */
+
   om->observables = List_create();
 
   if ( observables )
@@ -531,22 +530,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   nevents = Model_getNumEvents(ode);
   
   om = ODEModel_allocate(neq, nconst, nass, nevents, nalg);
-
   RETURN_ON_FATALS_WITH(NULL);
-  
-  om->neq = neq;
-  om->nalg = nalg; /* this causes crash at the moment, because
-		      ODEs have been constructed for that
-		      should be defined by alg. rules */
-  om->nconst = nconst;
-  om->nass = nass;
-
-  /* sensitivity structures are filled later */
-  om->index_sens = NULL;
-  om->index_sensP = NULL;
-  om->nsens = 0;      
- 
-
 
   /* 
      filling the Ids of all rate rules (ODEs) and assignment rules
@@ -707,19 +691,42 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nalg, int nevents)
 {
   odeModel_t *om;
+  int nvalues;
 
+  nvalues = neq + nalg + nass + nconst;
+
+  /* names */
   ASSIGN_NEW_MEMORY(om, odeModel_t, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(om->names,
-			  neq + nalg + nass + nconst, char *, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(om->observablesArray,
-			  neq + nalg + nass + nconst, int, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->names, nvalues, char *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->observablesArray, nvalues, int, NULL);
+
+  /* values */
+  /*!!! om->values currently only required for SBML independent input
+    but should be used generally for clarity? */
+  ASSIGN_NEW_MEMORY_BLOCK(om->values, nvalues, double, NULL);
+
+  /* equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignment, nass, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
 
-  /* currently only required for SBML independent input */
-  ASSIGN_NEW_MEMORY_BLOCK(om->values, neq, double, NULL);
+  om->neq    = neq;
+  om->nconst = nconst;
+  om->nass   = nass;
+  om->nalg   = nalg; /* this causes crash at the moment, because
+		      ODEs have been constructed for that
+		      should be defined by alg. rules */
+
+  /* set compiled function pointers to NULL */
+  om->compiledCVODEFunctionCode = NULL;
+  om->compiledCVODEJacobianFunction = NULL;
+  om->compiledCVODERhsFunction = NULL;
   
+  /* sensitivity structures are filled later */
+  om->index_sens = NULL;
+  om->index_sensP = NULL;
+  om->nsens = 0;      
+ 
   return om ;
 }
 
@@ -819,7 +826,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
     ODE variables, assigned variables and model parameters in this order.
 */
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values, Model_t *events)
 {
   int i, j, nvalues;
   odeModel_t *om;
@@ -828,13 +835,11 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   
   /* allocate odeModel structure and set values */
   om = ODEModel_allocate(neq, nconst, nass, 0, 0);
-  om->neq    = neq;
-  om->nass   = nass;
-  om->nconst = nconst;
 
   /* set SBML input to NULL */
   om->d = NULL;
-  om->m = om->simple = NULL;
+  om->m = NULL;
+  om->simple = events;
   
   /* set ODEs */
   for ( i=0; i<neq; i++ )    
@@ -854,18 +859,15 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   /* set values */
   for ( i=0; i<neq+nass+nconst; i++ )
     om->values[i] = values[i];
-  om->compiledCVODEFunctionCode = NULL;
-  om->compiledCVODEJacobianFunction = NULL;
-  om->compiledCVODERhsFunction = NULL;
-  om->observables = List_create();
 
-  
+  /* create observables list */
+  om->observables = List_create();  
 
-    /* create default list of observables from species */
+    /* create default list of observables */
   for ( i = 0; i <neq+nass+nconst; i++ )
   {
-    char *newObservable ;
-
+    char *newObservable;
+    
     ASSIGN_NEW_MEMORY_BLOCK(newObservable, strlen(names[i]) + 1, char, NULL);
       strcpy(newObservable, names[i]);
       List_add(om->observables, newObservable);
@@ -885,17 +887,6 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   return om;
   
 }
-
-/** Set an SBML model that contains a list of events, temporary function
-    for direct odeModel_t creation via ODEModel_createFromODEs.
-    DON'T USE WHEN CREATING odeModel_t FROM SBML INPUT.
-*/
-
-SBML_ODESOLVER_API void ODEModel_setEvents(odeModel_t *om, Model_t *events)
-{
-  om->simple = events;
-}
-
 
 /** \brief Frees the odeModel structures
  */

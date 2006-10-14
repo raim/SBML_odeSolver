@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-12 11:02:09 raim>
-  $Id: odeModel.h,v 1.29 2006/10/12 09:03:54 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-14 06:54:53 raim>
+  $Id: odeModel.h,v 1.30 2006/10/14 05:10:28 raimc Exp $ 
 */
 /* 
  *
@@ -170,8 +170,7 @@ extern "C" {
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char *, char **);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocument_t *, char **);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *, char **);
-  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **, int neq, int nass, int nconst, char **, double *);
-  SBML_ODESOLVER_API void ODEModel_setEvents(odeModel_t *, Model_t *);
+  SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **, int neq, int nass, int nconst, char **, double *, Model_t *);
   SBML_ODESOLVER_API void ODEModel_free(odeModel_t *);
   
   SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *);
