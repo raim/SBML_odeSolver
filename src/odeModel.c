@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-14 06:54:21 raim>
-  $Id: odeModel.c,v 1.62 2006/10/14 05:10:27 raimc Exp $ 
+  Last changed Time-stamp: <2006-10-14 07:46:04 raim>
+  $Id: odeModel.c,v 1.63 2006/10/14 05:46:41 raimc Exp $ 
 */
 /* 
  *
@@ -68,8 +68,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nevents, int nalg);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
-static void ODEModel_setEvents(odeModel_t *, Model_t *);
-
 
 typedef struct assignmentStage assignmentStage_t ;
 
@@ -815,15 +813,22 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
 }
 
 
-/** Create odeModel directly.
-
-    This function allows to create the internal odeModel structure
-    independently from SBML. The formulae, both ODEs and assignments,
-    can be passed as libSBML ASTs. neq is the number of ODEs, nass is
-    the number of assignments, where the passed array f contains both
-    ODEs and assignments in this order. The passed names and value arrays
-    are of size neq+nass+nconst and contains names and values of
-    ODE variables, assigned variables and model parameters in this order.
+/** Create odeModel_t directly:
+    This function allows to create the internal odeModel_t structure
+    independently from SBML. This structure can then be used to create
+    and run integratorInstance_t, including all sensitivity analysis
+    features.
+    
+    The formulae, both ODEs and assignments, can be passed as an array
+    `f' of libSBML ASTs. `neq' is the number of ODEs, `nass' is
+    the number of assignments and the passed array `f' contains both
+    ODEs and assignments in this order. Assignment rules must currently
+    occur in correct order, i.e. an assignment rule MUST NOT DEPEND on a
+    subsequent assignment rule! See SBML Level 2 Version 1 specification
+    for details on this restriction on assignment rules.
+    The passed `names' and `values' arrays are of size neq+nass+nconst and
+    contain names and values of ODE variables, assigned variables and
+    model parameters in this order and in the same order as ASTs in `f'.
 */
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values, Model_t *events)
@@ -839,9 +844,10 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   /* set SBML input to NULL */
   om->d = NULL;
   om->m = NULL;
+  /* set optional SBML model containing events */
   om->simple = events;
   
-  /* set ODEs */
+  /* set ODEs with indexed ASTs */
   for ( i=0; i<neq; i++ )    
     om->ode[i] = indexAST(f[i], nvalues, names);
 
