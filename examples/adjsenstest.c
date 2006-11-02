@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 14:31:31 raim>
-  $Id: adjsenstest.c,v 1.1 2006/10/03 14:45:43 jamescclu Exp $
+  $Id: adjsenstest.c,v 1.2 2006/11/02 15:56:05 jamescclu Exp $
 */
 /* 
  *
@@ -36,38 +36,33 @@
 #include <stdlib.h>
 
 #include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/sensSolver.h>
+#include <sbml/SBMLTypes.h>
 
 void create_simple_v_file(char *v_file, int n_var, char **var);
 
 int
 main (int argc, char *argv[]){
-  int i, j;
+  int i;
   
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
-  cvodeResults_t *results;
-  variableIndex_t *y, *p;
+  variableIndex_t *p;
   int flag;
    
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, 30, 10);
-  CvodeSettings_setErrors(set, 1e-9, 1e-6, 1e9);
+  CvodeSettings_setErrors(set, 1e-5, 1e-5, 1e9);
   CvodeSettings_setMethod(set, 0, 5);
   /*   CvodeSettings_setStoreResults(set, 0); */
   CvodeSettings_setJacobian(set, 1); /* for testing only */
-  /* CvodeSettings_dump(set); */
-  
+ 
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
   ii = IntegratorInstance_create(om, set);
 
-  /* simply create a v_file for the case  */
-  /* where the objective function is: x -> int_{[0, T]} v(t) x(t) dt  */
-  create_simple_v_file("adjsenstest_vector_v.txt", om->neq, om->names);
-  /* read v_vector */ 
-  IntegratorInstance_setLinearObjectiveFunction(ii, "adjsenstest_vector_v.txt");
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
@@ -78,16 +73,23 @@ main (int argc, char *argv[]){
   /* ACTIVATE ADJOINT ANALYSIS */
   CvodeSettings_setDoAdj(set);
   CvodeSettings_setAdjTime(set, 30, 10);
-  CvodeSettings_setAdjErrors(set, 1e-9, 1e-6);
-  CvodeSettings_setnSaveSteps(set, 100);
+  CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
+  CvodeSettings_setnSaveSteps(set, 1000);
 
   printf("Try 3 integrations with selected parameters/ICs!\n");
-  char *sensIDTest[3];  
-  sensIDTest[0] = "MAPK_PP";
+  char *sensIDTest[4];  
+  sensIDTest[0] = "MAPK";
+  sensIDTest[2] = "MAPK_P";
   sensIDTest[1] = "K1";
-  sensIDTest[2] = "MKKK_P";
-  CvodeSettings_setSensParams(set, sensIDTest, 3);
+  sensIDTest[3] = "Ki";
+  CvodeSettings_setSensParams(set, sensIDTest, 4);
 
+
+  fprintf(stderr, "\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
+  fprintf(stderr, "Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
+  /* Initially, only linear objective is present */
+  IntegratorInstance_setLinearObjectiveFunction(ii, "MAPK.linobjfun");
+  
   /* reset integrator to new settings */
   IntegratorInstance_reset(ii);
   
@@ -95,7 +97,17 @@ main (int argc, char *argv[]){
   p = ODEModel_getVariableIndex(om, "K1");  
    
   i = 0;
-  while ( i < 3 ) {
+  while ( i < 4 ) {
+
+    /* Set nonlinear objective function after 2 loops  */
+    if ( i == 2)
+    {
+      fprintf(stderr, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
+      flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK.objfun");
+      if (flag!=1)
+	return(EXIT_FAILURE);
+    }
+
     IntegratorInstance_reset(ii);
 
     while( !IntegratorInstance_timeCourseCompleted(ii) )
@@ -106,14 +118,18 @@ main (int argc, char *argv[]){
     printf("Param default: %s\n", ODEModel_getVariableName(om, p));
     IntegratorInstance_dumpPSensitivities(ii, p);
 
-    /* forward quadrature */
     flag = IntegratorInstance_CVODEQuad(ii);
     if (flag!=1)
-      return(EXIT_FAILURE);
-    fprintf(stderr, "### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
-    for(j=0;j<om->nsens;j++)
-      fprintf(stderr, "dJ/dp_%d = %0.10g ", i, NV_Ith_S(ii->solver->q, j));
-    fprintf(stderr, "\n \n");
+	return(EXIT_FAILURE);
+
+    if ( i < 2)
+      fprintf(stderr, "\n### Printing Forward Sensitivities");
+    else
+      fprintf(stderr, "\n### Printing Objective Function (since nonlinear objective is present)");  
+
+    flag = IntegratorInstance_printQuad(ii, stderr);
+    if (flag!=1)
+	return(EXIT_FAILURE);
 
     /* Now go into adjoint phase */   
     CvodeSettings_setAdjPhase(ii->opt); 
@@ -125,13 +141,17 @@ main (int argc, char *argv[]){
 
     /* Print out adjoint soln */
     IntegratorInstance_dumpAdjData(ii);
+
     /* adjoint quadrature */
     flag = IntegratorInstance_CVODEQuad(ii);
-    if (flag!=1) return(EXIT_FAILURE);
-    fprintf(stderr, "### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
-    for(j=0;j<om->nsens;j++)
-      fprintf(stderr, "dJ/dp_%d = %0.10g ", j, NV_Ith_S(ii->solver->qA, j));
-    
+     if (flag!=1) 
+      return(EXIT_FAILURE);
+
+    fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt");
+    flag = IntegratorInstance_printQuad(ii, stderr);
+    if (flag!=1)
+	return(EXIT_FAILURE); 
+
     CvodeSettings_unsetAdjPhase(ii->opt); 
     fprintf(stderr, "\n############# DONE RUN NUMBER %d  #############\n", i); 
     i++;
@@ -142,7 +162,7 @@ main (int argc, char *argv[]){
   /* now we have the results and can free the inputs */
   IntegratorInstance_free(ii);
   CvodeSettings_free(set);
-  ODEModel_free(om);
+  ODEModel_free(om); 
 
   return (EXIT_SUCCESS);  
 }
