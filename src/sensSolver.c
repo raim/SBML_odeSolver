@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.37 2006/10/03 14:56:12 jamescclu Exp $
+  $Id: sensSolver.c,v 1.38 2006/11/02 16:04:29 jamescclu Exp $
 */
 /* 
  *
@@ -82,12 +82,12 @@ void JacA(long int NB, DenseMat JA, realtype t,
 	  N_Vector y, N_Vector yA, N_Vector fyA, void *jac_dataA,
 	  N_Vector tmp1A, N_Vector tmp2A, N_Vector tmp3A);
 
-
 void fQA(realtype t, N_Vector y, N_Vector yA, 
 	 N_Vector qAdot, void *fQ_dataA);
 
-void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
+void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
+static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *);
 
 /* The Hot Stuff! */
 /** \brief Calls CVODES to provide forward sensitivities after a call to
@@ -310,36 +310,42 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVodeSetSensErrCon(solver->cvode_mem, FALSE);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensErrCon", 1);
     
-    if( opt->DoAdjoint )
+
+    /*  If linear functional exists, initialize quadrature computation  */
+    if ( (om->ObjectiveFunction == NULL)  && (om->vector_v != NULL) )
     {
-      if ( solver->q == NULL )
-      {
-	solver->q = N_VNew_Serial(om->nsens);
-	CVODE_HANDLE_ERROR((void *) solver->q,
-			   "N_VNew_Serial for vector q", 0);
+	if ( solver->qS == NULL )
+	  {
+	    solver->qS = N_VNew_Serial(om->nsens);
+	    CVODE_HANDLE_ERROR((void *) solver->qS,
+			       "N_VNew_Serial for vector q", 0);
 
-	/* Init solver->q = 0.0;*/
-	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->q, i) = 0.0;
+	    /* Init solver->qS = 0.0;*/
+	    for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
+           
+            /* If quadrature memory has not been allocated (in either of CreateCVODE(S)SolverStructures) */  
+	    if ( solver->q == NULL )
+            {   
+	      flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
+	      CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
+	    }
+	  }
+	else
+	{
+	    /* Init solver->qS = 0.0;*/
+	    for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
  
-	flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
-	CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
-      }
-      else
-      {
-	/* Init solver->q = 0.0;*/
-	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->q, i) = 0.0;
- 
-	flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
-	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
-      }
+	    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
+                       
+	}
 
-      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
-
-      /*   flag = CVodeSetQuadErrCon(solver->cvode_mem,
-	   TRUE, CV_SS, reltolQ, &abstolQ); */
-      /*   CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1); */
+	flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
+	CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
     }
+
+    
+
   } 
   else
     /* Adjoint Phase */
@@ -394,7 +400,21 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if ( opt->IterMethod == 1 ) iteration = CV_FUNCTIONAL;
     else iteration = CV_NEWTON;
 
-    if ( data->adjrun == 1 )
+    /* Error if neither ObjectiveFunction nor vector_v has been set  */
+    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   )   
+      return 0;
+
+    /*  If om->vector_v == NULL, construct it from ObjectiveFunction  */
+    if (om->vector_v == NULL)
+    {
+      flag = ODEModel_construct_vector_v_FromObjectiveFunction(om);
+      if (flag != 1)
+	return flag;
+    }
+
+
+  
+    if (data->adjrun == 1)
     {
       flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
       CVODE_HANDLE_ERROR(&flag, "CVodeCreateB", 1);
@@ -420,6 +440,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
+
+
 
     if ( solver->qA == NULL )
     {
@@ -517,23 +539,23 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
 
 }
 
-
+/** \brief Sets a linear objective function (for sensitivity solvers) via a text input file 
+*/
 SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorInstance_t *engine, char *v_file)
 {
-
   FILE *fp;
   char *line, *token;
   int i;
   ASTNode_t **vector_v, *tempAST;
   odeModel_t *om = engine->om;
  
-/*   vector_v = space(om->neq * sizeof(ASTNode_t *)); */
-
   ASSIGN_NEW_MEMORY_BLOCK(vector_v, om->neq, ASTNode_t *, 0);
 
-
   if ((fp = fopen(v_file, "r")) == NULL)
-    fatal(stderr, "read_v_file(): file not found");
+    SolverError_error(   FATAL_ERROR_TYPE,
+			 SOLVER_ERROR_VECTOR_V_FAILED,
+			 "File not found "
+			 "in reading vector_v");  
 
   /* loop over lines */
   for (i=0; (line = get_line(fp)) != NULL; i++){
@@ -576,8 +598,191 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
 }
 
 
-/* Perform quadrature of forward and/or adjoint sensitivity  */
-int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
+/** \brief Sets a general objective function (for ODE solution) via a text input file 
+*/
+SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstance_t *engine, char *ObjFunc_file)
+{
+  FILE *fp;
+  char *line;
+  ASTNode_t *ObjectiveFunction, *tempAST;
+  odeModel_t *om = engine->om;
+
+  /* If objective function exists, do nothing */
+  if ( om->ObjectiveFunction != NULL  )
+    return 1;
+
+  if ((fp = fopen(ObjFunc_file, "r")) == NULL)
+    SolverError_error(   FATAL_ERROR_TYPE,
+			 SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
+			 "File not found "
+			 "in reading objective function"); 
+
+  /* read line */
+  line = get_line(fp); 
+  
+  tempAST = SBML_parseFormula(line);
+
+  ObjectiveFunction = indexAST(tempAST, om->neq, om->names);
+  ASTNode_free(tempAST);
+  free(line);
+  
+  om->ObjectiveFunction = ObjectiveFunction;
+  
+  return 1;
+}
+
+
+
+static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
+{  
+  int i, j, failed;
+  ASTNode_t *fprime, *ObjFun;
+  List_t *names;
+
+  if ( om == NULL ) return 0;
+  if ( om->ObjectiveFunction == NULL ) return 0;  
+
+  /* if vector_v exists, nothing needs to be done */
+  if ( om->vector_v != NULL )
+    return 1;
+     
+  /******************** Calculate dJ/dx ************************/
+ 
+  failed = 0; 
+  ASSIGN_NEW_MEMORY_BLOCK(om->vector_v, om->neq, ASTNode_t *, 0);
+  ObjFun = copyAST(om->ObjectiveFunction);
+
+  for ( i=0; i<om->neq; i++ )
+  {
+    fprime = differentiateAST(ObjFun, om->names[i]);
+    om->vector_v[i] = fprime;
+
+    /* check if the AST contains a failure notice */
+    names = ASTNode_getListOfNodes(fprime,
+				   (ASTNodePredicate) ASTNode_isName);
+
+      for ( j=0; j<List_size(names); j++ ) 
+	if ( strcmp(ASTNode_getName(List_get(names,j)),
+		    "differentiation_failed") == 0 ) 
+	  failed++;
+
+      List_free(names); 
+  }
+
+  ASTNode_free(ObjFun);
+
+  if ( failed != 0 ) {
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+		      "%d entries of vector_v could not be "
+		      "constructed, due to failure of differentiation. " , failed);   
+  }
+ 
+  return 1;
+}
+
+
+
+
+/** \brief Sets a general objective function (for ODE solution) via a text input file 
+*/
+SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_t *engine, char *TimeSeriesData_file)
+{
+  int i;
+  char *name;
+
+  int n_data;      /* number of relevant data columns */
+  int *col;        /* positions of relevant columns in data file */
+  int *index;      /* corresponding indices in variable list */
+  int n_time;      /* number of data rows */
+ 
+  time_series_t *ts;
+  odeModel_t *om = engine->om;
+  int n_var = om->neq;       /* number ofvariable names */
+  char **var = om->names;      /* variable names */
+
+ /*  n_var =  om->neq; */
+/*   var   =  om->names; */
+
+  /* alloc mem */
+  ts = space(sizeof(time_series_t));
+
+  /* alloc mem for index lists */
+  ts->n_var = n_var;
+  ts->var   = space(n_var * sizeof(char *));
+  ts->data  = space(n_var * sizeof(double *));
+  ts->data2 = space(n_var * sizeof(double *));
+    
+  /* initialize index lists */
+  for ( i=0; i<n_var; i++ )
+  {
+    name = space((strlen(var[i])+1) * sizeof(char));
+    strcpy(name, var[i]);
+    ts->var[i]   = name;
+    ts->data[i]  = NULL;
+    ts->data2[i] = NULL;
+  }
+
+  /* alloc temp mem for column info */
+  col   = space(n_var * sizeof(int));
+  index = space(n_var * sizeof(int));
+
+  /* read header line */
+  n_data = read_header_line(TimeSeriesData_file, n_var, var, col, index);
+  ts->n_data = n_data;
+	
+  /* count number of lines */
+  n_time = read_columns(TimeSeriesData_file, 0, NULL, NULL, NULL);
+  ts->n_time = n_time;
+
+  /* alloc mem for data */
+  for ( i=0; i<n_data; i++ )
+  {
+    ts->data[index[i]]  = space(n_time * sizeof(double));
+    ts->data2[index[i]] = space(n_time * sizeof(double));
+  }
+  ts->time = space(n_time * sizeof(double));
+
+  /* read data */
+  read_columns(TimeSeriesData_file, n_data, col, index, ts);
+
+  /* free temp mem */
+  free(col);
+  free(index);
+
+  /* initialize interpolation type */
+  ts->type = 3;
+  /* calculate second derivatives */
+  for ( i=0; i<n_var; i++ )
+    if ( ts->data[i] != NULL )
+      spline(ts->n_time, ts->time, ts->data[i], ts->data2[i]);
+
+  ts->last = 0;
+    
+  /* alloc mem for warnings */
+  ts->mess = space(2 * sizeof(char *));
+  ts->warn = space(2 * sizeof(int));
+
+  /* initialize warnings */
+  ts->mess[0] = "argument out of range (left) ";
+  ts->mess[1] = "argument out of range (right)";
+  for ( i=0; i<2; i++ )
+    ts->warn[i] = 0;   
+
+
+ om->time_series = ts;
+
+ return 1;
+}
+
+
+/** \brief Perform necessary quadratures for ODE/forward/adjoint sensitivity
+          In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
+          it is computed; alternatively, if linear objective is present (prior call to II_setLinearObj), it is computed. 
+
+          In adjoint phase, the backward quadrature for linear objective is performed. 
+ */
+SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
 {
   int flag;
   cvodeSolver_t *solver = engine->solver;
@@ -600,12 +805,71 @@ int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
   }
   else
   {
-    flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
+    /* If an objective function exists */
+    if( om->ObjectiveFunction != NULL){
+      flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
+      CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
+    }
+
+    /* If doing forward sensitivity analysis and vector_v exists, compute sensitivity quadrature */
+    if( opt->Sensitivity && ( om->ObjectiveFunction == NULL  ) && ( om->vector_v != NULL)  ){
+      flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
+      CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
+    }
   }
 
   return(1);
 }
+
+
+/** \brief Prints computed quadratures for ODE/forward/adjoint sensitivity
+           In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
+	   it is printed; alternatively, if linear objective is present (prior call to II_setLinearObj) , it is printed. 
+
+	   In adjoint phase, the backward quadrature for linear objective is printed. 
+*/
+
+SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine, FILE *f)
+{
+  
+  int j;
+  odeModel_t *om = engine->om; 
+  cvodeSettings_t *opt = engine->opt;
+ 
+  if(opt->AdjointPhase)
+  {
+   fprintf(f, "\nExpression for integrand of linear objective J: \n");
+   for(j=0;j<om->neq;j++)       
+     fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(om->vector_v[j]) );
+
+   for(j=0;j<om->nsens;j++)
+      fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qA, j));   
+   fprintf(f, "\n");
+  }
+  else
+  {
+   if ( om->ObjectiveFunction != NULL  ) 
+   {
+       fprintf(f, "\nExpression for integrand of objective J: %s \n" ,SBML_formulaToString(om->ObjectiveFunction) );
+       fprintf(f, "Computed J=%0.15g \n", NV_Ith_S(engine->solver->q, 0));
+   }
+   else if ( engine->om->vector_v != NULL  )
+   {
+      fprintf(f, "\nExpression for integrand of linear objective J: \n");
+      for(j=0;j<om->neq;j++)       
+	fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(om->vector_v[j]) );
+      
+      for(j=0;j<om->nsens;j++)
+	fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qS, j));
+      fprintf(f, "\n");
+   }
+   else fprintf(f, "\nNo quadrature was performed \n");
+ }
+
+  return(1);
+}
+
+
 
 
 
@@ -788,7 +1052,7 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
 }
 
 
-void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
+void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 {
   int i, j, flag;
   realtype *ydata, *dqdata;
@@ -811,7 +1075,7 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
   data->currenttime = t;
 
   /* update sensitivities */
-  yS = N_VNewVectorArray_Serial(data->model->nconst, data->model->neq);
+  yS = N_VNewVectorArray_Serial(data->model->nsens, data->model->neq);
 
   /*  At t=0, yS is initialized to 0. In this case, CvodeGetSens
       shouldn't be used as it gives nan's */
@@ -837,7 +1101,7 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 	NV_Ith_S(yS[i], j);
   }
 
-  N_VDestroyVectorArray_Serial(yS, data->model->nconst);
+  N_VDestroyVectorArray_Serial(yS, data->model->nsens);
 
 }
 

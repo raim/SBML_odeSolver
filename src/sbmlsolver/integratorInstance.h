@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 14:09:10 raim>
-  $Id: integratorInstance.h,v 1.31 2006/09/27 14:45:38 jamescclu Exp $ 
+  $Id: integratorInstance.h,v 1.32 2006/11/02 16:04:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -65,11 +65,13 @@ extern "C" {
     N_Vector abstol;  /**< array of abs. err. tol., might once be used
 			 for individual error tolerances */
     N_Vector y;       /**< the solution vector, x(t) ! */
+    N_Vector q;       /**< quadrature of integral functional for x(t) */ 
+
     void *cvode_mem;  /**< pointer to the CVode Solver structure */    
     int nsens;        /**< number of requested sensitivities */
     N_Vector *yS;     /**< the sensitivities matrix, dx(t)/dp ! */    
     N_Vector senstol; /**< absolute tolerance for sensitivity error control */
-    N_Vector q;       /**< forward sensitivity quadratures of
+    N_Vector qS;       /**< forward sensitivity quadratures of
 			 integral functional */ 
     N_Vector dy;      /**< current ODE values dx/dt, IDA specific data! */
 

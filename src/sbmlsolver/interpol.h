@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-12 11:43:35 raim>
-  $Id: interpol.h,v 1.3 2006/06/12 10:25:57 raimc Exp $
+  $Id: interpol.h,v 1.4 2006/11/02 16:04:29 jamescclu Exp $
 */
 /* 
  *
@@ -60,6 +60,12 @@ extern "C" {
     char   **mess;  /**< list of warning messages */
     int    *warn;   /**< number of warnings */
   } time_series_t;
+
+
+  int read_header_line(char *file, int n_var, char **var,
+			    int *col, int *index);
+  int read_columns(char *file, int n_col, int *col, int *index,
+			time_series_t *ts);
 
   void free_data(time_series_t *ts);
   void print_data(time_series_t *ts);

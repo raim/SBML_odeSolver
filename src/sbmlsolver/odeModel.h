@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-14 06:54:53 raim>
-  $Id: odeModel.h,v 1.30 2006/10/14 05:10:28 raimc Exp $ 
+  $Id: odeModel.h,v 1.31 2006/11/02 16:04:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -147,12 +147,12 @@ extern "C" {
 				    events */
 
     /* adjoint */
-    /* Given a parameter to observation map F(p),
+    /* Adjoint: Given a parameter to observation map F(p),
        computes the adjoint operator applied to the vector v, F'*(p)v.
        v is given by a symbolic expression involving x and observation data. */
 
     
-    int *index_adj_sens;
+    /* int *index_adj_sens; */
 
     int observation_type;    /**< 0: continuous data observed
                                 1: discrete data observed  */
@@ -160,7 +160,8 @@ extern "C" {
     time_series_t *time_series;  /**< time series of observation data
 				    or of vector v */
 
-    ASTNode_t **vector_v;     /**< The vector v*/
+    ASTNode_t **vector_v;     /**< the vector v, expressiing linear objective used in sensitivity solvers */
+    ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear) objective function */
  
   };
   

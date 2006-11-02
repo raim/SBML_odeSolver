@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-13 04:44:45 raim>
-  $Id: integratorInstance.c,v 1.71 2006/10/13 05:21:27 raimc Exp $
+  $Id: integratorInstance.c,v 1.72 2006/11/02 16:04:29 jamescclu Exp $
 */
 /* 
  *
@@ -166,10 +166,12 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   engine->solver->y = NULL;
   engine->solver->cvode_mem = NULL;
   engine->solver->abstol = NULL;
+  engine->solver->q = NULL;
+
   /* set sensitivity structure to NULL */
   engine->solver->yS = NULL;
   engine->solver->senstol = NULL;
-  engine->solver->q = NULL;
+  engine->solver->qS = NULL;
   /* set IDA structure to NULL */
   engine->solver->dy = NULL;
   /* set adjoint sensitivity structures to NULL */

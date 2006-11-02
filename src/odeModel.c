@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-14 07:46:04 raim>
-  $Id: odeModel.c,v 1.63 2006/10/14 05:46:41 raimc Exp $ 
+  $Id: odeModel.c,v 1.64 2006/11/02 16:04:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -530,6 +530,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   om = ODEModel_allocate(neq, nconst, nass, nevents, nalg);
   RETURN_ON_FATALS_WITH(NULL);
 
+
   /* 
      filling the Ids of all rate rules (ODEs) and assignment rules
      the ODE model
@@ -725,6 +726,10 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   om->index_sensP = NULL;
   om->nsens = 0;      
  
+ 
+  om->vector_v = NULL;
+  om->ObjectiveFunction = NULL;
+
   return om ;
 }
 
@@ -925,6 +930,21 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   
   /* free Jacobian matrix, if it has been constructed */
   ODEModel_freeJacobian(om);
+
+  /* free objective function AST if it has been constructed */
+  if ( om->ObjectiveFunction != NULL  )
+    ASTNode_free(om->ObjectiveFunction);
+ 
+  /* free linear objective function AST's if constructed */
+  if ( om->vector_v != NULL)
+   for ( i=0; i<om->neq; i++ )
+    ASTNode_free(om->vector_v[i]);
+  free(om->vector_v);
+
+  /* free time_series, if present */
+  if ( om->time_series != NULL  )
+    free_data( om->time_series );
+
 
   /* free sensitivity structures */
   /* free parameter/variable indices */

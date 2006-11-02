@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-09 15:32:29 raim>
-  $Id: interpol.c,v 1.4 2006/06/09 17:04:35 raimc Exp $
+  $Id: interpol.c,v 1.5 2006/11/02 16:04:29 jamescclu Exp $
 */
 
 
@@ -17,13 +17,6 @@
 /* #define VERBOSE */
 
 #include "interpol.h"
-
-/* ------------------------------------------------------------------------ */
-
-static int read_header_line(char *file, int n_var, char **var,
-			    int *col, int *index);
-static int read_columns(char *file, int n_col, int *col, int *index,
-			time_series_t *ts);
 
 /* ------------------------------------------------------------------------ */
 
@@ -233,8 +226,8 @@ time_series_t *read_data(char *file, int n_var, char **var)
 /* finds the column names (of the header line) in the variable list, */
 /* and returns the list of found columns and a corresponding index list. */
 
-PRIVATE int read_header_line(char *file, int n_var, char **var,
-			     int *col, int *index)
+int read_header_line(char *file, int n_var, char **var,
+		     int *col, int *index)
 {    
   FILE *fp;
   char *line, *token;
@@ -298,8 +291,8 @@ PRIVATE int read_header_line(char *file, int n_var, char **var,
 /* and returns the number of read lines. */
 /* (or only counts the number of lines, if the pointer is NULL.) */
 
-PRIVATE int read_columns(char *file, int n_col, int *col, int *index,
-			 time_series_t *ts)
+int read_columns(char *file, int n_col, int *col, int *index,
+		 time_series_t *ts)
 {    
   FILE *fp;
   char *line, *token;

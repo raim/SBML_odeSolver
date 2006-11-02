@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-05 17:24:13 raim>
-  $Id: processAST.c,v 1.45 2006/10/05 15:26:25 raimc Exp $
+  $Id: processAST.c,v 1.46 2006/11/02 16:04:29 jamescclu Exp $
 */
 /* 
  *
@@ -182,6 +182,9 @@ ASTNode_t *copyAST(const ASTNode_t *f)
       ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
     }
     ASTNode_setName(copy, ASTNode_getName(f));
+
+    if ( ASTNode_isSetData((ASTNode_t *)f) )
+      ASTNode_setData(copy);
   }
   /* constants, functions, operators */
   else
@@ -670,8 +673,17 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
      other name node would have been catched above; the same is true
      for or a Constant nodes (Pi, E, TRUE, FALSE) */
   /** NAME: f(x)=x  =>  f'(x)=1.0*/
-  if ( ASTNode_isName(f) ) 
-    ASTNode_setReal(fprime, 1.0);    
+
+
+ if ( ASTNode_isName(f) )
+ {
+  if ( ASTNode_isSetData(f)  ) 
+    ASTNode_setReal(fprime, 0.0); /* it's observation data */ 
+  else 
+    ASTNode_setReal(fprime, 1.0); /* is variable, and not observation data */
+ }
+    
+
   /** OPERATORS */
   else if ( ASTNode_isOperator(f) || type==AST_FUNCTION_POWER )
   {
@@ -1562,10 +1574,12 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 /* 	 SBML_formulaToString(f), */
 /* 	 SBML_formulaToString(fprime)); */
   
-  /* return fprime; */
+/*   return fprime; */
   simple = simplifyAST(fprime);
   ASTNode_free(fprime);
   return simple;
+
+
 
 }
 
@@ -1724,7 +1738,7 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
   {
     found = 0;
     str = ASTNode_getName(f);
-    /* alloc mem for data variable */
+    /* alloc mem for (experimental) data variable */
     if ( strstr(str, "_data") != NULL )
     {
       short_str = space((strlen(str)-5+1) * sizeof(char));
@@ -1749,6 +1763,7 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
 	ASTNode_setIndex(index, i);
 	ASTNode_setData(index);
 	found++;
+  
 	break;
       }
     }
@@ -1827,8 +1842,12 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
       ASTNode_free(simple);
       simple = ASTNode_createIndexName();
       ASTNode_setIndex(simple, ASTNode_getIndex((ASTNode_t *)f));
+
+      if ( ASTNode_isSetData((ASTNode_t *)f) )
+	 ASTNode_setData(simple);
     } 
     ASTNode_setName(simple, ASTNode_getName(f));
+
   }
   /* --------------- operators with possible simplifications -------------- */
   /* special operator: unary minus */
@@ -2132,6 +2151,7 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
       /* after all no simplification */
       if (!simplify)
       {
+
 	ASTNode_setType (simple, type);
 	ASTNode_addChild(simple, left);
 	ASTNode_addChild(simple, right);
@@ -2144,6 +2164,10 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
   else
   {
     ASTNode_setType(simple, type);
+
+   /*  if( ASTNode_isSetData(f) ) */
+/*       ASTNode_setData(simple); */
+
     /* user-defined functions: name must be set*/
     if ( ASTNode_getType(f) == AST_FUNCTION ) 
       ASTNode_setName(simple, ASTNode_getName(f));

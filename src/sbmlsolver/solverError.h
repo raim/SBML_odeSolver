@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-16 15:32:09 raim>
-  $Id: solverError.h,v 1.21 2006/10/03 14:52:40 jamescclu Exp $ 
+  $Id: solverError.h,v 1.22 2006/11/02 16:04:29 jamescclu Exp $ 
 */
 /* 
  *
@@ -101,7 +101,7 @@ extern "C" {
       SOLVER_ERROR_CVODE_RESULTS_FAILED = 20201,
       SOLVER_ERROR_SBML_RESULTS_FAILED = 20202,
       SOLVER_ERROR_VECTOR_V_FAILED = 20203,
-      
+      SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED = 20204,
 
       /** 2X5XX - Integration Messages in integratorInstance.c */
       SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN = 20500,
