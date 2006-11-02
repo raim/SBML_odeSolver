@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 15:58:44 raim>
-  $Id: adj_sensitivity.c,v 1.8 2006/10/04 06:35:02 jamescclu Exp $
+  $Id: adj_sensitivity.c,v 1.9 2006/11/02 16:01:44 jamescclu Exp $
 */
 /* 
  *
@@ -39,11 +39,8 @@
 #include <sbmlsolver/odeSolver.h>
 #include <sbmlsolver/interpol.h>
 #include <sbmlsolver/variableIndex.h>
+#include <sbmlsolver/sensSolver.h>
 
-
-
-void create_v_file(char *v_file, int n_var, char **var, int flag);
-ASTNode_t **read_v_file(char *v_file, int n_var, char **var);
 
 /* --------- --------- --------- --------- --------- --------- --------- */
 
@@ -55,49 +52,32 @@ main (int argc, char *argv[]){
   cvodeSettings_t *set;
   integratorInstance_t *ii;
   variableIndex_t *p;
-  char *sbml_file, *v_file, *data_file; 
-  time_series_t *ts;
+  char *sbml_file, *objfun_file, *data_file; 
   int flag;
   double *dp;
   double tout; 
 
+
   /* read command line */
   if (argc != 4) {
-    fprintf(stderr, "usage: %s sbml-file v-file data-file\n", argv[0]);
+    fprintf(stderr, "usage: %s sbml-file objfun-file data-file\n", argv[0]);
+    fprintf(stderr, "eg: ./adj_sensitivity repressilator.xml repressilator.objfun repressilator_data.txt\n");
     exit (EXIT_FAILURE);
   } 
   else { 
-    sbml_file = argv[1];
-    v_file    = argv[2];
-    data_file = argv[3];
+    sbml_file      = argv[1];
+    objfun_file    = argv[2];
+    data_file      = argv[3];
   }
-   
-  fprintf(stderr, "\n \n This example performs forward and adjoint sensitivity analysis for data matching functional J(x) = int_0^T | x - x_delta |^2 dt. \n The two methods should give equivalent results. \n \n");
-
+  
+  fprintf(stderr, "\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
+  fprintf(stderr, "J(x) = int_0^T | x - x_delta |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
 
   /* creating the odeModel */
   om = ODEModel_createFromFile(sbml_file);
 
-  /* default: create "Landweber file" */
-  create_v_file(v_file, om->neq, om->names, 0);
-  /* read v_vector */
-  om->vector_v = read_v_file(v_file, om->neq, om->names);
-
-  /* read observations */
-  om->time_series = read_data(data_file, om->neq, om->names);
-  ts = om->time_series;
-  
-  /* print data */
-  /* print_data(ts); */
-
-  /* test data */
-  /* test_interpol(ts); */
-
-  /* free data */
-  /* free_data(ts); */
-
   /* time interval (of data) */
-  tout = ts->time[ts->n_time-1];
+  tout = 100;
 
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
@@ -119,14 +99,21 @@ main (int argc, char *argv[]){
   CvodeSettings_setAdjTime(set, tout, 5);
   CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
   CvodeSettings_setnSaveSteps(set, 2);
-   
- 
- 
+    
   /* get the last parameter (for which we will check sensitivities) */
   p = ODEModel_getConstantIndex(om, om->nconst-1);
 
   /* initialize the integrator */
   ii = IntegratorInstance_create(om, set);
+ 
+  flag = IntegratorInstance_setObjectiveFunction(ii, objfun_file);
+  if (flag!=1)
+      return(EXIT_FAILURE);
+
+  /* read observations */
+  flag = IntegratorInstance_readTimeSeriesData(ii, data_file);
+  if (flag!=1)
+	return(EXIT_FAILURE);
 
   printf("### Printing Sensitivities to %s (%g) on the fly:\n",
 	 ODEModel_getVariableName(om, p),
@@ -144,16 +131,15 @@ main (int argc, char *argv[]){
     IntegratorInstance_dumpPSensitivities(ii, p);
   }
 
-
   /* forward quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
   if (flag!=1)
     return(EXIT_FAILURE);
 
   fprintf(stderr, "\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
-  for(i=0;i<om->nconst;i++)
-    fprintf(stderr, "dJ/dp_%d = %0.10g ", i, NV_Ith_S(ii->solver->q, i));
-  fprintf(stderr, "\n \n");
+  flag = IntegratorInstance_printQuad(ii, stderr);
+    if (flag!=1)
+	return(EXIT_FAILURE); 
 
   /* directional sensitivities */
   dp = space(ii->results->nsens * sizeof(double));
@@ -183,17 +169,14 @@ main (int argc, char *argv[]){
     return(EXIT_FAILURE);
   }
 
-  /* Adjoint Integration */
-  /* CvodeSettings_setAdjPhase(set); */
-     CvodeSettings_setAdjPhase(ii->opt); 
 
+  
+  /* Adjoint Integration */
   fprintf(stderr, "\n### Commencing adjoint integration:\n");
-  /* For adjoint phase, resetting the isValid flag, 
-     and create the necessary adjoint structures */
-  ii->isValid = 0;
+ 
+  CvodeSettings_setAdjPhase(ii->opt); 
   IntegratorInstance_resetAdjPhase(ii);
 
- 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
   ii->data->currenttime =  ii->solver->t0;
@@ -212,9 +195,9 @@ main (int argc, char *argv[]){
   if (flag!=1) return(EXIT_FAILURE);
   
   fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
-  for(i=0;i<om->nsens;i++)
-    fprintf(stderr, "dJ/dp_%d = %0.10g ", i, NV_Ith_S(ii->solver->qA, i));
-  fprintf(stderr, "\n \n");
+  flag = IntegratorInstance_printQuad(ii, stderr);
+    if (flag!=1)
+	return(EXIT_FAILURE); 
 
   /* now we have the results and can free the inputs */
   VariableIndex_free(p);
@@ -225,72 +208,5 @@ main (int argc, char *argv[]){
   return (EXIT_SUCCESS);  
 }
 
-/* --------- --------- --------- --------- --------- --------- --------- */
-
-void create_v_file(char *v_file, int n_var, char **var, int flag){
-
-  FILE *fp;
-  int i;
-  
-  fp = fopen(v_file, "w");
-    
-  for(i=0; i<n_var; i++){
-    fprintf(fp, "%s ", var[i]);
-    if (flag == 0) /* Landweber */
-      fprintf(fp, "%s - %s_data\n", var[i], var[i]);
-    else           /* only data */
-      fprintf(fp, "%s_data\n", var[i]);
-  }
-
-  fclose(fp);
-
-}
-
-/* --------- --------- --------- --------- --------- --------- --------- */
-
-ASTNode_t **read_v_file(char *v_file, int n_var, char **var) {
-
-  FILE *fp;
-  char *line, *token;
-  int i;
-  ASTNode_t **vector_v, *tempAST;
-  vector_v = space(n_var * sizeof(ASTNode_t *));
-
-  if ((fp = fopen(v_file, "r")) == NULL)
-    fatal(stderr, "read_v_file(): file not found");
-
-  /* loop over lines */
-  for (i=0; (line = get_line(fp)) != NULL; i++){
-    /* read column 0 */
-    token = strtok(line, " ");
-    /* skip empty lines and comment lines */
-    if (token == NULL || *token == '#'){
-      free(line);
-      i--;
-      continue;
-    }
-    /* check variable order */
-    if ( i == n_var )
-      fatal(stderr, "read_v_file(): inconsistent number of variables (>)");
-    if ( strcmp(token, var[i]) != 0 )
-      fatal(stderr, "read_v_file(): inconsistent variable order");
-    /* read column 1 */
-    token = strtok(NULL, "");
-    /* fprintf(stderr, "%s: %s\n", var[i], token); */
-    tempAST = SBML_parseFormula(token);
-
-    vector_v[i] = indexAST(tempAST, n_var, var);
-   /*  fprintf(stderr, "vector_v[%d] = %s \n", i, SBML_formulaToString(vector_v[i])); */   
-    ASTNode_free(tempAST);
-    free(line);
-  }
-
-
-  if (i < n_var)
-    fatal(stderr, "read_v_file(): inconsistent number of variables (<)");
-
-  return vector_v;
-
-}
 
 /* End of file */
