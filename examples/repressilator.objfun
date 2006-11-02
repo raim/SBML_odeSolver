@@ -1,0 +1,1 @@
+1/2*( (x1 - x1_data)^2 + (x2 - x2_data)^2 + (x3 - x3_data)^2 + (y1 - y1_data)^2 + (y2 - y2_data)^2 + (y3 - y3_data)^2 ) 
