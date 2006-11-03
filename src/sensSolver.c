@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.38 2006/11/02 16:04:29 jamescclu Exp $
+  $Id: sensSolver.c,v 1.39 2006/11/03 12:10:40 jamescclu Exp $
 */
 /* 
  *
@@ -64,7 +64,8 @@
 #include "sbmlsolver/interpol.h"
 #include "sbmlsolver/variableIndex.h"
 
-
+#include <sbml/SBMLTypes.h>
+#include "sbmlsolver/ASTIndexNameNode.h"
 
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
@@ -88,6 +89,9 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
 void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
 static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *);
+
+static ASTNode_t *copyRevertDataAST(const ASTNode_t *);
+
 
 /* The Hot Stuff! */
 /** \brief Calls CVODES to provide forward sensitivities after a call to
@@ -549,6 +553,13 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
   ASTNode_t **vector_v, *tempAST;
   odeModel_t *om = engine->om;
  
+  if ( om->vector_v != NULL  )
+  {     
+    for (i=0; i<om->neq; i++)
+      ASTNode_free(om->vector_v[i]);
+    free(om->vector_v);
+  }
+
   ASSIGN_NEW_MEMORY_BLOCK(vector_v, om->neq, ASTNode_t *, 0);
 
   if ((fp = fopen(v_file, "r")) == NULL)
@@ -607,9 +618,9 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   ASTNode_t *ObjectiveFunction, *tempAST;
   odeModel_t *om = engine->om;
 
-  /* If objective function exists, do nothing */
+  /* If objective function exists, free it */
   if ( om->ObjectiveFunction != NULL  )
-    return 1;
+    ASTNode_free(om->ObjectiveFunction);
 
   if ((fp = fopen(ObjFunc_file, "r")) == NULL)
     SolverError_error(   FATAL_ERROR_TYPE,
@@ -700,9 +711,6 @@ SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_
   odeModel_t *om = engine->om;
   int n_var = om->neq;       /* number ofvariable names */
   char **var = om->names;      /* variable names */
-
- /*  n_var =  om->neq; */
-/*   var   =  om->names; */
 
   /* alloc mem */
   ts = space(sizeof(time_series_t));
@@ -835,12 +843,17 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
   int j;
   odeModel_t *om = engine->om; 
   cvodeSettings_t *opt = engine->opt;
- 
+  ASTNode_t *tempAST; 
+
   if(opt->AdjointPhase)
   {
    fprintf(f, "\nExpression for integrand of linear objective J: \n");
-   for(j=0;j<om->neq;j++)       
-     fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(om->vector_v[j]) );
+   for(j=0;j<om->neq;j++){       
+     /* Append "_data" to observation data in the vector_v AST  */
+     tempAST = copyRevertDataAST(om->vector_v[j]); 
+     fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) );
+     ASTNode_free(tempAST);
+   }
 
    for(j=0;j<om->nsens;j++)
       fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qA, j));   
@@ -849,16 +862,23 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
   else
   {
    if ( om->ObjectiveFunction != NULL  ) 
-   {
-       fprintf(f, "\nExpression for integrand of objective J: %s \n" ,SBML_formulaToString(om->ObjectiveFunction) );
+   {  
+      /*  Append "_data" to observation data in the vector_v AST */
+       tempAST = copyRevertDataAST(om->ObjectiveFunction);
+       fprintf(f, "\nExpression for integrand of objective J: %s \n" ,SBML_formulaToString(tempAST) );
        fprintf(f, "Computed J=%0.15g \n", NV_Ith_S(engine->solver->q, 0));
+       ASTNode_free(tempAST);
    }
    else if ( engine->om->vector_v != NULL  )
    {
       fprintf(f, "\nExpression for integrand of linear objective J: \n");
-      for(j=0;j<om->neq;j++)       
-	fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(om->vector_v[j]) );
-      
+      for(j=0;j<om->neq;j++){    
+        /* Append "_data" to observation data in the vector_v AST  */
+	tempAST = copyRevertDataAST(om->vector_v[j]); 
+	fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) );
+        ASTNode_free(tempAST);
+      }      
+
       for(j=0;j<om->nsens;j++)
 	fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qS, j));
       fprintf(f, "\n");
@@ -870,9 +890,59 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 }
 
 
+/* Extension of copyAST, for adding to the AST having ASTNode_isSetData
+   by attaching the string extension "_data" to variable names */
+static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
+{
+  int i;
+  ASTNode_t *copy;
+  const char *tempstr;
+  char *tempstr2 = NULL;
 
+  copy = ASTNode_create();
 
+  /* DISTINCTION OF CASES */
+  /* integers, reals */
+  if ( ASTNode_isInteger(f) ) 
+    ASTNode_setInteger(copy, ASTNode_getInteger(f));
+  else if ( ASTNode_isReal(f) ) 
+    ASTNode_setReal(copy, ASTNode_getReal(f));
+  /* variables */
+  else if ( ASTNode_isName(f) )
+  {
+    if ( ASTNode_isSetIndex((ASTNode_t *)f) )
+    {
+      ASTNode_free(copy);
+      copy = ASTNode_createIndexName();
+      ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
+    }
 
+    if ( !ASTNode_isSetData((ASTNode_t *)f) )  
+         ASTNode_setName(copy, ASTNode_getName(f));
+    else
+    {   
+        /*  ASTNode_setData(copy); */
+      tempstr  = ASTNode_getName(f);
+      tempstr2 = space((strlen(tempstr)+5) * sizeof(char));
+      strncpy(tempstr2, tempstr, strlen(tempstr) );
+      strncat(tempstr2, "_data", 5);
+      ASTNode_setName(copy, tempstr2 );
+    }
+    
+  }
+  /* constants, functions, operators */
+  else
+  {
+    ASTNode_setType(copy, ASTNode_getType(f));
+    /* user-defined functions: name must be set */
+    if ( ASTNode_getType(f) == AST_FUNCTION ) 
+      ASTNode_setName(copy, ASTNode_getName(f));
+    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) 
+      ASTNode_addChild(copy, copyRevertDataAST(ASTNode_getChild(f,i)));
+  }
+
+  return copy;
+}
 
 
 
