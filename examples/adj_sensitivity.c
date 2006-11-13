@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 15:58:44 raim>
-  $Id: adj_sensitivity.c,v 1.9 2006/11/02 16:01:44 jamescclu Exp $
+  $Id: adj_sensitivity.c,v 1.10 2006/11/13 07:30:11 jamescclu Exp $
 */
 /* 
  *
@@ -71,7 +71,7 @@ main (int argc, char *argv[]){
   }
   
   fprintf(stderr, "\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
-  fprintf(stderr, "J(x) = int_0^T | x - x_delta |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
+  fprintf(stderr, "J(x) = int_0^T | x - x_data |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
 
   /* creating the odeModel */
   om = ODEModel_createFromFile(sbml_file);
