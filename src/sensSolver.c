@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.39 2006/11/03 12:10:40 jamescclu Exp $
+  $Id: sensSolver.c,v 1.40 2006/11/13 12:46:57 jamescclu Exp $
 */
 /* 
  *
@@ -408,16 +408,14 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   )   
       return 0;
 
-    /*  If om->vector_v == NULL, construct it from ObjectiveFunction  */
-    if (om->vector_v == NULL)
+    /*  If ObjectiveFunction exists, compute vector_v from it */ 
+    if ( om->ObjectiveFunction != NULL ) 
     {
       flag = ODEModel_construct_vector_v_FromObjectiveFunction(om);
       if (flag != 1)
 	return flag;
     }
 
-
-  
     if (data->adjrun == 1)
     {
       flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
@@ -506,7 +504,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   return 1; /* OK */
 
 }
-
 
 
 
@@ -613,8 +610,9 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
 */
 SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstance_t *engine, char *ObjFunc_file)
 {
+  int i;
   FILE *fp;
-  char *line;
+  char *line = NULL, *line_formula = NULL, *token;
   ASTNode_t *ObjectiveFunction, *tempAST;
   odeModel_t *om = engine->om;
 
@@ -629,13 +627,43 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
 			 "in reading objective function"); 
 
   /* read line */
-  line = get_line(fp); 
-  
-  tempAST = SBML_parseFormula(line);
+  for (i=0; (line = get_line(fp)) != NULL; i++)
+  {   
+    token = strtok(line, "");
+    if (token == NULL || *token == '#')
+    {
+      free(line);
+      i--;
+    }
+    else
+    {
+      if ( line_formula != NULL  )
+        free(line_formula);
+      ASSIGN_NEW_MEMORY_BLOCK(line_formula, strlen(line), char, 0); 
+      strcpy(line_formula, line); 
+       if ( line != NULL  )
+        free(line); 
+    }
+  }
+
+
+  if( i > 1)
+  {
+   SolverError_error(   FATAL_ERROR_TYPE,
+			SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
+			"Error in processing objective function file"); 
+   return 0;
+  }
+
+  tempAST = SBML_parseFormula(line_formula);
 
   ObjectiveFunction = indexAST(tempAST, om->neq, om->names);
   ASTNode_free(tempAST);
-  free(line);
+ 
+  if ( line != NULL  )
+    free(line);
+  if ( line_formula != NULL  )
+    free(line_formula);
   
   om->ObjectiveFunction = ObjectiveFunction;
   
@@ -653,10 +681,12 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
   if ( om == NULL ) return 0;
   if ( om->ObjectiveFunction == NULL ) return 0;  
 
-  /* if vector_v exists, nothing needs to be done */
+  /* if vector_v exists, free it */
   if ( om->vector_v != NULL )
-    return 1;
-     
+    for (  i=0; i<om->neq; i++  )
+       ASTNode_free(om->vector_v[i]);  
+  free(om->vector_v);  
+
   /******************** Calculate dJ/dx ************************/
  
   failed = 0; 

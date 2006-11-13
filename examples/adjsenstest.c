@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 14:31:31 raim>
-  $Id: adjsenstest.c,v 1.2 2006/11/02 15:56:05 jamescclu Exp $
+  $Id: adjsenstest.c,v 1.3 2006/11/13 12:48:07 jamescclu Exp $
 */
 /* 
  *
@@ -63,6 +63,8 @@ main (int argc, char *argv[]){
   om = ODEModel_createFromFile("MAPK.xml");
   ii = IntegratorInstance_create(om, set);
 
+  
+
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
@@ -84,12 +86,14 @@ main (int argc, char *argv[]){
   sensIDTest[3] = "Ki";
   CvodeSettings_setSensParams(set, sensIDTest, 4);
 
-
   fprintf(stderr, "\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
   fprintf(stderr, "Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
+
   /* Initially, only linear objective is present */
-  IntegratorInstance_setLinearObjectiveFunction(ii, "MAPK.linobjfun");
-  
+  flag = IntegratorInstance_setLinearObjectiveFunction(ii, "MAPK.linobjfun");
+  if (flag!=1)
+    return(EXIT_FAILURE);  
+
   /* reset integrator to new settings */
   IntegratorInstance_reset(ii);
   
@@ -100,7 +104,7 @@ main (int argc, char *argv[]){
   while ( i < 4 ) {
 
     /* Set nonlinear objective function after 2 loops  */
-    if ( i == 2)
+    if ( i == 0)
     {
       fprintf(stderr, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
       flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK.objfun");
@@ -114,6 +118,8 @@ main (int argc, char *argv[]){
      if ( !IntegratorInstance_integrateOneStep(ii) )
        break;
     
+ 
+
     /*  IntegratorInstance_dumpData(ii); */
     printf("Param default: %s\n", ODEModel_getVariableName(om, p));
     IntegratorInstance_dumpPSensitivities(ii, p);
