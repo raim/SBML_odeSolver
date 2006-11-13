@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.40 2006/11/13 12:46:57 jamescclu Exp $
+  $Id: sensSolver.c,v 1.41 2006/11/13 13:20:43 jamescclu Exp $
 */
 /* 
  *
@@ -639,7 +639,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
     {
       if ( line_formula != NULL  )
         free(line_formula);
-      ASSIGN_NEW_MEMORY_BLOCK(line_formula, strlen(line), char, 0); 
+      ASSIGN_NEW_MEMORY_BLOCK(line_formula, strlen(line)+1, char, 0); 
       strcpy(line_formula, line); 
        if ( line != NULL  )
         free(line); 
