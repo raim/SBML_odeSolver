@@ -3,7 +3,7 @@
 ## Printing Variable Compartment time courses
 ## No Values.
 ## Printing Species time courses
-#time x1 x2 x3 y1 y2 y3 
+#t x1 x2 x3 y1 y2 y3 
 0 1 1 0.1 1 0.1 0.1 
 1 0.914162 0.483765 0.0885379 0.791221 0.208381 0.0744025 
 2 0.796231 0.304923 0.0775749 0.689586 0.190294 0.0700019 

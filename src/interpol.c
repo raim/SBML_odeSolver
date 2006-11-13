@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-09 15:32:29 raim>
-  $Id: interpol.c,v 1.5 2006/11/02 16:04:29 jamescclu Exp $
+  $Id: interpol.c,v 1.6 2006/11/13 08:54:39 stefan_tbi Exp $
 */
 
 
@@ -65,7 +65,7 @@ void print_data(time_series_t* ts)
   fprintf(stderr, "\n");
 
   /* print variable list */
-  fprintf(stderr, "#time ");
+  fprintf(stderr, "#t ");
   for (j=0; j<ts->n_var; j++) fprintf(stderr, "%s ", ts->var[j]);
   fprintf(stderr, "\n");
   
@@ -245,7 +245,7 @@ int read_header_line(char *file, int n_var, char **var,
     /* read column 0 */
     token = strtok(line, " ");
     /* header line found */
-    if (token != NULL && strcmp(token, "#time") == 0)
+    if (token != NULL && strcmp(token, "#t") == 0)
       break;
     /* skip empty lines and comment lines */
     if ( token == NULL || *token == '#' )
