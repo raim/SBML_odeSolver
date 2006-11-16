@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 14:09:10 raim>
-  $Id: integratorInstance.h,v 1.32 2006/11/02 16:04:29 jamescclu Exp $ 
+  $Id: integratorInstance.h,v 1.33 2006/11/16 09:53:52 jamescclu Exp $ 
 */
 /* 
  *
@@ -122,7 +122,6 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);
- 
   SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
@@ -131,9 +130,9 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
   SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *);
-
   SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *);
 
+  SBML_ODESOLVER_API char* IntegratorInstance_getSensVariableName(integratorInstance_t *, int);
 
   SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *, variableIndex_t *);

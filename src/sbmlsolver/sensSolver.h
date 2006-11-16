@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-04-07 23:30:44 raim>
-  $Id: sensSolver.h,v 1.9 2006/11/02 16:04:29 jamescclu Exp $
+  $Id: sensSolver.h,v 1.10 2006/11/16 09:53:52 jamescclu Exp $
 */
 /* 
  *
@@ -49,7 +49,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_t *, char *);
   SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *, FILE *);
-
+  SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *, realtype *);
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_getForwardSens(integratorInstance_t *);
