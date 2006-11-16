@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-14 07:46:04 raim>
-  $Id: odeModel.c,v 1.64 2006/11/02 16:04:29 jamescclu Exp $ 
+  $Id: odeModel.c,v 1.65 2006/11/16 09:53:02 jamescclu Exp $ 
 */
 /* 
  *
@@ -1563,6 +1563,14 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, co
 
   int index;
 
+  if ( symbol == NULL )
+   {
+    SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
+		      "symbol %s is not in the model", symbol);
+
+    return NULL;
+  }
+ 
   index = ODEModel_getVariableIndexFields(om, symbol);
 
   if ( index == -1 )

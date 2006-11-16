@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 16:01:07 raim>
-  $Id: integratorSettings.c,v 1.34 2006/10/01 14:12:51 raimc Exp $
+  $Id: integratorSettings.c,v 1.35 2006/11/16 09:53:02 jamescclu Exp $
 */
 /* 
  *
@@ -613,8 +613,6 @@ SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *set, char **
   }
   return 1;
 }
-
-
 
 
 /** Set method for sensitivity analysis:

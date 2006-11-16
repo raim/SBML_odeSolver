@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-13 04:44:45 raim>
-  $Id: integratorInstance.c,v 1.72 2006/11/02 16:04:29 jamescclu Exp $
+  $Id: integratorInstance.c,v 1.73 2006/11/16 09:53:02 jamescclu Exp $
 */
 /* 
  *
@@ -473,6 +473,17 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
       printf("%g ", data->sensitivity[j][i]);
     printf("\n");
   }
+}
+
+
+/**  Returns the name of sensitivity variable i
+*/
+SBML_ODESOLVER_API char* IntegratorInstance_getSensVariableName(integratorInstance_t *engine, int i)
+{
+  if (i > engine->om->nsens)
+    return NULL;
+
+  return engine->opt->sensIDs[i];
 }
 
 
@@ -953,8 +964,10 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
   /* 'solver' is no longer consistant with 'data' if the event changed
      the value of an ODE variable */
-  if ( vi->index < om->neq ) 
+  if ( vi->index < om->neq )
     engine->isValid = 0; 
+
+
   /* optimize ODEs for evaluation again, if a constant has been reset */
   else if (!engine->opt->compileFunctions &&  vi->index >= om->neq+om->nass ) 
     IntegratorInstance_optimizeOdes(engine);

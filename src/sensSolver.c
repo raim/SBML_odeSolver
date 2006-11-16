@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.41 2006/11/13 13:20:43 jamescclu Exp $
+  $Id: sensSolver.c,v 1.42 2006/11/16 09:53:02 jamescclu Exp $
 */
 /* 
  *
@@ -920,6 +920,37 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 }
 
 
+/** \brief Prints computed quadratures for ODE/forward/adjoint sensitivity
+           In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
+	   it is printed; alternatively, if linear objective is present (prior call to II_setLinearObj) , it is printed. 
+
+	   In adjoint phase, the backward quadrature for linear objective is printed. 
+*/
+
+SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine, realtype *data)
+{
+  
+  int j;
+  odeModel_t *om = engine->om; 
+  cvodeSettings_t *opt = engine->opt;
+
+  data = (realtype *) data;
+
+  if(opt->AdjointPhase)
+  {
+   for(j=0;j<om->nsens;j++)
+     data[j] = NV_Ith_S(engine->solver->qA, j);
+  }
+  else
+  {
+   data[0] = NV_Ith_S(engine->solver->q, 0); 
+  }
+
+  return(1);
+}
+
+
+
 /* Extension of copyAST, for adding to the AST having ASTNode_isSetData
    by attaching the string extension "_data" to variable names */
 static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
@@ -1025,10 +1056,6 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]],
 		    data);
   }
-
-/*   if ( data->opt->sensIDs !=NULL) */
-/*     printf("SENS FOR %s %d\n", data->opt->sensIDs[iS], */
-/* 	   data->model->index_sensP[iS] ); */
 
 }
 
