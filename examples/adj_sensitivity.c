@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 15:58:44 raim>
-  $Id: adj_sensitivity.c,v 1.10 2006/11/13 07:30:11 jamescclu Exp $
+  $Id: adj_sensitivity.c,v 1.11 2006/11/21 15:37:15 jamescclu Exp $
 */
 /* 
  *
@@ -179,8 +179,8 @@ main (int argc, char *argv[]){
 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
-  ii->data->currenttime =  ii->solver->t0;
   IntegratorInstance_dumpAdjData(ii);
+
   /*  Now the adjoint solver is called in the integration steps  */
   while( !IntegratorInstance_timeCourseCompleted(ii) ) {
     if ( !IntegratorInstance_integrateOneStep(ii) ) {
