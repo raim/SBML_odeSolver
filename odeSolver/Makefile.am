@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.3 2005/12/21 13:14:00 raimc Exp $
+# $Id: Makefile.am,v 1.4 2006/11/22 15:28:37 chfl Exp $
 ## 
 ## This application is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU Lesser General Public License as published
@@ -43,4 +43,4 @@ odeSolver_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
-                    -lstdc++ -lxerces-c -lm
+                    -lstdc++ -lm
