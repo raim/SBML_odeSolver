@@ -66,6 +66,42 @@ AC_PATH_PROG([AR],[ar],[ar])
 AC_PATH_PROG([SWIG],[swig],[swig])
 AC_PATH_PROG([PERL],[perl],[perl])
 
+dnl specify prefix for libxerces-c
+AC_ARG_WITH([xerces],
+  AC_HELP_STRING([--with-xerces=PREFIX],
+                 [Use Xerces XML Library in PREFIX/lib]),
+  [with_xerces=$withval],
+  [with_xerces=yes])
+
+dnl specify prefix for libexpat
+AC_ARG_WITH([expat],
+  AC_HELP_STRING([--with-expat=PREFIX],
+                 [Use Expat XML Library]),
+            [with_expat=$withval],
+            [with_expat=no])
+
+dnl set with_xerces=no if option --with-expat was given		 
+if test $with_expat != no; then
+   with_xerces=no
+fi
+
+dnl dispach xerces versus expat
+if test $with_xerces != no; then
+   if test $with_xerces == yes; then
+     LIBS=["-lxerces-c"]
+   else
+     LIBS=["-L$with_xerces/lib -lxerces-c"]
+   fi
+else
+   if test $with_expat == yes; then
+     LIBS=["-lexpat"]
+   else
+     LIBS=["-L$with_expat/lib -lexpat"]
+   fi
+fi
+
+dnl AC_MSG_NOTICE([LIBS=$LIBS])
+	
 CONFIG_LIB_SBML
 CONFIG_LIB_SUNDIALS
 CONFIG_LIB_GRACE
@@ -124,6 +160,8 @@ dnl Output
 dnl ---------------------------------------------------------------------------
 
 AC_CONFIG_FILES([./Makefile])
+dnl AC_CONFIG_FILES([doc/Makefile])
+dnl AC_CONFIG_FILES([doc/SBML_odeSolver.1])
 AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([odeSolver/Makefile])
 AC_CONFIG_FILES([src/Makefile])
