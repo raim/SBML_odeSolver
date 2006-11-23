@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.4 2006/11/22 15:28:37 chfl Exp $
+# $Id: Makefile.am,v 1.5 2006/11/23 11:26:26 chfl Exp $
 ## 
 ## This application is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU Lesser General Public License as published
@@ -37,7 +37,8 @@ odeSolver_SOURCES = main.c \
 		    commandLine.c \
 		    options.c  \
 		    printModel.c \
-		    interactive.c
+		    interactive.c \
+                    getopt.c getopt1.c
 odeSolver_LDADD   = -L../src -L/@prefix@/lib -lODES \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
