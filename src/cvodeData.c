@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-13 04:48:15 raim>
-  $Id: cvodeData.c,v 1.15 2006/11/21 15:32:20 jamescclu Exp $
+  Last changed Time-stamp: <2006-11-23 13:16:55 raim>
+  $Id: cvodeData.c,v 1.16 2006/11/23 12:17:27 raimc Exp $
 */
 /* 
  *
@@ -184,6 +184,7 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   {
     /* 1: distinguish between SBML-based or direct odeModel */
     /* 1a SBML based initialization */
+    /*!!! it might be better to write original SBML values also into this values array!!!*/
     if ( om->values == NULL )
     {
       if ( (s = Model_getSpeciesById(ode, om->names[i])) )
