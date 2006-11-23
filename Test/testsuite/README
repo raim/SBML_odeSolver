@@ -15,7 +15,7 @@ copy odeSolver-wrapper.bsh and odeSolver-wrapper-once.pl
 to the folder semantic-test-suite/AUTOMATION/wrappers, change to the directory 
 semantic-test-suite and run 
 
-`runtests.bsh -vwrapper=AUTOMATION/wrappers/odeSolver-wrapper.bsh >> testlog.txt'
+`./runtests.bsh -vwrapper=AUTOMATION/wrappers/odeSolver-wrapper.bsh >> testlog.txt'
 
 in a bash or shell.
 
