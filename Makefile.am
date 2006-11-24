@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.26 2006/03/02 16:24:12 raimc Exp $
+# $Id: Makefile.am,v 1.27 2006/11/24 13:38:53 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -28,12 +28,13 @@
 ## Contributor(s):
 ##     Rainer Machne
 ##
-if MAKE_BINDINGS
-   SUBDIRS = src odeSolver bindings
-else
+##if MAKE_BINDINGS
+##   SUBDIRS = src odeSolver bindings
+##else
+
    SUBDIRS = src odeSolver
-endif
-CFLAGS = $(AM_CFLAGS) -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
+
+##endif
 EXTRA_DIST = Win32/* \
              OUTLOOK \
              SOSlib.doxy \

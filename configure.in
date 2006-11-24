@@ -47,8 +47,8 @@ AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
 
 dnl Adding global compilation parameters
-dnl !!! remove -g -02 for release ???     
-CFLAGS="-g -02 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+dnl !!! remove -g -O2 for release ???     
+CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 LIBS="-lm -lstdc++"	   
 AC_SUBST(CFLAGS)
 AC_SUBST(LIBS)	
