@@ -45,8 +45,13 @@ esac
 AC_SUBST(TestDataDirectory)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
-CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+
+dnl Adding global compilation parameters
+dnl !!! remove -g -02 for release ???     
+CFLAGS="-g -02 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+LIBS="-lm -lstdc++"	   
 AC_SUBST(CFLAGS)
+AC_SUBST(LIBS)	
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for various programs and packages.
@@ -66,40 +71,6 @@ AC_PATH_PROG([AR],[ar],[ar])
 AC_PATH_PROG([SWIG],[swig],[swig])
 AC_PATH_PROG([PERL],[perl],[perl])
 
-dnl specify prefix for libxerces-c
-AC_ARG_WITH([xerces],
-  AC_HELP_STRING([--with-xerces=PREFIX],
-                 [Use Xerces XML Library in PREFIX/lib]),
-  [with_xerces=$withval],
-  [with_xerces=yes])
-
-dnl specify prefix for libexpat
-AC_ARG_WITH([expat],
-  AC_HELP_STRING([--with-expat=PREFIX],
-                 [Use Expat XML Library]),
-            [with_expat=$withval],
-            [with_expat=no])
-
-dnl set with_xerces=no if option --with-expat was given		 
-if test $with_expat != no; then
-   with_xerces=no
-fi
-
-dnl dispach xerces versus expat
-if test $with_xerces != no; then
-   if test $with_xerces == yes; then
-     LIBS=["-lxerces-c"]
-   else
-     LIBS=["-L$with_xerces/lib -lxerces-c"]
-   fi
-else
-   if test $with_expat == yes; then
-     LIBS=["-lexpat"]
-   else
-     LIBS=["-L$with_expat/lib -lexpat"]
-   fi
-fi
-
 dnl AC_MSG_NOTICE([LIBS=$LIBS])
 	
 CONFIG_LIB_SBML
@@ -109,8 +80,8 @@ CONFIG_LIB_GRAPHVIZ
 dnl configure options
 dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
 dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")
-AC_ARG_WITH(bindings, [  --with-bindings  build perl bindings])
-AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
+dnl AC_ARG_WITH(bindings, [  --with-bindings  build perl bindings])
+dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for libraries.
@@ -167,10 +138,10 @@ AC_CONFIG_FILES([odeSolver/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/libODES.pc])
 dnl AC_CONFIG_FILES([src/inverse/Makefile])
-AC_CONFIG_FILES([bindings/Makefile])
-AC_CONFIG_FILES([bindings/swig/Makefile])
-AC_CONFIG_FILES([bindings/perl/Makefile])
-AC_CONFIG_FILES([bindings/perl/Makefile.PL])
+dnl AC_CONFIG_FILES([bindings/Makefile])
+dnl AC_CONFIG_FILES([bindings/swig/Makefile])
+dnl AC_CONFIG_FILES([bindings/perl/Makefile])
+dnl AC_CONFIG_FILES([bindings/perl/Makefile.PL])
 
 AC_OUTPUT
 
@@ -220,7 +191,7 @@ if test $yes_libsbml = yes; then
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
-echo "SUNDIALS Library         = $yes_libsundials"
+echo "  SUNDIALS Library       = $yes_libsundials"
 if test $yes_libsundials       = yes; then
   echo "       CFLAGS          = $SUNDIALS_CFLAGS"
   echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"

@@ -1,4 +1,4 @@
-dnl $Id: grace.m4,v 1.2 2005/12/09 18:14:10 raimc Exp $
+dnl $Id: grace.m4,v 1.3 2006/11/24 13:38:54 raimc Exp $
 
 dnl
 dnl look for GRACE Library headers in some standard set of directories
@@ -78,10 +78,10 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   grace_save_CFLAGS="$CFLAGS"
   grace_save_LDFLAGS="$LDFLAGS"
   grace_save_LIBS="$LIBS"
-  dnl add GRACE specific stuff to global variables
+  dnl temporarily add GRACE specific stuff to global variables
   CFLAGS="$CFLAGS $GRACE_CFLAGS"
   LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
-  LIBS="$LIBS $GRACE_LIBS"
+  LIBS="$GRACE_LIBS $LIBS" 
   dnl can we link a mini program with grace?
   AC_TRY_LINK([#include <grace_np.h>],
     [GraceOpen(2048); GracePrintf("world xmax %g", 10.0); GraceClose();],

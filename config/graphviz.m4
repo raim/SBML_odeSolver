@@ -1,4 +1,4 @@
-dnl $Id: graphviz.m4,v 1.4 2005/10/13 14:10:09 chfl Exp $
+dnl $Id: graphviz.m4,v 1.5 2006/11/24 13:38:54 raimc Exp $
 
 dnl
 dnl Check --with-graphviz[=PREFIX] is specified and graphviz is installed.
@@ -92,10 +92,10 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
     graphviz_save_LDFLAGS="$LDFLAGS"
     graphviz_save_LIBS="$LIBS"
 
-    dnl add GRAPHVIZ specific stuff to global variables
+    dnl temporarily add GRAPHVIZ specific stuff to global variables
     CFLAGS="$CFLAGS -Wno-unknown-pragmas $GRAPHVIZ_CFLAGS"
     LDFLAGS="$LDFLAGS $GRAPHVIZ_LDFLAGS"
-    LIBS="$LIBS $GRAPHVIZ_LIBS"
+    LIBS="$GRAPHVIZ_LIBS $LIBS"
 
     dnl can we link a mini program with graphviz?
     AC_TRY_LINK([$graphviz_headers],

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.23 2006/06/13 15:07:47 raimc Exp $
+# $Id: Makefile.am,v 1.24 2006/11/24 13:38:54 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -39,7 +39,6 @@ LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
         @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-        -lxerces-c -lm
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
 lib_LIBRARIES = libODES.a

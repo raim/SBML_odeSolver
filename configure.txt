@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar build build_cpu build_vendor build_os host host_cpu host_vendor host_os TestDataDirectory HOST_TYPE SHAREDLIBEXT CFLAGS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CC ac_ct_CC CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP RANLIB ac_ct_RANLIB MAKE AR SWIG PERL USE_SBML OLD_LIBSBML SBML_CFLAGS SBML_LDFLAGS SBML_RPATH SBML_LIBS USE_SUNDIALS_CVODE CVODE_CFLAGS CVODE_LDFLAGS CVODE_LIBS USE_GRACE GRACE_CFLAGS GRACE_LDFLAGS GRACE_RPATH GRACE_LIBS DOT USE_GRAPHVIZ GRAPHVIZ_CFLAGS GRAPHVIZ_LDFLAGS GRAPHVIZ_RPATH GRAPHVIZ_LIBS MAKE_BINDINGS_TRUE MAKE_BINDINGS_FALSE EGREP LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar build build_cpu build_vendor build_os host host_cpu host_vendor host_os TestDataDirectory HOST_TYPE SHAREDLIBEXT CFLAGS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CC ac_ct_CC CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP RANLIB ac_ct_RANLIB MAKE AR SWIG PERL USE_SBML OLD_LIBSBML SBML_CFLAGS SBML_LDFLAGS SBML_RPATH SBML_LIBS USE_SUNDIALS SUNDIALS_CFLAGS SUNDIALS_LDFLAGS SUNDIALS_LIBS USE_GRACE GRACE_CFLAGS GRACE_LDFLAGS GRACE_RPATH GRACE_LIBS DOT USE_GRAPHVIZ GRAPHVIZ_CFLAGS GRAPHVIZ_LDFLAGS GRAPHVIZ_RPATH GRAPHVIZ_LIBS EGREP LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -868,10 +868,11 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-libsbml=PREFIX   Use SBML Library
-  --with-sundials=PREFIX  Use SUNDIALS CVODE Library
+  --with-xerces=PREFIX    Use Xerces XML Library
+  --with-expat=PREFIX     Use Expat XML Library
+  --with-sundials=PREFIX  Use SUNDIALS Library
   --with-grace=PREFIX     Use GRACE Library
   --with-graphviz=PREFIX  Use GRAPHVIZ Library
-  --with-bindings  build perl bindings
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -1856,6 +1857,10 @@ case $host_os in
 esac
 
 
+
+
+CFLAGS="-g -02 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+LIBS="-lm -lstdc++"
 
 
 
@@ -4094,6 +4099,7 @@ fi
 
 
 
+
 # Check whether --with-libsbml or --without-libsbml was given.
 if test "${with_libsbml+set}" = set; then
   withval="$with_libsbml"
@@ -4101,6 +4107,27 @@ if test "${with_libsbml+set}" = set; then
 else
   with_libsbml=yes
 fi;
+
+
+# Check whether --with-xerces or --without-xerces was given.
+if test "${with_xerces+set}" = set; then
+  withval="$with_xerces"
+  with_xerces=$withval
+else
+  with_xerces=yes
+fi;
+
+
+# Check whether --with-expat or --without-expat was given.
+if test "${with_expat+set}" = set; then
+  withval="$with_expat"
+  with_expat=$withval
+else
+  with_expat=no
+fi;
+
+
+
     SBML_CFLAGS=
   SBML_LDFLAGS=
   SBML_RPATH=
@@ -4142,46 +4169,7 @@ echo "${ECHO_T}yes" >&6
     fi
   done
 
-
-  sbml_sharedlib=`echo $ac_dir/libsbml.?.?.?.so`
-  if test -z "$sbml_sharedlib"; then sbml_sharedlib='libsbml.2.3.3'; fi
-  sbml_version=`echo $sbml_sharedlib | sed 's/.*libsbml\.\([0-9]*\.[0-9]*\.[0-9]*\).so/\1/p; d'`
-  sbml_major_version=`expr $sbml_version : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
-  sbml_minor_version=`expr $sbml_version : '[0-9]*\.\([0-9]*\)\.[0-9]*'`
-  sbml_micro_version=`expr $sbml_version : '[0-9]*\.[0-9]*\.\([0-9]*\)' '|' 0`
-
-  if test $sbml_major_version -eq 2 &&
-     test $sbml_minor_version -eq 3 &&
-     test $sbml_micro_version -le 3;
-  then
-    { echo "$as_me:$LINENO: found SBML Library Version <= $sbml_version" >&5
-echo "$as_me: found SBML Library Version <= $sbml_version" >&6;}
   else
-    { echo "$as_me:$LINENO: found SBML Library Version $sbml_version" >&5
-echo "$as_me: found SBML Library Version $sbml_version" >&6;}
-  fi
-
-  else
-        echo "$as_me:$LINENO: checking for SBML Library Version" >&5
-echo $ECHO_N "checking for SBML Library Version... $ECHO_C" >&6
-
-    sbml_sharedlib=$with_libsbml/libsbml.?.?.?.so
-    if test -z "$sbml_sharedlib"; then sbml_sharedlib='libsbml.2.3.3'; fi
-    sbml_version=`echo $sbml_sharedlib | sed 's/.*libsbml\.\([0-9]*\.[0-9]*\.[0-9]*\).so/\1/p; d'`
-    sbml_major_version=`expr $sbml_version : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
-    sbml_minor_version=`expr $sbml_version : '[0-9]*\.\([0-9]*\)\.[0-9]*'`
-    sbml_micro_version=`expr $sbml_version : '[0-9]*\.[0-9]*\.\([0-9]*\)' '|' 0`
-
-    if test $sbml_major_version -eq 2 &&
-       test $sbml_minor_version -eq 3 &&
-       test $sbml_micro_version -le 3;
-    then
-      { echo "$as_me:$LINENO: found SBML Library Version <= $sbml_version" >&5
-echo "$as_me: found SBML Library Version <= $sbml_version" >&6;}
-    else
-      { echo "$as_me:$LINENO: found SBML Library Version $sbml_version" >&5
-echo "$as_me: found SBML Library Version $sbml_version" >&6;}
-    fi
         SBML_CFLAGS="-I$with_libsbml/include -I$with_libsbml/include/sbml"
     SBML_LDFLAGS="-L$with_libsbml/lib"
 
@@ -4194,8 +4182,29 @@ echo "$as_me: found SBML Library Version $sbml_version" >&6;}
     SBML_LIBS="-lsbml"
   fi
 
-    echo "$as_me:$LINENO: checking correct functioning of SBML" >&5
-echo $ECHO_N "checking correct functioning of SBML... $ECHO_C" >&6
+
+    if test $with_expat != no; then
+     with_xerces=no
+  fi
+
+    if test $with_xerces != no; then
+     if test $with_xerces == yes; then
+       SBML_LIBS="$SBML_LIBS -lxerces-c"
+     else
+       SBML_LDFLAGS="$SBML_LDFLAGS -L$with_xerces/lib"
+       SBML_LIBS="$SBML_LIBS -lxerces-c"
+     fi
+  else
+     if test $with_expat == yes; then
+      SBML_LIBS="$SBML_LIBS -lexpat"
+     else
+      SBML_LIBS="$SBML_LIBS -lexpat"
+      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_expat/lib"
+     fi
+  fi
+
+    echo "$as_me:$LINENO: checking for correct functioning of SBML" >&5
+echo $ECHO_N "checking for correct functioning of SBML... $ECHO_C" >&6
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4207,7 +4216,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
   sbml_save_LIBS="$LIBS"
     CFLAGS="$CFLAGS $SBML_CFLAGS"
   LDFLAGS="$LDFLAGS $SBML_RPATH $SBML_LDFLAGS"
-  LIBS="$LIBS -lxerces-c $SBML_LIBS"
+  LIBS="$LIBS $SBML_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4274,13 +4283,7 @@ echo "$as_me: error: Can not link to SBML Library:
    { (exit 1); exit 1; }; }
   fi
 
-
-    if test $sbml_major_version -eq 2 &&
-     test $sbml_minor_version -eq 3 &&
-     test $sbml_micro_version -eq 4;
-  then
-     SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
-  fi
+    SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
 
     CFLAGS=$sbml_save_CFLAGS
   LDFLAGS=$sbml_save_LDFLAGS
@@ -4317,9 +4320,9 @@ if test "${with_sundials+set}" = set; then
 else
   with_sundials=yes
 fi;
-    CVODE_CFLAGS=
-  CVODE_LDFLAGS=
-  CVODE_LIBS=
+    SUNDIALS_CFLAGS=
+  SUNDIALS_LDFLAGS=
+  SUNDIALS_LIBS=
   if test $with_sundials = yes; then
      echo "$as_me:$LINENO: checking for SUNDIALS Library headers" >&5
 echo $ECHO_N "checking for SUNDIALS Library headers... $ECHO_C" >&6
@@ -4334,7 +4337,7 @@ echo $ECHO_N "checking for SUNDIALS Library headers... $ECHO_C" >&6
   do
     if test -r "$ac_dir/include/cvodes.h"; then
       ac_SUNDIALS_path=$ac_dir
-      CVODE_CFLAGS="-I$ac_dir/include"
+      SUNDIALS_CFLAGS="-I$ac_dir/include"
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
       break
@@ -4346,8 +4349,8 @@ echo $ECHO_N "checking for SUNDIALS Library... $ECHO_C" >&6
   ac_dir=$ac_SUNDIALS_path
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
-      CVODE_LDFLAGS="-L$ac_dir/lib"
-      CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+      SUNDIALS_LDFLAGS="-L$ac_dir/lib"
+      SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lsundials_shared"
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
       break
@@ -4355,12 +4358,12 @@ echo "${ECHO_T}yes" >&6
   done
 
   else
-    CVODE_CFLAGS="-I$with_sundials/include"
-    CVODE_LDFLAGS="-L$with_sundials/lib"
-    CVODE_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_cvode -lsundials_nvecserial -lsundials_shared"
+    SUNDIALS_CFLAGS="-I$with_sundials/include"
+    SUNDIALS_LDFLAGS="-L$with_sundials/lib"
+    SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lsundials_shared"
   fi
-    echo "$as_me:$LINENO: checking correct functioning of SUNDIALS CVODE" >&5
-echo $ECHO_N "checking correct functioning of SUNDIALS CVODE... $ECHO_C" >&6
+    echo "$as_me:$LINENO: checking correct functioning of SUNDIALS" >&5
+echo $ECHO_N "checking correct functioning of SUNDIALS... $ECHO_C" >&6
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4370,9 +4373,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     sundials_save_CFLAGS="$CFLAGS"
   sundials_save_LDFLAGS="$LDFLAGS"
   sundials_save_LIBS="$LIBS"
-    CFLAGS="$CFLAGS $CVODE_CFLAGS"
-  LDFLAGS="$LDFLAGS $CVODE_LDFLAGS"
-  LIBS="$LIBS $CVODE_LIBS -lm"
+    CFLAGS="$CFLAGS $SUNDIALS_CFLAGS"
+  LDFLAGS="$LDFLAGS $SUNDIALS_LDFLAGS"
+  LIBS="$SUNDIALS_LIBS $LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4432,8 +4435,8 @@ echo "${ECHO_T}$sundials_functional:
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS" >&6
-    { { echo "$as_me:$LINENO: error: Can not link to SUNDIALS CVODE Library" >&5
-echo "$as_me: error: Can not link to SUNDIALS CVODE Library" >&2;}
+    { { echo "$as_me:$LINENO: error: Can not link to SUNDIALS Library" >&5
+echo "$as_me: error: Can not link to SUNDIALS Library" >&2;}
    { (exit 1); exit 1; }; }
   fi
     CFLAGS=$sundials_save_CFLAGS
@@ -4448,10 +4451,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 cat >>confdefs.h <<\_ACEOF
-#define USE_SUNDIALS_CVODE 1
+#define USE_SUNDIALS_SUNDIALS 1
 _ACEOF
 
-  USE_SUNDIALS_CVODE=1
+  USE_SUNDIALS=1
 
 
 
@@ -4536,7 +4539,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
   grace_save_LIBS="$LIBS"
     CFLAGS="$CFLAGS $GRACE_CFLAGS"
   LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
-  LIBS="$LIBS $GRACE_LIBS"
+  LIBS="$GRACE_LIBS $LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -4811,7 +4814,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
         CFLAGS="$CFLAGS -Wno-unknown-pragmas $GRAPHVIZ_CFLAGS"
     LDFLAGS="$LDFLAGS $GRAPHVIZ_LDFLAGS"
-    LIBS="$LIBS $GRAPHVIZ_LIBS"
+    LIBS="$GRAPHVIZ_LIBS $LIBS"
 
         cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -4932,22 +4935,6 @@ _ACEOF
     GRAPHVIZ_LIBS=""
 
   fi
-
-
-# Check whether --with-bindings or --without-bindings was given.
-if test "${with_bindings+set}" = set; then
-  withval="$with_bindings"
-
-fi;
-
-
-if test "$with_bindings" = "yes"; then
-  MAKE_BINDINGS_TRUE=
-  MAKE_BINDINGS_FALSE='#'
-else
-  MAKE_BINDINGS_TRUE='#'
-  MAKE_BINDINGS_FALSE=
-fi
 
 
 
@@ -6013,10 +6000,6 @@ esac
 
           ac_config_files="$ac_config_files ./Makefile"
 
-          ac_config_files="$ac_config_files doc/Makefile"
-
-          ac_config_files="$ac_config_files doc/SBML_odeSolver.1"
-
           ac_config_files="$ac_config_files examples/Makefile"
 
           ac_config_files="$ac_config_files odeSolver/Makefile"
@@ -6024,14 +6007,6 @@ esac
           ac_config_files="$ac_config_files src/Makefile"
 
           ac_config_files="$ac_config_files src/libODES.pc"
-
-          ac_config_files="$ac_config_files bindings/Makefile"
-
-          ac_config_files="$ac_config_files bindings/swig/Makefile"
-
-          ac_config_files="$ac_config_files bindings/perl/Makefile"
-
-          ac_config_files="$ac_config_files bindings/perl/Makefile.PL"
 
 
 cat >confcache <<\_ACEOF
@@ -6143,13 +6118,6 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${MAKE_BINDINGS_TRUE}" && test -z "${MAKE_BINDINGS_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"MAKE_BINDINGS\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"MAKE_BINDINGS\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -6598,16 +6566,10 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "./Makefile" ) CONFIG_FILES="$CONFIG_FILES ./Makefile" ;;
-  "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
-  "doc/SBML_odeSolver.1" ) CONFIG_FILES="$CONFIG_FILES doc/SBML_odeSolver.1" ;;
   "examples/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
   "odeSolver/Makefile" ) CONFIG_FILES="$CONFIG_FILES odeSolver/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "src/libODES.pc" ) CONFIG_FILES="$CONFIG_FILES src/libODES.pc" ;;
-  "bindings/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/Makefile" ;;
-  "bindings/swig/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/swig/Makefile" ;;
-  "bindings/perl/Makefile" ) CONFIG_FILES="$CONFIG_FILES bindings/perl/Makefile" ;;
-  "bindings/perl/Makefile.PL" ) CONFIG_FILES="$CONFIG_FILES bindings/perl/Makefile.PL" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "src/sbmlsolver/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS src/sbmlsolver/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -6763,10 +6725,10 @@ s,@SBML_CFLAGS@,$SBML_CFLAGS,;t t
 s,@SBML_LDFLAGS@,$SBML_LDFLAGS,;t t
 s,@SBML_RPATH@,$SBML_RPATH,;t t
 s,@SBML_LIBS@,$SBML_LIBS,;t t
-s,@USE_SUNDIALS_CVODE@,$USE_SUNDIALS_CVODE,;t t
-s,@CVODE_CFLAGS@,$CVODE_CFLAGS,;t t
-s,@CVODE_LDFLAGS@,$CVODE_LDFLAGS,;t t
-s,@CVODE_LIBS@,$CVODE_LIBS,;t t
+s,@USE_SUNDIALS@,$USE_SUNDIALS,;t t
+s,@SUNDIALS_CFLAGS@,$SUNDIALS_CFLAGS,;t t
+s,@SUNDIALS_LDFLAGS@,$SUNDIALS_LDFLAGS,;t t
+s,@SUNDIALS_LIBS@,$SUNDIALS_LIBS,;t t
 s,@USE_GRACE@,$USE_GRACE,;t t
 s,@GRACE_CFLAGS@,$GRACE_CFLAGS,;t t
 s,@GRACE_LDFLAGS@,$GRACE_LDFLAGS,;t t
@@ -6778,8 +6740,6 @@ s,@GRAPHVIZ_CFLAGS@,$GRAPHVIZ_CFLAGS,;t t
 s,@GRAPHVIZ_LDFLAGS@,$GRAPHVIZ_LDFLAGS,;t t
 s,@GRAPHVIZ_RPATH@,$GRAPHVIZ_RPATH,;t t
 s,@GRAPHVIZ_LIBS@,$GRAPHVIZ_LIBS,;t t
-s,@MAKE_BINDINGS_TRUE@,$MAKE_BINDINGS_TRUE,;t t
-s,@MAKE_BINDINGS_FALSE@,$MAKE_BINDINGS_FALSE,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
@@ -7542,11 +7502,11 @@ if test $yes_libsbml = yes; then
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
-echo "SUNDIALS Library         = $yes_libsundials"
+echo "  SUNDIALS Library       = $yes_libsundials"
 if test $yes_libsundials       = yes; then
-  echo "       CFLAGS          = $CVODE_CFLAGS"
-  echo "       LDFLAGS         = $CVODE_LDFLAGS"
-  echo "       LIBS            = $CVODE_LIBS"
+  echo "       CFLAGS          = $SUNDIALS_CFLAGS"
+  echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
+  echo "       LIBS            = $SUNDIALS_LIBS"
 fi
 echo "  GRACE                = $yes_grace"
 if test $yes_grace = yes; then

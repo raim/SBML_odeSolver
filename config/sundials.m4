@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.7 2005/12/21 15:51:26 raimc Exp $
+dnl $Id: sundials.m4,v 1.8 2006/11/24 13:38:54 raimc Exp $
 
 dnl
 dnl look for SUNDAILS Library headers in some standard set of directories
@@ -63,10 +63,10 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   sundials_save_CFLAGS="$CFLAGS"
   sundials_save_LDFLAGS="$LDFLAGS"
   sundials_save_LIBS="$LIBS"
-  dnl add SUNDIALS specific stuff to global variables
+  dnl temporarily add SUNDIALS specific stuff to global variables
   CFLAGS="$CFLAGS $SUNDIALS_CFLAGS"
   LDFLAGS="$LDFLAGS $SUNDIALS_LDFLAGS"
-  LIBS="$LIBS $SUNDIALS_LIBS -lm"
+  LIBS="$SUNDIALS_LIBS $LIBS"
   dnl can we link a mini program with cvodes?
   AC_TRY_LINK([#include <nvector_serial.h>],
     [N_Vector y; y = N_VNew_Serial(3); N_VDestroy_Serial(y);],
