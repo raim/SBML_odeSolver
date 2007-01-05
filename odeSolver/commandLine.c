@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:21:30 raim>
-  $Id: commandLine.c,v 1.21 2006/07/18 09:41:06 raimc Exp $
+  Last changed Time-stamp: <2007-01-05 13:50:13 raim>
+  $Id: commandLine.c,v 1.22 2007/01/05 12:59:43 raimc Exp $
 */
 /* 
  *
@@ -205,10 +205,11 @@ odeSolver (int argc, char *argv[])
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 )
     {
       om = ODEModel_create(m);
+      ODEModel_constructJacobian(om);
       det = ODEModel_constructDeterminant(om);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
-      SolverError_haltOnErrors();
+      /* SolverError_haltOnErrors(); */
       fprintf(outfile, "det(J) = %s\n", SBML_formulaToString(det));
       ODEModel_free(om);
       Model_free(ode);
@@ -372,6 +373,7 @@ odeSolver (int argc, char *argv[])
 	  of the jacobian matrix
       */
       else if ( Opt.Determinant == 1 ) {
+	ODEModel_constructJacobian(om);
 	det = determinantNAST(om->jacob, om->neq);
 	printDeterminantTimeCourse(ii->data, det, outfile);
 	ASTNode_free(det);
