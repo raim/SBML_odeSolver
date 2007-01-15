@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-14 07:46:04 raim>
-  $Id: odeModel.c,v 1.65 2006/11/16 09:53:02 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-01-15 18:40:02 raim>
+  $Id: odeModel.c,v 1.66 2007/01/15 17:40:45 raimc Exp $ 
 */
 /* 
  *
@@ -66,7 +66,7 @@
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
-				     int nass, int nevents, int nalg);
+				     int nass, int nalg, int nevents);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
 
 typedef struct assignmentStage assignmentStage_t ;
@@ -184,13 +184,14 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
     }
   }
 
-  for ( i = 0; i != om->neq + om->nalg + om->nass + om->nconst; i++ )
+  for ( i = 0; i != om->neq + om->nass + om->nconst + om->nalg; i++ )
   {        
     om->observablesArray[i] = 0;
 
     for ( j = 0; j != List_size(om->observables); j++ )
       if ( !strcmp(om->names[i], List_get(om->observables, j)) )
 	om->observablesArray[i] = 1;
+
   }
 
   ODEModel_computeAssignmentRuleSets(om);
@@ -527,7 +528,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 
   nevents = Model_getNumEvents(ode);
   
-  om = ODEModel_allocate(neq, nconst, nass, nevents, nalg);
+  om = ODEModel_allocate(neq, nconst, nass, nalg, nevents);
   RETURN_ON_FATALS_WITH(NULL);
 
 
