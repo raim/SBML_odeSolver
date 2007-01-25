@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-28 17:08:39 raim>
-  $Id: integratorSettings.h,v 1.25 2006/09/28 18:14:28 raimc Exp $ 
+  Last changed Time-stamp: <2007-01-25 13:13:25 raim>
+  $Id: integratorSettings.h,v 1.26 2007/01/25 12:33:38 raimc Exp $ 
 */
 /* 
  *
@@ -88,6 +88,7 @@ extern "C" {
     int HaltOnEvent;      /**< if not 0: Stop integration upon an event */
     int SteadyState;      /**< if not 0: Stop integration upon a
 			     steady state */
+    double ssThreshold;   /**< threshold value for steady state detection */
     int UseJacobian;      /**< use of Jacobian ASTs (1) or CVODES'
 			     internal approximation (0)*/
     int StoreResults;     /**< if not 0: store time course history */
@@ -175,6 +176,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setSteadyStateThreshold(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *, int);
   SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *, char **, int);

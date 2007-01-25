@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-13 04:44:45 raim>
-  $Id: integratorInstance.c,v 1.73 2006/11/16 09:53:02 jamescclu Exp $
+  Last changed Time-stamp: <2007-01-25 13:14:05 raim>
+  $Id: integratorInstance.c,v 1.74 2007/01/25 12:33:38 raimc Exp $
 */
 /* 
  *
@@ -897,6 +897,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   double dy_mean, dy_var, dy_std;
   cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
+  cvodeSettings_t *opt= engine->opt;
   
   /* calculate the mean and standard deviation of rates of change and
      store in cvodeData_t * */
@@ -916,7 +917,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 
   /* stop integrator if mean + std of rates of change are lower than
      1e-11 */
-  if ( (dy_mean + dy_std) < 1e-11 )
+  if ( (dy_mean + dy_std) < opt->ssThreshold )
   {
     data->steadystate = 1;
     SolverError_error(WARNING_ERROR_TYPE,

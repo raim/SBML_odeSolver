@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-18 11:30:26 raim>
-  $Id: options.h,v 1.6 2006/07/18 09:41:06 raimc Exp $
+  Last changed Time-stamp: <2007-01-25 13:22:05 raim>
+  $Id: options.h,v 1.7 2007/01/25 12:33:37 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -22,6 +22,7 @@ typedef struct _Options {
   double Error;         /* absolute tolerance in Cvode integration */
   double RError;        /* relative tolerance in Cvode integration */
   double Mxstep;        /* maximum step number for CVode integration */
+  double ssThreshold;   /* threshold for steady state detection */  
   int Determinant;      /* Calculate and print determinant of the
 			   jacobian matrix */
   int DrawReactions;    /* Calculate a graph of the reaction network */

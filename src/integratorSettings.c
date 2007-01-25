@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 16:01:07 raim>
-  $Id: integratorSettings.c,v 1.35 2006/11/16 09:53:02 jamescclu Exp $
+  Last changed Time-stamp: <2007-01-25 13:15:08 raim>
+  $Id: integratorSettings.c,v 1.36 2007/01/25 12:33:38 raimc Exp $
 */
 /* 
  *
@@ -105,8 +105,9 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 	 "1: stop integration" :
 	 "0: keep integrating");
   printf("Steady States:   %s\n", set->SteadyState ?
-	 "1: stop integration" :
+	 "1: stop integrating" :
 	 "0: keep integrating");
+  printf("Steady state threshold: %g\n", set->ssThreshold);
   printf("Store Results:   %s\n", set->StoreResults ?
 	 "1: store results (only for finite integration)" :
 	 "0: don't store results");  
@@ -385,8 +386,8 @@ SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJ
   set->UseJacobian = UseJacobian;
   set->Indefinitely = Indefinitely;
   set->HaltOnEvent = HaltOnEvent;
-  set->SteadyState = SteadyState;
   set->StoreResults = StoreResults;
+  CvodeSettings_setSteadyState(set, SteadyState);
   CvodeSettings_setSensitivity(set, Sensitivity);
   CvodeSettings_setSensMethod(set, SensMethod);
 }
@@ -545,14 +546,26 @@ SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i
 /** Sets steady state handling: if i==1, the integration will stop
     upon an approximate detection of a steady state, which is here
     defined as some threshold value of the mean value and standard
-    deviation of current ODE values.
+    deviation of current ODE values. This functions also sets the
+    the threshold for steady state detection to 1e-11.
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i)
 {
   set->SteadyState = i;
+  CvodeSettings_setSteadyStateThreshold(set, 1e-11);
 }
 
+/** Sets steady state threshold: if steady state detection is switched on,
+    the passed value will be used as a threshold for aborting simulation.
+    The mean value + standard deviation of the ODE values must be lower
+    then this threshold.
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setSteadyStateThreshold(cvodeSettings_t *set, double ssThreshold)
+{
+  set->ssThreshold = ssThreshold;
+}
 
 /** Results will only be stored, if i==1 and if a finite integration
     has been chosen (default value or
