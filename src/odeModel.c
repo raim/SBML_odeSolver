@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-15 18:40:02 raim>
-  $Id: odeModel.c,v 1.66 2007/01/15 17:40:45 raimc Exp $ 
+  Last changed Time-stamp: <2007-01-26 12:15:23 raim>
+  $Id: odeModel.c,v 1.67 2007/01/26 11:17:34 raimc Exp $ 
 */
 /* 
  *
@@ -145,7 +145,10 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   RETURN_ON_ERRORS_WITH(NULL);
   
   om->m = m;
-  om->values = NULL; /*!!! this is only used for SBML independent use */
+  /*!!! the values array is only used to store initial conditions in
+    SBML independent use */
+  free(om->values); 
+  om->values = NULL;
   om->d = NULL;      /* will be set if created from file */
 
   om->observables = List_create();
