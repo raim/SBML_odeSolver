@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:07:03 raim>
-  $Id: integratorSettings.c,v 1.38 2007/01/30 15:17:07 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 16:23:19 raim>
+  $Id: integratorSettings.c,v 1.39 2007/01/30 15:24:37 raimc Exp $
 */
 /* 
  *
@@ -805,12 +805,20 @@ SBML_ODESOLVER_API int CvodeSettings_getHaltOnEvent(cvodeSettings_t *set)
     steady state, and 0 if integration should continue 
 */
 
-SBML_ODESOLVER_API int CvodeSettings_getSteadyState(cvodeSettings_t *set)
+SBML_ODESOLVER_API int CvodeSettings_getHaltOnSteadyState(cvodeSettings_t *set)
 {
   return set->SteadyState;
 }
 
+/** Returns to threshold used in steady state detection via
+    IntegratorInstance_checkSteadyState */
 
+SBML_ODESOLVER_API double CvodeSettings_setSteadyStateThreshold(cvodeSettings_t *set)
+{
+  return set->ssThreshold;
+}
+
+  
 /** Returns 1, if integration results should be stored internally,
     and 0 if not.
 
