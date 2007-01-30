@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 14:49:27 raim>
-  $Id: integratorInstance.c,v 1.76 2007/01/30 14:35:45 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 15:43:28 raim>
+  $Id: integratorInstance.c,v 1.77 2007/01/30 15:17:07 raimc Exp $
 */
 /* 
  *
@@ -884,11 +884,15 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 
 }
 
-/** Approximate identification of a steady state
+/** Approximate identification of a steady state, returns 1 upon
+    detection.
 
-    Evaluates mean and std of rates and returns 1 if a "steady state"
-    is reached to stop the calling integrator.  This function is only
-    called by the integrator function if specified via cvodeSettings !
+    Evaluates mean and standard deviation of rates and returns 1 if a
+    "steady state" is reached. This function is also called internally
+    by the integrator if steady state detection is switched on via
+    CvodeSettings_setSteadyState! In this case detection of a steady
+    state will stop the integrator. The threshold for steady state
+    detection can be set via CvodeSettings_setSteadyStateThreshold.
 */
 /* NOTE: provisional steady state finding! */
 SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *engine)

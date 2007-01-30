@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 12:59:25 raim>
-  $Id: integratorSettings.c,v 1.37 2007/01/30 12:32:45 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 16:07:03 raim>
+  $Id: integratorSettings.c,v 1.38 2007/01/30 15:17:07 raimc Exp $
 */
 /* 
  *
@@ -123,12 +123,12 @@ SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *set)
 }
 
 
-/** Creates a settings structure from input values. WARNING:
+/** Creates a settings structure from input values - WARNING:
     this function's type signature will change with time,
     as new settings will be required for other solvers!
 */
 
-SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int Method, int IterMethod, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int PrintStep, double Error, double RError, int Mxstep, int Method, int IterMethod, int UseJacobian, int Indefinitely, int HaltOnEvent, int HaltOnSteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {
 
   cvodeSettings_t *set;
@@ -146,7 +146,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   set->compileFunctions = 0;
   set->ResetCvodeOnEvent = 0;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
-			    HaltOnEvent, SteadyState, StoreResults,
+			    HaltOnEvent, HaltOnSteadyState, StoreResults,
 			    Sensitivity, SensMethod);
 
   /* 2. Setting Requested Time Series */
@@ -233,8 +233,7 @@ SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *set, double REr
 
 
 
-/** Sets maximum number of internal steps during CVODE integration
-*/
+/** Sets maximum number of internal steps during CVODE integration */
 
 SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep)
 {
@@ -242,25 +241,27 @@ SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep
 }
 
 
-/* Sets flag that tells solver that the adjoint solution is desired   */
+/** Sets flag that tells solver that the adjoint solution is desired */
 SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *set) 
 {
   set->DoAdjoint = 1;
 }
 
-/* Sets flag that tells solver that the adjoint solution is desired   */
+/** Sets flag that tells solver that the adjoint solution is desired   */
 SBML_ODESOLVER_API void CvodeSettings_unsetDoAdj(cvodeSettings_t *set) 
 {
   set->DoAdjoint = 0;
 }
 
-/* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
+/** Sets flag that tells solver that the forward phase is complete,
+    ready to initialize the adjoint phase  */
 SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *set) 
 {
   set->AdjointPhase = 1;
 }
 
-/* Sets flag that tells solver that the forward phase is complete, ready to initialize the adjoint phase   */
+/** Sets flag that tells solver that the forward phase is complete,
+    ready to initialize the adjoint phase  */
 SBML_ODESOLVER_API void CvodeSettings_unsetAdjPhase(cvodeSettings_t *set) 
 {
   set->AdjointPhase = 0;
@@ -381,13 +382,13 @@ SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set,
     will be required for other solvers!
 */
 
-SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod)
+SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJacobian, int Indefinitely, int HaltOnEvent, int HaltOnSteadyState, int StoreResults, int Sensitivity, int SensMethod)
 {  
   set->UseJacobian = UseJacobian;
   set->Indefinitely = Indefinitely;
   set->HaltOnEvent = HaltOnEvent;
   set->StoreResults = StoreResults;
-  CvodeSettings_setSteadyState(set, SteadyState);
+  CvodeSettings_setHaltOnSteadyState(set, HaltOnSteadyState);
   CvodeSettings_setSensitivity(set, Sensitivity);
   CvodeSettings_setSensMethod(set, SensMethod);
 }
@@ -527,7 +528,8 @@ SBML_ODESOLVER_API void CvodeSettings_setIndefinitely(cvodeSettings_t *set, int 
 }
 
 
-/** Sets event handling, stop (1, default) or don't stop (0) on events.
+/** Sets event handling, stop (1, default) or don't stop (0) the
+    integration upon triggering of an event.
 
     If i==1, the integration will stop upon
     detection of an event and evaluation of event assignments.
@@ -543,14 +545,19 @@ SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i
 }
 
 
-/** Sets steady state handling: if i==1, the integration will stop
-    upon an approximate detection of a steady state, which is here
-    defined as some threshold value of the mean value and standard
-    deviation of current ODE values. This functions also sets the
-    the threshold for steady state detection to 1e-11.
+/** Sets steady state handling (replacing
+    CvodeSettings_setSteadyState): if set to 1, the integration will
+    stop upon an approximate detection of a steady state, which is
+    here defined as some threshold value of the mean value and
+    standard deviation of current ODE values. A warnig message will be
+    issued via SOSlib error management. This functions also sets the
+    default threshold for steady state detection to 1e-11. An
+    alternative threshold can be set via
+    CvodeSettings_setSteadyStateThreshold.
 */
 
-SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i)
+
+SBML_ODESOLVER_API void CvodeSettings_setHaltOnSteadyState(cvodeSettings_t *set, int i)
 {
   set->SteadyState = i;
   CvodeSettings_setSteadyStateThreshold(set, 1e-11);

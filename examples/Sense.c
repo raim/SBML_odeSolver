@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-16 16:28:40 raim>
-  $Id: Sense.c,v 1.2 2005/12/16 15:29:18 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 16:16:00 raim>
+  $Id: Sense.c,v 1.3 2007/01/30 15:17:06 raimc Exp $
 */
 /* 
  *
@@ -174,7 +174,7 @@ int doit(int argc, char *argv[])
     CvodeSettings_setRError(settings, relativeErrorTolerance);        /* relative tolerance in Cvode integration */
     CvodeSettings_setMxstep(settings, maximumIntegrationSteps);        /* maximum step number for CVode integration */
     CvodeSettings_setHaltOnEvent(settings, 0);      /* doesn't stop integration upon an event */
-    CvodeSettings_setSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
+    CvodeSettings_setHaltOnSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
     CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
     CvodeSettings_setStoreResults(settings, 1);     /* don't Store time course history */
     CvodeSettings_setSensitivity(settings, 1); /* switch on sensitivity */
