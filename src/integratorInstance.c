@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 13:30:55 raim>
-  $Id: integratorInstance.c,v 1.75 2007/01/30 12:32:45 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 14:49:27 raim>
+  $Id: integratorInstance.c,v 1.76 2007/01/30 14:35:45 raimc Exp $
 */
 /* 
  *
@@ -920,12 +920,15 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   if ( (dy_mean + dy_std) < opt->ssThreshold )
   {
     data->steadystate = 1;
-    SolverError_error(WARNING_ERROR_TYPE,
-		      SOLVER_MESSAGE_STEADYSTATE_FOUND,
-		      "Steady state found. "
-		      "Simulation aborted at %g seconds. "
-		      "Mean of rates: %g, std %g",
-		      data->currenttime, dy_mean, dy_std);
+    /* issue warning only if steady state detection is one, and
+       integration will stop */
+    if ( opt->SteadyState )
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_MESSAGE_STEADYSTATE_FOUND,
+			"Steady state found. "
+			"Simulation aborted at %g seconds. "
+			"Mean of rates: %g, std %g",
+			data->currenttime, dy_mean, dy_std);
     return(1) ;
   }
   else
