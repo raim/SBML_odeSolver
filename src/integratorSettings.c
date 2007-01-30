@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:23:19 raim>
-  $Id: integratorSettings.c,v 1.39 2007/01/30 15:24:37 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 16:24:44 raim>
+  $Id: integratorSettings.c,v 1.40 2007/01/30 15:25:24 raimc Exp $
 */
 /* 
  *
@@ -813,7 +813,7 @@ SBML_ODESOLVER_API int CvodeSettings_getHaltOnSteadyState(cvodeSettings_t *set)
 /** Returns to threshold used in steady state detection via
     IntegratorInstance_checkSteadyState */
 
-SBML_ODESOLVER_API double CvodeSettings_setSteadyStateThreshold(cvodeSettings_t *set)
+SBML_ODESOLVER_API double CvodeSettings_getSteadyStateThreshold(cvodeSettings_t *set)
 {
   return set->ssThreshold;
 }
