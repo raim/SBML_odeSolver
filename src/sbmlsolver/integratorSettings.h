@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 15:54:50 raim>
-  $Id: integratorSettings.h,v 1.27 2007/01/30 15:17:08 raimc Exp $ 
+  Last changed Time-stamp: <2007-01-30 16:23:48 raim>
+  $Id: integratorSettings.h,v 1.28 2007/01/30 15:24:37 raimc Exp $ 
 */
 /* 
  *
@@ -201,7 +201,7 @@ extern "C" {
   SBML_ODESOLVER_API int CvodeSettings_getJacobian(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getIndefinitely(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getHaltOnEvent(cvodeSettings_t *);
-  SBML_ODESOLVER_API int CvodeSettings_getSteadyState(cvodeSettings_t *);
+  SBML_ODESOLVER_API int CvodeSettings_getHaltOnSteadyState(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *);
   SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *);
