@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-25 13:14:05 raim>
-  $Id: integratorInstance.c,v 1.74 2007/01/25 12:33:38 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 13:30:55 raim>
+  $Id: integratorInstance.c,v 1.75 2007/01/30 12:32:45 raimc Exp $
 */
 /* 
  *
@@ -1019,8 +1019,10 @@ void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
     between different solvers.
 
     Solvers are currently CVODES for models with ODEs or an internal
-    evaluation of rules for models without ODEs (rate rules).
-    Returns 1 if integration can continue, 0 otherwise.
+    evaluation of rules for models without ODEs (rate rules).  Returns
+    1 if integration can continue, 0 otherwise. A return value of 0
+    can also be caused by a steady state or an event if steady state
+    detection or HaltOnEvent options are activated, respectively.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)

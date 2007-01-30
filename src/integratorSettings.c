@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-25 13:15:08 raim>
-  $Id: integratorSettings.c,v 1.36 2007/01/25 12:33:38 raimc Exp $
+  Last changed Time-stamp: <2007-01-30 12:59:25 raim>
+  $Id: integratorSettings.c,v 1.37 2007/01/30 12:32:45 raimc Exp $
 */
 /* 
  *
@@ -556,10 +556,13 @@ SBML_ODESOLVER_API void CvodeSettings_setSteadyState(cvodeSettings_t *set, int i
   CvodeSettings_setSteadyStateThreshold(set, 1e-11);
 }
 
-/** Sets steady state threshold: if steady state detection is switched on,
-    the passed value will be used as a threshold for aborting simulation.
-    The mean value + standard deviation of the ODE values must be lower
-    then this threshold.
+/** Sets steady state threshold: The mean value + standard deviation
+    of the ODE values must be lower then this threshold. If steady
+    state detection is switched on, the passed value will be used as a
+    threshold for aborting simulation. If steady state detection is
+    switched off, the function IntegratorInstance_checkSteadyState can
+    be used by the calling application and will return 1, if a steady
+    state is detected.    
 */
 
 SBML_ODESOLVER_API void CvodeSettings_setSteadyStateThreshold(cvodeSettings_t *set, double ssThreshold)
