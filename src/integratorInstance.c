@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-02-28 14:00:27 raim>
-  $Id: integratorInstance.c,v 1.78 2007/02/28 15:31:00 raimc Exp $
+  $Id: integratorInstance.c,v 1.79 2007/02/28 15:49:27 jamescclu Exp $
 */
 /* 
  *
@@ -241,7 +241,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 	results->value[i][0] = data->value[i];
     }
 
-    /* count adjoint integration runs with this integratorInstance */
+    /* count integration runs with this integratorInstance */
     data->run++;
 
   }
@@ -265,7 +265,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 	results->value[i][0] = data->value[i];
     }
 
-    /* count integration runs with this integratorInstance */
+    /* count adjoint integration runs with this integratorInstance */
     data->adjrun++;
   }
 
@@ -520,6 +520,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine
 
 SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
 {
+ 
   return engine->solver->iout > engine->solver->nout;
 }
 
