@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-12 11:25:31 raim>
-  $Id: cvodeSolver.h,v 1.8 2006/06/12 10:25:57 raimc Exp $
+  $Id: cvodeSolver.h,v 1.9 2007/02/28 16:19:44 jamescclu Exp $
 */
 /* 
  *
@@ -45,6 +45,7 @@ extern "C" {
 
 #define CVODE_HANDLE_ERROR(_flag, _function, _type)	\
   {  if (check_flag(_flag, _function, _type)) {		\
+      SolverError_dump(); \
       return(0); }}
   
   /* CVODE SOLVER */
