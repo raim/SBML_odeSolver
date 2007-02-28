@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.42 2006/11/16 09:53:02 jamescclu Exp $
+  $Id: sensSolver.c,v 1.43 2007/02/28 15:39:23 jamescclu Exp $
 */
 /* 
  *
@@ -348,8 +348,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
     }
 
-    
-
   } 
   else
     /* Adjoint Phase */
@@ -405,15 +403,19 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else iteration = CV_NEWTON;
 
     /* Error if neither ObjectiveFunction nor vector_v has been set  */
-    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   )   
+    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   ){
+      fprintf(stderr, "Obj = NULL \n");
       return 0;
+    }
 
     /*  If ObjectiveFunction exists, compute vector_v from it */ 
     if ( om->ObjectiveFunction != NULL ) 
     {
       flag = ODEModel_construct_vector_v_FromObjectiveFunction(om);
-      if (flag != 1)
+      if (flag != 1){
+	fprintf(stderr, "error in constructing vector_v\n");
 	return flag;
+      }
     }
 
     if (data->adjrun == 1)
@@ -442,7 +444,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
-
 
 
     if ( solver->qA == NULL )
@@ -663,14 +664,34 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   if ( line != NULL  )
     free(line);
   if ( line_formula != NULL  )
-    free(line_formula);
-  
+    free(line_formula);  
+
   om->ObjectiveFunction = ObjectiveFunction;
   
   return 1;
 }
 
 
+
+/** \brief Sets a general objective function (for ODE solution) via a string
+*/
+SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunctionFromString(integratorInstance_t *engine, char *str)
+{
+  ASTNode_t *ast, *temp_ast;
+  odeModel_t *om = engine->om;
+  
+  if ( om->ObjectiveFunction != NULL  )
+    ASTNode_free(om->ObjectiveFunction);
+  
+  temp_ast = SBML_parseFormula(str);
+  ast = indexAST(temp_ast, om->neq, om->names);
+  om->ObjectiveFunction = ast;
+  
+  ASTNode_free(temp_ast);
+  
+  return 1;
+    
+}
 
 static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
 {  
@@ -721,7 +742,6 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
  
   return 1;
 }
-
 
 
 
@@ -937,7 +957,7 @@ SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine
   data = (realtype *) data;
 
   if(opt->AdjointPhase)
-  {
+  { 
    for(j=0;j<om->nsens;j++)
      data[j] = NV_Ith_S(engine->solver->qA, j);
   }
