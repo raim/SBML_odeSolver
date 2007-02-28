@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.43 2007/02/28 15:39:23 jamescclu Exp $
+  $Id: sensSolver.c,v 1.44 2007/02/28 16:14:39 jamescclu Exp $
 */
 /* 
  *
@@ -444,6 +444,10 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
+
+    /* set adjoint max steps to be same as that for forward */
+    flag = CVodeSetMaxNumStepsB(solver->cvadj_mem, opt->Mxstep);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxNumStepsB", 1);
 
 
     if ( solver->qA == NULL )
