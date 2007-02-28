@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 15:43:28 raim>
-  $Id: integratorInstance.c,v 1.77 2007/01/30 15:17:07 raimc Exp $
+  Last changed Time-stamp: <2007-02-28 14:00:27 raim>
+  $Id: integratorInstance.c,v 1.78 2007/02/28 15:31:00 raimc Exp $
 */
 /* 
  *
@@ -643,7 +643,9 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 
   /** evaluate assignments required befor trigger evaluation; \n */
   for ( i=0; i<om->nass; i++ )
-    if ( om->assignmentsBeforeEvents[i] )
+    /*!!! comment out the following line (also see below) for
+      temporary event bug fix !!!*/
+    if ( om->assignmentsBeforeEvents[i] ) 
       data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
   fired = 0;
@@ -682,6 +684,10 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 
   /** finally, evaluate assignments required after event execution; \n */
   for ( i=0; i<om->nass; i++ )
+    /*!!!! problem with events in two biomodels MODEL8938094216.xml
+      and MODEL3492674214.xml, possibly related to reaction rate rules !!!*/
+    /*!!! comment out the following line (also see below) for
+      temporary event bug fix !!!*/
     if (om->assignmentsAfterEvents[i])
       data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
