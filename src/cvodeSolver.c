@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-02 17:03:40 raim>
-  $Id: cvodeSolver.c,v 1.43 2006/11/02 16:04:29 jamescclu Exp $
+  $Id: cvodeSolver.c,v 1.44 2007/02/28 15:43:45 jamescclu Exp $
 */
 /* 
  *
@@ -87,7 +87,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   if ( !engine->isValid )
   {
     solver->t0 = solver->t;
-    if ( !IntegratorInstance_createCVODESolverStructures(engine) ) return 0;
+    if ( !IntegratorInstance_createCVODESolverStructures(engine) ){
+      fprintf(stderr, "engine not valid \n");
+      return 0;
+    }
   }
 
   if (!engine->clockStarted)
@@ -110,8 +113,9 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       flag = CVode(solver->cvode_mem, solver->tout,
 		   solver->y, &(solver->t), CV_NORMAL);
 
-
-    if ( flag != CV_SUCCESS )
+  
+   /*  if ( flag != CV_SUCCESS ) */
+    if ( flag < CV_SUCCESS )
     {
       char *message[] =
 	{
@@ -180,6 +184,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	  "???",
 	};
 	    
+
       SolverError_error(ERROR_ERROR_TYPE,
 			flag,
 			message[flag * -1],
@@ -201,9 +206,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     /* update rest of data with internal default function */
     flag = IntegratorInstance_updateData(engine);
-    if ( flag != 1 )
+    if ( flag != 1 ){
       return 0;
-    
+    }    
+
   }
   /* if( !opt->AdjointPhase ) */
   else
@@ -212,7 +218,117 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     /* The adjoint engine*/
     flag = CVodeB(solver->cvadj_mem, solver->tout,
 		  solver->yA, &(solver->t), CV_NORMAL);
-    CVODE_HANDLE_ERROR(&flag, "CVodeB", 1);
+
+   
+
+   /*  if ( (flag != CV_SUCCESS)||(flag != CV_TSTOP_RETURN )  ) */
+    if ( flag <CV_SUCCESS  )
+    {
+      char *message[] =
+	{
+	  /*  0 CV_SUCCESS */
+	  "Success",
+	  /**/
+	  /*  1 CV_ROOT_RETURN */
+	  /*   "CVode succeeded, and found one or more roots" */
+	  /*  2 CV_TSTOP_RETURN */
+	  /*   "CVode succeeded and returned at tstop" */
+	  /**/
+	  /* -1 CV_MEM_NULL -1 (old CVODE_NO_MEM) */
+	  "The cvode_mem argument was NULL",
+	  /* -2 CV_ILL_INPUT */
+	  "One of the inputs to CVode is illegal. This "
+	  "includes the situation when a component of the "
+	  "error weight vectors becomes < 0 during "
+	  "internal time-stepping. The ILL_INPUT flag "
+	  "will also be returned if the linear solver "
+	  "routine CV--- (called by the user after "
+	  "calling CVodeMalloc) failed to set one of the "
+	  "linear solver-related fields in cvode_mem or "
+	  "if the linear solver's init routine failed. In "
+	  "any case, the user should see the printed "
+	  "error message for more details.",
+	  /* -3 CV_NO_MALLOC */
+	  "cvode_mem was not allocated",
+	  /* -4 CV_TOO_MUCH_WORK */
+	  "The solver took %d internal steps but could not "
+	  "compute variable values for time %g",
+	  /* -5 CV_TOO_MUCH_ACC */
+	  "The solver could not satisfy the accuracy " 
+	  "requested for some internal step.",
+	  /* -6 CV_ERR_FAILURE */
+	  "Error test failures occurred too many times "
+	  "during one internal time step or "
+	  "occurred with |h| = hmin.",
+	  /* -7 CV_CONV_FAILURE */
+	  "Convergence test failures occurred too many "
+	  "times during one internal time step or occurred "
+	  "with |h| = hmin.",
+	  /* -8 CV_LINIT_FAIL */
+	  "CVode -- Initial Setup: "
+	  "The linear solver's init routine failed.",
+	  /* -9 CV_LSETUP_FAIL */
+	  "The linear solver's setup routine failed in an "
+	  "unrecoverable manner.",
+	  /* -10 CV_LSOLVE_FAIL */
+	  "The linear solver's solve routine failed in an "
+	  "unrecoverable manner.",
+	  /* -11 CV_MEM_FAIL */
+	  "A memory allocation failed. "
+	  "(including an attempt to increase maxord)",
+	  /* -12 CV_RTFUNC_NULL */
+	  "nrtfn > 0 but g = NULL.",
+	  /* -13 CV_NO_SLDET */
+	  "CVodeGetNumStabLimOrderReds -- Illegal attempt "
+	  "to call without enabling SLDET.",
+	  /* -14 CV_BAD_K */
+	  "CVodeGetDky -- Illegal value for k.",
+	  /* -15 CV_BAD_T */
+	  "CVodeGetDky -- Illegal value for t.",
+	  /* -16 CV_BAD_DKY */
+	  "CVodeGetDky -- dky = NULL illegal.",
+	  /* -17 CV_PDATA_NULL */
+	  "Precond module not initialized",
+          "Sensitivity index larger than number computed", 
+	  "", 
+	  "Quad integration not activated", 
+	  "Forward sensitivity integration not achieved",
+	};
+    
+         
+      if ( flag <= -100 ){
+	flag = flag + 100;
+	char *message[] =
+	  { "",
+            "Cvadj_mem full", 
+            "", 
+            "Bad final time for adjoint problem",
+	    "Memory for adjoint problem not created",
+            "Reinit of forward failed at check point",
+	    "Forward integration failed",
+	    "Wrong task for adjoint integration",
+	    "Output time outside forward problem interval",
+	    "Wrong time in Hermite interpolation",
+	  };
+      }  
+
+      SolverError_error(ERROR_ERROR_TYPE,
+			flag,
+			message[flag * -1],
+			opt->Mxstep,
+			solver->tout);
+      SolverError_error(WARNING_ERROR_TYPE,
+			SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
+			"Integration not successful. Results are not "
+			"complete.");
+
+     
+
+      return 0 ; /* Error - stop integration*/
+    }
+
+
+    /* CVODE_HANDLE_ERROR(&flag, "CVodeB", 1); */
     /*!! CVodeB flags should be handled with the same detail
       as CVode/CVodeF flags !!*/
 
@@ -224,18 +340,29 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     /* update rest of adjoint data with internal default function */
     flag = IntegratorInstance_updateAdjData(engine);
-    if ( flag != 1 )
+    if ( flag != 1 ){
       return 0;
-
+    }
   }
 
 
   /*  calculating sensitivities */
-  if ( opt->Sensitivity && !opt->AdjointPhase ) 
-    return IntegratorInstance_getForwardSens(engine);
-  else if( opt->AdjointPhase )
-    return IntegratorInstance_getAdjSens(engine); 
-  else
+  if ( opt->Sensitivity && !opt->AdjointPhase ){ 
+    flag = IntegratorInstance_getForwardSens(engine);
+    if ( flag != 1 ){
+      return 0;
+    }
+    else return 1;
+  }
+  else if( opt->AdjointPhase ){ 
+    flag = IntegratorInstance_getAdjSens(engine);
+    if ( flag != 1 ){
+      return 0;
+    }
+    else return 1; 
+  }
+ /*  else */
+
     return 1; /* OK */    
 }
 
@@ -293,7 +420,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     /* CVODESolverStructures from former runs must be freed */
     /* if (  solver->y != NULL ) */
-    /* 	IntegratorInstance_freeCVODESolverStructures(engine); */
+    /* 	IntegratorInstance_freeCVODEolverStructures(engine); */
 
     /**
      * Allocate y, abstol vectors
@@ -497,8 +624,11 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
   else
     /* Adjoint Phase*/
   {   
+    
     flag = IntegratorInstance_createCVODESSolverStructures(engine);
-    if ( flag == 0 ) return 0; /* error */
+    if ( flag == 0 ){
+      return 0; /* error */
+    }
     /* ERROR HANDLING CODE if SensSolver construction failed */
   }
 
