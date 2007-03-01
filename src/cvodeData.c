@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-11-23 13:16:55 raim>
-  $Id: cvodeData.c,v 1.16 2006/11/23 12:17:27 raimc Exp $
+  $Id: cvodeData.c,v 1.17 2007/03/01 08:19:07 jamescclu Exp $
 */
 /* 
  *
@@ -480,8 +480,11 @@ static int CvodeData_createMatrices(cvodeData_t *data,
   if ( opt->Sensitivity || opt->DoAdjoint )
   {
     /* only required if Jacobian exists */
-    if ( om->jacobian ) 
+    if ( om->jacobian ){ 
+      /* This would free sensitivity if om->sens != NULL  */
+      ODEModel_freeSensitivity(om);
       om->sensitivity = ODEModel_constructSensitivity(om);
+    }
     else
       om->sensitivity = 0;
   }
@@ -489,6 +492,8 @@ static int CvodeData_createMatrices(cvodeData_t *data,
   /* if doing adjoint, sensitivity matrix has to be constructed */
   if (  opt->DoAdjoint )
   {
+      /* This would free sensitivity if om->sens != NULL  */
+      ODEModel_freeSensitivity(om);
       om->sensitivity = ODEModel_constructSensitivity(om);
   }
   
