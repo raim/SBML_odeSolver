@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 16:31:49 raim>
-  $Id: cvodeSolver.c,v 1.45 2007/03/08 15:43:45 raimc Exp $
+  Last changed Time-stamp: <2007-03-08 16:48:51 raim>
+  $Id: cvodeSolver.c,v 1.46 2007/03/08 15:49:05 raimc Exp $
 */
 /* 
  *
@@ -576,6 +576,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	}
         else
 	{
+	  /*!!! does QuadReInit work if q changes dimension between runs?!!!*/
 	  flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
 	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
         }      
