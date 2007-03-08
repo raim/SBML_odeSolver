@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-26 12:15:23 raim>
-  $Id: odeModel.c,v 1.67 2007/01/26 11:17:34 raimc Exp $ 
+  Last changed Time-stamp: <2007-03-08 14:07:31 raim>
+  $Id: odeModel.c,v 1.68 2007/03/08 13:12:07 raimc Exp $ 
 */
 /* 
  *
@@ -1314,8 +1314,9 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   success = 0;
   nvalues = om->neq + om->nass + om->nconst;
 
-  om->sens = NULL;
-
+  /* this might not be necessary ? */
+  if ( om->sens != NULL )
+    ODEModel_freeSensitivity(om);
 
   /* fill with default parameters if none specified */
   if ( om->index_sens == NULL )

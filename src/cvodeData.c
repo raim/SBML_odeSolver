@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-11-23 13:16:55 raim>
-  $Id: cvodeData.c,v 1.17 2007/03/01 08:19:07 jamescclu Exp $
+  Last changed Time-stamp: <2007-03-08 14:08:30 raim>
+  $Id: cvodeData.c,v 1.18 2007/03/08 13:12:07 raimc Exp $
 */
 /* 
  *
@@ -449,8 +449,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* create structures for forward/adjoint sensitivity analysis */
   if (( opt->Sensitivity ) || ( opt->DoAdjoint ))
     CvodeData_initializeSensitivities(data, opt, om);
-
-
   /* now finally, Jacobian and sensitivity matrices can
      be constructed correctly */
   CvodeData_createMatrices(data, opt, om);
@@ -479,24 +477,12 @@ static int CvodeData_createMatrices(cvodeData_t *data,
   /* sens. matrix from former runs has been freed with initialization */
   if ( opt->Sensitivity || opt->DoAdjoint )
   {
-    /* only required if Jacobian exists */
-    if ( om->jacobian ){ 
-      /* This would free sensitivity if om->sens != NULL  */
-      ODEModel_freeSensitivity(om);
-      om->sensitivity = ODEModel_constructSensitivity(om);
-    }
+    /* only required if Jacobian exists or Adjoing is requested */
+    if ( om->jacobian  || opt->DoAdjoint )
+       om->sensitivity = ODEModel_constructSensitivity(om);
     else
       om->sensitivity = 0;
   }
-
-  /* if doing adjoint, sensitivity matrix has to be constructed */
-  if (  opt->DoAdjoint )
-  {
-      /* This would free sensitivity if om->sens != NULL  */
-      ODEModel_freeSensitivity(om);
-      om->sensitivity = ODEModel_constructSensitivity(om);
-  }
-  
 
   return 1;  
 }
