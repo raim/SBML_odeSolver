@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 16:48:51 raim>
-  $Id: cvodeSolver.c,v 1.46 2007/03/08 15:49:05 raimc Exp $
+  Last changed Time-stamp: <2007-03-08 17:39:17 raim>
+  $Id: cvodeSolver.c,v 1.47 2007/03/08 17:11:18 raimc Exp $
 */
 /* 
  *
@@ -551,9 +551,11 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      */
     if ( om->ObjectiveFunction != NULL  )
     {
-
-      if ( engine->solver->nsens != om->nsens )
+      if ( engine->solver->nsens != om->nsens && solver->q != NULL ) 
+      {
 	N_VDestroy_Serial(solver->q);
+	CVodeQuadFree(solver->cvode_mem);
+      }
 
       if ( solver->q == NULL ) /* solver->q has not been initialized  */
       {
@@ -568,7 +570,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	/* Init solver->q = 0.0;*/
 	NV_Ith_S(solver->q, 0) = 0.0;
 
-        /* If quadrature memory has not been allocated (in either of CreateCVODE(S)SolverStructures) */
+        /* If quadrature memory has not been allocated (in either of
+	   CreateCVODE(S)SolverStructures) */ 
         if ( solver->qS == NULL )
 	{ 
 	  flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
@@ -576,9 +579,17 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	}
         else
 	{
-	  /*!!! does QuadReInit work if q changes dimension between runs?!!!*/
-	  flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
+	  if ( engine->solver->nsens != om->nsens )
+	  {
+	    CVodeQuadFree(solver->cvode_mem);
+	    flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
+	  }
+	  else
+	  {
+	    flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
+	  }
         }      
       }
       else  /* reset solver->q and re-initialize quadrature memory */

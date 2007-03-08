@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 17:09:23 raim>
-  $Id: sensSolver.c,v 1.44 2007/02/28 16:14:39 jamescclu Exp $
+  Last changed Time-stamp: <2007-03-08 18:07:35 raim>
+  $Id: sensSolver.c,v 1.45 2007/03/08 17:11:18 raimc Exp $
 */
 /* 
  *
@@ -318,36 +318,51 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /*  If linear functional exists, initialize quadrature computation  */
     if ( (om->ObjectiveFunction == NULL)  && (om->vector_v != NULL) )
     {
-	if ( solver->qS == NULL )
-	  {
-	    solver->qS = N_VNew_Serial(om->nsens);
-	    CVODE_HANDLE_ERROR((void *) solver->qS,
-			       "N_VNew_Serial for vector q", 0);
-
-	    /* Init solver->qS = 0.0;*/
-	    for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
-           
-            /* If quadrature memory has not been allocated (in either of CreateCVODE(S)SolverStructures) */  
-	    if ( solver->q == NULL )
-            {   
-	      flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
-	      CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
-	    }
-	  }
-	else
+      if ( solver->qS == NULL )
+      {
+	solver->qS = N_VNew_Serial(om->nsens);
+	CVODE_HANDLE_ERROR((void *) solver->qS,
+			   "N_VNew_Serial for vector q", 0);
+	
+	/* Init solver->qS = 0.0;*/
+	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
+        
+	/* If quadrature memory has not been allocated (in either
+	   of CreateCVODE(S)SolverStructures) */  
+	if ( solver->q == NULL )
+	{   
+	  flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
+	}
+	else 
 	{
-	    /* Init solver->qS = 0.0;*/
-	    for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
- 
+	  if ( engine->solver->nsens != om->nsens )
+	  {
+	    CVodeQuadFree(solver->cvode_mem);
+	    flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
+	  }
+	  else
+	  {
 	    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
 	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
-                       
+	  }
 	}
-
-	flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-	CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
+	  }
+      else
+      {
+	/* Init solver->qS = 0.0;*/
+	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
+	
+	flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
+	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
+        
+      }
+      
+      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
     }
-
+    
   } 
   else
     /* Adjoint Phase */
