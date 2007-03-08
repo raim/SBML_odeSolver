@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-02 17:03:40 raim>
-  $Id: cvodeSolver.c,v 1.44 2007/02/28 15:43:45 jamescclu Exp $
+  Last changed Time-stamp: <2007-03-08 16:31:49 raim>
+  $Id: cvodeSolver.c,v 1.45 2007/03/08 15:43:45 raimc Exp $
 */
 /* 
  *
@@ -545,14 +545,16 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     flag = CVodeSetMaxNumSteps(solver->cvode_mem, opt->Mxstep);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxNumSteps", 1);
 
-    
 
-
-     /**
+    /**
      * Initialization to compute nonlinear functional
      */
-     if ( om->ObjectiveFunction != NULL  )
-     {
+    if ( om->ObjectiveFunction != NULL  )
+    {
+
+      if ( engine->solver->nsens != om->nsens )
+	N_VDestroy_Serial(solver->q);
+
       if ( solver->q == NULL ) /* solver->q has not been initialized  */
       {
 	/* although only scalar is neccessary for solver->q, 
@@ -589,7 +591,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
       flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
-     }
+    }
      
 
 
@@ -660,7 +662,13 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
     N_VDestroy_Serial(engine->solver->y);
     engine->solver->y = NULL;
   }
-    
+
+  /* Free forward quadrature vector */
+  if (engine->solver->q != NULL)
+  {
+    N_VDestroy_Serial(engine->solver->q);
+  }
+  
   /* Free the abstol vector */
   if (engine->solver->abstol != NULL)
   {
