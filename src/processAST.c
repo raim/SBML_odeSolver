@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-05 17:24:13 raim>
-  $Id: processAST.c,v 1.46 2006/11/02 16:04:29 jamescclu Exp $
+  Last changed Time-stamp: <2007-03-08 18:33:20 raim>
+  $Id: processAST.c,v 1.47 2007/03/08 17:58:33 raimc Exp $
 */
 /* 
  *
@@ -1749,7 +1749,7 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
       if ( strcmp(str, names[i]) == 0 )
       {
         ASTNode_free(index);
-	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
+	index = ASTNode_createIndexName(); 
 	ASTNode_setName(index, str);
 	ASTNode_setIndex(index, i);
 	found++;
@@ -1758,7 +1758,7 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
       else if ( short_str != NULL && strcmp(short_str, names[i]) == 0 )
       {
         ASTNode_free(index);
-	index = ASTNode_createIndexName(); /*!memory leak in sensitivity.c!*/
+	index = ASTNode_createIndexName(); 
 	ASTNode_setName(index, short_str);
 	ASTNode_setIndex(index, i);
 	ASTNode_setData(index);
