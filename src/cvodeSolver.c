@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 17:39:17 raim>
-  $Id: cvodeSolver.c,v 1.47 2007/03/08 17:11:18 raimc Exp $
+  Last changed Time-stamp: <2007-03-08 18:55:51 raim>
+  $Id: cvodeSolver.c,v 1.48 2007/03/08 18:01:44 raimc Exp $
 */
 /* 
  *
@@ -932,12 +932,10 @@ JacODE(long int N, DenseMat J, realtype t,
   int i, j;
   realtype *ydata;
   cvodeData_t *data;
+
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   
-  /** update time */
-  data->currenttime = t;
-
   /** update parameters: p is modified by CVODES,
       if fS could not be generated  */
   if ( data->p != NULL && data->opt->Sensitivity )
@@ -945,8 +943,10 @@ JacODE(long int N, DenseMat J, realtype t,
       data->value[data->model->index_sens[i]] = data->p[i];
 
   /** update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) 
-    data->value[i] = ydata[i];
+  for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
+
+  /** update time */
+  data->currenttime = t;
 
   /** evaluate Jacobian J = df/dx */
   for ( i=0; i<data->model->neq; i++ ) 

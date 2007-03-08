@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 18:07:35 raim>
-  $Id: sensSolver.c,v 1.45 2007/03/08 17:11:18 raimc Exp $
+  Last changed Time-stamp: <2007-03-08 18:53:56 raim>
+  $Id: sensSolver.c,v 1.46 2007/03/08 18:01:45 raimc Exp $
 */
 /* 
  *
@@ -1073,13 +1073,7 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   dySdata = NV_DATA_S(ySdot);
 
   /** update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) 
-    data->value[i] = ydata[i];
-
-  /** update assignment rules : NOT needed!!!! */
-  for ( i=0; i<data->model->nass; i++ )
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
+  for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
   
   /** update time */
   data->currenttime = t;
@@ -1124,8 +1118,7 @@ void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
   dyAdata = NV_DATA_S(yAdot);
 
   /* update ODE variables from CVODE  */  
-  for ( i=0; i<data->model->neq; i++ ) 
-    data->value[i] = ydata[i];
+  for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
  
   /* update time */
   data->currenttime = t;
@@ -1168,13 +1161,7 @@ void JacA(long int NB, DenseMat JB, realtype t,
   
 
   /** update ODE variables from CVODE */
-  for ( i=0; i<data->model->neq; i++ ) 
-    data->value[i] = ydata[i];
-
-  /** update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) 
-    data->value[data->model->neq+i] =
-      evaluateAST(data->model->assignment[i],data);
+  for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
 
   /** update time */
   data->currenttime = t;
@@ -1211,8 +1198,8 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
 
    if ( data->model->index_sensP[i] != -1 )
     for ( j=0; j<data->model->neq; j++ )
-      dqAdata[i] += yAdata[j] * evaluateAST(data->model->sens[j][ data->model->index_sensP[i]  ],
-					    data);
+      dqAdata[i] += yAdata[j] *
+	evaluateAST(data->model->sens[j][ data->model->index_sensP[i] ], data);
   }
 
 }
