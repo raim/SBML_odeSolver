@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:55:51 raim>
-  $Id: cvodeSolver.c,v 1.48 2007/03/08 18:01:44 raimc Exp $
+  $Id: cvodeSolver.c,v 1.49 2007/03/21 14:41:24 jamescclu Exp $
 */
 /* 
  *
@@ -555,6 +555,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       {
 	N_VDestroy_Serial(solver->q);
 	CVodeQuadFree(solver->cvode_mem);
+
+        /* Set solver->q to NULL after calling N_VDestroy */
+        solver->q = NULL; 
       }
 
       if ( solver->q == NULL ) /* solver->q has not been initialized  */
@@ -578,15 +581,21 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
 	}
         else
-	{
+	{ 
+	  
 	  if ( engine->solver->nsens != om->nsens )
 	  {
+            /* need to do a CVodeQuadFree and CvodeQuadMalloc
+             if nsens has changed  */
 	    CVodeQuadFree(solver->cvode_mem);
 	    flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
 	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
 	  }
 	  else
 	  {
+            /* if nsens has not changed, simply CvodeQuadReInit suffices 
+               since a  CVodeQuadMalloc has been called using solver->qS,
+               as confirmed by solver->qS != NULL   */
 	    flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
 	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	  }
