@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:53:56 raim>
-  $Id: sensSolver.c,v 1.46 2007/03/08 18:01:45 raimc Exp $
+  $Id: sensSolver.c,v 1.47 2007/03/21 14:42:02 jamescclu Exp $
 */
 /* 
  *
@@ -318,6 +318,16 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /*  If linear functional exists, initialize quadrature computation  */
     if ( (om->ObjectiveFunction == NULL)  && (om->vector_v != NULL) )
     {
+
+      if ( engine->solver->nsens != om->nsens && solver->qS != NULL ) 
+      {
+	N_VDestroy_Serial(solver->qS);
+	CVodeQuadFree(solver->cvode_mem);
+
+        /* Set solver->qS to NULL after calling N_VDestroy */
+        solver->qS = NULL; 
+      }
+
       if ( solver->qS == NULL )
       {
 	solver->qS = N_VNew_Serial(om->nsens);
@@ -328,9 +338,9 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
         
 	/* If quadrature memory has not been allocated (in either
-	   of CreateCVODE(S)SolverStructures) */  
+	   of CreateCVODE(S)SolverStructures) */
 	if ( solver->q == NULL )
-	{   
+	{
 	  flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
 	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
 	}
@@ -338,12 +348,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	{
 	  if ( engine->solver->nsens != om->nsens )
 	  {
+	   /* need to do a CVodeQuadFree and CvodeQuadMalloc
+              if nsens has changed  */ 
 	    CVodeQuadFree(solver->cvode_mem);
 	    flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
 	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
 	  }
 	  else
 	  {
+	    /* if nsens has not changed, simply CvodeQuadReInit suffices 
+               since a  CVodeQuadMalloc has been called using solver->q, 
+               as confirmed by solver->q != NULL  */
 	    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
 	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	  }
