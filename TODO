@@ -41,3 +41,32 @@
 * command-line and interactive usage
 	* change visualization to GNUPLOT (3D!)
 	* bioLog_resultVisualizer: ...
+
+___TODO MARCH 2007__
+
+* recreate solver structures when choosing new solver/iteration methods
+* implement max. order
+
+* check old valgrind memory leaks
+
+* check n-ary for relational operators
+
+* remove space() and fprintf(stderr,...)
+
+* optimize sens. matrix construction, compare parameters
+
+* implement compilation for all RHS
+
+* event bug! check rule evaluation ordering, and default observables
+also see odeModel.c line 175
+    /* AMF => if you want to expand the default observables set please
+    let me know.  If you include the reaction symbols performance
+    will be degraded in models with events */
+
+* use values array also for SBML input model
+
+* high level interfaces: check error handling
+
+* error handling in getForwardSens
+
+* check all rule evaluations for optimization
