@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-10-01 14:31:31 raim>
-  $Id: adjsenstest.c,v 1.3 2006/11/13 12:48:07 jamescclu Exp $
+  $Id: adjsenstest.c,v 1.4 2007/03/21 14:39:12 jamescclu Exp $
 */
 /* 
  *
@@ -104,7 +104,7 @@ main (int argc, char *argv[]){
   while ( i < 4 ) {
 
     /* Set nonlinear objective function after 2 loops  */
-    if ( i == 0)
+    if ( i == 2)
     {
       fprintf(stderr, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
       flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK.objfun");
