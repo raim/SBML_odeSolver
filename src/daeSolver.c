@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 14:54:38 raim>
-  $Id: daeSolver.c,v 1.11 2006/06/13 15:07:47 raimc Exp $
+  $Id: daeSolver.c,v 1.12 2007/03/21 15:15:46 jamescclu Exp $
 */
 /* 
  *
@@ -341,6 +341,7 @@ IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
 {
     /* Free sensitivity vector yS */
     N_VDestroy_Serial(engine->solver->dy);
+    engine->solver->dy = NULL;
 }
 
 /** \brief Prints some final statistics of the calls to CVODE routines

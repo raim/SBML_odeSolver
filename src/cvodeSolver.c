@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:55:51 raim>
-  $Id: cvodeSolver.c,v 1.49 2007/03/21 14:41:24 jamescclu Exp $
+  $Id: cvodeSolver.c,v 1.50 2007/03/21 15:15:32 jamescclu Exp $
 */
 /* 
  *
@@ -688,6 +688,7 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
   if (engine->solver->q != NULL)
   {
     N_VDestroy_Serial(engine->solver->q);
+    engine->solver->q = NULL;
   }
   
   /* Free the abstol vector */
