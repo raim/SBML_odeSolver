@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.24 2006/11/24 13:38:54 raimc Exp $
+# $Id: Makefile.am,v 1.25 2007/05/09 18:38:42 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -34,13 +34,16 @@ INCLUDES = @SUNDIALS_CFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
            @SBML_CFLAGS@ \
            @GRACE_CFLAGS@ \
+           @TCC_CFLAGS@ \
            -I.
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
         @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+        @TCC_LDFLAGS@ @TCC_LIBS@ 
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
-             @SBML_RPATH@
+             @SBML_RPATH@ \
+             @TCC_RPATH@ 
 lib_LIBRARIES = libODES.a
 
 libODES_a_SOURCES = ASTIndexNameNode.cpp \

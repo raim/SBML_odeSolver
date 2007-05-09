@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 13:35:59 raim>
-  $Id: compiler.c,v 1.5 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 20:22:48 raim>
+  $Id: compiler.c,v 1.6 2007/05/09 18:38:42 raimc Exp $
 */
 /* 
  *
@@ -51,6 +51,16 @@ struct compiled_code
   char *dllFileName ;
 };
 
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#include <libtcc.h>
+struct compiled_code
+{
+  TCCState *s;
+};
+
+
 #endif
 
 /**
@@ -60,6 +70,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 {
 
   compiled_code_t *code = NULL;
+  
 #ifdef WIN32
 
   char tempDir[MAX_PATH+1];
@@ -171,7 +182,28 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     code->dllHandle = dllHandle ;
     code->dllFileName = dllFileName;
+    
+#elsif USE_TCC
+    
+    code->s = tcc_new();
+    
+    if ( !code->s )
+    {
+        fprintf(stderr, "Could not create tcc state\n");
+        return NULL;
+    }
 
+    /* MUST BE CALLED before any compilation or file loading */
+    tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
+
+
+    /* add include path */
+    /* tcc_add_include_path(TCCState *s, const char *pathname);*/
+    
+    /* compile with TCC */
+    tcc_compile_string(code->s, sourceCode);
+
+    
 #endif
     return (code);
 }
@@ -190,6 +222,10 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 
   SolverError_storeLastWin32Error("");
   result = NULL;
+#elsif USE_TCC
+
+  tcc_get_symbol(code->s, result, const char *symbol);
+  
 #endif
   return (result);
 }
@@ -203,6 +239,9 @@ void CompiledCode_free(compiled_code_t *code)
   FreeLibrary(code->dllHandle);
   remove(code->dllFileName);
   free(code->dllFileName);
+  free(code);
+#elsif USE_TCC
+  tcc_delete(code->s);
   free(code);
 #endif
 }

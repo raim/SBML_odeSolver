@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 14:07:31 raim>
-  $Id: odeModel.c,v 1.68 2007/03/08 13:12:07 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-09 20:23:30 raim>
+  $Id: odeModel.c,v 1.69 2007/05/09 18:38:42 raimc Exp $ 
 */
 /* 
  *
@@ -1915,6 +1915,10 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   ODEModel_generateEventFunction(om, buffer);
   ODEModel_generateCVODERHSFunction(om, buffer);
+
+/*   printf("%s\n for compilation, HALLO\n", CharBuffer_getBuffer(buffer)); */
+/*   fflush(stdout); */
+  
   om->compiledCVODEFunctionCode =
     Compiler_compile(CharBuffer_getBuffer(buffer));
 
