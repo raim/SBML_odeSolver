@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 18:55:51 raim>
-  $Id: cvodeSolver.c,v 1.50 2007/03/21 15:15:32 jamescclu Exp $
+  Last changed Time-stamp: <2007-05-09 17:12:45 raim>
+  $Id: cvodeSolver.c,v 1.51 2007/05/09 15:20:47 raimc Exp $
 */
 /* 
  *
@@ -83,12 +83,13 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   cvodeSettings_t *opt = engine->opt;
   odeModel_t *om = engine->om;
 
-
   if ( !engine->isValid )
-  {
+  { 
     solver->t0 = solver->t;
-    if ( !IntegratorInstance_createCVODESolverStructures(engine) ){
-      fprintf(stderr, "engine not valid \n");
+    if ( !IntegratorInstance_createCVODESolverStructures(engine) )
+    {
+      fprintf(stderr, "engine not valid for unknown reasons"
+	      "please contact developers\n");
       return 0;
     }
   }
@@ -108,7 +109,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	 desired  */  
       flag = CVodeF(solver->cvadj_mem, solver->tout,
 		    solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck));
-    else
+    else 
       /* calling CVODE */
       flag = CVode(solver->cvode_mem, solver->tout,
 		   solver->y, &(solver->t), CV_NORMAL);
@@ -530,7 +531,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      * to approximate the Jacobian matrix to ...
      */
     if ( opt->UseJacobian == 1 ) 
-      /* ... user-supplied routine Jac */
+      /* ... user-supplied routine Jac */ /*!!!! should be jacODE not JacODE? !!!*/
       flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
     else
       /* ...the internal default difference quotient routine CVDenseDQJac */ 
