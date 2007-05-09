@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 17:11:59 raim>
-  $Id: integratorInstance.c,v 1.80 2007/05/09 15:27:02 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 18:01:24 raim>
+  $Id: integratorInstance.c,v 1.81 2007/05/09 16:02:04 raimc Exp $
 */
 /* 
  *
@@ -979,6 +979,10 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
   data->value[vi->index] = value;
 
+  /*!!! variable compartments:  here setVariableValue for species X
+    should be interpreted as concetration, unless species in amounts,
+    and thus for ODE variable species X_amount the input value needs
+    to be divided by current compartment size !!!*/
   /* initial values need to be set in results,
      because they had already been initialized */
   if ( engine->solver->t == 0.0 && data->results != NULL )
