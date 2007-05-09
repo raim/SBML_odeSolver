@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 14:08:30 raim>
-  $Id: cvodeData.c,v 1.18 2007/03/08 13:12:07 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 16:33:37 raim>
+  $Id: cvodeData.c,v 1.19 2007/05/09 15:27:02 raimc Exp $
 */
 /* 
  *
@@ -191,6 +191,8 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
       {
 	if ( Species_isSetInitialConcentration(s) )
 	  data->value[i] = Species_getInitialConcentration(s);
+	else if ( Species_isSetInitialAmount(s) )
+	  data->value[i] = Species_getInitialAmount(s);
 	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
 	  SolverError_error(FATAL_ERROR_TYPE,
 			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,

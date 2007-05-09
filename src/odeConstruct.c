@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:55:26 raim>
-  $Id: odeConstruct.c,v 1.34 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 17:24:03 raim>
+  $Id: odeConstruct.c,v 1.35 2007/05/09 15:27:02 raimc Exp $
 */
 /* 
  *
@@ -131,7 +131,10 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
 
 /* Initialize a new model from an input model
    Creates a new SBML model and copies
-   compartments, species and parameters from the passed model */ 
+   compartments, species and parameters from the passed model,
+   species are converted to concentration units, unless the
+   species has only substance units or its compartment has
+   spatial dimension 0 */ 
 static Model_t *Model_copyInits(Model_t *old)
 {
   int i;
@@ -214,16 +217,20 @@ static Model_t *Model_copyInits(Model_t *old)
     if ( Species_isSetCharge(s) )
       Species_setCharge(s_new, Species_getCharge(s));    
 
-    /* convert initial amount to concentration */
+    /* convert initial amount to concentration, unless species has only
+       substance units */
     if ( Species_isSetInitialConcentration(s) )
       Species_setInitialConcentration(s_new,
 				      Species_getInitialConcentration(s));
-    else
+    else 
     {
       c = Model_getCompartmentById(old, Species_getCompartment(s));
-      Species_setInitialConcentration(s_new,
-				      Species_getInitialAmount(s)/
-				      Compartment_getSize(c));
+      if ( Compartment_getSpatialDimensions(c) != 0 &&
+	   !Species_getHasOnlySubstanceUnits(s) )
+	Species_setInitialConcentration(s_new, Species_getInitialAmount(s)/
+					Compartment_getSize(c));
+      else
+	Species_setInitialAmount(s_new, Species_getInitialAmount(s));
     }    
 
     Model_addSpecies(new, s_new);
@@ -427,6 +434,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
   Reaction_t *r;
   KineticLaw_t *kl;
   SpeciesReference_t *sref;
+  Compartment_t *c;
   ASTNode_t *simple, *ode, *tmp, *reactant, *reactionSymbol;
 
   errors = 0;
@@ -561,7 +569,10 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
      constant nor a boundary condition but appears only as a modifier
      in reactions. The rate for such species is set to 0. */
 
-  if( ode != NULL )
+  c = Model_getCompartmentById(m, Species_getCompartment(s)); 
+
+  if( ode != NULL && !Species_getHasOnlySubstanceUnits(s) &&
+      Compartment_getSpatialDimensions(c) !=0 )
   {
     tmp = copyAST(ode);
     ASTNode_free(ode);
@@ -782,7 +793,9 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
 
 
 /** Returns the value of a compartment, species or parameter
-    with the passed ID
+    with the passed ID. Note that species values are always
+    returned as concentrations, unless the species has only substance
+    units or its compartments has spatial dimension 0.
 */
 
 SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
@@ -809,7 +822,11 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
     else if ( Species_isSetInitialAmount(s) )
     {
       c = Model_getCompartmentById(m, Species_getCompartment(s));
-      return Species_getInitialAmount(s) / Compartment_getSize(c);
+      if ( Compartment_getSpatialDimensions(c) != 0 &&
+	   !Species_getHasOnlySubstanceUnits(s) ) 
+	return Species_getInitialAmount(s) / Compartment_getSize(c);
+      else
+	return Species_getInitialAmount(s);
     }
   }
   fprintf(stderr, "Value for %s not found!", id); 
@@ -819,7 +836,9 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
 
 
 /** Sets the value of a compartment, species or parameter
-    with the passed ID
+    with the passed ID. For species it depends on the current
+    state of the species whether concentrations or substance units
+    are set.
 */
 
 SBML_ODESOLVER_API int Model_setValue(Model_t *m, const char *id, const char *rid, double value)

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 15:54:52 raim>
-  $Id: modelSimplify.c,v 1.15 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 17:11:43 raim>
+  $Id: modelSimplify.c,v 1.16 2007/05/09 15:27:02 raimc Exp $
 */
 /* 
  *
@@ -305,7 +305,9 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
   /** Steps R.5: replacing all species that
       are defined as either constant or boundary
       but not defined by a rate rule (i.e. also constant)
-      by their initial concentration.
+      by their initial concentration, or amount if the
+      species has only substance units or its compartment
+      has a spatial dimension 0.
       Species that are set by an assignment rules
       have already been replaced above in Step R.1
   */
@@ -314,13 +316,21 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
     found = 0;
     s = Model_getSpecies(m, i);
     c = Model_getCompartmentById(m, Species_getCompartment(s));
-    if ( Species_getConstant(s) )    
-      AST_replaceNameByValue(math,
-			     Species_getId(s),
-			     Species_isSetInitialConcentration(s) ?
-			     Species_getInitialConcentration(s) :
-			     Species_getInitialAmount(s) /
-			     Compartment_getSize(c));    
+    if ( Species_getConstant(s) )
+    {
+      if ( !Species_getHasOnlySubstanceUnits(s) &&
+	   Compartment_getSpatialDimensions(c) != 0 )
+	AST_replaceNameByValue(math,
+			       Species_getId(s),
+			       Species_isSetInitialConcentration(s) ?
+			       Species_getInitialConcentration(s) :
+			       Species_getInitialAmount(s) /
+			       Compartment_getSize(c));
+      else
+	AST_replaceNameByValue(math,
+			       Species_getId(s), Species_getInitialAmount(s));
+	
+    }
     else if ( Species_getBoundaryCondition(s) )
     {
       for ( j=0; j<Model_getNumRules(m); j++ )
@@ -342,13 +352,22 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
 	      ++found;	  
 	}
       }
-      if ( found == 0 ) 
-	AST_replaceNameByValue(math,
-			       Species_getId(s),
-			       Species_isSetInitialConcentration(s) ?
-			       Species_getInitialConcentration(s) :
-			       Species_getInitialAmount(s) /
-			       Compartment_getSize(c));      
+      if ( found == 0 )
+      {
+	if ( !Species_getHasOnlySubstanceUnits(s) &&
+	     Compartment_getSpatialDimensions(c) != 0 )
+	  AST_replaceNameByValue(math,
+				 Species_getId(s),
+				 Species_isSetInitialConcentration(s) ?
+				 Species_getInitialConcentration(s) :
+				 Species_getInitialAmount(s) /
+				 Compartment_getSize(c));
+	else
+	  AST_replaceNameByValue(math,
+				 Species_getId(s),
+				 Species_getInitialAmount(s));
+
+      }
     }
   }
 } 

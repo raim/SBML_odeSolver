@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-02-28 14:00:27 raim>
-  $Id: integratorInstance.c,v 1.79 2007/02/28 15:49:27 jamescclu Exp $
+  Last changed Time-stamp: <2007-05-09 17:11:59 raim>
+  $Id: integratorInstance.c,v 1.80 2007/05/09 15:27:02 raimc Exp $
 */
 /* 
  *
@@ -596,7 +596,14 @@ SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engi
   for ( i=0; i<nvalues; i++ )
   {
     if ( (s = Model_getSpeciesById(m, om->names[i])) != NULL )
-      Species_setInitialConcentration(s, results->value[i][nout]);
+    {
+      c = Model_getCompartmentById(m, Species_getCompartment(s));
+      if ( !Species_getHasOnlySubstanceUnits(s) &&
+	   Compartment_getSpatialDimensions != 0 )
+	Species_setInitialConcentration(s, results->value[i][nout]);
+      else
+	Species_setInitialAmount(s, results->value[i][nout]);
+    }
     else if ( (c = Model_getCompartmentById(m, om->names[i])) != NULL ) 
       Compartment_setSize(c, results->value[i][nout]);    
     else if ( (p = Model_getParameterById(m, om->names[i])) !=  NULL ) 
@@ -1049,7 +1056,6 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t 
      and use the default update IntegratorInstance_updateData(engine)
      afterwards */
     
-
   /* for models without ODEs, we just need to increase the time */
   if ( engine->om->neq == 0 ) 
     return IntegratorInstance_simpleOneStep(engine);
