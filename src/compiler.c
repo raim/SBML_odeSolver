@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 20:22:48 raim>
-  $Id: compiler.c,v 1.6 2007/05/09 18:38:42 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 22:39:45 raim>
+  $Id: compiler.c,v 1.7 2007/05/09 21:34:11 raimc Exp $
 */
 /* 
  *
@@ -51,7 +51,7 @@ struct compiled_code
   char *dllFileName ;
 };
 
-#else
+#elif USE_TCC
 #include <stdio.h>
 #include <stdlib.h>
 #include <libtcc.h>
