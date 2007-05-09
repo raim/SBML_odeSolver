@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-10-27 16:35:04 raim>
-  $Id: interactive.c,v 1.4 2005/10/27 14:52:51 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 16:57:37 raim>
+  $Id: interactive.c,v 1.5 2007/05/09 18:37:10 raimc Exp $
 */
 /* 
  *
@@ -317,7 +317,7 @@ static void setValues(Model_t *m) {
       }
     }
     if ( Species_getHasOnlySubstanceUnits(s) ) {
-
+	printf(" (has only substance units)");
     }
     printf("\n");
     if ( Species_isSetCharge(s) ) {
@@ -337,7 +337,7 @@ static void setValues(Model_t *m) {
       Species_setInitialAmount(s, (float) atof(newIA));
     }
     else if ( Species_isSetInitialConcentration(s) ) {
-      printf("Please enter new initial Amount: ");
+      printf("Please enter new initial Concentration: ");
       newIC = get_line(stdin);
       newIC = util_trim(newIC);
       Species_setInitialConcentration(s, (float) atof(newIC));

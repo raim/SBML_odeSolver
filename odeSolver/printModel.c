@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-07-20 13:06:53 raim>
-  $Id: printModel.c,v 1.19 2006/07/20 12:00:19 raimc Exp $
+  Last changed Time-stamp: <2007-05-09 17:10:53 raim>
+  $Id: printModel.c,v 1.20 2007/05/09 18:37:10 raimc Exp $
 */
 /* 
  *
@@ -102,7 +102,8 @@ void printSpecies(Model_t *m, FILE *f)
 
   fprintf(f, "\n");
   fprintf(f, "# Initial Conditions for Species and Compartments:\n");
-  for ( i=0; i<Model_getNumCompartments(m); i++ ) {
+  for ( i=0; i<Model_getNumCompartments(m); i++ )
+  {
     if ( i== 0 ) fprintf(f, "# Compartments:\n");
     c = Model_getCompartment(m,i);
     if(Compartment_isSetId(c))
@@ -132,9 +133,15 @@ void printSpecies(Model_t *m, FILE *f)
 	  fprintf(f, "(%s) ", Species_getName(s));
 	
 	if ( Species_isSetInitialAmount(s) )
+	{
+	  if ( Compartment_getSpatialDimensions(c) != 0 &&
+	       !Species_getHasOnlySubstanceUnits(s) )
 	  fprintf(f, "= %g/%g; ",
 		 Species_getInitialAmount(s),
-		 Compartment_getSize(c));
+		  Compartment_getSize(c));
+	  else 
+	    fprintf(f, "= %g; ", Species_getInitialAmount(s));
+	}
 	else if ( Species_isSetInitialConcentration(s) )
 	  fprintf(f, "= %g; ", Species_getInitialConcentration(s));
 	else
