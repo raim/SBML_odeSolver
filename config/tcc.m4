@@ -1,4 +1,4 @@
-dnl $Id: tcc.m4,v 1.1 2007/05/09 18:38:42 raimc Exp $
+dnl $Id: tcc.m4,v 1.2 2007/05/10 18:44:37 raimc Exp $
 
 
 dnl
@@ -33,8 +33,8 @@ AC_DEFUN([AC_TCC_PATH],
       fi
 
 dnl !!! -m32 is required for tcc but in conflict with all others
-dnl      TCC_LIBS="-m32 -ldl -ltcc"
-      TCC_LIBS=""
+      TCC_LIBS="-ldl -ltcc"
+dnl      TCC_LIBS=""
       AC_MSG_RESULT([yes])
       break
     fi
@@ -71,11 +71,10 @@ AC_DEFUN([CONFIG_LIB_TCC],
     fi   
 
 dnl !!! -m32 is required for tcc but in conflict with all others
-dnl    TCC_LIBS="-m32 -ldl -ltcc"  
-    TCC_LIBS=""
+    TCC_LIBS="-ldl -ltcc"  
+dnl    TCC_LIBS=""
   fi
 
- 
   dnl check if TCC Library is functional
   AC_MSG_CHECKING([for correct functioning of TCC])
   AC_LANG_PUSH(C)
@@ -87,15 +86,14 @@ dnl    TCC_LIBS="-m32 -ldl -ltcc"
   CFLAGS="$CFLAGS $TCC_CFLAGS"
   LDFLAGS="$LDFLAGS $TCC_RPATH $TCC_LDFLAGS"
   LIBS=" $TCC_LIBS $LIBS"
-  dnl can we link a mini program with libtcc?
+dnl can we link a mini program with libtcc?
 dnl tcc_set_output_type(s, TCC_OUTPUT_MEMORY);tcc_compile_string(s, "main(){int x; x=1;return x;}");
-  AC_TRY_LINK([#include <libtcc.h>],
 dnl !!! use the following to REALLY test TCC, currently requires -m32
-dnl    [TCCState *s;s = tcc_new();],
-    [],
+dnl    [],
+  AC_TRY_LINK([#include <libtcc.h>],
+     [ TCCState *s;s = tcc_new();],
     [tcc_functional=yes],
     [tcc_functional=no])
-
   if test $tcc_functional = yes; then
     AC_MSG_RESULT([$tcc_functional])
   else
@@ -103,7 +101,7 @@ dnl    [TCCState *s;s = tcc_new();],
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
-    AC_MSG_RESULT([Can not link to TCC Library:])		  
+    AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])		  
   fi
 
 
@@ -115,8 +113,8 @@ dnl    [TCCState *s;s = tcc_new();],
 
   if test $tcc_functional = yes; then
 dnl !!! set USE_TCC to one, once it works
-    AC_DEFINE([USE_TCC], 0, [Define to 1 to use the TCC Library])
-    AC_SUBST(USE_TCC, 0)
+    AC_DEFINE([USE_TCC], 1, [Define to 1 to use the TCC Library])
+    AC_SUBST(USE_TCC, 1)
     AC_SUBST(TCC_CFLAGS)
     AC_SUBST(TCC_LDFLAGS)
     AC_SUBST(TCC_RPATH)

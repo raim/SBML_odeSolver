@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 22:39:45 raim>
-  $Id: compiler.c,v 1.7 2007/05/09 21:34:11 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 20:39:23 raim>
+  $Id: compiler.c,v 1.8 2007/05/10 18:44:39 raimc Exp $
 */
 /* 
  *
@@ -51,7 +51,9 @@ struct compiled_code
   char *dllFileName ;
 };
 
-#elif USE_TCC
+#else
+#if USE_TCC 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <libtcc.h>
@@ -60,7 +62,7 @@ struct compiled_code
   TCCState *s;
 };
 
-
+#endif 
 #endif
 
 /**
@@ -183,29 +185,51 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     code->dllHandle = dllHandle ;
     code->dllFileName = dllFileName;
     
-#elsif USE_TCC
-    
+
+#else
+#if USE_TCC 
+
+    printf("HALLO FROM COMPILER USE_TCC\n");
+
+    ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
+
     code->s = tcc_new();
+
+    printf("HALLO FROM COMPILER created\n");
     
     if ( !code->s )
     {
         fprintf(stderr, "Could not create tcc state\n");
         return NULL;
     }
+    printf("HALLO FROM COMPILER created\n");
 
     /* MUST BE CALLED before any compilation or file loading */
     tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
 
+    printf("HALLO FROM COMPILER set output\n");
 
     /* add include path */
-    /* tcc_add_include_path(TCCState *s, const char *pathname);*/
+    tcc_add_include_path(code->s, "/scr/fremdling/raim/bit32/include");
+    tcc_add_sysinclude_path(code->s, "/usr/local/include");
+    tcc_add_library_path(code->s, "/scr/fremdling/raim/bit32/lib");
+    tcc_add_library(code->s, "sundials_kinsol");
+    tcc_add_library(code->s, "sundials_cvodes");
+    tcc_add_library(code->s, "sundials_nvecserial");
+    tcc_add_library(code->s, "sundials_shared");
+    tcc_add_library(code->s, "m");
     
+    printf("%s\n for compilation, HALLO\n", sourceCode);
+    fflush(stdout);
+   
     /* compile with TCC */
     tcc_compile_string(code->s, sourceCode);
-
+    printf("HALLO FROM COMPILER COMPILED\n");
     
 #endif
-    return (code);
+#endif
+
+   return (code);
 }
 
 /**
@@ -214,6 +238,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 {
   void *result = NULL;
+
 #ifdef WIN32
   result = GetProcAddress(code->dllHandle, symbol);
 
@@ -222,10 +247,16 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 
   SolverError_storeLastWin32Error("");
   result = NULL;
-#elsif USE_TCC
+#else
+#if USE_TCC
 
-  tcc_get_symbol(code->s, result, const char *symbol);
-  
+  tcc_relocate(code->s);
+  if ( !tcc_get_symbol(code->s, &result, symbol) )
+    printf("GETTING %s at %g\n", symbol, result);
+  else
+    printf("NOT FOUND %s\n", symbol);
+  fflush(stdout);
+#endif  
 #endif
   return (result);
 }
@@ -240,8 +271,10 @@ void CompiledCode_free(compiled_code_t *code)
   remove(code->dllFileName);
   free(code->dllFileName);
   free(code);
-#elsif USE_TCC
+#else
+#if USE_TCC
   tcc_delete(code->s);
   free(code);
+#endif
 #endif
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 20:23:30 raim>
-  $Id: odeModel.c,v 1.69 2007/05/09 18:38:42 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-10 20:27:54 raim>
+  $Id: odeModel.c,v 1.70 2007/05/10 18:44:39 raimc Exp $ 
 */
 /* 
  *
@@ -1904,10 +1904,23 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/dense.h>\n" 
 		    "#include <sbmlsolver/cvode.h>\n"\
 		    "#include <sbmlsolver/cvdense.h>\n"\
-		    "#include <sbmlsolver/cvodeDataStruct.h>\n"\
-		    "#include <sbmlsolver/cvodeSettingsStruct.h>\n"\
-		    "#include <sbmlsolver/odeModelStruct.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/cvodeSettings.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT __declspec(dllexport)\n");
+#else
+#if USE_TCC
+  CharBuffer_append(buffer,
+		    "#include <math.h>\n"\
+		    "#include <nvector_serial.h>\n"\
+		    "#include <dense.h>\n" 
+		    "#include <cvode.h>\n"\
+		    "#include <cvdense.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/integratorSettings.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
+		    "#define DLL_EXPORT\n");
+#endif
 #endif
   generateMacros(buffer);
 
@@ -1915,9 +1928,6 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   ODEModel_generateEventFunction(om, buffer);
   ODEModel_generateCVODERHSFunction(om, buffer);
-
-/*   printf("%s\n for compilation, HALLO\n", CharBuffer_getBuffer(buffer)); */
-/*   fflush(stdout); */
   
   om->compiledCVODEFunctionCode =
     Compiler_compile(CharBuffer_getBuffer(buffer));
