@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-09 17:12:45 raim>
-  $Id: cvodeSolver.c,v 1.51 2007/05/09 15:20:47 raimc Exp $
+  $Id: cvodeSolver.c,v 1.52 2007/05/10 16:48:40 jamescclu Exp $
 */
 /* 
  *
@@ -390,6 +390,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
   CVRhsFn rhsFunction;
   CVDenseJacFn jacODE ;
 
+ 
 
   if ( !opt->AdjointPhase )
   {
@@ -613,6 +614,13 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
       flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
+
+      /* set quadrature tolerance for objective function 
+         to be the same as the forward solution tolerances */
+      flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE,
+	CV_SS, solver->reltol, &(opt->Error) );
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1);
+
     }
      
 
