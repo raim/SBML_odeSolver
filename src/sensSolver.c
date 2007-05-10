@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:53:56 raim>
-  $Id: sensSolver.c,v 1.47 2007/03/21 14:42:02 jamescclu Exp $
+  $Id: sensSolver.c,v 1.48 2007/05/10 16:48:17 jamescclu Exp $
 */
 /* 
  *
@@ -204,7 +204,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   /* N_Vector qA; */
   realtype *ydata;
 
-
+  
   if( !opt->AdjointPhase )
   {
 
@@ -307,8 +307,9 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
     
-    /*     CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
-    /* 			   solver->reltol, &solver->senstol); */
+    /* set tolerances for sensitivity equations */
+    /*   CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
+/*     			   opt->AdjRError, &(opt->AdjError)); */
     
     /* difference FALSE/TRUE ? */
     flag = CVodeSetSensErrCon(solver->cvode_mem, FALSE);
@@ -376,6 +377,9 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       
       flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
+
+     
+      
     }
     
   } 
@@ -492,7 +496,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   
       flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadMallocB", 1);
-      
+
     }
     else
     {
@@ -525,13 +529,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVodeSetQuadFdataB(solver->cvadj_mem, data);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdataB", 1);
 
-    /*  flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE,
-	CV_SV, solver->reltolQA, solver->abstolQA); */
-    /*   CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1);  */
+    flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE,
+	CV_SS, solver->reltolA, &(opt->AdjError) );
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1);
 
-    /*   flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE,
-	 CV_SS, &(solver->reltolQA), solver->abstolQA );  */
-    /*     CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1); */
+    
 
     /* END adjoint phase */
   } 
