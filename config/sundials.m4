@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.8 2006/11/24 13:38:54 raimc Exp $
+dnl $Id: sundials.m4,v 1.9 2007/05/10 19:54:15 raimc Exp $
 
 dnl
 dnl look for SUNDAILS Library headers in some standard set of directories
@@ -88,7 +88,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   LIBS=$sundials_save_LIBS
   AC_LANG_POP
 
-  AC_DEFINE([USE_SUNDIALS_SUNDIALS], 1,
+  AC_DEFINE([USE_SUNDIALS], 1,
             [Define to 1 to use the SUNDIALS Library])
   AC_SUBST(USE_SUNDIALS, 1)
   AC_SUBST(SUNDIALS_CFLAGS)

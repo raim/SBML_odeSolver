@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 20:27:54 raim>
-  $Id: odeModel.c,v 1.70 2007/05/10 18:44:39 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-10 21:20:38 raim>
+  $Id: odeModel.c,v 1.71 2007/05/10 19:54:16 raimc Exp $ 
 */
 /* 
  *
@@ -1908,8 +1908,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/cvodeSettings.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT __declspec(dllexport)\n");
-#else
-#if USE_TCC
+#elif USE_TCC == 1
   CharBuffer_append(buffer,
 		    "#include <math.h>\n"\
 		    "#include <nvector_serial.h>\n"\
@@ -1921,7 +1920,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT\n");
 #endif
-#endif
+
   generateMacros(buffer);
 
   if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 20:39:23 raim>
-  $Id: compiler.c,v 1.8 2007/05/10 18:44:39 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 21:48:36 raim>
+  $Id: compiler.c,v 1.9 2007/05/10 19:54:16 raimc Exp $
 */
 /* 
  *
@@ -33,8 +33,13 @@
  */
 
 #include "compiler.h"
-
 #include "solverError.h"
+
+/* System specific definitions,
+   created by configure script */
+#ifndef WIN32
+#include "config.h"
+#endif
 
 #ifdef WIN32
 
@@ -51,8 +56,7 @@ struct compiled_code
   char *dllFileName ;
 };
 
-#else
-#if USE_TCC 
+#elif USE_TCC == 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +66,6 @@ struct compiled_code
   TCCState *s;
 };
 
-#endif 
 #endif
 
 /**
@@ -186,8 +189,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     code->dllFileName = dllFileName;
     
 
-#else
-#if USE_TCC 
+#elif USE_TCC == 1 
 
     printf("HALLO FROM COMPILER USE_TCC\n");
 
@@ -227,7 +229,6 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     printf("HALLO FROM COMPILER COMPILED\n");
     
 #endif
-#endif
 
    return (code);
 }
@@ -247,8 +248,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 
   SolverError_storeLastWin32Error("");
   result = NULL;
-#else
-#if USE_TCC
+#elif USE_TCC == 1
 
   tcc_relocate(code->s);
   if ( !tcc_get_symbol(code->s, &result, symbol) )
@@ -256,7 +256,6 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   else
     printf("NOT FOUND %s\n", symbol);
   fflush(stdout);
-#endif  
 #endif
   return (result);
 }
@@ -271,10 +270,8 @@ void CompiledCode_free(compiled_code_t *code)
   remove(code->dllFileName);
   free(code->dllFileName);
   free(code);
-#else
-#if USE_TCC
+#elif USE_TCC == 1
   tcc_delete(code->s);
   free(code);
-#endif
 #endif
 }

@@ -1,4 +1,4 @@
-dnl $Id: tcc.m4,v 1.2 2007/05/10 18:44:37 raimc Exp $
+dnl $Id: tcc.m4,v 1.3 2007/05/10 19:54:16 raimc Exp $
 
 
 dnl
@@ -62,18 +62,15 @@ AC_DEFUN([CONFIG_LIB_TCC],
   else
     TCC_CFLAGS="-I$with_libtcc/include"
     TCC_LDFLAGS="-L$with_libtcc/lib"
-    
-    dnl ac_TCC_includes=$with_libtcc
     if test $HOST_TYPE = darwin; then
       TCC_RPATH=
     else
       TCC_RPATH="-Wl,-rpath,$with_libtcc/lib"
     fi   
-
-dnl !!! -m32 is required for tcc but in conflict with all others
     TCC_LIBS="-ldl -ltcc"  
-dnl    TCC_LIBS=""
   fi
+
+dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
 
   dnl check if TCC Library is functional
   AC_MSG_CHECKING([for correct functioning of TCC])
@@ -86,14 +83,15 @@ dnl    TCC_LIBS=""
   CFLAGS="$CFLAGS $TCC_CFLAGS"
   LDFLAGS="$LDFLAGS $TCC_RPATH $TCC_LDFLAGS"
   LIBS=" $TCC_LIBS $LIBS"
-dnl can we link a mini program with libtcc?
-dnl tcc_set_output_type(s, TCC_OUTPUT_MEMORY);tcc_compile_string(s, "main(){int x; x=1;return x;}");
-dnl !!! use the following to REALLY test TCC, currently requires -m32
-dnl    [],
-  AC_TRY_LINK([#include <libtcc.h>],
-     [ TCCState *s;s = tcc_new();],
-    [tcc_functional=yes],
-    [tcc_functional=no])
+  dnl set headers and test program
+  tcc_headers="#include <libtcc.h>"
+  tcc_testprg="TCCState *s;s = tcc_new();"
+  dnl can we link a mini program with libtcc?
+  AC_TRY_LINK([$tcc_headers],
+     [$tcc_testprg],
+     [tcc_functional=yes],
+     [tcc_functional=no])
+
   if test $tcc_functional = yes; then
     AC_MSG_RESULT([$tcc_functional])
   else
@@ -103,16 +101,12 @@ dnl    [],
                    LIBS=$LIBS])
     AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])		  
   fi
-
-
   dnl reset global variables to cached values
   CFLAGS=$tcc_save_CFLAGS
   LDFLAGS=$tcc_save_LDFLAGS
   LIBS=$tcc_save_LIBS
   AC_LANG_POP
-
   if test $tcc_functional = yes; then
-dnl !!! set USE_TCC to one, once it works
     AC_DEFINE([USE_TCC], 1, [Define to 1 to use the TCC Library])
     AC_SUBST(USE_TCC, 1)
     AC_SUBST(TCC_CFLAGS)

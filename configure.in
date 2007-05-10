@@ -75,9 +75,10 @@ dnl AC_MSG_NOTICE([LIBS=$LIBS])
 	
 CONFIG_LIB_SBML
 CONFIG_LIB_SUNDIALS
+CONFIG_LIB_TCC
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
-CONFIG_LIB_TCC
+	
 dnl configure options
 dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
 dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")
