@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 23:11:07 raim>
-  $Id: compiler.c,v 1.10 2007/05/10 21:21:10 raimc Exp $
+  Last changed Time-stamp: <2007-05-11 00:27:40 raim>
+  $Id: compiler.c,v 1.11 2007/05/10 22:29:28 raimc Exp $
 */
 /* 
  *
@@ -208,14 +208,14 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
 
     /* add include path */
-    tcc_add_include_path(code->s, "/scr/fremdling/raim/bit32/include");
-    tcc_add_sysinclude_path(code->s, "/usr/local/include");
-    tcc_add_library_path(code->s, "/scr/fremdling/raim/bit32/lib");
-    tcc_add_library(code->s, "sundials_kinsol");
-    tcc_add_library(code->s, "sundials_cvodes");
-    tcc_add_library(code->s, "sundials_nvecserial");
-    tcc_add_library(code->s, "sundials_shared");
-    tcc_add_library(code->s, "m");
+    tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
+    /* tcc_add_sysinclude_path(code->s, CFLAGS); */
+    tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
+    tcc_add_library(code->s, SUNDIALS_LIB1);
+    tcc_add_library(code->s, SUNDIALS_LIB2);
+    tcc_add_library(code->s, SUNDIALS_LIB3);
+    tcc_add_library(code->s, SUNDIALS_LIB4);
+    tcc_add_library(code->s, SUNDIALS_LIB5);
 
     /* compile with TCC */
     failed = tcc_compile_string(code->s, sourceCode);
