@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 21:20:38 raim>
-  $Id: odeModel.c,v 1.71 2007/05/10 19:54:16 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-10 22:08:35 raim>
+  $Id: odeModel.c,v 1.72 2007/05/10 20:10:12 raimc Exp $ 
 */
 /* 
  *
@@ -45,7 +45,11 @@
 /*@{*/
 
 
-
+/* System specific definitions,
+   created by configure script */
+#ifndef WIN32
+#include "config.h"
+#endif
 
 #include <string.h>
 #include <malloc.h>
