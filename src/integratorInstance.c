@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 18:01:24 raim>
-  $Id: integratorInstance.c,v 1.81 2007/05/09 16:02:04 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 22:43:20 raim>
+  $Id: integratorInstance.c,v 1.82 2007/05/10 21:21:10 raimc Exp $
 */
 /* 
  *
@@ -726,9 +726,11 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 
   if ( engine->processEvents )
   {
-    if ( opt->compileFunctions )
-      fired = om->compiledEventFunction(data, &(engine->isValid));  
+#ifdef WIN32
+    if ( opt->compileFunctions ) 
+      fired = om->compiledEventFunction(data, &(engine->isValid));   
     else
+#endif      
       fired = IntegratorInstance_processEventsAndAssignments(engine);
 
     if ( fired && opt->ResetCvodeOnEvent )

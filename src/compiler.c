@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 21:48:36 raim>
-  $Id: compiler.c,v 1.9 2007/05/10 19:54:16 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 23:11:07 raim>
+  $Id: compiler.c,v 1.10 2007/05/10 21:21:10 raimc Exp $
 */
 /* 
  *
@@ -191,25 +191,21 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
 #elif USE_TCC == 1 
 
-    printf("HALLO FROM COMPILER USE_TCC\n");
+    int failed;
 
     ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
 
     code->s = tcc_new();
 
-    printf("HALLO FROM COMPILER created\n");
-    
     if ( !code->s )
     {
-        fprintf(stderr, "Could not create tcc state\n");
-        return NULL;
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"TCC failed: tcc_new() was empty");
+      return NULL;
     }
-    printf("HALLO FROM COMPILER created\n");
-
+ 
     /* MUST BE CALLED before any compilation or file loading */
     tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
-
-    printf("HALLO FROM COMPILER set output\n");
 
     /* add include path */
     tcc_add_include_path(code->s, "/scr/fremdling/raim/bit32/include");
@@ -220,13 +216,12 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     tcc_add_library(code->s, "sundials_nvecserial");
     tcc_add_library(code->s, "sundials_shared");
     tcc_add_library(code->s, "m");
-    
-    printf("%s\n for compilation, HALLO\n", sourceCode);
-    fflush(stdout);
-   
+
     /* compile with TCC */
-    tcc_compile_string(code->s, sourceCode);
-    printf("HALLO FROM COMPILER COMPILED\n");
+    failed = tcc_compile_string(code->s, sourceCode);
+    if ( failed != 0 )
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"Online compilation failed - returned %d", failed);
     
 #endif
 
@@ -250,12 +245,14 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   result = NULL;
 #elif USE_TCC == 1
 
+  int failed;
   tcc_relocate(code->s);
-  if ( !tcc_get_symbol(code->s, &result, symbol) )
-    printf("GETTING %s at %g\n", symbol, result);
-  else
-    printf("NOT FOUND %s\n", symbol);
-  fflush(stdout);
+  failed = tcc_get_symbol(code->s, &result, symbol);
+  if ( failed != 0 )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "TCC failed: couldn't get function: %s", symbol);
+ 
+
 #endif
   return (result);
 }

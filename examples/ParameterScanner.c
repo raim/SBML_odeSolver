@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:15:50 raim>
-  $Id: ParameterScanner.c,v 1.11 2007/01/30 15:17:06 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 22:54:09 raim>
+  $Id: ParameterScanner.c,v 1.12 2007/05/10 21:21:09 raimc Exp $
 */
 /* 
  *
@@ -120,8 +120,11 @@ int doit(int argc, char *argv[])
     CvodeSettings_setHaltOnSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
     CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
     CvodeSettings_setStoreResults(settings, 0);     /* don't Store time course history */
-    CvodeSettings_setCompileFunctions(settings, 0); /* compile model */ 
+    CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
 
+    
+    integratorInstance = IntegratorInstance_create(model, settings);
+    
     printf("set xlabel 'time'\n");
     printf("set ylabel '%s'\n", parameterStr);
     printf("splot '-' using 1:2:3 title '%s' with lines\n", speciesStr);
@@ -130,7 +133,7 @@ int doit(int argc, char *argv[])
     {
         int error = 0 ;
 
-        integratorInstance = IntegratorInstance_create(model, settings);
+        IntegratorInstance_reset( integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
 
         IntegratorInstance_setVariableValue(integratorInstance, parameterVI, parameter); 
@@ -149,11 +152,12 @@ int doit(int argc, char *argv[])
             else
                 DumpState(integratorInstance, parameterVI, speciesVI);
         }
-        IntegratorInstance_free(integratorInstance);
+        
         printf("\n");
     }
 
     printf("end\n");
+    IntegratorInstance_free(integratorInstance);
     VariableIndex_free(parameterVI);
     VariableIndex_free(speciesVI);
     ODEModel_free(model);

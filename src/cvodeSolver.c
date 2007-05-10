@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 17:12:45 raim>
-  $Id: cvodeSolver.c,v 1.52 2007/05/10 16:48:40 jamescclu Exp $
+  Last changed Time-stamp: <2007-05-10 22:27:11 raim>
+  $Id: cvodeSolver.c,v 1.53 2007/05/10 21:21:10 raimc Exp $
 */
 /* 
  *
@@ -412,7 +412,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     {
       if ( opt->compileFunctions )
       {
-	jacODE = ODEModel_getCompiledCVODEJacobianFunction(om);
+	jacODE = JacODE;/*!!! ODEModel_getCompiledCVODEJacobianFunction(om); */
 	if ( !jacODE )
 	  return 0; /* error */
       }

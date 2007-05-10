@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 22:08:35 raim>
-  $Id: odeModel.c,v 1.72 2007/05/10 20:10:12 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-10 23:17:08 raim>
+  $Id: odeModel.c,v 1.73 2007/05/10 21:21:10 raimc Exp $ 
 */
 /* 
  *
@@ -1800,7 +1800,8 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
   CharBuffer_append(buffer, "data->currenttime = t;\n");
 
   CharBuffer_append(buffer,
-		    "if ( data->p != NULL && data->opt->Sensitivity  )\n"\
+		    "if ( data->opt->Sensitivity && " \
+		    " !data->model->sensitivity )\n"\
 		    "    for ( i=0; i<data->nsens; i++ )\n"\
 		    "    data->value[data->model->index_sens[i]] = "\
 		    "data->p[i];\n");
@@ -1926,10 +1927,12 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 #endif
 
   generateMacros(buffer);
-
+  
+#ifdef WIN32
   if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);
-
   ODEModel_generateEventFunction(om, buffer);
+#endif
+
   ODEModel_generateCVODERHSFunction(om, buffer);
   
   om->compiledCVODEFunctionCode =
@@ -1944,6 +1947,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   CharBuffer_free(buffer);
 
+#ifdef WIN32  
   if ( om->jacobian )
   {
     om->compiledCVODEJacobianFunction =
@@ -1962,7 +1966,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
   if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
        SolverError_getNum(FATAL_ERROR_TYPE) )
     return;
-
+#endif
+  
   om->compiledCVODERhsFunction =
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_RHS_FUNCTION_NAME);
