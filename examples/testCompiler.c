@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 23:19:21 raim>
-  $Id: testCompiler.c,v 1.1 2007/05/10 21:21:09 raimc Exp $
+  Last changed Time-stamp: <2007-05-10 23:32:27 raim>
+  $Id: testCompiler.c,v 1.2 2007/05/10 21:56:30 raimc Exp $
 */
 /* 
  *
@@ -55,7 +55,7 @@ int doit(int argc, char *argv[])
     int i ;
     cvodeSettings_t *settings = CvodeSettings_create();
     integratorInstance_t *integratorInstance;
-    char *modelStr, *parameterStr, *speciesStr;
+    char *modelStr;
     double endtime, relativeErrorTolerance,errorTolerance ;
     int printsteps, maximumIntegrationSteps;
     odeModel_t *model ;
