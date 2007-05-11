@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 23:17:08 raim>
-  $Id: odeModel.c,v 1.73 2007/05/10 21:21:10 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-11 16:48:23 raim>
+  $Id: odeModel.c,v 1.74 2007/05/11 14:49:31 raimc Exp $ 
 */
 /* 
  *
@@ -64,9 +64,9 @@
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 
-#define COMPILED_RHS_FUNCTION_NAME "rhs"
-#define COMPILED_JACOBIAN_FUNCTION_NAME "jac"
-#define COMPILED_EVENT_FUNCTION_NAME "event"
+#define COMPILED_RHS_FUNCTION_NAME "odef"
+#define COMPILED_JACOBIAN_FUNCTION_NAME "jacobif"
+#define COMPILED_EVENT_FUNCTION_NAME "eventf"
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
@@ -1928,13 +1928,13 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   generateMacros(buffer);
   
-#ifdef WIN32
   if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);
   ODEModel_generateEventFunction(om, buffer);
-#endif
 
   ODEModel_generateCVODERHSFunction(om, buffer);
-  
+
+  /* now all required sourcecode is in `buffer' and can be sent
+     to the compiler */
   om->compiledCVODEFunctionCode =
     Compiler_compile(CharBuffer_getBuffer(buffer));
 
@@ -1947,7 +1947,10 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   CharBuffer_free(buffer);
 
-#ifdef WIN32  
+
+  om->compiledCVODERhsFunction =
+    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			     COMPILED_RHS_FUNCTION_NAME);
   if ( om->jacobian )
   {
     om->compiledCVODEJacobianFunction =
@@ -1962,15 +1965,11 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
   om->compiledEventFunction =
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_EVENT_FUNCTION_NAME);
-
+  
   if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
        SolverError_getNum(FATAL_ERROR_TYPE) )
     return;
-#endif
   
-  om->compiledCVODERhsFunction =
-    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			     COMPILED_RHS_FUNCTION_NAME);
 }
 
 /** returns the compiled RHS ODE function for the given model */

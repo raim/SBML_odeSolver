@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 00:27:40 raim>
-  $Id: compiler.c,v 1.11 2007/05/10 22:29:28 raimc Exp $
+  Last changed Time-stamp: <2007-05-11 16:34:20 raim>
+  $Id: compiler.c,v 1.12 2007/05/11 14:49:31 raimc Exp $
 */
 /* 
  *
@@ -200,7 +200,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     if ( !code->s )
     {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"TCC failed: tcc_new() was empty");
+			"TCC compilation failed: tcc_new() was empty.");
       return NULL;
     }
  
@@ -217,11 +217,24 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     tcc_add_library(code->s, SUNDIALS_LIB4);
     tcc_add_library(code->s, SUNDIALS_LIB5);
 
-    /* compile with TCC */
+    /* compile with TCC :) */
     failed = tcc_compile_string(code->s, sourceCode);
     if ( failed != 0 )
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 			"Online compilation failed - returned %d", failed);
+
+    failed = tcc_relocate(code->s);
+    if ( failed != 0 )
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"TCC failed: couldn't relocate TCCState");
+    
+#ifdef _DEBUG /* write out source file for debugging*/
+    FILE *src;
+    char *srcname =  "functions.c";
+    src = fopen(srcname, "w");
+    fprintf(src, sourceCode);
+    fclose(src);
+#endif
     
 #endif
 
@@ -246,13 +259,14 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 #elif USE_TCC == 1
 
   int failed;
-  tcc_relocate(code->s);
-  failed = tcc_get_symbol(code->s, &result, symbol);
+  unsigned long val;
+    
+  failed = tcc_get_symbol(code->s, &val, symbol);
+  result = (void *)val;
   if ( failed != 0 )
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 		      "TCC failed: couldn't get function: %s", symbol);
- 
-
+  
 #endif
   return (result);
 }

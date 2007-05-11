@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 22:27:11 raim>
-  $Id: cvodeSolver.c,v 1.53 2007/05/10 21:21:10 raimc Exp $
+  Last changed Time-stamp: <2007-05-11 16:36:01 raim>
+  $Id: cvodeSolver.c,v 1.54 2007/05/11 14:49:31 raimc Exp $
 */
 /* 
  *
@@ -412,7 +412,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     {
       if ( opt->compileFunctions )
       {
-	jacODE = JacODE;/*!!! ODEModel_getCompiledCVODEJacobianFunction(om); */
+	jacODE = ODEModel_getCompiledCVODEJacobianFunction(om); 
 	if ( !jacODE )
 	  return 0; /* error */
       }
@@ -533,7 +533,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      */
     if ( opt->UseJacobian == 1 ) 
       /* ... user-supplied routine Jac */ /*!!!! should be jacODE not JacODE? !!!*/
-      flag = CVDenseSetJacFn(solver->cvode_mem, JacODE, engine->data);
+      flag = CVDenseSetJacFn(solver->cvode_mem, jacODE, engine->data);
     else
       /* ...the internal default difference quotient routine CVDenseDQJac */ 
       flag = CVDenseSetJacFn(solver->cvode_mem, NULL, NULL);
