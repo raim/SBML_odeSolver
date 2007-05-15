@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:37:21 raim>
-  $Id: integratorSettings.c,v 1.41 2007/05/15 18:38:41 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:41:11 raim>
+  $Id: integratorSettings.c,v 1.42 2007/05/15 18:41:29 raimc Exp $
 */
 /* 
  *
@@ -370,7 +370,7 @@ SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, 
 #if USE_TCC == 0
     /* catch compilation w/o TCC */
     /*!!! this might be better to catch in compiler.c or somewhere else */
-    opt->compileFunctions = 0;
+    set->compileFunctions = 0;
 #endif 
 }
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 14:08:19 raim>
-  $Id: cvodeSolver.c,v 1.55 2007/05/15 12:18:19 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:26:59 raim>
+  $Id: cvodeSolver.c,v 1.56 2007/05/15 18:38:42 raimc Exp $
 */
 /* 
  *
@@ -394,6 +394,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
+#if USE_TCC == 0
+    /* catch compilation w/o TCC */
+    /*!!! this might be better to catch in compiler.c ? */
+    opt->compileFunctions = 0;
+#endif
+    
     if ( opt->compileFunctions )
     {
       rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
@@ -525,7 +531,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      * to approximate the Jacobian matrix to ...
      */
     if ( opt->UseJacobian == 1 ) 
-      /* ... user-supplied routine Jac */ /*!!!! should be jacODE not JacODE? !!!*/
+      /* ... user-supplied routine Jac */ 
       flag = CVDenseSetJacFn(solver->cvode_mem, jacODE, engine->data);
     else
       /* ...the internal default difference quotient routine CVDenseDQJac */ 
@@ -640,7 +646,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     }
 
 
-    /* optimize ODEs for evaluation */
+    /* optimize ODEs for evaluation, only required if no compilation
+       was requested */
     if ( !opt->compileFunctions )
       IntegratorInstance_optimizeOdes(engine);
     

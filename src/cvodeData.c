@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 16:33:37 raim>
-  $Id: cvodeData.c,v 1.19 2007/05/09 15:27:02 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 19:01:50 raim>
+  $Id: cvodeData.c,v 1.20 2007/05/15 18:38:42 raimc Exp $
 */
 /* 
  *
@@ -390,18 +390,20 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   Event_t *e;
   ASTNode_t *trigger;
 
-  if (data->opt != NULL && data->ode && !data->opt->compileFunctions)
+  if ( data->ode )
   {
     /* free ODEs */
     for ( i=0; i<data->neq; i++ )
-      ASTNode_free(data->ode[i]);
+      if ( data->ode[i] )
+	ASTNode_free(data->ode[i]);
     free(data->ode);
+    data->ode = NULL;
   }
 
   /* data now also depends on cvodeSettings */
   data->opt = opt;
 
-  /* initialize memory for optimized ODEs */
+  /* initialize memory for optimized ODEs, only if compilation is off */
   if ( !data->opt->compileFunctions )
     ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
   
@@ -652,15 +654,13 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   /* free event trigger flags */
   free(data->trigger);
 
-  if ( data->opt != NULL )
-  {  
-    if (!data->opt->compileFunctions)
-    {
-      /* free ODEs */
+  if ( data->ode != NULL )
+  {
       for ( i=0; i<data->neq; i++ )
-	ASTNode_free(data->ode[i]);
+	if ( data->ode[i] != NULL )
+	  ASTNode_free(data->ode[i]);
       free(data->ode);
-    }
+      data->ode = NULL;
   }
 }
 
