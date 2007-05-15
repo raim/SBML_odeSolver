@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:41:11 raim>
-  $Id: integratorSettings.c,v 1.42 2007/05/15 18:41:29 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:43:56 raim>
+  $Id: integratorSettings.c,v 1.43 2007/05/15 18:46:35 raimc Exp $
 */
 /* 
  *
@@ -367,11 +367,7 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
 SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, int compileFunctions)
 {
   set->compileFunctions = compileFunctions;
-#if USE_TCC == 0
-    /* catch compilation w/o TCC */
-    /*!!! this might be better to catch in compiler.c or somewhere else */
-    set->compileFunctions = 0;
-#endif 
+
 }
 
 /** Sets whether the integrator will be freed and restarted when

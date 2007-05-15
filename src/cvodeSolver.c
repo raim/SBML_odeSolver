@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:26:59 raim>
-  $Id: cvodeSolver.c,v 1.56 2007/05/15 18:38:42 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:46:00 raim>
+  $Id: cvodeSolver.c,v 1.57 2007/05/15 18:46:35 raimc Exp $
 */
 /* 
  *
@@ -394,12 +394,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     neq = engine->om->neq; /* number of equations */
 
-#if USE_TCC == 0
-    /* catch compilation w/o TCC */
-    /*!!! this might be better to catch in compiler.c ? */
-    opt->compileFunctions = 0;
-#endif
-    
     if ( opt->compileFunctions )
     {
       rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
