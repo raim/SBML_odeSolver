@@ -79,6 +79,9 @@ CONFIG_LIB_TCC
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
 	
+CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+LIBS="-lm -lstdc++"
+	  
 dnl configure options
 dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
 dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")
