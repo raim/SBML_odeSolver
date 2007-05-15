@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 16:34:20 raim>
-  $Id: compiler.c,v 1.12 2007/05/11 14:49:31 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 14:14:08 raim>
+  $Id: compiler.c,v 1.13 2007/05/15 12:14:40 raimc Exp $
 */
 /* 
  *
@@ -196,6 +196,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
 
     code->s = tcc_new();
+    /* tcc_enable_debug(code->s);  */
 
     if ( !code->s )
     {
@@ -211,12 +212,13 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
     /* tcc_add_sysinclude_path(code->s, CFLAGS); */
     tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
-    tcc_add_library(code->s, SUNDIALS_LIB1);
-    tcc_add_library(code->s, SUNDIALS_LIB2);
+/*     tcc_add_library(code->s, SUNDIALS_LIB1); */
+/*     tcc_add_library(code->s, SUNDIALS_LIB2); */
     tcc_add_library(code->s, SUNDIALS_LIB3);
-    tcc_add_library(code->s, SUNDIALS_LIB4);
+/*     tcc_add_library(code->s, SUNDIALS_LIB4); */
     tcc_add_library(code->s, SUNDIALS_LIB5);
 
+    
     /* compile with TCC :) */
     failed = tcc_compile_string(code->s, sourceCode);
     if ( failed != 0 )
@@ -282,7 +284,9 @@ void CompiledCode_free(compiled_code_t *code)
   free(code->dllFileName);
   free(code);
 #elif USE_TCC == 1
-  tcc_delete(code->s);
+  if ( code->s != NULL ) tcc_delete(code->s);
+  code->s = NULL;
   free(code);
+  code = NULL;
 #endif
 }
