@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 16:35:00 raim>
-  $Id: integratorInstance.c,v 1.83 2007/05/11 14:49:31 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 14:15:31 raim>
+  $Id: integratorInstance.c,v 1.84 2007/05/15 12:16:14 raimc Exp $
 */
 /* 
  *
@@ -160,7 +160,6 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   engine->solver->cvode_mem = NULL;
   engine->solver->y = NULL;
   engine->solver->abstol = NULL;
-  engine->clockStarted = 0;
 
   /* set state variable vector y to NULL for first run */
   engine->solver->y = NULL;
@@ -273,6 +272,9 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
      created before integration */
   engine->isValid = 0;
 
+  /* reset integrator clock */
+  engine->clockStarted = 0;
+  
   return 1;  
 }
 
