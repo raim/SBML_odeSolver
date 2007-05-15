@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 14:06:34 raim>
-  $Id: testCompiler.c,v 1.3 2007/05/15 13:30:45 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:18:29 raim>
+  $Id: testCompiler.c,v 1.4 2007/05/15 18:51:59 raimc Exp $
 */
 /* 
  *
@@ -87,7 +87,7 @@ int doit(int argc, char *argv[])
 
   errorTolerance = 1e-20;
   relativeErrorTolerance = 1e-10;
-  maximumIntegrationSteps = 500;
+  maximumIntegrationSteps = 50000;
 
   model = ODEModel_createFromFile(modelStr);
   RETURN_ON_ERRORS_WITH(1);
@@ -130,6 +130,10 @@ int doit(int argc, char *argv[])
   printf("Integration time was %g\n",
 	 IntegratorInstance_getIntegrationTime(ii));
 
+  /* testing combinations of difference quotient and exact calculation
+   of jacobian and parametric matrices */
+  CvodeSettings_setJacobian(settings, 1);
+  
   CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
   IntegratorInstance_reset(ii);
     

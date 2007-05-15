@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 15:27:53 raim>
-  $Id: odeModel.c,v 1.75 2007/05/15 13:30:45 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-15 20:49:05 raim>
+  $Id: odeModel.c,v 1.76 2007/05/15 18:51:59 raimc Exp $ 
 */
 /* 
  *
@@ -1420,6 +1420,11 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
     free(om->sens);
     om->sens = NULL;
   }
+
+  /*!!! NOT WORKING, TCC ERROR free compiled sens code */
+  /* if ( om->compiledCVODESensitivityCode ) */
+    /* CompiledCode_free(om->compiledCVODESensitivityCode); */
+
 }
 
 
@@ -2001,16 +2006,10 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
 		    " void *fs_data, N_Vector tmp1, N_Vector tmp2)\n"\
 		    "{\n"\
 		    "  \n"\
-		    "int i, nsens, idxP;\n"\
 		    "realtype *ydata, *ySdata, *dySdata;\n"\
 		    "cvodeData_t *data;\n"\
-		    "odeModel_t *om;\n"\
 		    "double *value;\n"\
-		    "int *indexp;\n"\
 		    "data = (cvodeData_t *) fs_data;\n"\
-		    "om = data->model;\n"\
-		    "nsens = om->nsensP;\n"\
-		    "indexp = om->index_sens ;\n"\
 		    "value = data->value ;\n"\
 		    "ydata = NV_DATA_S(y);\n"\
 		    "ySdata = NV_DATA_S(yS);\n"\
@@ -2048,34 +2047,31 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
       CharBuffer_appendInt(buffer, j);
       CharBuffer_append(buffer, "]  */ \n");
     }
-    /*!!! NOT FUNCTIONAL: parameter sensitivities !!!*/
-    CharBuffer_append(buffer, "for ( i=0; i<om->nsens; i++ ){\n");
+ 
     for ( k=0; k<om->nsens; k++ )
     {
-      /* printf("sens P index %d of %d\n", om->sensP_index[k], om->nsensP); */
-      CharBuffer_append(buffer, "if ( i == iS ) ");
+      CharBuffer_append(buffer, "if ( ");
+      CharBuffer_appendInt(buffer, k);
+      CharBuffer_append(buffer, " == iS ) ");
       CharBuffer_append(buffer, "dySdata[");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, "] += ");
       if ( om->index_sensP[k] == -1 )
 	CharBuffer_appendInt(buffer, 0);
-      else CharBuffer_appendInt(buffer, 0);
-	/* generateAST(buffer, om->sens[i][om->index_sensP[k]]); */
+      else 
+	generateAST(buffer, om->sens[i][om->index_sensP[k]]);
       CharBuffer_append(buffer, "; ");
       CharBuffer_append(buffer, " /* om->sens[");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, "][");
       CharBuffer_appendInt(buffer,om->index_sensP[k]);
       CharBuffer_append(buffer, "]  */ \n");
-      CharBuffer_append(buffer, "\n ");      
     }
-    CharBuffer_append(buffer, "}\n");
   }
-  /* CharBuffer_append(buffer, "printf(\"HI\");\n"); */
   CharBuffer_append(buffer, "}");
-
-  
 }
+
+
 
 /* dynamically generates and compiles the ODE Sensitivity RHS
    for the given model */
@@ -2117,7 +2113,7 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
   if ( om->sensitivity )
     ODEModel_generateCVODESensitivityFunction(om, buffer);
 
-#ifdef USE_TCC /* write out source file for debugging*/
+#ifdef _DEBUG /* write out source file for debugging*/
   FILE *src;
   char *srcname =  "sensfunctions.c";
   src = fopen(srcname, "w");
@@ -2188,7 +2184,7 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_CANNOT_COMPILE_SENSITIVTY_NOT_COMPUTED,
-		      "Attempting to compile sensitivity matris before "\
+		      "Attempting to compile sensitivity matrix before "\
 		      "the matrix is computed\n"\
 		      "Call ODEModel_constructSensitivity before calling\n"\
 		      "ODEModel_getCompiledCVODESenseFunction\n");
@@ -2203,7 +2199,6 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
 
   return om->compiledCVODESenseFunction;
 }
-
 
 /** @} */
 /* End of file */

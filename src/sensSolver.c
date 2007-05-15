@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 15:29:43 raim>
-  $Id: sensSolver.c,v 1.49 2007/05/15 13:30:46 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:06:39 raim>
+  $Id: sensSolver.c,v 1.50 2007/05/15 18:51:59 raimc Exp $
 */
 /* 
  *
@@ -196,7 +196,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
-  CVSensRhs1Fn sensRhsFunction;
+  CVSensRhs1Fn sensRhsFunction = NULL;
   
   /* adjoint specific*/
   int method, iteration;
@@ -208,17 +208,21 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   {
 
     /*****  adding sensitivity specific structures ******/
-#ifndef WIN32
-    if ( opt->compileFunctions )
+
+    /* set rhs function for sensitivity */
+    if ( om->jacobian && om->sensitivity )
     {
-      /*!!! compilation of sensitivity not yet functional ??? !!!*/
-      sensRhsFunction =  fS  /* ODEModel_getCompiledCVODESenseFunction(om) */;
-      if ( !sensRhsFunction ) return 0;  /* error */
+#ifndef WIN32
+      if ( opt->compileFunctions )
+      {
+	sensRhsFunction =  ODEModel_getCompiledCVODESenseFunction(om);
+	if ( !sensRhsFunction ) return 0;  /* error */
+      }
+      else
+#endif
+	sensRhsFunction = fS ;
     }
-    else 
-#endif    
-      sensRhsFunction = fS ;
-      
+    
     /* if the sens. problem dimension has changed since
        the last run, free all sensitivity structures */
     if ( engine->solver->nsens != om->nsens )
@@ -289,8 +293,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* !!! plist could later be used to specify requested parameters
        for sens.analysis !!! */
     
-    /* was construction of Jacobian and
-       parametric matrix successfull ? */
+    /* was construction of Jacobian and parametric matrix successfull ? */
     if ( om->sensitivity && om->jacobian )
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction);

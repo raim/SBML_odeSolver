@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 14:14:08 raim>
-  $Id: compiler.c,v 1.13 2007/05/15 12:14:40 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 20:11:58 raim>
+  $Id: compiler.c,v 1.14 2007/05/15 18:51:59 raimc Exp $
 */
 /* 
  *
@@ -73,7 +73,6 @@ struct compiled_code
 */
 compiled_code_t *Compiler_compile(const char *sourceCode)
 {
-
   compiled_code_t *code = NULL;
   
 #ifdef WIN32
@@ -189,8 +188,8 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     code->dllFileName = dllFileName;
     
 
-#elif USE_TCC == 1 
-
+#elif USE_TCC == 1
+    
     int failed;
 
     ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
@@ -210,15 +209,10 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     /* add include path */
     tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
-    /* tcc_add_sysinclude_path(code->s, CFLAGS); */
     tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
-/*     tcc_add_library(code->s, SUNDIALS_LIB1); */
-/*     tcc_add_library(code->s, SUNDIALS_LIB2); */
     tcc_add_library(code->s, SUNDIALS_LIB3);
-/*     tcc_add_library(code->s, SUNDIALS_LIB4); */
     tcc_add_library(code->s, SUNDIALS_LIB5);
 
-    
     /* compile with TCC :) */
     failed = tcc_compile_string(code->s, sourceCode);
     if ( failed != 0 )
@@ -229,7 +223,9 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     if ( failed != 0 )
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 			"TCC failed: couldn't relocate TCCState");
-    
+
+    /* printf("TCC pointer %d\n", code->s); */
+
 #ifdef _DEBUG /* write out source file for debugging*/
     FILE *src;
     char *srcname =  "functions.c";
@@ -285,7 +281,6 @@ void CompiledCode_free(compiled_code_t *code)
   free(code);
 #elif USE_TCC == 1
   if ( code->s != NULL ) tcc_delete(code->s);
-  code->s = NULL;
   free(code);
   code = NULL;
 #endif
