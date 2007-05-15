@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 18:53:56 raim>
-  $Id: sensSolver.c,v 1.48 2007/05/10 16:48:17 jamescclu Exp $
+  Last changed Time-stamp: <2007-05-15 15:29:43 raim>
+  $Id: sensSolver.c,v 1.49 2007/05/15 13:30:46 raimc Exp $
 */
 /* 
  *
@@ -75,16 +75,14 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
 
-void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
-	void *fA_data);
+void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data);
 
 
 void JacA(long int NB, DenseMat JA, realtype t,
 	  N_Vector y, N_Vector yA, N_Vector fyA, void *jac_dataA,
 	  N_Vector tmp1A, N_Vector tmp2A, N_Vector tmp3A);
 
-void fQA(realtype t, N_Vector y, N_Vector yA, 
-	 N_Vector qAdot, void *fQ_dataA);
+void fQA(realtype t, N_Vector y, N_Vector yA, N_Vector qAdot, void *fQ_dataA);
 
 void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
@@ -198,7 +196,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
-
+  CVSensRhs1Fn sensRhsFunction;
+  
   /* adjoint specific*/
   int method, iteration;
   /* N_Vector qA; */
@@ -209,7 +208,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   {
 
     /*****  adding sensitivity specific structures ******/
-
+#ifndef WIN32
+    if ( opt->compileFunctions )
+    {
+      /*!!! compilation of sensitivity not yet functional ??? !!!*/
+      sensRhsFunction =  fS  /* ODEModel_getCompiledCVODESenseFunction(om) */;
+      if ( !sensRhsFunction ) return 0;  /* error */
+    }
+    else 
+#endif    
+      sensRhsFunction = fS ;
+      
     /* if the sens. problem dimension has changed since
        the last run, free all sensitivity structures */
     if ( engine->solver->nsens != om->nsens )
@@ -284,8 +293,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
        parametric matrix successfull ? */
     if ( om->sensitivity && om->jacobian )
     {
-      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, fS);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn", 1);
+      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn Matrix", 1);
 
       flag = CVodeSetSensFdata(solver->cvode_mem, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensFdata", 1);
@@ -293,7 +302,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn", 1);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn NULL", 1);
       
       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRho", 1);
@@ -1103,8 +1112,7 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
       dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
     if ( data->model->index_sensP[iS] != -1 )
       dySdata[i] +=
-	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]],
-		    data);
+	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]], data);
   }
 
 }

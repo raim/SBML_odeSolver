@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 16:48:23 raim>
-  $Id: odeModel.c,v 1.74 2007/05/11 14:49:31 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-15 15:27:53 raim>
+  $Id: odeModel.c,v 1.75 2007/05/15 13:30:45 raimc Exp $ 
 */
 /* 
  *
@@ -64,9 +64,10 @@
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 
-#define COMPILED_RHS_FUNCTION_NAME "odef"
-#define COMPILED_JACOBIAN_FUNCTION_NAME "jacobif"
-#define COMPILED_EVENT_FUNCTION_NAME "eventf"
+#define COMPILED_RHS_FUNCTION_NAME "ode_f"
+#define COMPILED_JACOBIAN_FUNCTION_NAME "jacobi_f"
+#define COMPILED_EVENT_FUNCTION_NAME "event_f"
+#define COMPILED_SENSITIVITY_FUNCTION_NAME "sense_f"
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
@@ -728,6 +729,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   om->compiledCVODEFunctionCode = NULL;
   om->compiledCVODEJacobianFunction = NULL;
   om->compiledCVODERhsFunction = NULL;
+  om->compiledCVODESenseFunction = NULL;
   
   /* sensitivity structures are filled later */
   om->index_sens = NULL;
@@ -940,17 +942,17 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   ODEModel_freeJacobian(om);
 
   /* free objective function AST if it has been constructed */
-  if ( om->ObjectiveFunction != NULL  )
+  if ( om->ObjectiveFunction != NULL )
     ASTNode_free(om->ObjectiveFunction);
  
   /* free linear objective function AST's if constructed */
-  if ( om->vector_v != NULL)
+  if ( om->vector_v != NULL )
    for ( i=0; i<om->neq; i++ )
     ASTNode_free(om->vector_v[i]);
   free(om->vector_v);
 
   /* free time_series, if present */
-  if ( om->time_series != NULL  )
+  if ( om->time_series != NULL )
     free_data( om->time_series );
 
 
@@ -973,15 +975,15 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   if (om->compiledCVODEFunctionCode)
     CompiledCode_free(om->compiledCVODEFunctionCode);
 
+  /* free assignment evaulation rules */
   free(om->assignmentsAfterEvents);
   free(om->assignmentsBeforeEvents);
   free(om->assignmentsBeforeODEs);
 
+  /* free observable lists */
   for (i=0; i != List_size(om->observables); i++)
     free(List_get(om->observables, i));
-
   List_free(om->observables);
-
   free(om->observablesArray);
 
   /* free model structure */
@@ -1322,7 +1324,8 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
   if ( om->sens != NULL )
     ODEModel_freeSensitivity(om);
 
-  /* fill with default parameters if none specified */
+  /* fill with default parameters if none specified
+     - ? by CvodeData_initializeSensitivities ? for external use only ?) */
   if ( om->index_sens == NULL )
   {
     om->nsens = om->nconst;
@@ -1906,7 +1909,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/sundialstypes.h>\n"\
 		    "#include <sbmlsolver/nvector.h>\n"\
 		    "#include <sbmlsolver/nvector_serial.h>\n"\
-		    "#include <sbmlsolver/dense.h>\n" 
+		    "#include <sbmlsolver/dense.h>\n"\
 		    "#include <sbmlsolver/cvode.h>\n"\
 		    "#include <sbmlsolver/cvdense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
@@ -1933,10 +1936,19 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   ODEModel_generateCVODERHSFunction(om, buffer);
 
+#ifdef _DEBUG /* write out source file for debugging*/
+  FILE *src;
+  char *srcname =  "rhsfunctions.c";
+  src = fopen(srcname, "w");
+  fprintf(src, CharBuffer_getBuffer(buffer));
+  fclose(src);
+#endif
+
   /* now all required sourcecode is in `buffer' and can be sent
      to the compiler */
   om->compiledCVODEFunctionCode =
     Compiler_compile(CharBuffer_getBuffer(buffer));
+
 
   if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
        SolverError_getNum(FATAL_ERROR_TYPE) )
@@ -1971,6 +1983,167 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     return;
   
 }
+
+/* appends compiled code to the given buffer for the function called
+   by the value of 'COMPILED_SENSITIVITY_FUNCTION_NAME' which
+   calculates the sensitivities (derived from Jacobian and parametrix
+   matrices) for the set of ODEs being solved. */
+void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
+					       charBuffer_t *buffer)
+{
+  int i, j, k;
+
+  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,COMPILED_SENSITIVITY_FUNCTION_NAME);
+  CharBuffer_append(buffer,
+		    "(int Ns, realtype t, N_Vector y, N_Vector ydot,\n"\
+		    " int iS, N_Vector yS, N_Vector ySdot, \n"
+		    " void *fs_data, N_Vector tmp1, N_Vector tmp2)\n"\
+		    "{\n"\
+		    "  \n"\
+		    "int i, nsens, idxP;\n"\
+		    "realtype *ydata, *ySdata, *dySdata;\n"\
+		    "cvodeData_t *data;\n"\
+		    "odeModel_t *om;\n"\
+		    "double *value;\n"\
+		    "int *indexp;\n"\
+		    "data = (cvodeData_t *) fs_data;\n"\
+		    "om = data->model;\n"\
+		    "nsens = om->nsensP;\n"\
+		    "indexp = om->index_sens ;\n"\
+		    "value = data->value ;\n"\
+		    "ydata = NV_DATA_S(y);\n"\
+		    "ySdata = NV_DATA_S(yS);\n"\
+		    "dySdata = NV_DATA_S(ySdot);\n"\
+		    "data->currenttime = t;\n");
+
+  /** update ODE variables from CVODE */
+  for ( i=0; i<om->neq; i++ )
+  {
+    CharBuffer_append(buffer, "value[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = ydata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "];\n\n");
+  }
+  
+  /** evaluate sensitivity RHS: df/dx * s + df/dp for one p */
+  for ( i=0; i<om->neq; i++ )
+  {
+    CharBuffer_append(buffer, "dySdata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = 0.0;\n");
+    for (j=0; j<om->neq; j++)
+    {
+      CharBuffer_append(buffer, "dySdata[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "] +=  ");
+      generateAST(buffer, om->jacob[i][j]);
+      CharBuffer_append(buffer, " * ySdata[");
+      CharBuffer_appendInt(buffer, j);
+      CharBuffer_append(buffer, "]; ");
+      CharBuffer_append(buffer, " /* om->jacob[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "][");
+      CharBuffer_appendInt(buffer, j);
+      CharBuffer_append(buffer, "]  */ \n");
+    }
+    /*!!! NOT FUNCTIONAL: parameter sensitivities !!!*/
+    CharBuffer_append(buffer, "for ( i=0; i<om->nsens; i++ ){\n");
+    for ( k=0; k<om->nsens; k++ )
+    {
+      /* printf("sens P index %d of %d\n", om->sensP_index[k], om->nsensP); */
+      CharBuffer_append(buffer, "if ( i == iS ) ");
+      CharBuffer_append(buffer, "dySdata[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "] += ");
+      if ( om->index_sensP[k] == -1 )
+	CharBuffer_appendInt(buffer, 0);
+      else CharBuffer_appendInt(buffer, 0);
+	/* generateAST(buffer, om->sens[i][om->index_sensP[k]]); */
+      CharBuffer_append(buffer, "; ");
+      CharBuffer_append(buffer, " /* om->sens[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "][");
+      CharBuffer_appendInt(buffer,om->index_sensP[k]);
+      CharBuffer_append(buffer, "]  */ \n");
+      CharBuffer_append(buffer, "\n ");      
+    }
+    CharBuffer_append(buffer, "}\n");
+  }
+  /* CharBuffer_append(buffer, "printf(\"HI\");\n"); */
+  CharBuffer_append(buffer, "}");
+
+  
+}
+
+/* dynamically generates and compiles the ODE Sensitivity RHS
+   for the given model */
+void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
+{
+  charBuffer_t *buffer = CharBuffer_create();
+
+#ifdef WIN32        
+  CharBuffer_append(buffer,
+		    "#include <windows.h>\n"\
+		    "#include <math.h>\n"\
+		    "#include <sbmlsolver/sundialstypes.h>\n"\
+		    "#include <sbmlsolver/nvector.h>\n"\
+		    "#include <sbmlsolver/nvector_serial.h>\n"\
+		    "#include <sbmlsolver/dense.h>\n" 
+		    "#include <sbmlsolver/cvode.h>\n"\
+		    "#include <sbmlsolver/cvdense.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/cvodeSettings.h>\n"\
+		    "#include <sbmlsolver/processAST.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
+		    "#define DLL_EXPORT __declspec(dllexport)\n");
+#elif USE_TCC == 1
+  CharBuffer_append(buffer,
+		    "#include <math.h>\n"\
+		    "#include <nvector_serial.h>\n"\
+		    "#include <dense.h>\n" 
+		    "#include <cvode.h>\n"\
+		    "#include <cvdense.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/integratorSettings.h>\n"\
+		    "#include <sbmlsolver/processAST.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
+		    "#define DLL_EXPORT\n");
+#endif
+
+  generateMacros(buffer);
+
+  if ( om->sensitivity )
+    ODEModel_generateCVODESensitivityFunction(om, buffer);
+
+#ifdef USE_TCC /* write out source file for debugging*/
+  FILE *src;
+  char *srcname =  "sensfunctions.c";
+  src = fopen(srcname, "w");
+  fprintf(src, CharBuffer_getBuffer(buffer));
+  fclose(src);
+#endif
+  
+  /* now all required sourcecode is in `buffer' and can be sent
+     to the compiler */
+  om->compiledCVODESensitivityCode =
+    Compiler_compile(CharBuffer_getBuffer(buffer));
+
+  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+       SolverError_getNum(FATAL_ERROR_TYPE) )
+  {
+    CharBuffer_free(buffer);
+    return ;
+  }
+
+  CharBuffer_free(buffer);
+
+  om->compiledCVODESenseFunction =
+    CompiledCode_getFunction(om->compiledCVODESensitivityCode,
+			     COMPILED_SENSITIVITY_FUNCTION_NAME);
+}
+
 
 /** returns the compiled RHS ODE function for the given model */
 SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
@@ -2008,6 +2181,28 @@ SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeMod
   return om->compiledCVODEJacobianFunction;
 }
 
+/** returns the compiled Sensitivity function for the given model */
+SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *om)
+{
+  if ( !om->sensitivity )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_CANNOT_COMPILE_SENSITIVTY_NOT_COMPUTED,
+		      "Attempting to compile sensitivity matris before "\
+		      "the matrix is computed\n"\
+		      "Call ODEModel_constructSensitivity before calling\n"\
+		      "ODEModel_getCompiledCVODESenseFunction\n");
+    return NULL;
+  }
+
+  if ( !om->compiledCVODESenseFunction )
+  {  
+    ODEModel_compileCVODESenseFunctions(om);
+    RETURN_ON_ERRORS_WITH(NULL);
+  }
+
+  return om->compiledCVODESenseFunction;
+}
 
 
 /** @} */

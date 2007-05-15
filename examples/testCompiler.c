@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 23:32:27 raim>
-  $Id: testCompiler.c,v 1.2 2007/05/10 21:56:30 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 14:06:34 raim>
+  $Id: testCompiler.c,v 1.3 2007/05/15 13:30:45 raimc Exp $
 */
 /* 
  *
@@ -43,85 +43,129 @@
 
 void DumpErrors()
 {
-    char *errors = SolverError_dumpToString();
+  char *errors = SolverError_dumpToString();
 
-    fprintf(stderr, errors);
-    SolverError_freeDumpString(errors);
-    SolverError_clear();
+  fprintf(stderr, errors);
+  SolverError_freeDumpString(errors);
+  SolverError_clear();
 }
 
 int doit(int argc, char *argv[])
 {
-    int i ;
-    cvodeSettings_t *settings = CvodeSettings_create();
-    integratorInstance_t *integratorInstance;
-    char *modelStr;
-    double endtime, relativeErrorTolerance,errorTolerance ;
-    int printsteps, maximumIntegrationSteps;
-    odeModel_t *model ;
+  cvodeSettings_t *settings = CvodeSettings_create();
+  integratorInstance_t *ii;
+  variableIndex_t *v1, *v2, *v3, *v4;
+  char *modelStr;
+  double endtime, relativeErrorTolerance,errorTolerance ;
+  int printsteps, maximumIntegrationSteps;
+  odeModel_t *model ;
+
+
+  int sensi = 1;
+  int nsens = 4;
+  char *sensIDs[nsens];
+    
+  sensIDs[0] = "MAPK_PP";
+  sensIDs[1] = "V1";
+  sensIDs[2] = "MAPK_P";
+  sensIDs[3] = "uVol";
+
         
-    if (argc < 3)
-    {
-        fprintf(
+  if (argc < 3)
+  {
+    fprintf(
             stderr,
             "usage %s sbml-model-file end-time print-steps\n",
             argv[0]);
 
-        exit(0);
-    }
+    exit(0);
+  }
 
-    modelStr = argv[1];
-    endtime = atoi(argv[2]);
-    printsteps = atof(argv[3]);
+  modelStr = argv[1];
+  endtime = atoi(argv[2]);
+  printsteps = atof(argv[3]);
 
-    errorTolerance = 1e-20;
-    relativeErrorTolerance = 1e-10;
-    maximumIntegrationSteps = 500;
+  errorTolerance = 1e-20;
+  relativeErrorTolerance = 1e-10;
+  maximumIntegrationSteps = 500;
 
-    model = ODEModel_createFromFile(modelStr);
-    RETURN_ON_ERRORS_WITH(1);
+  model = ODEModel_createFromFile(modelStr);
+  RETURN_ON_ERRORS_WITH(1);
 
-    
-    CvodeSettings_setTime(settings, endtime, printsteps);
-    CvodeSettings_setError(settings, errorTolerance);    
-    CvodeSettings_setRError(settings, relativeErrorTolerance);
-    CvodeSettings_setMxstep(settings, maximumIntegrationSteps);     
-    CvodeSettings_setJacobian(settings, 1);
-    CvodeSettings_setStoreResults(settings, 0);
+  v1 = ODEModel_getVariableIndex(model, sensIDs[0]);
+  v2 = ODEModel_getVariableIndex(model, sensIDs[1]);
+  v3 = ODEModel_getVariableIndex(model, sensIDs[2]);
+  v4 = ODEModel_getVariableIndex(model, sensIDs[3]);
 
     
-    CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
-    integratorInstance = IntegratorInstance_create(model, settings);
+  CvodeSettings_setTime(settings, endtime, printsteps);
+  CvodeSettings_setError(settings, errorTolerance);    
+  CvodeSettings_setRError(settings, relativeErrorTolerance);
+  CvodeSettings_setMxstep(settings, maximumIntegrationSteps);     
+  CvodeSettings_setJacobian(settings, 1);
+  CvodeSettings_setStoreResults(settings, 0);
 
-    printf("START WITH COMPILATION \n");
-    IntegratorInstance_integrate(integratorInstance);
-    IntegratorInstance_dumpData(integratorInstance);
-    DumpErrors;
-    printf("Integration time was %g\n",
-	   IntegratorInstance_getIntegrationTime(integratorInstance));
-
-    CvodeSettings_setCompileFunctions(settings, 0); /* don't compile model */ 
-    IntegratorInstance_reset(integratorInstance);
+  if (sensi)
+  {
+    CvodeSettings_setSensitivity(settings, 1);
+    CvodeSettings_setSensParams (settings,sensIDs, nsens );
+  }
     
-    printf("\n\nAGAIN WITHOUT COMPILATION \n");
-    IntegratorInstance_integrate(integratorInstance);
-    IntegratorInstance_dumpData(integratorInstance);
-    DumpErrors;
-    printf("FINISHED WITH SAME RESULTS??\n");
-    printf("Integration time was %g\n",
-	   IntegratorInstance_getIntegrationTime(integratorInstance));
-    
-    IntegratorInstance_free(integratorInstance);
-    ODEModel_free(model);
-    CvodeSettings_free(settings);
+  CvodeSettings_setCompileFunctions(settings, 0); /* don't compile model */ 
+  ii = IntegratorInstance_create(model, settings);
 
-    return 0;
+  printf("\n\nINTEGRATE WITHOUT COMPILATION \n");
+  IntegratorInstance_integrate(ii);
+  IntegratorInstance_dumpData(ii);
+
+  if ( sensi )
+  {
+    IntegratorInstance_dumpPSensitivities(ii, v1);
+    IntegratorInstance_dumpPSensitivities(ii, v2);
+    IntegratorInstance_dumpPSensitivities(ii, v3);
+    IntegratorInstance_dumpPSensitivities(ii, v4);
+  }
+    
+  DumpErrors();
+  printf("Integration time was %g\n",
+	 IntegratorInstance_getIntegrationTime(ii));
+
+  CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
+  IntegratorInstance_reset(ii);
+    
+  printf("\n\nAGAIN WITH COMPILATION \n");
+  IntegratorInstance_integrate(ii);
+  IntegratorInstance_dumpData(ii);
+
+  if ( sensi )
+  {
+    IntegratorInstance_dumpPSensitivities(ii, v1);
+    IntegratorInstance_dumpPSensitivities(ii, v2);
+    IntegratorInstance_dumpPSensitivities(ii, v3);
+    IntegratorInstance_dumpPSensitivities(ii, v4);
+  }
+
+
+  DumpErrors();
+  printf("FINISHED WITH SAME RESULTS??\n");
+  printf("Integration time was %g\n",
+	 IntegratorInstance_getIntegrationTime(ii));
+
+  VariableIndex_free(v1);
+  VariableIndex_free(v2);
+  VariableIndex_free(v3);
+  VariableIndex_free(v4);
+  IntegratorInstance_free(ii);
+  ODEModel_free(model);
+  CvodeSettings_free(settings);
+
+  return 0;
 }
 
 int main (int argc, char *argv[])
 {
-    int result = doit(argc, argv);
-    DumpErrors();
+  int result = doit(argc, argv);
+  DumpErrors();
 
-    return result;
+  return result;
 }

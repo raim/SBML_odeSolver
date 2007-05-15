@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-14 06:54:53 raim>
-  $Id: odeModel.h,v 1.31 2006/11/02 16:04:29 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-05-15 14:28:10 raim>
+  $Id: odeModel.h,v 1.32 2007/05/15 13:30:46 raimc Exp $ 
 */
 /* 
  *
@@ -109,7 +109,7 @@ extern "C" {
     ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
-    /* compilation */
+    /* compilation of forward integration functions */
     CVRhsFn compiledCVODERhsFunction; /**< CVODE rhs function created
 					 by compiling code generated
 					 from model */
@@ -124,7 +124,14 @@ extern "C" {
     compiled_code_t *compiledCVODEFunctionCode; /**< compiled code
 						   containing compiled
 						   functions */
-
+    /* compilation of sensitivity functions */
+    CVSensRhs1Fn compiledCVODESenseFunction; /**< Sensitivity function
+                                               created by compiling
+                                               code generated from
+                                               model */
+    compiled_code_t *compiledCVODESensitivityCode; /**< compiled code
+                                                    containing compiled
+                                                    sensitivity functions */
     /* assignment Rule Optimization */
     List_t *observables ; /**< set of symbols that the user wishes to
 			     have computed for output (list contains
@@ -187,6 +194,7 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *);
   SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
@@ -207,7 +215,8 @@ extern "C" {
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *om);
- 
+  SBML_ODESOLVER_API void ODEModel_compileCVODESenseFunctions(odeModel_t *om);
+  
 #ifdef __cplusplus
 }
 #endif
