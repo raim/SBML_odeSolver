@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 16:36:01 raim>
-  $Id: cvodeSolver.c,v 1.54 2007/05/11 14:49:31 raimc Exp $
+  Last changed Time-stamp: <2007-05-15 14:08:19 raim>
+  $Id: cvodeSolver.c,v 1.55 2007/05/15 12:18:19 raimc Exp $
 */
 /* 
  *
@@ -88,7 +88,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     solver->t0 = solver->t;
     if ( !IntegratorInstance_createCVODESolverStructures(engine) )
     {
-      fprintf(stderr, "engine not valid for unknown reasons"
+      fprintf(stderr, "engine not valid for unknown reasons, "
 	      "please contact developers\n");
       return 0;
     }
@@ -102,8 +102,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
   /* Forward solver is only called if not in the adjoint (backward) phase */
   if( !opt->AdjointPhase )
-  {
-
+  { 
     if( opt->DoAdjoint )  
       /* CvodeF is needed in the forward phase if the adjoint soln is
 	 desired  */  
@@ -113,9 +112,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       /* calling CVODE */
       flag = CVode(solver->cvode_mem, solver->tout,
 		   solver->y, &(solver->t), CV_NORMAL);
-
-  
-   /*  if ( flag != CV_SUCCESS ) */
+    /*  if ( flag != CV_SUCCESS ) */
     if ( flag < CV_SUCCESS )
     {
       char *message[] =
@@ -348,18 +345,16 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
 
   /*  calculating sensitivities */
-  if ( opt->Sensitivity && !opt->AdjointPhase ){ 
+  if ( opt->Sensitivity && !opt->AdjointPhase )
+  { 
     flag = IntegratorInstance_getForwardSens(engine);
-    if ( flag != 1 ){
-      return 0;
-    }
+    if ( flag != 1 ) return 0;
     else return 1;
   }
-  else if( opt->AdjointPhase ){ 
+  else if( opt->AdjointPhase )
+  { 
     flag = IntegratorInstance_getAdjSens(engine);
-    if ( flag != 1 ){
-      return 0;
-    }
+    if ( flag != 1 ) return 0;
     else return 1; 
   }
  /*  else */
@@ -388,7 +383,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   CVRhsFn rhsFunction;
-  CVDenseJacFn jacODE ;
+  CVDenseJacFn jacODE = NULL;
 
  
 
@@ -402,8 +397,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if ( opt->compileFunctions )
     {
       rhsFunction = ODEModel_getCompiledCVODERHSFunction(om);
-      if ( !rhsFunction )
-	return 0; /* error */
+      if ( !rhsFunction ) return 0; /* error */
     }
     else
       rhsFunction = f ;
@@ -413,8 +407,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       if ( opt->compileFunctions )
       {
 	jacODE = ODEModel_getCompiledCVODEJacobianFunction(om); 
-	if ( !jacODE )
-	  return 0; /* error */
+	if ( !jacODE ) return 0; /* error */
       }
       else
 	jacODE = JacODE;
@@ -942,10 +935,9 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-void
-JacODE(long int N, DenseMat J, realtype t,
-       N_Vector y, N_Vector fy, void *jac_data,
-       N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
+void JacODE(long int N, DenseMat J, realtype t,
+	    N_Vector y, N_Vector fy, void *jac_data,
+	    N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
 {
   
   int i, j;
