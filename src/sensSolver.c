@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:06:39 raim>
-  $Id: sensSolver.c,v 1.50 2007/05/15 18:51:59 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 18:25:44 raim>
+  $Id: sensSolver.c,v 1.51 2007/05/16 16:35:21 raimc Exp $
 */
 /* 
  *
@@ -655,8 +655,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
 }
 
 
-/** \brief Sets a general objective function (for ODE solution) via a text input file 
-*/
+/** \brief Sets a general objective function (for ODE solution) via a
+    text input file */
 SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstance_t *engine, char *ObjFunc_file)
 {
   int i;
@@ -1117,7 +1117,7 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
       dySdata[i] +=
 	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]], data);
   }
-
+  /* printf("s"); */
 }
 
 
@@ -1187,7 +1187,10 @@ void JacA(long int NB, DenseMat JB, realtype t,
   data  = (cvodeData_t *) jac_dataB;
   ydata = NV_DATA_S(y);
   
-
+  /*!!! is this required here:
+    update parameters: p is modified by CVODES,
+    if fS could not be generated  */
+  
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
 
@@ -1213,6 +1216,7 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
   yAdata = NV_DATA_S(yA);
   dqAdata = NV_DATA_S(qAdot);
 
+ 
   /* update ODE variables from CVODE  */  
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
  
