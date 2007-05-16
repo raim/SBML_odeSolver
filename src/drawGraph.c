@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:54:45 raim>
-  $Id: drawGraph.c,v 1.25 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 20:37:12 raim>
+  $Id: drawGraph.c,v 1.26 2007/05/16 18:38:20 raimc Exp $
 */
 /* 
  *
@@ -539,7 +539,8 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
 
   xfree(formatopt);
   xfree(outfile);
-
+  free(highest);
+  free(lowest);
 #endif
 
   return 1;
@@ -623,6 +624,8 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
 	    om->names[om->index_sens[i]]);
 
   fprintf(f, "}\n");
+  free(highest);
+  free(lowest);
   return 1;
 }
 
