@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 21:27:25 raim>
-  $Id: adjsenstest.c,v 1.5 2007/05/16 19:31:39 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 21:50:03 raim>
+  $Id: adjsenstest.c,v 1.6 2007/05/16 19:52:47 raimc Exp $
 */
 /* 
  *
@@ -114,11 +114,14 @@ main (int argc, char *argv[]){
     }
 
     IntegratorInstance_reset(ii);
-
+    
+    printf("\n\nIntegration time is %g\n",
+	 IntegratorInstance_getIntegrationTime(ii));
     while( !IntegratorInstance_timeCourseCompleted(ii) )
      if ( !IntegratorInstance_integrateOneStep(ii) )
        break;
-
+    printf("Integration time was %g\n\n",
+	 IntegratorInstance_getIntegrationTime(ii));
      
 
     /*  IntegratorInstance_dumpData(ii); */
@@ -136,6 +139,8 @@ main (int argc, char *argv[]){
 
      
     flag = IntegratorInstance_printQuad(ii, stderr);
+
+
     if (flag!=1)
 	return(EXIT_FAILURE);
 
@@ -143,10 +148,14 @@ main (int argc, char *argv[]){
     CvodeSettings_setAdjPhase(ii->opt); 
     IntegratorInstance_resetAdjPhase(ii); 
     /* Adjoint phase */
+    printf("\n\nIntegration time is %g\n",
+	   IntegratorInstance_getIntegrationTime(ii));
     while( !IntegratorInstance_timeCourseCompleted(ii) )
-     if ( !IntegratorInstance_integrateOneStep(ii) )
-       break;
-
+      if ( !IntegratorInstance_integrateOneStep(ii) )
+	break;
+    printf("Integration time was %g\n\n",
+	   IntegratorInstance_getIntegrationTime(ii));
+    
     /* Print out adjoint soln */
     IntegratorInstance_dumpAdjData(ii);
 
@@ -159,8 +168,7 @@ main (int argc, char *argv[]){
     flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
 	return(EXIT_FAILURE); 
-    printf("\nIntegration time was %g\n",
-	 IntegratorInstance_getIntegrationTime(ii));
+
 
     CvodeSettings_unsetAdjPhase(ii->opt); 
     fprintf(stderr, "\n############# DONE RUN NUMBER %d  #############\n", i); 
