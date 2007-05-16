@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 14:31:31 raim>
-  $Id: adjsenstest.c,v 1.4 2007/03/21 14:39:12 jamescclu Exp $
+  Last changed Time-stamp: <2007-05-16 21:27:25 raim>
+  $Id: adjsenstest.c,v 1.5 2007/05/16 19:31:39 raimc Exp $
 */
 /* 
  *
@@ -53,18 +53,19 @@ main (int argc, char *argv[]){
    
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
-  CvodeSettings_setTime(set, 30, 10);
-  CvodeSettings_setErrors(set, 1e-5, 1e-5, 1e9);
+  CvodeSettings_setTime(set, 1000, 10);
+  CvodeSettings_setErrors(set, 1e-15, 1e-8, 1e10);
   CvodeSettings_setMethod(set, 0, 5);
   /*   CvodeSettings_setStoreResults(set, 0); */
   CvodeSettings_setJacobian(set, 1); /* for testing only */
+  CvodeSettings_setCompileFunctions(set, 0); /* for testing only */
+
  
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
   ii = IntegratorInstance_create(om, set);
 
   
-
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
@@ -74,8 +75,8 @@ main (int argc, char *argv[]){
 
   /* ACTIVATE ADJOINT ANALYSIS */
   CvodeSettings_setDoAdj(set);
-  CvodeSettings_setAdjTime(set, 30, 10);
-  CvodeSettings_setAdjErrors(set, 1e-5, 1e-5);
+  CvodeSettings_setAdjTime(set, 1000, 100);
+  CvodeSettings_setAdjErrors(set, 1e-15, 1e-8);
   CvodeSettings_setnSaveSteps(set, 1000);
 
   printf("Try 3 integrations with selected parameters/ICs!\n");
@@ -117,8 +118,8 @@ main (int argc, char *argv[]){
     while( !IntegratorInstance_timeCourseCompleted(ii) )
      if ( !IntegratorInstance_integrateOneStep(ii) )
        break;
-    
- 
+
+     
 
     /*  IntegratorInstance_dumpData(ii); */
     printf("Param default: %s\n", ODEModel_getVariableName(om, p));
@@ -133,11 +134,12 @@ main (int argc, char *argv[]){
     else
       fprintf(stderr, "\n### Printing Objective Function (since nonlinear objective is present)");  
 
+     
     flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
 	return(EXIT_FAILURE);
 
-    /* Now go into adjoint phase */   
+     /* Now go into adjoint phase */   
     CvodeSettings_setAdjPhase(ii->opt); 
     IntegratorInstance_resetAdjPhase(ii); 
     /* Adjoint phase */
@@ -157,6 +159,8 @@ main (int argc, char *argv[]){
     flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
 	return(EXIT_FAILURE); 
+    printf("\nIntegration time was %g\n",
+	 IntegratorInstance_getIntegrationTime(ii));
 
     CvodeSettings_unsetAdjPhase(ii->opt); 
     fprintf(stderr, "\n############# DONE RUN NUMBER %d  #############\n", i); 
