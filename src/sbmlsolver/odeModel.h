@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 19:32:37 raim>
-  $Id: odeModel.h,v 1.33 2007/05/16 17:36:59 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-16 20:16:40 raim>
+  $Id: odeModel.h,v 1.34 2007/05/16 19:29:55 raimc Exp $ 
 */
 /* 
  *
@@ -119,16 +119,6 @@ extern "C" {
 						   compiling code
 						   generated from
 						   model */
-    CVDenseJacFnB compiledCVODEAdjointJacobianFunction; /**< CVODE
-							   adjoint
-							   jacobian
-							   function
-							   created by
-							   compiling
-							   code
-							   generated
-							   from
-							   model */
     EventFn compiledEventFunction; /**< Event function created by
 				      compiling code generated from
 				      model */
@@ -142,7 +132,24 @@ extern "C" {
                                                model */
     compiled_code_t *compiledCVODESensitivityCode; /**< compiled code
                                                     containing compiled
-                                                    sensitivity functions */
+                                                    sensitivity functions
+						    !!! currently not
+                                                    used, until TCC can handle
+						    multiple states !!!*/
+    /* compilation of adjoint functions */
+    CVDenseJacFnB compiledCVODEAdjointJacobianFunction; /**< CVODE
+							   adjoint
+							   jacobian
+							   function
+							   created by
+							   compiling
+							   code
+							   generated
+							   from
+							   model */
+    CVQuadRhsFnB compiledCVODEAdjointQuadFunction; /**< CVODE adjoint
+						      quadrature function */
+
     /* assignment Rule Optimization */
     List_t *observables ; /**< set of symbols that the user wishes to
 			     have computed for output (list contains
@@ -206,6 +213,7 @@ extern "C" {
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(odeModel_t *);
   SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *);
   SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
@@ -226,8 +234,8 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
-  SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *om);
-  SBML_ODESOLVER_API void ODEModel_compileCVODESenseFunctions(odeModel_t *om);
+  SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *);
+  SBML_ODESOLVER_API void ODEModel_compileCVODESenseFunctions(odeModel_t *);
   
 #ifdef __cplusplus
 }

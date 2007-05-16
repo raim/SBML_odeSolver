@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 19:14:57 raim>
-  $Id: sensSolver.c,v 1.52 2007/05/16 17:36:59 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 21:02:34 raim>
+  $Id: sensSolver.c,v 1.53 2007/05/16 19:29:54 raimc Exp $
 */
 /* 
  *
@@ -198,7 +198,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   cvodeSettings_t *opt = engine->opt;
   CVSensRhs1Fn sensRhsFunction = NULL;
   CVDenseJacFnB jacA = NULL;
-    
+  CVQuadRhsFnB adjointQuadFunction = NULL;
+  
   /* adjoint specific*/
   int method, iteration;
   /* N_Vector qA; */
@@ -215,7 +216,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     {
       if ( opt->compileFunctions )
       {
-	sensRhsFunction =  ODEModel_getCompiledCVODESenseFunction(om);
+	sensRhsFunction = ODEModel_getCompiledCVODESenseFunction(om);
 	if ( !sensRhsFunction ) return 0;  /* error */
       }
       else
@@ -400,14 +401,22 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     
     /* set rhs function for sensitivity */
-    
     if ( opt->compileFunctions )
     {
-      jacA =  ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
-      if ( !jacA ) jacA = JacA;  /* fall back to non-compiled */
-    }
+      jacA = ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
+      if ( !jacA ) return 0;  /* error */
+      /* set adjoint quadrature function for sensitivity */
+      if ( om->sensitivity )
+      {
+	adjointQuadFunction = fQA /*ODEModel_getCompiledCVODEAdjointQuadFunction(om)*/;
+	if ( !adjointQuadFunction ) return 0;  /* error */
+      }
+     }
     else
-      jacA = JacA ;
+    {
+      jacA = JacA;
+      adjointQuadFunction = fQA ;
+    }
     
     /*  Allocate yA, abstolA vectors */
     if ( solver->yA == NULL )
@@ -492,7 +501,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 			  solver->abstolA);
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
     }
-      
+     
     flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetFdataB", 1);
 
@@ -500,7 +509,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     CVODE_HANDLE_ERROR(&flag, "CVDenseB", 1);
 
     /*!!! could NULL be passed here if jacobian is not available ??*/
-    flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
+    flag = CVDenseSetJacFnB(solver->cvadj_mem, jacA, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
 
     /* set adjoint max steps to be same as that for forward */
@@ -518,7 +527,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       for( i=0; i<om->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
-      flag = CVodeQuadMallocB(solver->cvadj_mem, fQA, solver->qA);
+      flag = CVodeQuadMallocB(solver->cvadj_mem, adjointQuadFunction,
+			      solver->qA);
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadMallocB", 1);
 
     }
@@ -528,10 +538,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       for( i=0; i<om->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
-      flag = CVodeQuadReInitB(solver->cvadj_mem, fQA, solver->qA);
+      flag = CVodeQuadReInitB(solver->cvadj_mem, adjointQuadFunction,
+			      solver->qA);
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);
     }
-
+ 
     /*  Allocate abstolQA vector */
     if ( solver->abstolQA == NULL )
     {
@@ -1199,12 +1210,6 @@ void JacA(long int NB, DenseMat JB, realtype t,
   data  = (cvodeData_t *) jac_dataB;
   ydata = NV_DATA_S(y);
   
-  /** update parameters: p is modified by CVODES,
-      if fS could not be generated  */
-  if ( data->p != NULL && data->opt->Sensitivity )
-    for ( i=0; i<data->nsens; i++ )
-      data->value[data->model->index_sens[i]] = data->p[i];
-  
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
 
@@ -1242,10 +1247,10 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
   {
     dqAdata[i] = 0.0;
 
-   if ( data->model->index_sensP[i] != -1 )
-    for ( j=0; j<data->model->neq; j++ )
-      dqAdata[i] += yAdata[j] *
-	evaluateAST(data->model->sens[j][ data->model->index_sensP[i] ], data);
+    if ( data->model->index_sensP[i] != -1 )
+      for ( j=0; j<data->model->neq; j++ )
+	dqAdata[i] += yAdata[j] *
+	  evaluateAST(data->model->sens[j][data->model->index_sensP[i]], data);
   }
 
 }

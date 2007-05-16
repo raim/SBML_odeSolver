@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 19:34:20 raim>
-  $Id: odeModel.c,v 1.78 2007/05/16 17:36:59 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-16 21:12:18 raim>
+  $Id: odeModel.c,v 1.79 2007/05/16 19:29:54 raimc Exp $ 
 */
 /* 
  *
@@ -70,6 +70,7 @@
 #define COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME "adj_jacobi_f"
 #define COMPILED_EVENT_FUNCTION_NAME "event_f"
 #define COMPILED_SENSITIVITY_FUNCTION_NAME "sense_f"
+#define COMPILED_ADJOINT_QUAD_FUNCTION_NAME "adj_quad"
 
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
@@ -1909,25 +1910,21 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
   CharBuffer_append(buffer,"DLL_EXPORT void ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
-		    "(long int NB, DenseMat JB, realtype t,\n"\
-		    "    N_Vector y, N_Vector yB, void *jac_dataB,\n"\
-		    "    N_Vector tmpB, N_Vector tmp2B, N_Vector tmp3B)\n"\
-		    "{\n"\
-		    "  \n"\
-		    "int i;\n"\
-		    "realtype *ydata;\n"\
-		    "cvodeData_t *data;\n"\
-		    "double *value;\n"\
-		    "data  = (cvodeData_t *) jac_dataB;\n"\
-		    "value = data->value ;\n"\
-		    "ydata = NV_DATA_S(y);\n"\
-		    "data->currenttime = t;\n"\
-		    "\n"\
-		    "if ( data->p != NULL && data->opt->Sensitivity )\n"\
-		    "    for ( i=0; i<data->nsens; i++ )\n"\
-		    "        value[data->model->index_sens[i]] = "\
-		    "data->p[i];\n\n");
-
+		    "(long int NB, DenseMat JB, realtype t, N_Vector y,\n" \
+		    "    N_Vector yB,  N_Vector fyB, void *jac_dataB,\n" \
+		    "    N_Vector tmpB, N_Vector tmp2B, N_Vector tmp3B)\n" \
+		    "{\n"						\
+		    "  \n"						\
+		    "int i;\n"						\
+		    "realtype *ydata;\n"				\
+		    "cvodeData_t *data;\n"				\
+		    "double *value;\n"					\
+		    "data  = (cvodeData_t *) jac_dataB;\n"		\
+		    "value = data->value ;\n"				\
+		    "ydata = NV_DATA_S(y);\n"				\
+		    "data->currenttime = t;\n"				\
+		    "\n");
+  
   /** update ODE variables from CVODE */
   for ( i=0; i<om->neq; i++ ) 
   {
@@ -1947,9 +1944,9 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, ",");
       CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, ") = - ");
+      CharBuffer_append(buffer, ") = - (");
       generateAST(buffer, om->jacob[i][j]);
-      CharBuffer_append(buffer, ";\n");
+      CharBuffer_append(buffer, ");\n");
     }
   }
   /* CharBuffer_append(buffer, "printf(\"JA\");"); */
@@ -2036,7 +2033,72 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"S\");"); */
-  CharBuffer_append(buffer, "}");
+  CharBuffer_append(buffer, "}\n\n");
+}
+
+
+/* appends compiled code to the given buffer for the function called
+   by the value of 'COMPILED_ADJOINT_QUAD_FUNCTION_NAME' */
+void ODEModel_generateCVODEAdjointQuadFunction(odeModel_t *om,
+					       charBuffer_t *buffer)
+{
+  int i, j;
+
+  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
+  CharBuffer_append(buffer,
+		    "(realtype t, N_Vector y, N_Vector yA,\n"	\
+		    " N_Vector qAdot, void *fA_data)\n"		\
+		    "{\n"					\
+		    "  \n"					\
+		    "realtype *ydata, *yAdata, *dqAdata;\n"	\
+		    "cvodeData_t *data;\n"\
+		    "double *value;\n"\
+		    "data = (cvodeData_t *) fA_data;\n"\
+		    "value = data->value ;\n"\
+		    "ydata = NV_DATA_S(y);\n"\
+		    "yAdata = NV_DATA_S(yA);\n"\
+		    "dqAdata = NV_DATA_S(qAdot);\n"\
+		    "data->currenttime = t;\n");
+
+  /** update ODE variables from CVODE */
+  for ( i=0; i<om->neq; i++ )
+  {
+    CharBuffer_append(buffer, "value[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = ydata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "];\n\n");
+  }
+  
+  /** evaluate quadrature integrand: yA^T * df/dp */
+  for ( i=0; i<om->nsens; i++ )
+  {
+    CharBuffer_append(buffer, "dqAdata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = 0.0;\n");
+
+    for ( j=0; j<om->neq; j++ )
+    {
+      if ( om->index_sensP[i] != -1 )
+      {
+	CharBuffer_append(buffer, "dqAdata[");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, "] += ");
+	CharBuffer_append(buffer, "yAdata[");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, "] * ");
+	generateAST(buffer, om->sens[j][om->index_sensP[i]]);
+	CharBuffer_append(buffer, "; /* om->sens[");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, "][");
+	CharBuffer_appendInt(buffer,om->index_sensP[i]);
+	CharBuffer_append(buffer, "]  */ \n");
+      }      
+    }
+  }
+  /* CharBuffer_append(buffer, "printf(\"qa\");"); */
+  CharBuffer_append(buffer, "}\n\n");
 }
 
 /* dynamically generates and complies the ODE RHS, Jacobian and
@@ -2102,9 +2164,13 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
    all functions is required when sensitivities change, could later
    be compiled into a separate structure when TCC allows */
   if ( om->sensitivity )
+  {
     ODEModel_generateCVODESensitivityFunction(om, buffer);
+    /* this could be made optional */
+    ODEModel_generateCVODEAdjointQuadFunction(om, buffer);
+  }
 
-#ifdef _DEBUG /* write out source file for debugging*/
+#ifdef USE_TCC /* write out source file for debugging*/
   FILE *src;
   char *srcname =  "rhsfunctions.c";
   src = fopen(srcname, "w");
@@ -2159,9 +2225,14 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     return;
 
   if ( om->sensitivity )
+  {
      om->compiledCVODESenseFunction =
        CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 				COMPILED_SENSITIVITY_FUNCTION_NAME);
+     om->compiledCVODEAdjointQuadFunction =
+       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+				COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
+   }
 }
 
 
@@ -2295,6 +2366,8 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
     /*!!! currently not used: if TCC multiple states become possible,
       until then this must have been compiled already within the main
       compiled code structure */
+    /* only for calling independent of solver!!
+       function should have been compiled already */
     ODEModel_compileCVODESenseFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
   }
@@ -2326,6 +2399,34 @@ SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunctio
   }
 
   return om->compiledCVODEAdjointJacobianFunction;
+}
+
+/** returns the compiled adjoint quadrature function for the given model */
+SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(odeModel_t *om)
+{
+  if ( !om->sensitivity )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_CANNOT_COMPILE_SENSITIVTY_NOT_COMPUTED,
+		      "Attempting to compile adjoint quadrature before " \
+		      "the parametric matrix is computed\n"		\
+		      "Call ODEModel_constructSensitivity before calling\n" \
+		      "ODEModel_getCompiledCVODEAdjointQuadFunction\n");
+    return NULL;
+  }
+
+  if ( !om->compiledCVODEAdjointQuadFunction )
+  {
+    /*!!! currently not used: if TCC multiple states become possible,
+      until then this must have been compiled already within the main
+      compiled code structure */
+    /* only for calling independent of solver!!
+       function should have been compiled already */
+    ODEModel_compileCVODESenseFunctions(om);
+    RETURN_ON_ERRORS_WITH(NULL);
+  }
+
+  return om->compiledCVODEAdjointQuadFunction;
 }
 
 /** @} */
