@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:46:00 raim>
-  $Id: cvodeSolver.c,v 1.57 2007/05/15 18:46:35 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 18:25:34 raim>
+  $Id: cvodeSolver.c,v 1.58 2007/05/16 16:33:58 raimc Exp $
 */
 /* 
  *
@@ -357,8 +357,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     if ( flag != 1 ) return 0;
     else return 1; 
   }
- /*  else */
-
+  else
     return 1; /* OK */    
 }
 
@@ -422,7 +421,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      */
     /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
       bytes  in 2 blocks are definitely lost !!!*/
-    if (  solver->y == NULL )
+    if ( solver->y == NULL )
     {
       solver->y = N_VNew_Serial(neq);
       CVODE_HANDLE_ERROR((void *)solver->y, "N_VNew_Serial for y", 0);
@@ -430,7 +429,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     /*!!! valgrind memcheck sensitivity:   576 (32 direct, 544 indirect)
       bytes in 2 blocks are definitely lost !!!*/
-    if (  solver->abstol == NULL )
+    if ( solver->abstol == NULL )
     {
       solver->abstol = N_VNew_Serial(neq);
       CVODE_HANDLE_ERROR((void *)solver->abstol,
@@ -475,7 +474,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
        18,752 indirect) bytes in 1 blocks are definitely lost !!! */
     /* !?? problem with ReInit: can't use new method !??
        -> use additional methodIsValid option */
-    if (  solver->cvode_mem == NULL )
+    /*!!! PROBLEM: can't reinit w/o sensitivity if once initialized */
+    if ( solver->cvode_mem == NULL )
     {
       solver->cvode_mem = CVodeCreate(method, iteration);
       CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "CVodeCreate", 0);
@@ -616,8 +616,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
     }
      
-
-
 
     if ( opt->Sensitivity )
     {
