@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:49:05 raim>
-  $Id: odeModel.c,v 1.76 2007/05/15 18:51:59 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-16 18:28:41 raim>
+  $Id: odeModel.c,v 1.77 2007/05/16 16:36:16 raimc Exp $ 
 */
 /* 
  *
@@ -63,6 +63,7 @@
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
+#include "sbmlsolver/compiler.h"
 
 #define COMPILED_RHS_FUNCTION_NAME "ode_f"
 #define COMPILED_JACOBIAN_FUNCTION_NAME "jacobi_f"
@@ -972,8 +973,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   if ( om->values != NULL ) free(om->values);
   
   /* free compiled code */
-  if (om->compiledCVODEFunctionCode)
-    CompiledCode_free(om->compiledCVODEFunctionCode);
+   if ( om->compiledCVODEFunctionCode != NULL )
+   {
+     CompiledCode_free(om->compiledCVODEFunctionCode);
+     om->compiledCVODEFunctionCode = NULL;
+   }
 
   /* free assignment evaulation rules */
   free(om->assignmentsAfterEvents);
@@ -1420,11 +1424,6 @@ SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *om)
     free(om->sens);
     om->sens = NULL;
   }
-
-  /*!!! NOT WORKING, TCC ERROR free compiled sens code */
-  /* if ( om->compiledCVODESensitivityCode ) */
-    /* CompiledCode_free(om->compiledCVODESensitivityCode); */
-
 }
 
 
@@ -1836,7 +1835,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     generateAST(buffer, om->ode[i]);
     CharBuffer_append(buffer, ";\n");
   }
-
+ /*  CharBuffer_append(buffer, "printf(\"F\");");*/
   CharBuffer_append(buffer, "}\n");
 }
 
@@ -1894,99 +1893,8 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
       CharBuffer_append(buffer, ";\n");
     }
   }
-
+  /* CharBuffer_append(buffer, "printf(\"J\");"); */
   CharBuffer_append(buffer, "}\n");
-}
-
-/* dynamically generates and complies the ODE RHS, Jacobian and
-   Events handling functions for the given model.
-   The jacobian function is not generated if the jacobian AST
-   expressions have not been generated.
-*/
-void ODEModel_compileCVODEFunctions(odeModel_t *om)
-{
-  charBuffer_t *buffer = CharBuffer_create();
-
-#ifdef WIN32        
-  CharBuffer_append(buffer,
-		    "#include <windows.h>\n"\
-		    "#include <math.h>\n"\
-		    "#include <sbmlsolver/sundialstypes.h>\n"\
-		    "#include <sbmlsolver/nvector.h>\n"\
-		    "#include <sbmlsolver/nvector_serial.h>\n"\
-		    "#include <sbmlsolver/dense.h>\n"\
-		    "#include <sbmlsolver/cvode.h>\n"\
-		    "#include <sbmlsolver/cvdense.h>\n"\
-		    "#include <sbmlsolver/cvodeData.h>\n"\
-		    "#include <sbmlsolver/cvodeSettings.h>\n"\
-		    "#include <sbmlsolver/odeModel.h>\n"\
-		    "#define DLL_EXPORT __declspec(dllexport)\n");
-#elif USE_TCC == 1
-  CharBuffer_append(buffer,
-		    "#include <math.h>\n"\
-		    "#include <nvector_serial.h>\n"\
-		    "#include <dense.h>\n" 
-		    "#include <cvode.h>\n"\
-		    "#include <cvdense.h>\n"\
-		    "#include <sbmlsolver/cvodeData.h>\n"\
-		    "#include <sbmlsolver/integratorSettings.h>\n"\
-		    "#include <sbmlsolver/odeModel.h>\n"\
-		    "#define DLL_EXPORT\n");
-#endif
-
-  generateMacros(buffer);
-  
-  if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);
-  ODEModel_generateEventFunction(om, buffer);
-
-  ODEModel_generateCVODERHSFunction(om, buffer);
-
-#ifdef _DEBUG /* write out source file for debugging*/
-  FILE *src;
-  char *srcname =  "rhsfunctions.c";
-  src = fopen(srcname, "w");
-  fprintf(src, CharBuffer_getBuffer(buffer));
-  fclose(src);
-#endif
-
-  /* now all required sourcecode is in `buffer' and can be sent
-     to the compiler */
-  om->compiledCVODEFunctionCode =
-    Compiler_compile(CharBuffer_getBuffer(buffer));
-
-
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
-  {
-    CharBuffer_free(buffer);
-    return ;
-  }
-
-  CharBuffer_free(buffer);
-
-
-  om->compiledCVODERhsFunction =
-    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			     COMPILED_RHS_FUNCTION_NAME);
-  if ( om->jacobian )
-  {
-    om->compiledCVODEJacobianFunction =
-      CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			       COMPILED_JACOBIAN_FUNCTION_NAME);
-
-    if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-	 SolverError_getNum(FATAL_ERROR_TYPE) )
-      return;
-  }
-
-  om->compiledEventFunction =
-    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			     COMPILED_EVENT_FUNCTION_NAME);
-  
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
-    return;
-  
 }
 
 /* appends compiled code to the given buffer for the function called
@@ -2068,13 +1976,121 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
       CharBuffer_append(buffer, "]  */ \n");
     }
   }
+  /* CharBuffer_append(buffer, "printf(\"S\");"); */
   CharBuffer_append(buffer, "}");
 }
 
+/* dynamically generates and complies the ODE RHS, Jacobian and
+   Events handling functions for the given model.
+   The jacobian function is not generated if the jacobian AST
+   expressions have not been generated.
+*/
+void ODEModel_compileCVODEFunctions(odeModel_t *om)
+{
+  charBuffer_t *buffer = CharBuffer_create();
+
+  /* the whole code needs recompilation */
+  if ( om->compiledCVODEFunctionCode != NULL )
+  {
+    CompiledCode_free(om->compiledCVODEFunctionCode);
+    om->compiledCVODEFunctionCode = NULL;
+  }
+
+#ifdef WIN32        
+  CharBuffer_append(buffer,
+		    "#include <windows.h>\n"\
+		    "#include <math.h>\n"\
+		    "#include <sbmlsolver/sundialstypes.h>\n"\
+		    "#include <sbmlsolver/nvector.h>\n"\
+		    "#include <sbmlsolver/nvector_serial.h>\n"\
+		    "#include <sbmlsolver/dense.h>\n"\
+		    "#include <sbmlsolver/cvode.h>\n"\
+		    "#include <sbmlsolver/cvdense.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/cvodeSettings.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
+		    "#define DLL_EXPORT __declspec(dllexport)\n");
+#elif USE_TCC == 1
+  CharBuffer_append(buffer,
+		    "#include <math.h>\n"\
+		    "#include <nvector_serial.h>\n"\
+		    "#include <dense.h>\n" 
+		    "#include <cvode.h>\n"\
+		    "#include <cvdense.h>\n"\
+		    "#include <sbmlsolver/cvodeData.h>\n"\
+		    "#include <sbmlsolver/integratorSettings.h>\n"\
+		    "#include <sbmlsolver/odeModel.h>\n"\
+		    "#define DLL_EXPORT\n");
+#endif
+
+  generateMacros(buffer);
+  
+  if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);
+  ODEModel_generateEventFunction(om, buffer);
+
+  ODEModel_generateCVODERHSFunction(om, buffer);
+
+  if ( om->sensitivity )
+    ODEModel_generateCVODESensitivityFunction(om, buffer);
+
+#ifdef _DEBUG /* write out source file for debugging*/
+  FILE *src;
+  char *srcname =  "rhsfunctions.c";
+  src = fopen(srcname, "w");
+  fprintf(src, CharBuffer_getBuffer(buffer));
+  fclose(src);
+#endif
+
+  /* now all required sourcecode is in `buffer' and can be sent
+     to the compiler */
+  om->compiledCVODEFunctionCode =
+    Compiler_compile(CharBuffer_getBuffer(buffer));
+
+
+  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+       SolverError_getNum(FATAL_ERROR_TYPE) )
+  {
+    CharBuffer_free(buffer);
+    return ;
+  }
+
+  CharBuffer_free(buffer);
+
+
+  om->compiledCVODERhsFunction =
+    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			     COMPILED_RHS_FUNCTION_NAME);
+  if ( om->jacobian )
+  {
+    om->compiledCVODEJacobianFunction =
+      CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			       COMPILED_JACOBIAN_FUNCTION_NAME);
+
+    if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+	 SolverError_getNum(FATAL_ERROR_TYPE) )
+      return;
+  }
+
+  om->compiledEventFunction =
+    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			     COMPILED_EVENT_FUNCTION_NAME);
+  
+  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+       SolverError_getNum(FATAL_ERROR_TYPE) )
+    return;
+
+  if ( om->sensitivity )
+     om->compiledCVODESenseFunction =
+       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+				COMPILED_SENSITIVITY_FUNCTION_NAME);
+}
 
 
 /* dynamically generates and compiles the ODE Sensitivity RHS
    for the given model */
+/*!!! this function is currently not called, because TCC is not
+  thread-safe and can only have one TCCState at a time, thus all
+  functions need to be re-compiled when sensitivity changes */
 void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
@@ -2192,8 +2208,8 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
   }
 
   if ( !om->compiledCVODESenseFunction )
-  {  
-    ODEModel_compileCVODESenseFunctions(om);
+  {
+    ODEModel_compileCVODEFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
   }
 

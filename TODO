@@ -70,3 +70,14 @@ also see odeModel.c line 175
 * error handling in getForwardSens
 
 * check all rule evaluations for optimization
+
+___TODO MAY 2007___
+
+* new SUNDIALS: can sensitivities be switched off, or does it require full
+  re-construction of solver??
+
+* reconstruction and re-initialization need to be moved completely,
+  best probably to first call of sensitivity, complete free or not
+  upon IntegratorInstance_(re)set
+
+

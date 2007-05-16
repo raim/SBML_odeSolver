@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:06:24 raim>
-  $Id: compiler.h,v 1.4 2006/06/12 10:25:57 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 17:18:57 raim>
+  $Id: compiler.h,v 1.5 2007/05/16 16:36:16 raimc Exp $
 */
 /* 
  *
@@ -40,8 +40,39 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+  
+#ifndef WIN32
+#include "config.h"
+#endif
 
+  /* the compiled code structure */
   typedef struct compiled_code compiled_code_t ;
+  
+#ifdef WIN32
+  
+  /**
+     A structure that stores compiled code
+  */
+  struct compiled_code
+  {
+    HMODULE dllHandle ;
+    char *dllFileName ;
+  };
+  
+#elif USE_TCC == 1
+  
+#include <libtcc.h>
+  /**
+     A structure that stores compiled code
+  */
+
+  struct compiled_code
+  {
+    TCCState *s;
+  };
+  
+#endif
+  
 
   /**
    * create compiled code from C source

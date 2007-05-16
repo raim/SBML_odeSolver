@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:18:29 raim>
-  $Id: testCompiler.c,v 1.4 2007/05/15 18:51:59 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 18:28:22 raim>
+  $Id: testCompiler.c,v 1.5 2007/05/16 16:36:16 raimc Exp $
 */
 /* 
  *
@@ -118,13 +118,11 @@ int doit(int argc, char *argv[])
   IntegratorInstance_integrate(ii);
   IntegratorInstance_dumpData(ii);
 
-  if ( sensi )
-  {
-    IntegratorInstance_dumpPSensitivities(ii, v1);
-    IntegratorInstance_dumpPSensitivities(ii, v2);
-    IntegratorInstance_dumpPSensitivities(ii, v3);
-    IntegratorInstance_dumpPSensitivities(ii, v4);
-  }
+  IntegratorInstance_dumpPSensitivities(ii, v1);
+  IntegratorInstance_dumpPSensitivities(ii, v2);
+  IntegratorInstance_dumpPSensitivities(ii, v3);
+  IntegratorInstance_dumpPSensitivities(ii, v4);
+  
     
   DumpErrors();
   printf("Integration time was %g\n",
@@ -133,21 +131,21 @@ int doit(int argc, char *argv[])
   /* testing combinations of difference quotient and exact calculation
    of jacobian and parametric matrices */
   CvodeSettings_setJacobian(settings, 1);
+  CvodeSettings_setSensitivity(settings, 1);
+  /*!!! sensitivity can't be switched off! but compilation is??? */
+
+  CvodeSettings_setCompileFunctions(settings, 1); /* compile model */
   
-  CvodeSettings_setCompileFunctions(settings, 1); /* compile model */ 
   IntegratorInstance_reset(ii);
     
   printf("\n\nAGAIN WITH COMPILATION \n");
   IntegratorInstance_integrate(ii);
   IntegratorInstance_dumpData(ii);
 
-  if ( sensi )
-  {
-    IntegratorInstance_dumpPSensitivities(ii, v1);
-    IntegratorInstance_dumpPSensitivities(ii, v2);
-    IntegratorInstance_dumpPSensitivities(ii, v3);
-    IntegratorInstance_dumpPSensitivities(ii, v4);
-  }
+  IntegratorInstance_dumpPSensitivities(ii, v1);
+  IntegratorInstance_dumpPSensitivities(ii, v2);
+  IntegratorInstance_dumpPSensitivities(ii, v3);
+  IntegratorInstance_dumpPSensitivities(ii, v4);
 
 
   DumpErrors();

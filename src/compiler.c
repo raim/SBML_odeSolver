@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 20:11:58 raim>
-  $Id: compiler.c,v 1.14 2007/05/15 18:51:59 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 17:47:26 raim>
+  $Id: compiler.c,v 1.15 2007/05/16 16:36:16 raimc Exp $
 */
 /* 
  *
@@ -38,7 +38,7 @@
 /* System specific definitions,
    created by configure script */
 #ifndef WIN32
-#include "config.h"
+#include "sbmlsolver/config.h"
 #endif
 
 #ifdef WIN32
@@ -47,24 +47,11 @@
 #include <tchar.h>
 #include <stdio.h>
 
-/**
-   A structure that stores compiled code
-*/
-struct compiled_code
-{
-  HMODULE dllHandle ;
-  char *dllFileName ;
-};
-
 #elif USE_TCC == 1
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <libtcc.h>
-struct compiled_code
-{
-  TCCState *s;
-};
 
 #endif
 
@@ -280,8 +267,12 @@ void CompiledCode_free(compiled_code_t *code)
   free(code->dllFileName);
   free(code);
 #elif USE_TCC == 1
+
   if ( code->s != NULL ) tcc_delete(code->s);
-  free(code);
+  code->s = NULL;
+  if ( code != NULL ) free(code);
+  /*!!! this somehow has no effect for the calling function */
   code = NULL;
+
 #endif
 }
