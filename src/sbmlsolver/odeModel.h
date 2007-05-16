@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 14:28:10 raim>
-  $Id: odeModel.h,v 1.32 2007/05/15 13:30:46 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-16 19:32:37 raim>
+  $Id: odeModel.h,v 1.33 2007/05/16 17:36:59 raimc Exp $ 
 */
 /* 
  *
@@ -38,6 +38,7 @@
 
 #include <cvodes.h>
 #include <cvdense.h>
+#include <cvodea.h>
 
 #include <sbml/SBMLTypes.h>
 
@@ -118,6 +119,16 @@ extern "C" {
 						   compiling code
 						   generated from
 						   model */
+    CVDenseJacFnB compiledCVODEAdjointJacobianFunction; /**< CVODE
+							   adjoint
+							   jacobian
+							   function
+							   created by
+							   compiling
+							   code
+							   generated
+							   from
+							   model */
     EventFn compiledEventFunction; /**< Event function created by
 				      compiling code generated from
 				      model */
@@ -194,6 +205,7 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *);
   SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);

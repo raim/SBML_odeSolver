@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 18:25:44 raim>
-  $Id: sensSolver.c,v 1.51 2007/05/16 16:35:21 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 19:14:57 raim>
+  $Id: sensSolver.c,v 1.52 2007/05/16 17:36:59 raimc Exp $
 */
 /* 
  *
@@ -197,7 +197,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   CVSensRhs1Fn sensRhsFunction = NULL;
-  
+  CVDenseJacFnB jacA = NULL;
+    
   /* adjoint specific*/
   int method, iteration;
   /* N_Vector qA; */
@@ -212,14 +213,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* set rhs function for sensitivity */
     if ( om->jacobian && om->sensitivity )
     {
-#ifndef WIN32
       if ( opt->compileFunctions )
       {
 	sensRhsFunction =  ODEModel_getCompiledCVODESenseFunction(om);
 	if ( !sensRhsFunction ) return 0;  /* error */
       }
       else
-#endif
 	sensRhsFunction = fS ;
     }
     
@@ -398,6 +397,18 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   else
     /* Adjoint Phase */
   {
+
+    
+    /* set rhs function for sensitivity */
+    
+    if ( opt->compileFunctions )
+    {
+      jacA =  ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
+      if ( !jacA ) jacA = JacA;  /* fall back to non-compiled */
+    }
+    else
+      jacA = JacA ;
+    
     /*  Allocate yA, abstolA vectors */
     if ( solver->yA == NULL )
     {
@@ -464,7 +475,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       }
     }
 
-    if (data->adjrun == 1)
+    if ( data->adjrun == 1 )
     {
       flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
       CVODE_HANDLE_ERROR(&flag, "CVodeCreateB", 1);
@@ -488,6 +499,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVDenseB(solver->cvadj_mem, om->neq);
     CVODE_HANDLE_ERROR(&flag, "CVDenseB", 1);
 
+    /*!!! could NULL be passed here if jacobian is not available ??*/
     flag = CVDenseSetJacFnB(solver->cvadj_mem, JacA, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
 
@@ -1187,9 +1199,11 @@ void JacA(long int NB, DenseMat JB, realtype t,
   data  = (cvodeData_t *) jac_dataB;
   ydata = NV_DATA_S(y);
   
-  /*!!! is this required here:
-    update parameters: p is modified by CVODES,
-    if fS could not be generated  */
+  /** update parameters: p is modified by CVODES,
+      if fS could not be generated  */
+  if ( data->p != NULL && data->opt->Sensitivity )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->model->index_sens[i]] = data->p[i];
   
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 18:28:41 raim>
-  $Id: odeModel.c,v 1.77 2007/05/16 16:36:16 raimc Exp $ 
+  Last changed Time-stamp: <2007-05-16 19:34:20 raim>
+  $Id: odeModel.c,v 1.78 2007/05/16 17:36:59 raimc Exp $ 
 */
 /* 
  *
@@ -67,6 +67,7 @@
 
 #define COMPILED_RHS_FUNCTION_NAME "ode_f"
 #define COMPILED_JACOBIAN_FUNCTION_NAME "jacobi_f"
+#define COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME "adj_jacobi_f"
 #define COMPILED_EVENT_FUNCTION_NAME "event_f"
 #define COMPILED_SENSITIVITY_FUNCTION_NAME "sense_f"
 
@@ -1897,6 +1898,64 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
   CharBuffer_append(buffer, "}\n");
 }
 
+/* appends compiled code to the given buffer for the function called by
+   the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
+   calculates the Jacobian for the set of ODEs being solved. */
+void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
+						   charBuffer_t *buffer)
+{
+  int i, j ;
+
+  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
+  CharBuffer_append(buffer,
+		    "(long int NB, DenseMat JB, realtype t,\n"\
+		    "    N_Vector y, N_Vector yB, void *jac_dataB,\n"\
+		    "    N_Vector tmpB, N_Vector tmp2B, N_Vector tmp3B)\n"\
+		    "{\n"\
+		    "  \n"\
+		    "int i;\n"\
+		    "realtype *ydata;\n"\
+		    "cvodeData_t *data;\n"\
+		    "double *value;\n"\
+		    "data  = (cvodeData_t *) jac_dataB;\n"\
+		    "value = data->value ;\n"\
+		    "ydata = NV_DATA_S(y);\n"\
+		    "data->currenttime = t;\n"\
+		    "\n"\
+		    "if ( data->p != NULL && data->opt->Sensitivity )\n"\
+		    "    for ( i=0; i<data->nsens; i++ )\n"\
+		    "        value[data->model->index_sens[i]] = "\
+		    "data->p[i];\n\n");
+
+  /** update ODE variables from CVODE */
+  for ( i=0; i<om->neq; i++ ) 
+  {
+    CharBuffer_append(buffer, "value[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = ydata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "];\n");
+  }
+
+  /** evaluate Jacobian J = df/dx */
+  for ( i=0; i<om->neq; i++ )
+  {
+    for ( j=0; j<om->neq; j++ ) 
+    {
+      CharBuffer_append(buffer, "DENSE_ELEM(JB,");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, ",");
+      CharBuffer_appendInt(buffer, j);
+      CharBuffer_append(buffer, ") = - ");
+      generateAST(buffer, om->jacob[i][j]);
+      CharBuffer_append(buffer, ";\n");
+    }
+  }
+  /* CharBuffer_append(buffer, "printf(\"JA\");"); */
+  CharBuffer_append(buffer, "}\n");
+}
+
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_SENSITIVITY_FUNCTION_NAME' which
    calculates the sensitivities (derived from Jacobian and parametrix
@@ -1989,7 +2048,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
-  /* the whole code needs recompilation */
+  /* if available, the whole code needs recompilation, can happen
+     for subsequent runs with new sensitivity settings */
   if ( om->compiledCVODEFunctionCode != NULL )
   {
     CompiledCode_free(om->compiledCVODEFunctionCode);
@@ -2004,7 +2064,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/nvector.h>\n"\
 		    "#include <sbmlsolver/nvector_serial.h>\n"\
 		    "#include <sbmlsolver/dense.h>\n"\
-		    "#include <sbmlsolver/cvode.h>\n"\
+		    "#include <sbmlsolver/cvodes.h>\n"\
+		    "#include <sbmlsolver/cvodea.h>\n"\
 		    "#include <sbmlsolver/cvdense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/cvodeSettings.h>\n"\
@@ -2015,7 +2076,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <math.h>\n"\
 		    "#include <nvector_serial.h>\n"\
 		    "#include <dense.h>\n" 
-		    "#include <cvode.h>\n"\
+		    "#include <cvodes.h>\n"\
+		    "#include <cvodea.h>\n"\
 		    "#include <cvdense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/integratorSettings.h>\n"\
@@ -2025,11 +2087,20 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
   generateMacros(buffer);
   
-  if ( om->jacobian ) ODEModel_generateCVODEJacobianFunction(om, buffer);
+  if ( om->jacobian )
+  {
+    ODEModel_generateCVODEJacobianFunction(om, buffer);
+    /* this could later be made optional and compiled into
+       a separate structure when TCC allows */
+    ODEModel_generateCVODEAdjointJacobianFunction(om, buffer);
+  }
   ODEModel_generateEventFunction(om, buffer);
 
   ODEModel_generateCVODERHSFunction(om, buffer);
 
+  /* including sensitivity matrix here implies that re-compilation of
+   all functions is required when sensitivities change, could later
+   be compiled into a separate structure when TCC allows */
   if ( om->sensitivity )
     ODEModel_generateCVODESensitivityFunction(om, buffer);
 
@@ -2069,6 +2140,14 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
 	 SolverError_getNum(FATAL_ERROR_TYPE) )
       return;
+
+    om->compiledCVODEAdjointJacobianFunction =
+      CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			       COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
+
+    if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+	 SolverError_getNum(FATAL_ERROR_TYPE) )
+      return;
   }
 
   om->compiledEventFunction =
@@ -2103,7 +2182,8 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/nvector.h>\n"\
 		    "#include <sbmlsolver/nvector_serial.h>\n"\
 		    "#include <sbmlsolver/dense.h>\n" 
-		    "#include <sbmlsolver/cvode.h>\n"\
+		    "#include <sbmlsolver/cvodes.h>\n"\
+		    "#include <sbmlsolver/cvodea.h>\n"\
 		    "#include <sbmlsolver/cvdense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/cvodeSettings.h>\n"\
@@ -2115,8 +2195,9 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 		    "#include <math.h>\n"\
 		    "#include <nvector_serial.h>\n"\
 		    "#include <dense.h>\n" 
-		    "#include <cvode.h>\n"\
+		    "#include <cvodes.h>\n"\
 		    "#include <cvdense.h>\n"\
+		    "#include <cvodea.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/integratorSettings.h>\n"\
 		    "#include <sbmlsolver/processAST.h>\n"\
@@ -2186,6 +2267,8 @@ SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeMod
 
   if ( !om->compiledCVODEJacobianFunction )
   {
+    /* only for calling independent of solver!!
+       function should have been compiled already */
     ODEModel_compileCVODEFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
   }
@@ -2209,11 +2292,40 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
 
   if ( !om->compiledCVODESenseFunction )
   {
-    ODEModel_compileCVODEFunctions(om);
+    /*!!! currently not used: if TCC multiple states become possible,
+      until then this must have been compiled already within the main
+      compiled code structure */
+    ODEModel_compileCVODESenseFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
   }
 
   return om->compiledCVODESenseFunction;
+}
+
+/** returns the compiled adjoint jacobian function for the given model */
+SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *om)
+{
+  if ( !om->jacobian )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_CANNOT_COMPILE_JACOBIAN_NOT_COMPUTED,
+		      "Attempting to compile adjoint jacobian before "\
+		      "the jacobian is computed\n"\
+		      "Call ODEModel_constructJacobian before calling\n"\
+		      "ODEModel_getCompiledCVODEAdjointJacobianFunction or "\
+		      "ODEModel_getCompiledCVODERHSFunction\n");
+    return NULL;
+  }
+
+  if ( !om->compiledCVODEAdjointJacobianFunction )
+  {
+    /* only for calling independent of solver!!
+       function should have been compiled already */
+    ODEModel_compileCVODEFunctions(om);
+    RETURN_ON_ERRORS_WITH(NULL);
+  }
+
+  return om->compiledCVODEAdjointJacobianFunction;
 }
 
 /** @} */
