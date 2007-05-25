@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.23 2007/05/10 21:21:09 raimc Exp $
+# $Id: Makefile.am,v 1.24 2007/05/25 11:27:21 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -28,7 +28,7 @@
 ## Contributor(s):
 ##     Rainer Machne    
 ##
-INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @SUNDIALS_CFLAGS@
+INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @SUNDIALS_CFLAGS@ @TCC_CFLAGS@
 AM_CFLAGS  = @CFLAGS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \

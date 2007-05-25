@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.10 2007/05/10 22:29:27 raimc Exp $
+dnl $Id: sundials.m4,v 1.11 2007/05/25 11:26:34 raimc Exp $
 
 dnl
 dnl look for SUNDAILS Library headers in some standard set of directories
@@ -16,6 +16,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
   do
     if test -r "$ac_dir/include/cvodes.h"; then
       ac_SUNDIALS_path=$ac_dir
+      with_sundials = "$ac_dir"
       SUNDIALS_CFLAGS="-I$ac_dir/include"
       AC_MSG_RESULT([yes])
       break
@@ -88,9 +89,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   LIBS=$sundials_save_LIBS
   AC_LANG_POP
 
-  AC_DEFINE([USE_SUNDIALS], 1,
-            [Define to 1 to use the SUNDIALS Library])
-  AC_SUBST(USE_SUNDIALS, 1)
+  dnl add the CFLAGS and LDFLAGS for tcc online compilation
   AC_DEFINE_UNQUOTED([SUNDIALS_CFLAGS], "${with_sundials}/include",
             [SUNDIALS include directories])
   AC_DEFINE_UNQUOTED([SUNDIALS_LDFLAGS], "${with_sundials}/lib",
@@ -98,13 +97,21 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB1], "sundials_kinsol",
             [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB2], "sundials_cvodes",
-            [SUNDIALS libs])  AC_SUBST(SUNDIALS_CFLAGS)
+            [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB3], "sundials_nvecserial",
             [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB4], "sundials_shared",
             [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB5], "m",
             [SUNDIALS libs])
+  AC_DEFINE([USE_SUNDIALS], 1,
+            [Define to 1 to use the SUNDIALS Library])
+
+  AC_SUBST(USE_SUNDIALS, 1)
   AC_SUBST(SUNDIALS_LDFLAGS)
   AC_SUBST(SUNDIALS_LIBS)
+  AC_SUBST(SUNDIALS_CFLAGS)
+
+
+
 ])

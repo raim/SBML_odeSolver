@@ -81,7 +81,15 @@ CONFIG_LIB_GRAPHVIZ
 	
 CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 LIBS="-lm -lstdc++"
-	  
+
+dnl add the CFLAGS and LDFLAGS for tcc online compilation
+AC_DEFINE_UNQUOTED([SOSLIB_CFLAGS], "${prefix}/include",
+				    [SOSLIB include directories])
+AC_DEFINE_UNQUOTED([SOSLIB_LDFLAGS], "${prefix}/lib",
+				     [SOSLIB lib directories])
+AC_DEFINE_UNQUOTED([SOSLIB_LIBS], "ODES",
+				  [SOSLIB libs])
+	      
 dnl configure options
 dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
 dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")

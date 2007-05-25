@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 17:47:26 raim>
-  $Id: compiler.c,v 1.15 2007/05/16 16:36:16 raimc Exp $
+  Last changed Time-stamp: <2007-05-25 13:15:10 raim>
+  $Id: compiler.c,v 1.16 2007/05/25 11:27:21 raimc Exp $
 */
 /* 
  *
@@ -196,6 +196,10 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
     /* add include path */
     tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
+    tcc_add_include_path(code->s, SBML_CFLAGS);
+    tcc_add_include_path(code->s, SBML_CFLAGS2);
+    tcc_add_include_path(code->s, TCC_CFLAGS);
+    tcc_add_include_path(code->s, SOSLIB_CFLAGS);
     tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
     tcc_add_library(code->s, SUNDIALS_LIB3);
     tcc_add_library(code->s, SUNDIALS_LIB5);

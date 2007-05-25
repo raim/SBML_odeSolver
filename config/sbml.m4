@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.8 2006/11/24 13:38:54 raimc Exp $
+dnl $Id: sbml.m4,v 1.9 2007/05/25 11:26:34 raimc Exp $
 
 
 dnl
@@ -15,6 +15,7 @@ AC_DEFUN([AC_SBML_PATH],
   do
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
       ac_SBML_includes="$ac_dir"
+      with_libsbml = "$ac_dir"
       dnl include /sbml folder for libSBML 2.3.4 bugs
       SBML_CFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
       AC_MSG_RESULT([yes])
@@ -140,19 +141,33 @@ AC_DEFUN([CONFIG_LIB_SBML],
   fi
 
   dnl work around broken include-header-paths in libsbml-2.3.4
-  SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
+  dnl SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
 
   dnl reset global variables to cached values
   CFLAGS=$sbml_save_CFLAGS
   LDFLAGS=$sbml_save_LDFLAGS
   LIBS=$sbml_save_LIBS
   AC_LANG_POP
+
+  dnl add the CFLAGS and LDFLAGS for tcc online compilation
+  AC_DEFINE_UNQUOTED([SBML_CFLAGS], "${with_libsbml}/include",
+            [SBML include directories])
+  AC_DEFINE_UNQUOTED([SBML_CFLAGS2], "${with_libsbml}/include/sbml",
+            [SBML include directories])
+  AC_DEFINE_UNQUOTED([SBML_LDFLAGS], "${with_libsbml}/lib",
+            [SBML lib directories])
+  AC_DEFINE_UNQUOTED([SBML_LIBS], "sbml",
+            [SBML libs])
+
+
   AC_DEFINE([USE_SBML], 1, [Define to 1 to use the SBML Library])
   AC_SUBST(USE_SBML, 1)
-  AC_DEFINE([OLD_LIBSBML], 0, [Define to 1 to use SBML Library version < 2.2.0])
+  AC_DEFINE([OLD_LIBSBML], 0, [Define to 1 for SBML Library version < 2.2.0])
   AC_SUBST(OLD_LIBSBML)
   AC_SUBST(SBML_CFLAGS)
   AC_SUBST(SBML_LDFLAGS)
   AC_SUBST(SBML_RPATH)
   AC_SUBST(SBML_LIBS)
+
+
 ])

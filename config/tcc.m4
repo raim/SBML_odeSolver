@@ -1,4 +1,4 @@
-dnl $Id: tcc.m4,v 1.3 2007/05/10 19:54:16 raimc Exp $
+dnl $Id: tcc.m4,v 1.4 2007/05/25 11:26:34 raimc Exp $
 
 
 dnl
@@ -15,6 +15,7 @@ AC_DEFUN([AC_TCC_PATH],
   do
     if test -r "$ac_dir/libtcc.h"; then
       ac_TCC_includes="$ac_dir"
+      with_libtcc = "$ac_dir"
       TCC_CFLAGS="-I$ac_TCC_includes"
       AC_MSG_RESULT([yes])
       break
@@ -107,6 +108,13 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
   LIBS=$tcc_save_LIBS
   AC_LANG_POP
   if test $tcc_functional = yes; then
+    dnl add the CFLAGS and LDFLAGS for tcc online compilation
+    AC_DEFINE_UNQUOTED([TCC_CFLAGS], "${with_libtcc}/include",
+              [TCC include directories])
+    AC_DEFINE_UNQUOTED([TCC_LDFLAGS], "${with_libtcc}/lib",
+              [TCC lib directories])
+    AC_DEFINE_UNQUOTED([TCC_LIBS], "tcc",
+              [TCC libs])
     AC_DEFINE([USE_TCC], 1, [Define to 1 to use the TCC Library])
     AC_SUBST(USE_TCC, 1)
     AC_SUBST(TCC_CFLAGS)
