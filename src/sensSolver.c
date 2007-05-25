@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 21:02:34 raim>
-  $Id: sensSolver.c,v 1.53 2007/05/16 19:29:54 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 22:18:54 raim>
+  $Id: sensSolver.c,v 1.54 2007/05/25 14:34:26 raimc Exp $
 */
 /* 
  *
@@ -408,7 +408,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       /* set adjoint quadrature function for sensitivity */
       if ( om->sensitivity )
       {
-	adjointQuadFunction = fQA /*ODEModel_getCompiledCVODEAdjointQuadFunction(om)*/;
+	adjointQuadFunction = ODEModel_getCompiledCVODEAdjointQuadFunction(om);
 	if ( !adjointQuadFunction ) return 0;  /* error */
       }
      }
@@ -565,7 +565,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdataB", 1);
 
     flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE,
-	CV_SS, solver->reltolA, &(opt->AdjError) );
+			       CV_SS, solver->reltolA, &(opt->AdjError) );
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1);
 
     
@@ -692,11 +692,11 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   if ( om->ObjectiveFunction != NULL  )
     ASTNode_free(om->ObjectiveFunction);
 
-  if ((fp = fopen(ObjFunc_file, "r")) == NULL)
-    SolverError_error(   FATAL_ERROR_TYPE,
-			 SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
-			 "File not found "
-			 "in reading objective function"); 
+  if ( (fp = fopen(ObjFunc_file, "r")) == NULL )
+    SolverError_error(FATAL_ERROR_TYPE,
+		      SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
+		      "File not found "
+		      "in reading objective function"); 
 
   /* read line */
   for (i=0; (line = get_line(fp)) != NULL; i++)
@@ -721,9 +721,9 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
 
   if( i > 1)
   {
-   SolverError_error(   FATAL_ERROR_TYPE,
-			SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
-			"Error in processing objective function file"); 
+   SolverError_error(FATAL_ERROR_TYPE,
+		     SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
+		     "Error in processing objective function file"); 
    return 0;
   }
 
@@ -804,11 +804,13 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
 
   ASTNode_free(ObjFun);
 
-  if ( failed != 0 ) {
+  if ( failed != 0 )
+  {
     SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
 		      "%d entries of vector_v could not be "
-		      "constructed, due to failure of differentiation. " , failed);   
+		      "constructed, due to failure of differentiation. " ,
+		      failed);   
   }
  
   return 1;
@@ -816,7 +818,8 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
 
 
 
-/** \brief Sets a general objective function (for ODE solution) via a text input file 
+/** \brief Sets a general objective function (for ODE solution) via a
+    text input file
 */
 SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_t *engine, char *TimeSeriesData_file)
 {
@@ -905,11 +908,14 @@ SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_
 }
 
 
-/** \brief Perform necessary quadratures for ODE/forward/adjoint sensitivity
-          In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
-          it is computed; alternatively, if linear objective is present (prior call to II_setLinearObj), it is computed. 
+/** \brief Perform necessary quadratures for ODE/forward/adjoint
+          sensitivity In forward phase, if nonlinear objective is
+          present (by calling II_setObjectiveFunction) it is computed;
+          alternatively, if linear objective is present (prior call to
+          II_setLinearObj), it is computed.
 
-          In adjoint phase, the backward quadrature for linear objective is performed. 
+          In adjoint phase, the backward quadrature for linear
+          objective is performed.
  */
 SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
 {
@@ -928,20 +934,26 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 
     /* For adj sensitivity components corresponding to IC as parameter */
     for( iS=0; iS<engine->om->nsens; iS++  )
-      if ( data->model->index_sensP[iS] == -1 ){
-        NV_Ith_S(solver->qA, iS) = - data->adjvalue[ data->model->index_sens[iS] ];
+      if ( data->model->index_sensP[iS] == -1 )
+      {
+        NV_Ith_S(solver->qA, iS) =
+	  - data->adjvalue[data->model->index_sens[iS]];
       }
   }
   else
   {
     /* If an objective function exists */
-    if( om->ObjectiveFunction != NULL){
+    if( om->ObjectiveFunction != NULL )
+    {
       flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
       CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
     }
 
-    /* If doing forward sensitivity analysis and vector_v exists, compute sensitivity quadrature */
-    if( opt->Sensitivity && ( om->ObjectiveFunction == NULL  ) && ( om->vector_v != NULL)  ){
+    /* If doing forward sensitivity analysis and vector_v exists,
+       compute sensitivity quadrature */
+    if( opt->Sensitivity && om->ObjectiveFunction == NULL &&
+	om->vector_v != NULL  )
+    {
       flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
       CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
     }
@@ -951,11 +963,14 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 }
 
 
-/** \brief Prints computed quadratures for ODE/forward/adjoint sensitivity
-           In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
-	   it is printed; alternatively, if linear objective is present (prior call to II_setLinearObj) , it is printed. 
+/** \brief Prints computed quadratures for ODE/forward/adjoint
+           sensitivity In forward phase, if nonlinear objective is
+           present (by calling II_setObjectiveFunction) it is printed;
+           alternatively, if linear objective is present (prior call
+           to II_setLinearObj) , it is printed.
 
-	   In adjoint phase, the backward quadrature for linear objective is printed. 
+	   In adjoint phase, the backward quadrature for linear
+	   objective is printed.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine, FILE *f)
@@ -969,7 +984,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
   if(opt->AdjointPhase)
   {
    fprintf(f, "\nExpression for integrand of linear objective J: \n");
-   for(j=0;j<om->neq;j++){       
+   for(j=0;j<om->neq;j++)
+   {       
      /* Append "_data" to observation data in the vector_v AST  */
      tempAST = copyRevertDataAST(om->vector_v[j]); 
      fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) );
@@ -986,17 +1002,20 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
    {  
       /*  Append "_data" to observation data in the vector_v AST */
        tempAST = copyRevertDataAST(om->ObjectiveFunction);
-       fprintf(f, "\nExpression for integrand of objective J: %s \n" ,SBML_formulaToString(tempAST) );
+       fprintf(f, "\nExpression for integrand of objective J: %s \n" ,
+	       SBML_formulaToString(tempAST) );
        fprintf(f, "Computed J=%0.15g \n", NV_Ith_S(engine->solver->q, 0));
        ASTNode_free(tempAST);
    }
    else if ( engine->om->vector_v != NULL  )
    {
       fprintf(f, "\nExpression for integrand of linear objective J: \n");
-      for(j=0;j<om->neq;j++){    
+      for(j=0;j<om->neq;j++)
+      {    
         /* Append "_data" to observation data in the vector_v AST  */
 	tempAST = copyRevertDataAST(om->vector_v[j]); 
-	fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) );
+	fprintf(f, "%d-th component: %s \n" , j,
+		SBML_formulaToString(tempAST) );
         ASTNode_free(tempAST);
       }      
 
@@ -1011,11 +1030,14 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 }
 
 
-/** \brief Prints computed quadratures for ODE/forward/adjoint sensitivity
-           In forward phase, if nonlinear objective is present (by calling II_setObjectiveFunction) 
-	   it is printed; alternatively, if linear objective is present (prior call to II_setLinearObj) , it is printed. 
+/** \brief Prints computed quadratures for ODE/forward/adjoint
+           sensitivity In forward phase, if nonlinear objective is
+           present (by calling II_setObjectiveFunction) it is printed;
+           alternatively, if linear objective is present (prior call
+           to II_setLinearObj) , it is printed.
 
-	   In adjoint phase, the backward quadrature for linear objective is printed. 
+	   In adjoint phase, the backward quadrature for linear
+	   objective is printed.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine, realtype *data)
