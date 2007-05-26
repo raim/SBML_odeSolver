@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 14:15:31 raim>
-  $Id: integratorInstance.c,v 1.84 2007/05/15 12:16:14 raimc Exp $
+  Last changed Time-stamp: <2007-05-26 02:33:35 raim>
+  $Id: integratorInstance.c,v 1.85 2007/05/26 00:34:44 raimc Exp $
 */
 /* 
  *
@@ -655,7 +655,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
   for ( i=0; i<om->nass; i++ )
     /*!!! comment out the following line (also see below) for
       temporary event bug fix !!!*/
-    if ( om->assignmentsBeforeEvents[i] ) 
+/*    if ( om->assignmentsBeforeEvents[i] ) */
       data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
   fired = 0;
@@ -698,7 +698,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
       and MODEL3492674214.xml, possibly related to reaction rate rules !!!*/
     /*!!! comment out the following line (also see below) for
       temporary event bug fix !!!*/
-    if (om->assignmentsAfterEvents[i])
+   /* if (om->assignmentsAfterEvents[i]) */
       data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
 
   /** and return the number of fired events. */
