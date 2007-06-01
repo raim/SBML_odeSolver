@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 20:16:40 raim>
-  $Id: odeModel.h,v 1.34 2007/05/16 19:29:55 raimc Exp $ 
+  $Id: odeModel.h,v 1.35 2007/06/01 10:31:36 jamescclu Exp $ 
 */
 /* 
  *
@@ -137,6 +137,10 @@ extern "C" {
                                                     used, until TCC can handle
 						    multiple states !!!*/
     /* compilation of adjoint functions */
+    CVRhsFnB compiledCVODEAdjointRhsFunction; /**< CVODE adjoint rhs function created
+					                 by compiling code generated
+					                 from model */
+
     CVDenseJacFnB compiledCVODEAdjointJacobianFunction; /**< CVODE
 							   adjoint
 							   jacobian
@@ -212,6 +216,7 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(odeModel_t *);
   SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *);
