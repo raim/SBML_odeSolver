@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-25 13:15:10 raim>
-  $Id: compiler.c,v 1.16 2007/05/25 11:27:21 raimc Exp $
+  $Id: compiler.c,v 1.17 2007/06/01 10:28:35 jamescclu Exp $
 */
 /* 
  *
@@ -34,6 +34,7 @@
 
 #include "compiler.h"
 #include "solverError.h"
+#include "processAST.h"
 
 /* System specific definitions,
    created by configure script */
@@ -203,12 +204,17 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
     tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
     tcc_add_library(code->s, SUNDIALS_LIB3);
     tcc_add_library(code->s, SUNDIALS_LIB5);
-
+    
     /* compile with TCC :) */
     failed = tcc_compile_string(code->s, sourceCode);
     if ( failed != 0 )
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 			"Online compilation failed - returned %d", failed);
+
+    failed = tcc_add_symbol(code->s, "evaluateAST", (unsigned long)& evaluateAST);
+    if ( failed != 0 )
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"TCC failed: couldn't add symbol evaluateAST");
 
     failed = tcc_relocate(code->s);
     if ( failed != 0 )
