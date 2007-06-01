@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.79 2007/05/16 19:29:54 raimc Exp $ 
+  $Id: odeModel.c,v 1.80 2007/06/01 10:29:17 jamescclu Exp $ 
 */
 /* 
  *
@@ -66,6 +66,7 @@
 #include "sbmlsolver/compiler.h"
 
 #define COMPILED_RHS_FUNCTION_NAME "ode_f"
+#define COMPILED_ADJOINT_RHS_FUNCTION_NAME "adjode_f"
 #define COMPILED_JACOBIAN_FUNCTION_NAME "jacobi_f"
 #define COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME "adj_jacobi_f"
 #define COMPILED_EVENT_FUNCTION_NAME "event_f"
@@ -1841,6 +1842,73 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
   CharBuffer_append(buffer, "}\n");
 }
 
+
+/* appends compiled code to the given buffer for the function called
+   by the value of 'COMPILED_ADJRHS_FUNCTION_NAME' which calculates the
+   right hand side ODE values for the adjoint ODEs being solved. */
+void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
+{
+  int i,j ;
+
+  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,COMPILED_ADJOINT_RHS_FUNCTION_NAME);
+  CharBuffer_append(buffer,
+		    "(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)\n"\
+		    "{\n"\
+		    "    int i;\n"\
+		    "    realtype *ydata, *yAdata, *dyAdata;\n"\
+		    "    cvodeData_t *data;\n"\
+                    "    double *value ;\n"\
+		    "    data = (cvodeData_t *) fA_data;\n"\
+                    "    value = data->value;\n"\
+                    "    ydata = NV_DATA_S(y);\n"\
+		    "    yAdata = NV_DATA_S(yA);\n"\
+		    "    dyAdata = NV_DATA_S(yAdot);\n" );
+
+
+  /*  update ODE variables from CVODE */
+  for ( i=0; i<om->neq; i++ ){
+     CharBuffer_append(buffer,  "value[");
+     CharBuffer_appendInt(buffer, i);
+     CharBuffer_append(buffer,  "] = ydata[");
+     CharBuffer_appendInt(buffer, i);
+     CharBuffer_append(buffer,  "];\n" );
+  }
+
+  /* update time  */
+  CharBuffer_append(buffer, "data->currenttime = t;\n");
+
+ 
+  /*  evaluate adjoint sensitivity RHS: -[df/dx]^T * yA + v */
+  for ( i=0; i<om->neq; i++ )
+  {
+    CharBuffer_append(buffer, "dyAdata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = 0.0;\n");
+    for ( j=0; j<om->neq; j++ ){
+      CharBuffer_append(buffer, "dyAdata[");
+      CharBuffer_appendInt(buffer, i);
+      CharBuffer_append(buffer, "]");
+      CharBuffer_append(buffer, "-= ");
+      generateAST(buffer, om->jacob[j][i]);
+      CharBuffer_append(buffer, " * yAdata[");
+      CharBuffer_appendInt(buffer, j);
+      CharBuffer_append(buffer, "];\n");
+    }
+  
+    CharBuffer_append(buffer, "dyAdata[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] +=");
+    CharBuffer_append(buffer, " evaluateAST( data->model->vector_v[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "], data);\n");
+
+  }
+ 
+
+  CharBuffer_append(buffer, "}\n\n");
+}
+
 /* appends compiled code to the given buffer for the function called by
    the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
    calculates the Jacobian for the set of ODEs being solved. */
@@ -1938,14 +2006,14 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
   /** evaluate Jacobian J = df/dx */
   for ( i=0; i<om->neq; i++ )
   {
-    for ( j=0; j<om->neq; j++ ) 
+    for ( j=0; j<om->neq; j++ )
     {
       CharBuffer_append(buffer, "DENSE_ELEM(JB,");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, ",");
       CharBuffer_appendInt(buffer, j);
       CharBuffer_append(buffer, ") = - (");
-      generateAST(buffer, om->jacob[i][j]);
+      generateAST(buffer, om->jacob[j][i]);
       CharBuffer_append(buffer, ");\n");
     }
   }
@@ -2094,7 +2162,7 @@ void ODEModel_generateCVODEAdjointQuadFunction(odeModel_t *om,
 	CharBuffer_append(buffer, "][");
 	CharBuffer_appendInt(buffer,om->index_sensP[i]);
 	CharBuffer_append(buffer, "]  */ \n");
-      }      
+      }
     }
   }
   /* CharBuffer_append(buffer, "printf(\"qa\");"); */
@@ -2144,6 +2212,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/integratorSettings.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
+                    "#include <sbmlsolver/processAST.h>\n"\
+                    "#include <sbmlsolver/ASTIndexNameNode.h>\n"\
 		    "#define DLL_EXPORT\n");
 #endif
 
@@ -2167,6 +2237,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
   {
     ODEModel_generateCVODESensitivityFunction(om, buffer);
     /* this could be made optional */
+    ODEModel_generateCVODEAdjointRHSFunction(om, buffer);
     ODEModel_generateCVODEAdjointQuadFunction(om, buffer);
   }
 
@@ -2203,7 +2274,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			       COMPILED_JACOBIAN_FUNCTION_NAME);
 
-    if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
+     if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
 	 SolverError_getNum(FATAL_ERROR_TYPE) )
       return;
 
@@ -2229,6 +2300,11 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
      om->compiledCVODESenseFunction =
        CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 				COMPILED_SENSITIVITY_FUNCTION_NAME);
+
+     om->compiledCVODEAdjointRhsFunction =
+       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+				COMPILED_ADJOINT_RHS_FUNCTION_NAME);
+
      om->compiledCVODEAdjointQuadFunction =
        CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 				COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
@@ -2373,6 +2449,29 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
   }
 
   return om->compiledCVODESenseFunction;
+}
+
+/** returns the compiled adjoint RHS ODE function for the given model */
+SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *om)
+{
+  if ( !om->sensitivity )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_CANNOT_COMPILE_SENSITIVTY_NOT_COMPUTED,
+		      "Attempting to compile adjoint RHS before " \
+		      "the parametric matrix is computed\n"		\
+		      "Call ODEModel_constructSensitivity before calling\n" \
+		      "ODEModel_getCompiledCVODEAdjointRHSFunction\n");
+    return NULL;
+  }
+
+  if ( !om->compiledCVODEAdjointRhsFunction )
+  {
+    ODEModel_compileCVODEFunctions(om);
+    RETURN_ON_ERRORS_WITH(NULL);
+  }
+
+  return om->compiledCVODEAdjointRhsFunction;
 }
 
 /** returns the compiled adjoint jacobian function for the given model */
