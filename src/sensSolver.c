@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 22:18:54 raim>
-  $Id: sensSolver.c,v 1.54 2007/05/25 14:34:26 raimc Exp $
+  $Id: sensSolver.c,v 1.55 2007/06/01 10:30:15 jamescclu Exp $
 */
 /* 
  *
@@ -199,6 +199,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   CVSensRhs1Fn sensRhsFunction = NULL;
   CVDenseJacFnB jacA = NULL;
   CVQuadRhsFnB adjointQuadFunction = NULL;
+  CVRhsFnB adjointRHSFunction = NULL;
   
   /* adjoint specific*/
   int method, iteration;
@@ -411,11 +412,16 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	adjointQuadFunction = ODEModel_getCompiledCVODEAdjointQuadFunction(om);
 	if ( !adjointQuadFunction ) return 0;  /* error */
       }
+
+      adjointRHSFunction = ODEModel_getCompiledCVODEAdjointRHSFunction(om);
+      if ( !adjointRHSFunction ) return 0;  /* error */
+
      }
     else
     {
       jacA = JacA;
       adjointQuadFunction = fQA ;
+      adjointRHSFunction = fA;
     }
     
     /*  Allocate yA, abstolA vectors */
@@ -489,14 +495,14 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
       CVODE_HANDLE_ERROR(&flag, "CVodeCreateB", 1);
 
-      flag = CVodeMallocB(solver->cvadj_mem, fA, solver->t0,
+      flag = CVodeMallocB(solver->cvadj_mem, adjointRHSFunction, solver->t0,
 			  solver->yA, CV_SV, solver->reltolA,
 			  solver->abstolA);
       CVODE_HANDLE_ERROR(&flag, "CVodeMallocB", 1);
     }
     else
     {
-      flag = CVodeReInitB(solver->cvadj_mem, fA, solver->t0,
+      flag = CVodeReInitB(solver->cvadj_mem, adjointRHSFunction, solver->t0,
 			  solver->yA, CV_SV, solver->reltolA,
 			  solver->abstolA);
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
@@ -516,7 +522,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVodeSetMaxNumStepsB(solver->cvadj_mem, opt->Mxstep);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxNumStepsB", 1);
 
-
+   
     if ( solver->qA == NULL )
     {
       solver->qA = N_VNew_Serial(om->nsens);
@@ -1062,8 +1068,6 @@ SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine
   return(1);
 }
 
-
-
 /* Extension of copyAST, for adding to the AST having ASTNode_isSetData
    by attaching the string extension "_data" to variable names */
 static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
@@ -1165,8 +1169,6 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   /* printf("s"); */
 }
 
-
-
 /********* Additional Function for Adjoint Sensitivity Analysis **********/
 
 /**
@@ -1190,7 +1192,7 @@ void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
   yAdata = NV_DATA_S(yA);
   dyAdata = NV_DATA_S(yAdot);
 
-  /* update ODE variables from CVODE  */  
+  /* update ODE variables from CVODE  */
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
  
   /* update time */
@@ -1201,7 +1203,7 @@ void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
   for(i=0; i<data->model->neq; i++)
   {
     dyAdata[i] = 0;
-    for (j=0; j<data->model->neq; j++) 
+    for (j=0; j<data->model->neq; j++)
       dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];
     
     /*  Vector v contribution */
