@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-13 04:48:42 raim>
-  $Id: cvodeData.h,v 1.5 2006/10/13 05:21:28 raimc Exp $
+  Last changed Time-stamp: <2007-06-08 17:47:13 xtof>
+  $Id: cvodeData.h,v 1.6 2007/06/12 13:41:06 chfl Exp $
 */
 /* 
  *
@@ -38,7 +38,7 @@
 #define _CVODEDATA_H_
 
 /* Header Files for CVODE: required only for realtype *p  */
-#include "nvector_serial.h"
+#include "nvector/nvector_serial.h"
 
 #include <stdio.h>
 #include <sbml/SBMLTypes.h>
