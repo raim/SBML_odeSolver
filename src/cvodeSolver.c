@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 18:25:34 raim>
-  $Id: cvodeSolver.c,v 1.58 2007/05/16 16:33:58 raimc Exp $
+  Last changed Time-stamp: <2007-06-12 15:10:43 xtof>
+  $Id: cvodeSolver.c,v 1.59 2007/06/12 13:15:16 chfl Exp $
 */
 /* 
  *
@@ -47,10 +47,9 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "cvodes.h"    
-#include "cvodea.h"  
-#include "cvdense.h"
-#include "nvector_serial.h"  
+#include "cvodes/cvodes.h"    
+#include "cvodes/cvodes_dense.h"
+#include "nvector/nvector_serial.h"  
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
@@ -62,7 +61,11 @@
 #include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/modelSimplify.h"
 
-void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
+static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
+static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
+static int JacODE(long int N, DenseMat J, realtype t,
+		  N_Vector y, N_Vector fy, void *jac_data,
+		  N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
 
 /** Calls CVODE to move the current simulation one time step.
 
@@ -632,7 +635,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       if ( solver->cvadj_mem == NULL )
       {
 	solver->cvadj_mem =
-	  CVadjMalloc(solver->cvode_mem, opt->nSaveSteps);
+	  CVadjMalloc(solver->cvode_mem, opt->nSaveSteps, CV_HERMITE);
 	CVODE_HANDLE_ERROR((void *)solver->cvadj_mem, "CVadjMalloc", 0);
       }
     }
@@ -702,14 +705,14 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
   /* Free the integrator memory */
   if (engine->solver->cvode_mem != NULL)
   {
-    CVodeFree(engine->solver->cvode_mem);
+    CVodeFree(&engine->solver->cvode_mem);
     engine->solver->cvode_mem = NULL;
   }
 
   /* Free the adjoint memory */
   if (engine->solver->cvadj_mem != NULL)
   {
-    CVadjFree(engine->solver->cvadj_mem);
+    CVadjFree(&engine->solver->cvadj_mem);
     engine->solver->cvadj_mem = NULL;
   }
 
@@ -884,7 +887,7 @@ int check_flag(void *flagvalue, char *funcname, int opt)
 
 */
 
-void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
+static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 {
   
   int i;
@@ -922,6 +925,7 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
     for ( i=0; i<data->nsens; i++ )
       data->value[data->model->index_sens[i]] = data->p_orig[i];
 
+  return (0);
 }
 
 /**
@@ -934,9 +938,9 @@ void f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-void JacODE(long int N, DenseMat J, realtype t,
-	    N_Vector y, N_Vector fy, void *jac_data,
-	    N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
+static int JacODE(long int N, DenseMat J, realtype t,
+		  N_Vector y, N_Vector fy, void *jac_data,
+		  N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
 {
   
   int i, j;
@@ -962,12 +966,13 @@ void JacODE(long int N, DenseMat J, realtype t,
   for ( i=0; i<data->model->neq; i++ ) 
     for ( j=0; j<data->model->neq; j++ ) 
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
+
+  return (0);
 }
 
 
 
-
-void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
+static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 {
   int i;
   realtype *ydata, *dqdata;
@@ -993,7 +998,9 @@ void fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
     dqdata[i] = 0.0;
 
   /* only the first component matters */
-  dqdata[0] += evaluateAST(engine->om->ObjectiveFunction, data); 
+  dqdata[0] += evaluateAST(engine->om->ObjectiveFunction, data);
+
+  return (0);
 }
 
 
