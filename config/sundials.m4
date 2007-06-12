@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.11 2007/05/25 11:26:34 raimc Exp $
+dnl $Id: sundials.m4,v 1.12 2007/06/12 13:17:04 chfl Exp $
 
 dnl
 dnl look for SUNDAILS Library headers in some standard set of directories
@@ -28,7 +28,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
       SUNDIALS_LDFLAGS="-L$ac_dir/lib"
-      SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lsundials_shared"
+      SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -55,7 +55,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   else
     SUNDIALS_CFLAGS="-I$with_sundials/include"
     SUNDIALS_LDFLAGS="-L$with_sundials/lib"
-    SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lsundials_shared"
+    SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
   fi
   dnl check if SUNDIALS Library is functional
   AC_MSG_CHECKING([correct functioning of SUNDIALS])
@@ -69,7 +69,8 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   LDFLAGS="$LDFLAGS $SUNDIALS_LDFLAGS"
   LIBS="$SUNDIALS_LIBS $LIBS"
   dnl can we link a mini program with cvodes?
-  AC_TRY_LINK([#include <nvector_serial.h>],
+  AC_TRY_LINK([#include <sundials/sundials_nvector.h>],
+    [#include <nvector/nvector_serial.h>]
     [N_Vector y; y = N_VNew_Serial(3); N_VDestroy_Serial(y);],
     [sundials_functional=yes],
     [sundials_functional=no])
