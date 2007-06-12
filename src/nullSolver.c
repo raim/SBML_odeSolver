@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:55:11 raim>
-  $Id: nullSolver.c,v 1.11 2006/06/13 15:07:47 raimc Exp $
+  Last changed Time-stamp: <2007-06-12 12:51:36 xtof>
+  $Id: nullSolver.c,v 1.12 2007/06/12 13:27:28 chfl Exp $
 */
 /* 
  *
@@ -50,10 +50,10 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "kinsol.h"
-#include "kinspgmr.h"
-#include "cvdense.h"
-#include "nvector_serial.h"  
+#include "kinsol/kinsol.h"
+#include "kinsol/kinsol_spgmr.h"
+#include "cvodes/cvodes_dense.h"
+#include "nvector/nvector_serial.h"  
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
@@ -66,7 +66,7 @@
 
 
 /* Prototypes of functions called by KINSOL */
-static void func(N_Vector y, N_Vector dy, void *data);
+static int func(N_Vector y, N_Vector dy, void *data);
 static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
 		booleantype *new_u, void *data);
 
@@ -271,7 +271,7 @@ void IntegratorInstance_freeKINSolverStructures(integratorInstance_t *engine)
 {
   N_VDestroy_Serial(engine->solver->y);
   N_VDestroy_Serial(engine->solver->abstol);
-  KINFree(engine->solver->cvode_mem);
+  KINFree(&engine->solver->cvode_mem);
 }
 
 /** \brief Prints some final statistics of the calls to CVODE routines
@@ -293,7 +293,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInsta
    This function is called by KIN's solving routines every time
    needed. 
 */
-static void func(N_Vector y, N_Vector dydt, void *f_data)
+static int func(N_Vector y, N_Vector dydt, void *f_data)
 {
   int i;
   realtype *ydata, *dydata;
@@ -318,6 +318,8 @@ static void func(N_Vector y, N_Vector dydt, void *f_data)
   /* evaluate f(y) = dy/dt */
   for ( i=0; i<data->model->neq; i++ ) 
     dydata[i] = evaluateAST(data->model->ode[i],data);
+
+  return (0);
 }
 
 
@@ -356,6 +358,7 @@ static int JacV(N_Vector v, N_Vector Jv, N_Vector y,
   }
 
   *new_u = TRUE;      
+
   return 0;
 }
 
