@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 20:16:40 raim>
-  $Id: odeModel.h,v 1.35 2007/06/01 10:31:36 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-06-12 15:47:41 xtof>
+  $Id: odeModel.h,v 1.36 2007/06/12 13:46:59 chfl Exp $ 
 */
 /* 
  *
@@ -36,9 +36,8 @@
 #ifndef _ODEMODEL_H_
 #define _ODEMODEL_H_
 
-#include <cvodes.h>
-#include <cvdense.h>
-#include <cvodea.h>
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_dense.h>
 
 #include <sbml/SBMLTypes.h>
 
