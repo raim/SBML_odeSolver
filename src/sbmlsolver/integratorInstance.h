@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:09:10 raim>
-  $Id: integratorInstance.h,v 1.33 2006/11/16 09:53:52 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-06-08 17:55:58 xtof>
+  $Id: integratorInstance.h,v 1.34 2007/06/12 13:44:12 chfl Exp $ 
 */
 /* 
  *
@@ -38,7 +38,7 @@
 
 #include <time.h>
 /* Header Files for CVODE */
-#include "nvector_serial.h"
+#include "nvector/nvector_serial.h"
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorSettings.h"
