@@ -3,7 +3,7 @@ dnl Autoconf initialization.
 dnl
 dnl Bug reports are sent to {raim,xtof}@tbi.univie.ac.at
 dnl ---------------------------------------------------------------------------
-
+           
 if test -f "VERSION.txt"; then
    m4_define(ODES_VERSION,
        m4_esyscmd(cat VERSION.txt  | sed 's/\-.*$//' | tr -d '\n\r'))
@@ -240,8 +240,12 @@ if test $yes_graphviz = yes; then
 else
    echo "GRAPHVIZ functionality will NOT be installed!"	
 fi
+
 echo ""
 echo "NOTE:"
-echo "     Unfortunately the current version of the SBML ODE Solver"
-echo "     only works with the libSBML version >= 2.3.2.           "
+echo "     SOSlib has the following dependencies:"
+echo "     (*) SUNDIALS suite v3.2.0"
+echo "     (*) libsbml v2.3.4"
+echo "     (*) libxerces-c v2.7.0 or expat v2.0.0"
+echo "     (*) tcc from http://savannah.nongnu.org/projects/tinycc"
 echo ""
