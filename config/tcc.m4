@@ -1,4 +1,4 @@
-dnl $Id: tcc.m4,v 1.4 2007/05/25 11:26:34 raimc Exp $
+dnl $Id: tcc.m4,v 1.5 2007/06/12 13:17:31 chfl Exp $
 
 
 dnl
@@ -15,7 +15,7 @@ AC_DEFUN([AC_TCC_PATH],
   do
     if test -r "$ac_dir/libtcc.h"; then
       ac_TCC_includes="$ac_dir"
-      with_libtcc = "$ac_dir"
+      with_libtcc="$ac_dir"
       TCC_CFLAGS="-I$ac_TCC_includes"
       AC_MSG_RESULT([yes])
       break
