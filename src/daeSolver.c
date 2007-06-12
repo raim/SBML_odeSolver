@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:54:38 raim>
-  $Id: daeSolver.c,v 1.12 2007/03/21 15:15:46 jamescclu Exp $
+  Last changed Time-stamp: <2007-06-08 18:35:02 xtof>
+  $Id: daeSolver.c,v 1.13 2007/06/12 13:21:22 chfl Exp $
 */
 /* 
  *
@@ -52,10 +52,10 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "ida.h"    
-#include "idadense.h"
-#include "cvdense.h"
-#include "nvector_serial.h"  
+#include "ida/ida.h"    
+#include "ida/ida_dense.h"
+#include "cvodes/cvodes_dense.h"
+#include "nvector/nvector_serial.h"  
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
@@ -69,11 +69,11 @@
 /* Prototypes of functions called by IDA */
 
 static int fRes(realtype tres, N_Vector yy, N_Vector yp,
-	 N_Vector resval, void *rdata);
+		N_Vector resval, void *rdata);
 
-static void JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
-           N_Vector resvec, realtype cj, void *jdata, DenseMat JJ,
-           N_Vector tempv1, N_Vector tempv2, N_Vector tempv3);
+static int JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
+		  N_Vector resvec, realtype cj, void *jdata, DenseMat JJ,
+		  N_Vector tempv1, N_Vector tempv2, N_Vector tempv3);
 
 
 static void
@@ -411,7 +411,7 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
    back to IDA's internal vector DENSE_ELEM(J,i,j).
 */
 
-static void
+static int
 JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
            N_Vector resvec, realtype cj, void *jac_data, DenseMat J,
            N_Vector tempv1, N_Vector tempv2, N_Vector tempv3)
@@ -450,6 +450,7 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
     for ( j=0; j<data->model->nalg; j++ ) 
       DENSE_ELEM(J,i,j) = 1.; /* algebraic jacobian here!! */
 
+  return (0);
 }
 
 
