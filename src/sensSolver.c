@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 22:18:54 raim>
-  $Id: sensSolver.c,v 1.55 2007/06/01 10:30:15 jamescclu Exp $
+  Last changed Time-stamp: <2007-06-12 14:42:34 xtof>
+  $Id: sensSolver.c,v 1.56 2007/06/12 13:39:39 chfl Exp $
 */
 /* 
  *
@@ -47,10 +47,9 @@
 
 
 /* Header Files for CVODE */
-#include "cvodes.h"    
-#include "cvodea.h"  
-#include "cvdense.h"
-#include "nvector_serial.h"  
+#include "cvodes/cvodes.h"    
+#include "cvodes/cvodes_dense.h"
+#include "nvector/nvector_serial.h"  
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
@@ -70,21 +69,23 @@
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
  */
-void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
-	int iS, N_Vector yS, N_Vector ySdot,
-	void *fS_data, N_Vector tmp1, N_Vector tmp2);
+static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
+	      int iS, N_Vector yS, N_Vector ySdot,
+	      void *fS_data, N_Vector tmp1, N_Vector tmp2);
 
 
-void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data);
+static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
+	      void *fA_data);
 
 
-void JacA(long int NB, DenseMat JA, realtype t,
-	  N_Vector y, N_Vector yA, N_Vector fyA, void *jac_dataA,
-	  N_Vector tmp1A, N_Vector tmp2A, N_Vector tmp3A);
+static int JacA(long int NB, DenseMat JA, realtype t,
+		N_Vector y, N_Vector yA, N_Vector fyA, void *jac_dataA,
+		N_Vector tmp1A, N_Vector tmp2A, N_Vector tmp3A);
 
-void fQA(realtype t, N_Vector y, N_Vector yA, N_Vector qAdot, void *fQ_dataA);
+static int fQA(realtype t, N_Vector y, N_Vector yA, N_Vector qAdot,
+	       void *fQ_dataA);
 
-void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
+static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
 static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *);
 
@@ -250,9 +251,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     reinit = 1;
     if ( solver->yS == NULL )
     {
-      solver->yS = N_VNewVectorArray_Serial(data->nsens, data->neq);
+      N_Vector y;
+
+      y = N_VNew_Serial(data->neq);
+      solver->yS = N_VCloneVectorArray_Serial(data->nsens, y);
       CVODE_HANDLE_ERROR((void *)solver->yS, "N_VNewVectorArray_Serial", 0);
       reinit = 0;
+      N_VDestroy_Serial(y);
     }
 
     /* fill sens. and senstol data, yS and senstol:
@@ -297,19 +302,19 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* was construction of Jacobian and parametric matrix successfull ? */
     if ( om->sensitivity && om->jacobian )
     {
-      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction);
+      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn Matrix", 1);
 
-      flag = CVodeSetSensFdata(solver->cvode_mem, data);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensFdata", 1);
+/*       flag = CVodeSetSensFdata(solver->cvode_mem, data); */
+/*       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensFdata", 1); */
     }
     else
     {
-      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL);
+      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn NULL", 1);
       
-      flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /* what is it? */
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRho", 1);
+/*       flag = CVodeSetSensRho(solver->cvode_mem, 0.0); /\* what is it? *\/ */
+/*       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRho", 1); */
  
     }
 
@@ -1137,9 +1142,9 @@ static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
  not `static' only for including it in the documentation!
 */
 
-void fS(int Ns, realtype t, N_Vector y, N_Vector ydot, 
-	int iS, N_Vector yS, N_Vector ySdot, 
-	void *fS_data, N_Vector tmp1, N_Vector tmp2)
+static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot, 
+	      int iS, N_Vector yS, N_Vector ySdot, 
+	      void *fS_data, N_Vector tmp1, N_Vector tmp2)
 {
   int i, j;
   realtype *ydata, *ySdata, *dySdata;
@@ -1167,6 +1172,8 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]], data);
   }
   /* printf("s"); */
+
+  return (0);
 }
 
 /********* Additional Function for Adjoint Sensitivity Analysis **********/
@@ -1181,7 +1188,8 @@ void fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
  and writes the results back to CVODE's N_Vector yAdot.
 */
 
-void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
+static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
+	      void *fA_data)
 {
   int i, j;
   realtype *ydata, *yAdata, *dyAdata;
@@ -1210,6 +1218,7 @@ void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
     dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
   }
   
+  return (0);
 }
 
 /**
@@ -1223,9 +1232,9 @@ void fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-void JacA(long int NB, DenseMat JB, realtype t,
-	  N_Vector y, N_Vector yB, N_Vector fyB, void *jac_dataB,
-	  N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
+static int JacA(long int NB, DenseMat JB, realtype t,
+		N_Vector y, N_Vector yB, N_Vector fyB, void *jac_dataB,
+		N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
 
   int i, j;
@@ -1244,11 +1253,13 @@ void JacA(long int NB, DenseMat JB, realtype t,
   for ( i=0; i<data->model->neq; i++ ) 
     for ( j=0; j<data->model->neq; j++ ) 
       DENSE_ELEM(JB,i,j) = - evaluateAST(data->model->jacob[j][i], data);
+
+  return (0);
 }
 
 
-void fQA(realtype t, N_Vector y, N_Vector yA, 
-	 N_Vector qAdot, void *fA_data)
+static int fQA(realtype t, N_Vector y, N_Vector yA, 
+	       N_Vector qAdot, void *fA_data)
 { 
   int i, j;
   realtype *ydata, *yAdata, *dqAdata;
@@ -1277,10 +1288,11 @@ void fQA(realtype t, N_Vector y, N_Vector yA,
 	  evaluateAST(data->model->sens[j][data->model->index_sensP[i]], data);
   }
 
+  return (0);
 }
 
 
-void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
+static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 {
   int i, j, flag;
   realtype *ydata, *dqdata;
@@ -1288,6 +1300,7 @@ void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
   cvodeSolver_t *solver; 
   integratorInstance_t *engine;
   N_Vector *yS;
+  N_Vector yy;
   
   engine = (integratorInstance_t *) fQ_data;
   solver = engine->solver;
@@ -1303,7 +1316,9 @@ void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
   data->currenttime = t;
 
   /* update sensitivities */
-  yS = N_VNewVectorArray_Serial(data->model->nsens, data->model->neq);
+  yy = N_VNew_Serial(data->model->neq);
+  yS = N_VCloneVectorArray_Serial(data->model->nsens, yy);
+  N_VDestroy_Serial(yy);
 
   /*  At t=0, yS is initialized to 0. In this case, CvodeGetSens
       shouldn't be used as it gives nan's */
@@ -1331,6 +1346,7 @@ void fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 
   N_VDestroyVectorArray_Serial(yS, data->model->nsens);
 
+  return (0);
 }
 
 
