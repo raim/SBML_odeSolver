@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.80 2007/06/01 10:29:17 jamescclu Exp $ 
+  $Id: odeModel.c,v 1.81 2007/06/15 08:50:18 jamescclu Exp $ 
 */
 /* 
  *
@@ -1773,6 +1773,7 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 			"    trigger[");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, "] = 0;\n"\
+
 			"}\n");
     }
   }
@@ -1789,7 +1790,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i ;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_RHS_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(realtype t, N_Vector y, N_Vector ydot, void *f_data)\n"\
@@ -1797,27 +1798,17 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 		    "    int i;\n"\
 		    "    realtype *ydata, *dydata;\n"\
 		    "    cvodeData_t *data;\n"\
-		    "    double *value ;\n"\
-		    "    data = (struct cvodeData *) f_data;\n"\
+		    "    realtype *value ;\n"\
+		    "    data = (cvodeData_t *) f_data;\n"\
 		    "    value = data->value;\n"\
 		    "    ydata = NV_DATA_S(y);\n"\
 		    "    dydata = NV_DATA_S(ydot);\n");
 
-  /* update parameters: p is modified by CVODES,
-     if fS could not be generated  */
-
   /* update time  */
   CharBuffer_append(buffer, "data->currenttime = t;\n");
 
-  CharBuffer_append(buffer,
-		    "if ( data->opt->Sensitivity && " \
-		    " !data->model->sensitivity )\n"\
-		    "    for ( i=0; i<data->nsens; i++ )\n"\
-		    "    data->value[data->model->index_sens[i]] = "\
-		    "data->p[i];\n");
-
   /* update ODE variables from CVODE */
-  for ( i=0; i<om->neq; i++ ) 
+  for ( i=0; i<om->neq; i++ )
   {
     CharBuffer_append(buffer, "value[");
     CharBuffer_appendInt(buffer, i);
@@ -1825,6 +1816,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     CharBuffer_appendInt(buffer, i);
     CharBuffer_append(buffer, "];\n");
   }
+
 
   /* update assignment rules */
   ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeODEs, buffer);
@@ -1838,7 +1830,32 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     generateAST(buffer, om->ode[i]);
     CharBuffer_append(buffer, ";\n");
   }
- /*  CharBuffer_append(buffer, "printf(\"F\");");*/
+
+ /*   CharBuffer_append(buffer, "fprintf(stderr, "); */
+/*    CharBuffer_append(buffer, " \"time = %lf \n \" , t"); */
+/*    CharBuffer_append(buffer, "); \n "); */
+
+/*      for ( i=0; i<om->neq; i++ )  */
+/*   { */
+/*      CharBuffer_append(buffer, "fprintf(stderr, "); */
+/*      CharBuffer_append(buffer, " \"value = %lf \n \" , value["); */
+/* 			 CharBuffer_appendInt(buffer,i); */
+/*        CharBuffer_append(buffer, "] "); */
+/*        CharBuffer_append(buffer, "); \n "); */
+/*   } */    
+/*     CharBuffer_append(buffer, "fprintf(stderr,\" \n \"); "); */
+/*     for ( i=0; i<om->neq; i++ )  */
+/*   { */
+/*      CharBuffer_append(buffer, "fprintf(stderr, "); */
+/*      CharBuffer_append(buffer, " \"dydata = %lf \n \" , dydata["); */
+/*      CharBuffer_appendInt(buffer,i); */
+/*        CharBuffer_append(buffer, "] "); */
+/*        CharBuffer_append(buffer, "); \n "); */
+/*   } */
+/*     CharBuffer_append(buffer, "fprintf(stderr,\" \n \"); "); */
+
+
+  CharBuffer_append(buffer, "return (0);\n");
   CharBuffer_append(buffer, "}\n");
 }
 
@@ -1850,7 +1867,7 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 {
   int i,j ;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_RHS_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)\n"\
@@ -1905,6 +1922,7 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 
   }
  
+  CharBuffer_append(buffer, "return (0);\n");
 
   CharBuffer_append(buffer, "}\n\n");
 }
@@ -1917,7 +1935,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 {
   int i, j ;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(long int N, DenseMat J, realtype t,\n"\
@@ -1964,6 +1982,8 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"J\");"); */
+  CharBuffer_append(buffer, "return (0);\n");
+
   CharBuffer_append(buffer, "}\n");
 }
 
@@ -1975,7 +1995,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 {
   int i, j ;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(long int NB, DenseMat JB, realtype t, N_Vector y,\n" \
@@ -2018,6 +2038,8 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"JA\");"); */
+   CharBuffer_append(buffer, "return (0);\n");
+
   CharBuffer_append(buffer, "}\n");
 }
 
@@ -2030,7 +2052,7 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
 {
   int i, j, k;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_SENSITIVITY_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(int Ns, realtype t, N_Vector y, N_Vector ydot,\n"\
@@ -2088,10 +2110,12 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
       CharBuffer_append(buffer, "dySdata[");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, "] += ");
+
       if ( om->index_sensP[k] == -1 )
 	CharBuffer_appendInt(buffer, 0);
-      else 
+      else
 	generateAST(buffer, om->sens[i][om->index_sensP[k]]);
+
       CharBuffer_append(buffer, "; ");
       CharBuffer_append(buffer, " /* om->sens[");
       CharBuffer_appendInt(buffer, i);
@@ -2101,6 +2125,8 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"S\");"); */
+   CharBuffer_append(buffer, "return (0);\n");
+
   CharBuffer_append(buffer, "}\n\n");
 }
 
@@ -2112,7 +2138,7 @@ void ODEModel_generateCVODEAdjointQuadFunction(odeModel_t *om,
 {
   int i, j;
 
-  CharBuffer_append(buffer,"DLL_EXPORT void ");
+  CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
   CharBuffer_append(buffer,
 		    "(realtype t, N_Vector y, N_Vector yA,\n"	\
@@ -2165,6 +2191,9 @@ void ODEModel_generateCVODEAdjointQuadFunction(odeModel_t *om,
       }
     }
   }
+
+  CharBuffer_append(buffer, "return (0);\n");
+
   /* CharBuffer_append(buffer, "printf(\"qa\");"); */
   CharBuffer_append(buffer, "}\n\n");
 }
@@ -2204,11 +2233,12 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 #elif USE_TCC == 1
   CharBuffer_append(buffer,
 		    "#include <math.h>\n"\
-		    "#include <nvector_serial.h>\n"\
-		    "#include <dense.h>\n" 
-		    "#include <cvodes.h>\n"\
-		    "#include <cvodea.h>\n"\
-		    "#include <cvdense.h>\n"\
+		    "#include <nvector/nvector_serial.h>\n"\
+		    "#include <cvodes/cvodes.h>\n"\
+		    "#include <cvodes/cvodes_dense.h>\n"\
+                    "#include <sundials/sundials_types.h>\n"\
+                    "#include <sundials/sundials_math.h>\n"\
+                    "#include <sundials/sundials_dense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/integratorSettings.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
@@ -2263,7 +2293,6 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
   }
 
   CharBuffer_free(buffer);
-
 
   om->compiledCVODERhsFunction =
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
@@ -2337,18 +2366,21 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/processAST.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT __declspec(dllexport)\n");
+
 #elif USE_TCC == 1
   CharBuffer_append(buffer,
 		    "#include <math.h>\n"\
-		    "#include <nvector_serial.h>\n"\
-		    "#include <dense.h>\n" 
-		    "#include <cvodes.h>\n"\
-		    "#include <cvdense.h>\n"\
-		    "#include <cvodea.h>\n"\
+		    "#include <nvector/nvector_serial.h>\n"\
+		    "#include <cvodes/cvodes.h>\n"\
+		    "#include <cvodes/cvodes_dense.h>\n"\
+                    "#include <sundials/sundials_types.h>\n"\
+                    "#include <sundials/sundials_math.h>\n"\
+                    "#include <sundials/sundials_dense.h>\n"\
 		    "#include <sbmlsolver/cvodeData.h>\n"\
 		    "#include <sbmlsolver/integratorSettings.h>\n"\
-		    "#include <sbmlsolver/processAST.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
+                    "#include <sbmlsolver/processAST.h>\n"\
+                    "#include <sbmlsolver/ASTIndexNameNode.h>\n"\
 		    "#define DLL_EXPORT\n");
 #endif
 
@@ -2446,6 +2478,8 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
        function should have been compiled already */
     ODEModel_compileCVODESenseFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
+
+    fprintf(stderr, "compiledd CVODE sens funcion \n"); 
   }
 
   return om->compiledCVODESenseFunction;
