@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 21:50:03 raim>
-  $Id: adjsenstest.c,v 1.6 2007/05/16 19:52:47 raimc Exp $
+  Last changed Time-stamp: <2007-06-15 15:19:36 raim>
+  $Id: adjsenstest.c,v 1.7 2007/06/18 17:20:43 raimc Exp $
 */
 /* 
  *
@@ -58,7 +58,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setMethod(set, 0, 5);
   /*   CvodeSettings_setStoreResults(set, 0); */
   CvodeSettings_setJacobian(set, 1); /* for testing only */
-  CvodeSettings_setCompileFunctions(set, 0); /* for testing only */
+  CvodeSettings_setCompileFunctions(set, 1); /* for testing only */
 
  
   /* creating the odeModel */

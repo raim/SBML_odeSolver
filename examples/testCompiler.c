@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 18:28:22 raim>
-  $Id: testCompiler.c,v 1.5 2007/05/16 16:36:16 raimc Exp $
+  Last changed Time-stamp: <2007-05-16 22:06:03 raim>
+  $Id: testCompiler.c,v 1.6 2007/06/18 17:20:43 raimc Exp $
 */
 /* 
  *
@@ -61,7 +61,7 @@ int doit(int argc, char *argv[])
   odeModel_t *model ;
 
 
-  int sensi = 1;
+  int sensi = 0;
   int nsens = 4;
   char *sensIDs[nsens];
     
@@ -131,7 +131,7 @@ int doit(int argc, char *argv[])
   /* testing combinations of difference quotient and exact calculation
    of jacobian and parametric matrices */
   CvodeSettings_setJacobian(settings, 1);
-  CvodeSettings_setSensitivity(settings, 1);
+  /* CvodeSettings_setSensitivity(settings, 1); */
   /*!!! sensitivity can't be switched off! but compilation is??? */
 
   CvodeSettings_setCompileFunctions(settings, 1); /* compile model */
