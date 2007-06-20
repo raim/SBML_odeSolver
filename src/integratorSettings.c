@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-15 20:43:56 raim>
-  $Id: integratorSettings.c,v 1.43 2007/05/15 18:46:35 raimc Exp $
+  $Id: integratorSettings.c,v 1.44 2007/06/20 09:09:23 jamescclu Exp $
 */
 /* 
  *
@@ -48,6 +48,8 @@
 
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/interpol.h"
+#include "sbmlsolver/util.h"
 
 
 /** Creates a settings structure with default values
@@ -162,6 +164,9 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   /* Default: not doing adjoint solution  */
   set->DoAdjoint = 0;
   set->AdjointPhase = 0;
+ 
+  /* default: use continuous observation */
+  set->observation_data_type = 0;
 
   return set;
 }
@@ -195,6 +200,14 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
     /* copy TimePoint array */
     for ( i=0; i<=clone->PrintStep; i++ ) 
       clone->TimePoints[i] = set->TimePoints[i];    
+    
+    /* if adjoint TimePoint array exists, also copy it */
+    if ( set->AdjTimePoints != NULL  ){
+      ASSIGN_NEW_MEMORY_BLOCK(clone->AdjTimePoints,clone->PrintStep+1,double,NULL);
+      /* copy TimePoint array */
+      for ( i=0; i<=clone->PrintStep; i++ ) 
+	clone->AdjTimePoints[i] = set->AdjTimePoints[i];     
+    }
   }
   return clone;
 }
@@ -229,17 +242,12 @@ SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *set, double REr
   set->RError = RError;
 }
 
-
-
-
-
 /** Sets maximum number of internal steps during CVODE integration */
 
 SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *set, int Mxstep)
 {
   set->Mxstep = Mxstep;  
 }
-
 
 /** Sets flag that tells solver that the adjoint solution is desired */
 SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *set) 
@@ -278,7 +286,6 @@ SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *set, double 
   /* CvodeSettings_setAdjMxstep(set, Mxstep);*/    
 }
 
-
 /** Sets absolute error tolerance for adjoint integration  
 */
 
@@ -286,7 +293,6 @@ SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *set, double E
 {
   set->AdjError = Error;
 }
-
 
 /** Sets relative error tolerance for adjoint integration  
 */
@@ -297,9 +303,6 @@ SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *set, double 
 }
 
 
-
-
-
 /** Sets the number of forward steps saved, prior to doing the adjoint integration  
 */
 
@@ -307,9 +310,6 @@ SBML_ODESOLVER_API void CvodeSettings_setnSaveSteps(cvodeSettings_t *set, int nS
 {
   set->nSaveSteps = nSaveSteps;
 }
-
-
-
 
 /** Set method non-linear solver methods, and its maximum order (currently
     the latter cannot really be set, but default to 5 for BDF or 12 for
@@ -429,6 +429,7 @@ SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
   set->TimePoints[0] = 0.0;
   for ( i=1; i<=PrintStep; i++ ) 
     set->TimePoints[i] = timeseries[i-1];
+
   return 1;
 }
 
@@ -479,6 +480,89 @@ SBML_ODESOLVER_API  int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
   for ( i=1; i<= AdjPrintStep; i++ ) 
     set->AdjTimePoints[i] = timeseries[i-1];
   
+  return 1;
+}
+
+/** Sets flag that tells solver that the (experimental) data should be treated as discrete entities  */
+SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *set) 
+{
+  set->observation_data_type = 1;
+}
+
+/** unsets flag that tells solver that the (experimental) data should be treated as discrete entities  */
+SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *set) 
+{
+  set->observation_data_type = 0;
+}
+
+/** Reads time point column of data, for use in CvodeSettings_setForwAdjTimeSeriesFromData   */
+static int read_time(char *file, double *timepoints)
+{    
+  FILE *fp;
+  char *line, *token;
+  int i;
+
+  /* open file */
+  if ( (fp = fopen(file, "r")) == NULL )
+    fatal(stderr, "read_time(): file not found");
+
+  /* find data lines */
+  for ( i=0; (line = get_line(fp)) != NULL; i++ )
+  {  
+    /* column 0 */
+    token = strtok(line, " ");
+    /* skip empty lines and comment lines (including header line) */
+    if ( token == NULL || *token == '#' )
+    {
+      free(line);
+      i--;
+      continue;
+    }
+    sscanf(token, "%lf",  &(timepoints[i]));  
+    free(line);
+  }
+
+  /* free */
+  fclose(fp);
+
+  return i;
+}
+
+
+/** Reads experimental data time points and use them in cvodeSettings. Assigns memory for
+    an array of requested time points with size PrintStep + 1 (including
+    initial time 0). Returns 1, if sucessful and 0, if not. */
+
+SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *set,
+							         char *TimeSeriesData_file)
+{
+  int i, n_time;
+  
+ if (set->TimePoints != NULL)
+  free(set->TimePoints);
+
+  /* count number of lines */
+  n_time = read_columns(TimeSeriesData_file, 0, NULL, NULL, NULL);
+
+  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, n_time, double, 0.0);
+
+  /* read time data */
+  read_time(TimeSeriesData_file, set->TimePoints);
+  set->TimePoints[0] = 0.0;
+
+ if (set->AdjTimePoints != NULL)
+  free(set->AdjTimePoints);
+
+  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, n_time, double, 0.0);    
+
+  for ( i=0; i<n_time; i++ ) 
+    set->AdjTimePoints[i] = ((double) set->TimePoints[n_time-1-i]);
+
+  set->Time = ((double) set->TimePoints[n_time-1]);
+  set->AdjTime= 0.0;
+  set->PrintStep = n_time-1;
+  set->AdjPrintStep = n_time-1;
+
   return 1;
 }
 

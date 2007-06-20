@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.81 2007/06/15 08:50:18 jamescclu Exp $ 
+  $Id: odeModel.c,v 1.82 2007/06/20 09:09:23 jamescclu Exp $ 
 */
 /* 
  *
@@ -715,7 +715,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   /* values */
   /*!!! om->values currently only required for SBML independent input
     but should be used generally for clarity? */
-  ASSIGN_NEW_MEMORY_BLOCK(om->values, nvalues, double, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(om->values, nvalues, realtype, NULL);
 
   /* equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
@@ -743,6 +743,9 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
  
   om->vector_v = NULL;
   om->ObjectiveFunction = NULL;
+  om->discrete_observation_data = 0;
+  om->compute_vector_v = 0;
+  om->time_series = NULL;
 
   return om ;
 }
@@ -850,7 +853,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
     model parameters in this order and in the same order as ASTs in `f'.
 */
 
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, double *values, Model_t *events)
+SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, realtype *values, Model_t *events)
 {
   int i, j, nvalues;
   odeModel_t *om;
@@ -1723,7 +1726,7 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
   CharBuffer_append(buffer,COMPILED_EVENT_FUNCTION_NAME);
   CharBuffer_append(buffer,"(cvodeData_t *data, int *odeVarIsValid)\n"\
 		    "{\n"\
-		    "    double *value = data->value;\n"\
+		    "    realtype *value = data->value;\n"\
 		    "    int fired = 0;\n"\
 		    "    int *trigger = data->trigger;\n");
     
@@ -1817,7 +1820,6 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     CharBuffer_append(buffer, "];\n");
   }
 
-
   /* update assignment rules */
   ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeODEs, buffer);
 
@@ -1830,30 +1832,6 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     generateAST(buffer, om->ode[i]);
     CharBuffer_append(buffer, ";\n");
   }
-
- /*   CharBuffer_append(buffer, "fprintf(stderr, "); */
-/*    CharBuffer_append(buffer, " \"time = %lf \n \" , t"); */
-/*    CharBuffer_append(buffer, "); \n "); */
-
-/*      for ( i=0; i<om->neq; i++ )  */
-/*   { */
-/*      CharBuffer_append(buffer, "fprintf(stderr, "); */
-/*      CharBuffer_append(buffer, " \"value = %lf \n \" , value["); */
-/* 			 CharBuffer_appendInt(buffer,i); */
-/*        CharBuffer_append(buffer, "] "); */
-/*        CharBuffer_append(buffer, "); \n "); */
-/*   } */    
-/*     CharBuffer_append(buffer, "fprintf(stderr,\" \n \"); "); */
-/*     for ( i=0; i<om->neq; i++ )  */
-/*   { */
-/*      CharBuffer_append(buffer, "fprintf(stderr, "); */
-/*      CharBuffer_append(buffer, " \"dydata = %lf \n \" , dydata["); */
-/*      CharBuffer_appendInt(buffer,i); */
-/*        CharBuffer_append(buffer, "] "); */
-/*        CharBuffer_append(buffer, "); \n "); */
-/*   } */
-/*     CharBuffer_append(buffer, "fprintf(stderr,\" \n \"); "); */
-
 
   CharBuffer_append(buffer, "return (0);\n");
   CharBuffer_append(buffer, "}\n");
@@ -1875,7 +1853,7 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 		    "    int i;\n"\
 		    "    realtype *ydata, *yAdata, *dyAdata;\n"\
 		    "    cvodeData_t *data;\n"\
-                    "    double *value ;\n"\
+                    "    realtype *value ;\n"\
 		    "    data = (cvodeData_t *) fA_data;\n"\
                     "    value = data->value;\n"\
                     "    ydata = NV_DATA_S(y);\n"\
@@ -1946,7 +1924,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 		    "int i;\n"\
 		    "realtype *ydata;\n"\
 		    "cvodeData_t *data;\n"\
-		    "double *value;\n"\
+		    "realtype *value;\n"\
 		    "data  = (cvodeData_t *) jac_data;\n"\
 		    "value = data->value ;\n"\
 		    "ydata = NV_DATA_S(y);\n"\
@@ -2006,7 +1984,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 		    "int i;\n"						\
 		    "realtype *ydata;\n"				\
 		    "cvodeData_t *data;\n"				\
-		    "double *value;\n"					\
+		    "realtype *value;\n"					\
 		    "data  = (cvodeData_t *) jac_dataB;\n"		\
 		    "value = data->value ;\n"				\
 		    "ydata = NV_DATA_S(y);\n"				\
@@ -2062,7 +2040,7 @@ void ODEModel_generateCVODESensitivityFunction(odeModel_t *om,
 		    "  \n"\
 		    "realtype *ydata, *ySdata, *dySdata;\n"\
 		    "cvodeData_t *data;\n"\
-		    "double *value;\n"\
+		    "realtype *value;\n"\
 		    "data = (cvodeData_t *) fs_data;\n"\
 		    "value = data->value ;\n"\
 		    "ydata = NV_DATA_S(y);\n"\
@@ -2147,7 +2125,7 @@ void ODEModel_generateCVODEAdjointQuadFunction(odeModel_t *om,
 		    "  \n"					\
 		    "realtype *ydata, *yAdata, *dqAdata;\n"	\
 		    "cvodeData_t *data;\n"\
-		    "double *value;\n"\
+		    "realtype *value;\n"\
 		    "data = (cvodeData_t *) fA_data;\n"\
 		    "value = data->value ;\n"\
 		    "ydata = NV_DATA_S(y);\n"\

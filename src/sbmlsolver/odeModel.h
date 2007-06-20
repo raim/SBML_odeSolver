@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-12 15:47:41 xtof>
-  $Id: odeModel.h,v 1.36 2007/06/12 13:46:59 chfl Exp $ 
+  $Id: odeModel.h,v 1.37 2007/06/20 09:10:34 jamescclu Exp $ 
 */
 /* 
  *
@@ -153,6 +153,9 @@ extern "C" {
     CVQuadRhsFnB compiledCVODEAdjointQuadFunction; /**< CVODE adjoint
 						      quadrature function */
 
+    CVRhsFnB      adjointRHSFunction; /**< CVODE adjoint rhs function being used by solver */
+    CVQuadRhsFnB adjointQuadFunction; /**< CVODE adjoint quad rhs function being used by solver */ 
+
     /* assignment Rule Optimization */
     List_t *observables ; /**< set of symbols that the user wishes to
 			     have computed for output (list contains
@@ -179,11 +182,11 @@ extern "C" {
        computes the adjoint operator applied to the vector v, F'*(p)v.
        v is given by a symbolic expression involving x and observation data. */
 
-    
-    /* int *index_adj_sens; */
 
-    int observation_type;    /**< 0: continuous data observed
-                                1: discrete data observed  */
+    int discrete_observation_data;    /**< 0: data observed is of continuous type (i.e., interpolated)
+                                           1: data observed is of discrete type  */
+
+    int compute_vector_v;            /*  if evaluateAST is called to computed vector_v  */
 
     time_series_t *time_series;  /**< time series of observation data
 				    or of vector v */

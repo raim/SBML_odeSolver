@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-01-30 16:25:16 raim>
-  $Id: integratorSettings.h,v 1.29 2007/01/30 15:25:24 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.30 2007/06/20 09:10:34 jamescclu Exp $ 
 */
 /* 
  *
@@ -96,6 +96,9 @@ extern "C" {
     int compileFunctions ;  /**< if 1 use compiled functions for ODE,
 			       Jacobian and events */
 
+    int observation_data_type;    /**< 0: continuous data observed
+                                       1: discrete data observed  */  
+
     /** Adjoint related flags and settings   */   
     int DoAdjoint;          /**< if 1, the adjoint solution is desired   */
     int AdjointPhase;       /**< if 0, do the forward phase of the normal run 
@@ -148,6 +151,11 @@ extern "C" {
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *, double EndTime, int PrintStep);
   SBML_ODESOLVER_API int CvodeSettings_setTimeStep(cvodeSettings_t *, int, double);
   SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *, double *timeseries, int PrintStep);
+
+  SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *);
+  SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *); 
+  SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *, char *);
+ 
   SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API void CvodeSettings_setErrors(cvodeSettings_t *, double Error, double RError, int Mxstep);
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);

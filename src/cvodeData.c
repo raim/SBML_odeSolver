@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-15 19:01:50 raim>
-  $Id: cvodeData.c,v 1.20 2007/05/15 18:38:42 raimc Exp $
+  $Id: cvodeData.c,v 1.21 2007/06/20 09:09:23 jamescclu Exp $
 */
 /* 
  *
@@ -403,6 +403,12 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* data now also depends on cvodeSettings */
   data->opt = opt;
 
+  /* if discrete data is used via settings */
+  if ( opt->observation_data_type == 1 )
+    om->discrete_observation_data=1;
+  else
+    om->discrete_observation_data=0;
+
   /* initialize memory for optimized ODEs, only if compilation is off */
   if ( !data->opt->compileFunctions )
     ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
@@ -482,7 +488,7 @@ static int CvodeData_createMatrices(cvodeData_t *data,
   if ( opt->Sensitivity || opt->DoAdjoint )
   {
     /* only required if Jacobian exists or Adjoing is requested */
-    if ( om->jacobian  || opt->DoAdjoint )
+    if ( om->jacobian || opt->DoAdjoint )
        om->sensitivity = ODEModel_constructSensitivity(om);
     else
       om->sensitivity = 0;

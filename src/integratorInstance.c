@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-08 18:37:31 xtof>
-  $Id: integratorInstance.c,v 1.86 2007/06/12 13:24:19 chfl Exp $
+  $Id: integratorInstance.c,v 1.87 2007/06/20 09:09:23 jamescclu Exp $
 */
 /* 
  *
@@ -65,7 +65,6 @@
 #include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/modelSimplify.h"
 /* #include "sbmlsolver/daeSolver.h" */ /* !!! not yet working !!! */
-
 
 
 /* local integratorInstance allocation and initialization */ 
@@ -203,7 +202,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   int i;
   cvodeSolver_t *solver = engine->solver;
   cvodeResults_t *results = data->results; 
-
+ 
   /* irreversibly linking the engine to its input model */
   engine->om = om;
 
@@ -249,19 +248,19 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
     /* Adjoint Phase */
     solver->t0 = opt->AdjTimePoints[0]; 
     solver->tout = opt->AdjTimePoints[1]; 
-    solver->nout = opt->AdjPrintStep;     /* number of output steps */
-    solver->t = opt->AdjTimePoints[0];    /* CVODE current time, always 0,
-					     when starting from odeModel */
+    solver->nout = opt->AdjPrintStep;     /* number of adjoint output steps */
+    solver->t = opt->AdjTimePoints[0];   
     /* set up loop variables */
     solver->iout=1;  
+
 
     /* write adjoint initial conditions to results structure */
     /* Need to look into modifying data values? */
     if ( opt->AdjStoreResults )
     {
-      results->time[0] = data->currenttime;
-      for ( i=0; i<data->nvalues; i++ )
-	results->value[i][0] = data->value[i];
+    
+      for ( i=0; i<data->neq; i++ )
+	results->adjvalue[i][0] = data->adjvalue[i];
     }
 
     /* count adjoint integration runs with this integratorInstance */
@@ -408,8 +407,6 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
   printf("\n");
 }
 
-
-
 /**  Prints the current adjoint integration data,
      The first value is the current time, followed by adjoint
      ODE variable values.
@@ -425,10 +422,6 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *eng
     printf("%g ", data->adjvalue[i]);
   printf("\n");
 }
-
-
-
-
 
 
 /**  Prints the current time, current value of variable y and 
@@ -722,6 +715,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
+  int found, j;
     
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
@@ -759,11 +753,13 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     }
   }
 
+
   /* store results */
   if ( opt->StoreResults )
   {
     results->nout = solver->iout;
     results->time[solver->iout] = solver->t;
+
     for ( i=0; i<data->nvalues; i++ )
       results->value[i][solver->iout] = data->value[i]; 
   }
@@ -774,6 +770,26 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   if ( opt->SteadyState == 1 ) 
     if ( IntegratorInstance_checkSteadyState(engine) )
       flag = 0;  /* stop integration */
+
+  /* if discrete data is observed, compute step contribution to
+     the objective as well as the forward sensitivity */
+  if (opt->observation_data_type == 1)
+  {
+    /* set current time and state values for evaluating vector_v  */
+    data->currenttime = solver->t;
+  
+    /* update objective quadrature  */
+    om->compute_vector_v=1;
+    NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0) +  evaluateAST( data->model->ObjectiveFunction, data);
+   /*  if (opt->Sensitivity){ */
+/*       for (j=0;j<om->nsens;j++) */
+/*          NV_Ith_S(solver->qS, j) = NV_Ith_S(solver->qS, j) +  evaluateAST( data->model->vector_v[j] , data); */
+/*     } */
+    om->compute_vector_v=0;
+
+  } /* if (opt->observation_data_type == 1) */
+
+
 
   /* increase integration step counter */
   solver->iout++;
@@ -787,33 +803,99 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 }
 
 
-/** Default function for updating adjoint data, to be used by solvers after
-    they have calculate psi(t) and updated the time.
+/** Default function for updating adjoint data
 
     The function increases loop variables, stores
-    results and sets next output time.
+    results, increment jumps in adjoint of discrete data is observed, 
+    and sets next output time.
 */
 
 int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
 {
-  int i, flag = 1;
+  int i, j, flag = 1, found = 0;
   cvodeSolver_t *solver = engine->solver;
   cvodeData_t *data = engine->data;
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
-    
+  odeModel_t *om = engine->om;
+/*   N_Vector yAdata = NULL; */
+
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
 
   /* store results */
   if (opt->AdjStoreResults)
   {
-    results->nout = solver->iout;
-    results->time[solver->iout] = solver->t;
+ 
     for ( i=0; i<data->neq; i++ ) 
       results->adjvalue[i][solver->iout] = data->adjvalue[i];
   }
             
+  /* update adjoint state if discrete experimental data is observed */
+  if (opt->observation_data_type == 1)
+  {    
+    /* set current time and state values for evaluating vector_v  */ 
+    data->currenttime = solver->t;
+   
+    /* find in the stored forward solution result, value at solver->t */
+    for(i=solver->iout-1; i<=opt->PrintStep; i++) 
+    {
+      if (results->time[opt->PrintStep-i] == solver->t)
+       {
+	  found++;
+	  for ( j=0; j<om->neq; j++ )
+	    data->value[j] = results->value[j][opt->PrintStep-i];
+
+           break;  
+       }      
+     }
+
+
+    if (found != 1){
+      fprintf(stderr, "ERROR in update adjoint data: found none or more than one matchings in results data.\n");
+        SolverError_error(FATAL_ERROR_TYPE, 
+			  SOLVER_ERROR_UPDATE_ADJDATA,
+			  "Failed to get state value at time %g.", solver->t);
+        return 0;
+    }
+
+    om->compute_vector_v=1;
+    for ( i=0; i<om->neq; i++ ){ 
+       data->adjvalue[i] = data->adjvalue[i] - evaluateAST( data->model->vector_v[i], data);
+       /* also need to update solver->yA */
+        NV_Ith_S(solver->yA, i) = data->adjvalue[i];    
+    }
+    om->compute_vector_v=0;
+
+    /* compute quadrature: quad for the computed step is now added to qA  */
+    flag = CVodeGetQuadB(solver->cvadj_mem, solver->qA);
+  
+    if (flag != CV_SUCCESS)
+    {    fprintf(stderr, "get quad error!!\n");
+      CVODE_HANDLE_ERROR(&flag, "CVodeGetQuadB", 1); 
+      return 0;
+    }
+
+    /* reinit solvers */   /*  om->adjointRHSFunction */
+    flag = CVodeReInitB(solver->cvadj_mem, om->adjointRHSFunction, data->currenttime,
+	          	  solver->yA, CV_SV, solver->reltolA,
+			  solver->abstolA);
+    if (flag != CV_SUCCESS)
+    { fprintf(stderr, "B reinit error!!\n");
+      CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
+      return 0; 
+    } 
+
+    /*  om->adjointQuadFunction */
+    flag = CVodeQuadReInitB(solver->cvadj_mem, om->adjointQuadFunction ,
+         		    solver->qA);
+   if (flag != CV_SUCCESS)
+   {   fprintf(stderr, "quad reinit error!!\n");
+      CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);
+      return 0;
+   }
+
+  } /* if (opt->observation_data_type == 1) */
 
   /* increase integration step counter */
   solver->iout++;
@@ -823,7 +905,8 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     solver->tout += opt->Time;
   else if ( solver->iout <= solver->nout )
     solver->tout = opt->AdjTimePoints[solver->iout];
-  return flag;
+
+return 1;
 }
 
 
