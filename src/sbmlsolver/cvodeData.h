@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-08 17:47:13 xtof>
-  $Id: cvodeData.h,v 1.6 2007/06/12 13:41:06 chfl Exp $
+  $Id: cvodeData.h,v 1.7 2007/06/20 15:46:11 jamescclu Exp $
 */
 /* 
  *
@@ -124,6 +124,9 @@ struct cvodeData {
  
   /** number of adjoint runs with the one integratorInstance */
   int adjrun;
+
+  /* for computing vector_v using discrete observation data */
+  int TimeSeriesIndex;
 } ;
 
 /** Stores CVODE specific integration results, data correspond
