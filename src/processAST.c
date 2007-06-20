@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:33:20 raim>
-  $Id: processAST.c,v 1.47 2007/03/08 17:58:33 raimc Exp $
+  $Id: processAST.c,v 1.48 2007/06/20 09:07:44 jamescclu Exp $
 */
 /* 
  *
@@ -26,7 +26,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  *
  * The original code contained here was initially developed by:
- *
  *     Rainer Machne
  *
  * Contributor(s):
@@ -227,8 +226,10 @@ ASTNode_t *copyAST(const ASTNode_t *f)
 SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 {
   int i, j, childnum;
-  int found;
+  int found, datafound;
   int true;
+  time_series_t *ts=data->model->time_series;
+  double findtol=1e-5;
  
   ASTNodeType_t type;
   /* ASTNode_t **child; */
@@ -282,12 +283,51 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     if ( ASTNode_isSetIndex(n) )
     {
       if ( ASTNode_isSetData(n) )
-	result = call(ASTNode_getIndex(n),
-		      data->currenttime, data->model->time_series);
+      {
+
+        /* if continuous data is observed, obtain interpolated result */  
+        if ( (data->model->discrete_observation_data != 1) || (data->model->compute_vector_v != 1) )
+	{
+	  result = call(ASTNode_getIndex(n),
+			data->currenttime, ts);
+
+	}
+	else  /* if discrete data is observed, simply obtain value from time_series */
+	{
+          datafound = 0;
+          for (i=0; i<ts->n_time; i++)
+	  {
+	    if ( fabs(data->currenttime - ts->time[i]) < findtol )
+	    {    
+	      result = ts->data[ASTNode_getIndex(n)][i];
+              datafound++;
+	      break;
+	    }
+	   }
+
+          if ( datafound != 1)
+	  {	      
+            fprintf(stderr, "# data NOT found! currenttime = %g ### \n", data->currenttime);             
+	    SolverError_error(FATAL_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_DISCRETE_DATA,
+			"use of discrete time series data failed; none or several time points matching current time");
+	    result = 0;
+           /*  break;  */
+	  }
+          else found = 1;
+
+	}
+      }
       else
+      { 
 	result = data->value[ASTNode_getIndex(n)];
-      found++;
+  
+      }
+      
+       found++;
     }
+
+
     if ( found == 0 )
     {
       if ( strcmp(ASTNode_getName(n),"time") == 0 ||
@@ -304,6 +344,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       {
 	if ( (strcmp(ASTNode_getName(n),data->model->names[j]) == 0) )
 	{
+	  
 	  result = data->value[j];
 	  found++;
 	}
@@ -318,6 +359,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = 0;
     }
     break;
+
   case AST_FUNCTION_DELAY:
     SolverError_error(FATAL_ERROR_TYPE,
 		      SOLVER_ERROR_AST_EVALUATION_FAILED_DELAY,
@@ -1741,7 +1783,8 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
     /* alloc mem for (experimental) data variable */
     if ( strstr(str, "_data") != NULL )
     {
-      short_str = space((strlen(str)-5+1) * sizeof(char));
+      /* short_str = space((strlen(str)-5+1) * sizeof(char)); */
+      ASSIGN_NEW_MEMORY_BLOCK(short_str, strlen(str)-5+1, char, 0);
       strncpy(short_str, str, strlen(str)-5);
     }
     for ( i=0; i<nvalues; i++ )
@@ -2533,14 +2576,14 @@ void generateAST(charBuffer_t *expressionStream, const ASTNode_t *node)
     ASTNode_generateFunctionCall(expressionStream, node, "pow");
     break;
   case AST_INTEGER :
-    CharBuffer_append(expressionStream, "((double)");
+    CharBuffer_append(expressionStream, "((realtype)");
     CharBuffer_appendInt(expressionStream, ASTNode_getInteger(node));
     CharBuffer_append(expressionStream, ")");
     break;
   case AST_REAL :
   case AST_REAL_E :
   case AST_RATIONAL :
-    CharBuffer_append(expressionStream, "((double)");
+    CharBuffer_append(expressionStream, "((realtype)");
     CharBuffer_appendDouble(expressionStream, ASTNode_getReal(node));
     CharBuffer_append(expressionStream, ")");
     break;
