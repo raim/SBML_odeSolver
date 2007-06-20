@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-03-08 18:33:20 raim>
-  $Id: processAST.c,v 1.48 2007/06/20 09:07:44 jamescclu Exp $
+  $Id: processAST.c,v 1.49 2007/06/20 15:51:12 jamescclu Exp $
 */
 /* 
  *
@@ -295,19 +295,16 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	else  /* if discrete data is observed, simply obtain value from time_series */
 	{
           datafound = 0;
-          for (i=0; i<ts->n_time; i++)
-	  {
+          i = data->TimeSeriesIndex;
+        
 	    if ( fabs(data->currenttime - ts->time[i]) < findtol )
 	    {    
 	      result = ts->data[ASTNode_getIndex(n)][i];
               datafound++;
-	      break;
 	    }
-	   }
-
+	
           if ( datafound != 1)
-	  {	      
-            fprintf(stderr, "# data NOT found! currenttime = %g ### \n", data->currenttime);             
+	  {	            
 	    SolverError_error(FATAL_ERROR_TYPE,
 			SOLVER_ERROR_AST_EVALUATION_FAILED_DISCRETE_DATA,
 			"use of discrete time series data failed; none or several time points matching current time");

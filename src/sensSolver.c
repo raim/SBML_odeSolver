@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-12 14:42:34 xtof>
-  $Id: sensSolver.c,v 1.57 2007/06/20 09:08:14 jamescclu Exp $
+  $Id: sensSolver.c,v 1.58 2007/06/20 15:51:11 jamescclu Exp $
 */
 /* 
  *
@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
 
 /* Header Files for CVODE */
 #include "cvodes/cvodes.h"    
@@ -437,29 +437,26 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       /* set current time and state values for evaluating vector_v  */
       data->currenttime = solver->t;
     
-    
-      /* find in the stored forward solution result, value at solver->t */
-      found = 0;
-      for (i=0;i<=opt->PrintStep;i++)
-	if (engine->results->time[opt->PrintStep-i] == solver->t)
+        found = 0;
+	if ( fabs(engine->results->time[opt->PrintStep] - solver->t) < 1e-5)
 	{
 	    found++;
 	    for ( j=0; j<om->neq; j++ )
-	      data->value[j] = engine->results->value[j][opt->PrintStep-i];
+	      data->value[j] = engine->results->value[j][opt->PrintStep];
 
-	    break;
 	}
 
-      if (found != 1){
-	fprintf(stderr, "ERROR in updating the initial adjoint data.\n");
-        SolverError_error(FATAL_ERROR_TYPE,
-			  SOLVER_ERROR_INITIALIZE_ADJDATA,
-			  "Failed to get state value at time %g.", solver->t);
+	if (found != 1){
+	  fprintf(stderr, "ERROR in updating the initial adjoint data.\n");
+	  SolverError_error(FATAL_ERROR_TYPE,
+			    SOLVER_ERROR_INITIALIZE_ADJDATA,
+			    "Failed to get state value at time %g.", solver->t);
         return 0;
       }
 
       /* in discrete data case, set the initial adjoint solution to the evaluated value of vector_v */
       om->compute_vector_v=1;
+      data->TimeSeriesIndex = data->model->time_series->n_time-1 ;
       for ( i=0; i<om->neq; i++ )
       {
 	  data->adjvalue[i] = -evaluateAST( data->model->vector_v[i], data);

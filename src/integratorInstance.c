@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-08 18:37:31 xtof>
-  $Id: integratorInstance.c,v 1.87 2007/06/20 09:09:23 jamescclu Exp $
+  $Id: integratorInstance.c,v 1.88 2007/06/20 15:51:12 jamescclu Exp $
 */
 /* 
  *
@@ -716,7 +716,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
   int found, j;
-    
+  div_t d;   
+
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
 
@@ -771,20 +772,21 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     if ( IntegratorInstance_checkSteadyState(engine) )
       flag = 0;  /* stop integration */
 
+
   /* if discrete data is observed, compute step contribution to
      the objective as well as the forward sensitivity */
-  if (opt->observation_data_type == 1)
+ if ((opt->observation_data_type == 1)  &&
+     ( (solver->iout==opt->OffSet)  ||  ((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
   {
     /* set current time and state values for evaluating vector_v  */
     data->currenttime = solver->t;
   
     /* update objective quadrature  */
     om->compute_vector_v=1;
+    d = div(solver->iout, 1+opt->InterStep);
+    data->TimeSeriesIndex = opt->OffSet + d.quot;
+
     NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0) +  evaluateAST( data->model->ObjectiveFunction, data);
-   /*  if (opt->Sensitivity){ */
-/*       for (j=0;j<om->nsens;j++) */
-/*          NV_Ith_S(solver->qS, j) = NV_Ith_S(solver->qS, j) +  evaluateAST( data->model->vector_v[j] , data); */
-/*     } */
     om->compute_vector_v=0;
 
   } /* if (opt->observation_data_type == 1) */
@@ -818,7 +820,7 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
-/*   N_Vector yAdata = NULL; */
+  div_t d;
 
   /* update rest of cvodeData_t **/
   data->currenttime = solver->t;
@@ -831,25 +833,22 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
       results->adjvalue[i][solver->iout] = data->adjvalue[i];
   }
             
+
   /* update adjoint state if discrete experimental data is observed */
-  if (opt->observation_data_type == 1)
+  if ((opt->observation_data_type == 1)  && 
+     ( (solver->iout==opt->OffSet)  ||  ((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
   {    
     /* set current time and state values for evaluating vector_v  */ 
     data->currenttime = solver->t;
    
-    /* find in the stored forward solution result, value at solver->t */
-    for(i=solver->iout-1; i<=opt->PrintStep; i++) 
-    {
-      if (results->time[opt->PrintStep-i] == solver->t)
+ 
+      if ( fabs(results->time[opt->PrintStep-solver->iout] - solver->t) < 1e-5)
        {
 	  found++;
 	  for ( j=0; j<om->neq; j++ )
-	    data->value[j] = results->value[j][opt->PrintStep-i];
-
-           break;  
+	    data->value[j] = results->value[j][opt->PrintStep-solver->iout];
        }      
-     }
-
+ 
 
     if (found != 1){
       fprintf(stderr, "ERROR in update adjoint data: found none or more than one matchings in results data.\n");
@@ -860,8 +859,10 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     }
 
     om->compute_vector_v=1;
+    d = div(solver->iout, 1+opt->InterStep);
+    data->TimeSeriesIndex = data->model->time_series->n_time-1-(opt->OffSet + d.quot);
     for ( i=0; i<om->neq; i++ ){ 
-       data->adjvalue[i] = data->adjvalue[i] - evaluateAST( data->model->vector_v[i], data);
+       data->adjvalue[i] = data->adjvalue[i] - evaluateAST(data->model->vector_v[i], data);
        /* also need to update solver->yA */
         NV_Ith_S(solver->yA, i) = data->adjvalue[i];    
     }
@@ -871,17 +872,17 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     flag = CVodeGetQuadB(solver->cvadj_mem, solver->qA);
   
     if (flag != CV_SUCCESS)
-    {    fprintf(stderr, "get quad error!!\n");
+    {  
       CVODE_HANDLE_ERROR(&flag, "CVodeGetQuadB", 1); 
       return 0;
     }
 
-    /* reinit solvers */   /*  om->adjointRHSFunction */
+    /* reinit solvers */   
     flag = CVodeReInitB(solver->cvadj_mem, om->adjointRHSFunction, data->currenttime,
 	          	  solver->yA, CV_SV, solver->reltolA,
 			  solver->abstolA);
     if (flag != CV_SUCCESS)
-    { fprintf(stderr, "B reinit error!!\n");
+    { 
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
       return 0; 
     } 
@@ -890,7 +891,7 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     flag = CVodeQuadReInitB(solver->cvadj_mem, om->adjointQuadFunction ,
          		    solver->qA);
    if (flag != CV_SUCCESS)
-   {   fprintf(stderr, "quad reinit error!!\n");
+   {   
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);
       return 0;
    }

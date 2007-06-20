@@ -1,7 +1,5 @@
-/*
-  Last changed Time-stamp: <2007-05-15 20:43:56 raim>
-  $Id: integratorSettings.c,v 1.44 2007/06/20 09:09:23 jamescclu Exp $
-*/
+/*   Last changed Time-stamp: <2007-05-15 20:43:56 raim> */
+/*   $Id: integratorSettings.c,v 1.45 2007/06/20 15:51:12 jamescclu Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -45,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/solverError.h"
@@ -529,39 +528,78 @@ static int read_time(char *file, double *timepoints)
 }
 
 
-/** Reads experimental data time points and use them in cvodeSettings. Assigns memory for
-    an array of requested time points with size PrintStep + 1 (including
-    initial time 0). Returns 1, if sucessful and 0, if not. */
+/** Reads experimental data time points and use them in cvodeSettings.
+    TimeSteps are given by the time values of data, with InterStep number of time points in
+    between each 'data' time.
+    Assigns memory for (forward and adjoint) arrays of requested time points with size PrintStep + 1 
+    (including initial time 0). Returns 1, if sucessful and 0, if not. */
 
 SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *set,
-							         char *TimeSeriesData_file)
+							         char *TimeSeriesData_file, int InterStep)
 {
-  int i, n_time;
-  
+  int i, n_time, OffSet, TotalNumStep;
+  double *DataTimePoints;  
+  double ZeroTol = 1e-5, NextDataTime, TimeStep;
+  div_t d;
+
  if (set->TimePoints != NULL)
   free(set->TimePoints);
 
   /* count number of lines */
   n_time = read_columns(TimeSeriesData_file, 0, NULL, NULL, NULL);
-
-  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, n_time, double, 0.0);
-
+  ASSIGN_NEW_MEMORY_BLOCK(DataTimePoints, n_time, double, 0.0);
+  
   /* read time data */
-  read_time(TimeSeriesData_file, set->TimePoints);
-  set->TimePoints[0] = 0.0;
+  read_time(TimeSeriesData_file, DataTimePoints);
+
+  OffSet = 0;
+  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  ){
+    OffSet = 1;
+  }
+ 
+  TotalNumStep = (n_time-1) * (1+InterStep) + 1 + OffSet;
+  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, TotalNumStep, double, 0.0);
+
+  for (i=0; i< TotalNumStep-OffSet; i++){  
+
+    set->TimePoints[0] = 0.0;
+    d = div(i, 1+InterStep);
+
+    if( d.rem == 0){
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot];
+    }
+    else{
+
+      if (d.quot == n_time-1 ){
+	NextDataTime =  DataTimePoints[d.quot];
+      }
+      else{
+        NextDataTime =  DataTimePoints[d.quot+1];
+      }
+
+
+      TimeStep = NextDataTime - DataTimePoints[d.quot];
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] + ((double) d.rem/(1+InterStep) * TimeStep);
+    }
+
+  }
+
+  set->PrintStep = TotalNumStep-1;
+  set->Time = ((double) set->TimePoints[set->PrintStep]);
+  set->OffSet = OffSet;
+  set->InterStep = InterStep; 
+
 
  if (set->AdjTimePoints != NULL)
   free(set->AdjTimePoints);
 
-  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, n_time, double, 0.0);    
+ ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, TotalNumStep, double, 0.0);
 
-  for ( i=0; i<n_time; i++ ) 
-    set->AdjTimePoints[i] = ((double) set->TimePoints[n_time-1-i]);
+ for ( i=0; i<TotalNumStep; i++ )  
+     set->AdjTimePoints[i] = ((double) set->TimePoints[TotalNumStep-i-1]);
 
-  set->Time = ((double) set->TimePoints[n_time-1]);
-  set->AdjTime= 0.0;
-  set->PrintStep = n_time-1;
-  set->AdjPrintStep = n_time-1;
+ set->AdjTime= 0.0;
+ set->AdjPrintStep =  set->PrintStep; 
 
   return 1;
 }
