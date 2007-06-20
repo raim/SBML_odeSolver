@@ -61,15 +61,14 @@ main (int argc, char *argv[]){
 
   /* use time series data as discrete observations and set corresponding print steps */ 
   CvodeSettings_setDiscreteObservation(set);
-  CvodeSettings_setForwAdjTimeSeriesFromData(set, DataFileNames[0]);
-
+  
   CvodeSettings_setErrors(set, 1e-8, 1e-8, 1e6);
   CvodeSettings_setMethod(set, 0, 5);
   CvodeSettings_setJacobian(set, 1);
   CvodeSettings_setStoreResults(set, 1);
 
   CvodeSettings_setCompileFunctions(set, 0); /* to not compile RHS functions */
-  CvodeSettings_setSensitivity(set, 1);
+  CvodeSettings_setSensitivity(set, 0);
   CvodeSettings_setSensMethod(set, 0);
 
   /* ACTIVATE ADJOINT ANALYSIS */
@@ -87,7 +86,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setSensParams(set, sensIDTest, 4);
 
   om = ODEModel_createFromFile("MAPK.xml");  
-  /* Set parameter Ki from original value of 9 to 9.2 */
+  /* Set parameter Ki from original value of 10 to 9.2 */
   vi = ODEModel_getVariableIndex(om, "K1");
   if (vi == NULL){
       fprintf(stderr, "vi == NULL \n");
@@ -121,7 +120,7 @@ main (int argc, char *argv[]){
       RunIndex = RunIndexOuter;
 
 
-    CvodeSettings_setForwAdjTimeSeriesFromData(set, DataFileNames[RunIndex]);   
+    CvodeSettings_setForwAdjTimeSeriesFromData(set, DataFileNames[RunIndex], 3);   
     IntegratorInstance_reset(ii);
     IntegratorInstance_setVariableValue(ii, vi, 9.2);
 
@@ -171,12 +170,15 @@ main (int argc, char *argv[]){
     /* Adjoint phase */
     /* Print out adjoint soln */
     while( !IntegratorInstance_timeCourseCompleted(ii) ){
+     /*  if (RunIndex == 0) */
+/* 	 IntegratorInstance_dumpAdjData(ii); */
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	{ 
 	  fprintf(stderr, "Error in integrating one step!\n");
 	  break;
-	}
-  }
+	}     
+    }
+    
 
   /* adjoint quadrature */
   flag = IntegratorInstance_CVODEQuad(ii);
