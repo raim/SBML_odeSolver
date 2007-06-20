@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-09 15:32:29 raim>
-  $Id: interpol.c,v 1.6 2006/11/13 08:54:39 stefan_tbi Exp $
+  $Id: interpol.c,v 1.7 2007/06/20 09:06:46 jamescclu Exp $
 */
 
 
@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "util.h"
+#include "sbmlsolver/solverError.h"
 
 #define PRIVATE static
 #define PUBLIC SBML_ODESOLVER_API
@@ -151,27 +152,27 @@ time_series_t *read_data(char *file, int n_var, char **var)
   time_series_t *ts;
 
   /* alloc mem */
-  ts = space(sizeof(time_series_t));
+  ASSIGN_NEW_MEMORY_BLOCK(ts, 1, time_series_t, 0);
 
   /* alloc mem for index lists */
   ts->n_var = n_var;
-  ts->var   = space(n_var * sizeof(char *));
-  ts->data  = space(n_var * sizeof(double *));
-  ts->data2 = space(n_var * sizeof(double *));
-    
+  ASSIGN_NEW_MEMORY_BLOCK(ts->var,   n_var, char *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(ts->data,  n_var, double *, 0); 
+  ASSIGN_NEW_MEMORY_BLOCK(ts->data2, n_var, double *, 0);    
+
   /* initialize index lists */
   for ( i=0; i<n_var; i++ )
   {
-    name = space((strlen(var[i])+1) * sizeof(char));
+    ASSIGN_NEW_MEMORY_BLOCK(name, strlen(var[i])+1, char , 0);
     strcpy(name, var[i]);
     ts->var[i]   = name;
     ts->data[i]  = NULL;
     ts->data2[i] = NULL;
   }
 
-  /* alloc temp mem for column info */
-  col   = space(n_var * sizeof(int));
-  index = space(n_var * sizeof(int));
+    /* alloc temp mem for column info */
+    ASSIGN_NEW_MEMORY_BLOCK(col,    n_var, int, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(index,  n_var, int, 0);
 
   /* read header line */
   n_data = read_header_line(file, n_var, var, col, index);
@@ -184,10 +185,11 @@ time_series_t *read_data(char *file, int n_var, char **var)
   /* alloc mem for data */
   for ( i=0; i<n_data; i++ )
   {
-    ts->data[index[i]]  = space(n_time * sizeof(double));
-    ts->data2[index[i]] = space(n_time * sizeof(double));
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data[index[i]],   n_time, double, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data2[index[i]],  n_time, double, 0);
   }
-  ts->time = space(n_time * sizeof(double));
+  /* ts->time = space(n_time * sizeof(double)); */
+  ASSIGN_NEW_MEMORY_BLOCK(ts->time,  n_time, double, 0);
 
   /* read data */
   read_columns(file, n_data, col, index, ts);
@@ -206,8 +208,8 @@ time_series_t *read_data(char *file, int n_var, char **var)
   ts->last = 0;
     
   /* alloc mem for warnings */
-  ts->mess = space(2 * sizeof(char *));
-  ts->warn = space(2 * sizeof(int));
+  ASSIGN_NEW_MEMORY_BLOCK(ts->mess,  2, char *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(ts->warn,  2, int   , 0);   
 
   /* initialize warnings */
   ts->mess[0] = "argument out of range (left) ";
@@ -371,12 +373,14 @@ double call(int i, double x, time_series_t *ts)
   /* check if x is out of range (and warn) */
   if ( x < xs[0] )
   {
+   /*  fprintf(stderr, "left out range: %g\n", x); */
     y = ys[0];
     ts->last = -1;
     ts->warn[0]++;
   }
   else if ( x >= xs[nt-1] )
   {
+    /* fprintf(stderr, "right out range: %g\n", x); */
     y = ys[nt-1];
     ts->last = nt-1;
     ts->warn[1]++;
@@ -390,9 +394,9 @@ double call(int i, double x, time_series_t *ts)
   fprintf(stderr, "function %s has index %d\n", ts->var[i], i);
   l = ts->last;
   if ( l == -1 )
-    fprintf(stderr, "argument out of range (left) \n");
+   /*  fprintf(stderr, "argument out of range (left) \n"); */
   else if ( l == nt-1 )
-    fprintf(stderr, "argument out of range (right)\n");
+   /*  fprintf(stderr, "argument out of range (right)\n"); */
   else
   {
     fprintf(stderr, "argument %g found in interval ", x);
@@ -418,7 +422,7 @@ void spline(int n, double *x, double *y, double *y2)
   int i;
   double p, sig, *u;
 
-  u = space((n-1) * sizeof(double));
+  ASSIGN_NEW_MEMORY_BLOCK(u, n-1, double, 1);
 
   y2[0] = u[0] = 0.0;
   for ( i=1; i<=n-2; i++ )
