@@ -1,0 +1,4 @@
+# Example of a nonlinear objective function used in adjsenstest_ContDiscData.c
+1/100 * 100 * 1/2*((MKKK-MKKK_data)^2+(MKKK_P-MKKK_P_data)^2+(MKK-MKK_data)^2+(MKK_P-MKK_P_data)^2+(MKK_PP-MKK_PP_data)^2+(MAPK-MAPK_data)^2+(MAPK_P-MAPK_P_data)^2+(MAPK_PP-MAPK_PP_data)^2)
+
+
