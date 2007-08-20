@@ -82,10 +82,16 @@ CONFIG_LIB_GRAPHVIZ
 CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 LIBS="-lm -lstdc++"
 
+	  
 dnl add the CFLAGS and LDFLAGS for tcc online compilation
-AC_DEFINE_UNQUOTED([SOSLIB_CFLAGS], "${prefix}/include",
+if test "$prefix" = "NONE"; then
+   ourPrefix=$ac_default_prefix;
+else	
+   ourPrefix=$prefix;
+fi 
+AC_DEFINE_UNQUOTED([SOSLIB_CFLAGS], "${ourPrefix}/include",
 				    [SOSLIB include directories])
-AC_DEFINE_UNQUOTED([SOSLIB_LDFLAGS], "${prefix}/lib",
+AC_DEFINE_UNQUOTED([SOSLIB_LDFLAGS], "${ourPrefix}/lib",
 				     [SOSLIB lib directories])
 AC_DEFINE_UNQUOTED([SOSLIB_LIBS], "ODES",
 				  [SOSLIB libs])
