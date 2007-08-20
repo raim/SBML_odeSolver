@@ -1,4 +1,4 @@
-dnl $Id: tcc.m4,v 1.5 2007/06/12 13:17:31 chfl Exp $
+dnl $Id: tcc.m4,v 1.6 2007/08/20 18:02:12 chfl Exp $
 
 
 dnl
@@ -51,7 +51,7 @@ AC_DEFUN([CONFIG_LIB_TCC],
   AC_HELP_STRING([--with-libtcc=PREFIX],
                  [Use TCC Library]),
               [with_libtcc=$withval],
-              [with_libtcc=yes])
+              [with_libtcc=no])
 
   dnl set TCC related variables
   TCC_CFLAGS=
