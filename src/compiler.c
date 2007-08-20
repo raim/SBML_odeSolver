@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-08-20 19:58:09 xtof>
-  $Id: compiler.c,v 1.18 2007/08/20 18:05:45 chfl Exp $
+  Last changed Time-stamp: <2007-08-20 21:07:36 raim>
+  $Id: compiler.c,v 1.19 2007/08/20 19:10:08 raimc Exp $
 */
 /* 
  *
@@ -30,6 +30,7 @@
  *     Andrew Finney
  *
  * Contributor(s):
+ *    Christoph Flamm, Rainer Machne
  */
 
 #include <stdio.h>
@@ -112,10 +113,10 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
   cFile = fopen(cFileName, "w");
 
   if (!cFile)
-    {
-      SolverError_storeLastWin32Error("Unable to open C source file for write");
-      return NULL;
-    }
+  {
+    SolverError_storeLastWin32Error("Unable to open C source file for write");
+    return NULL;
+  }
 
   fprintf(cFile, sourceCode);
   fclose(cFile);
@@ -128,21 +129,21 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
   result = system(command);
 
   if (result == -1)
-    {
-      SolverError_storeLastWin32Error("Whilst running compile command");
-      remove(cFileName);
-      free(cFileName);
-      return NULL ;
-    }
+  {
+    SolverError_storeLastWin32Error("Whilst running compile command");
+    remove(cFileName);
+    free(cFileName);
+    return NULL ;
+  }
   else if (result != 0)
-    {
-      SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"Compile command failed - returned %d", result);
-      remove(cFileName);
-      free(cFileName);
-      return NULL ;
-    }
-
+  {
+    SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "Compile command failed - returned %d", result);
+    remove(cFileName);
+    free(cFileName);
+    return NULL ;
+  }
+  
   remove(cFileName);
   free(cFileName);
   remove(outFileName);
@@ -158,11 +159,11 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
   free(dllFileNameDot);
 
   if (!dllHandle)
-    {
-      SolverError_storeLastWin32Error("While loading compiled dll");
-      return NULL;
-    }
-
+  {
+    SolverError_storeLastWin32Error("While loading compiled dll");
+    return NULL;
+  }
+  
   ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
 
   code->dllHandle = dllHandle ;
@@ -185,11 +186,11 @@ compiled_code_t *Compiler_compile_with_tcc(const char *sourceCode)
   /* tcc_enable_debug(code->s);  */
 
   if ( !code->s )
-    {
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"TCC compilation failed: tcc_new() was empty.");
-      return NULL;
-    }
+  {
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "TCC compilation failed: tcc_new() was empty.");
+    return NULL;
+  }
  
   /* MUST BE CALLED before any compilation or file loading */
   tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
@@ -276,8 +277,9 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 
   /* open file and dump source code to it */
   cFile = fopen(cFileName, "w");
-
-  if (!cFile) {
+  
+  if (!cFile)
+  {
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_OPEN_FILE,
 		      "Could not open file %s - %s!",
 		      cFileName, strerror(errno));  
@@ -308,12 +310,14 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   result = system(command);
 
   /* handle possible errors */
-  if (result == -1) {
+  if (result == -1)
+  {
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
 		      "forking gcc compiler subprocess failed!");
     return (NULL);
   }
-  else if (result != 0) {
+  else if (result != 0)
+  {
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 		      "compiling failed with errno %d - %s!",
 		      result, strerror(result));    
@@ -329,7 +333,8 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 
   /* load shared library */
   dllHandle = dlopen(dllFileName, RTLD_LAZY);
-  if (dllHandle == NULL) {
+  if (dllHandle == NULL)
+  {
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_DL_LOAD_FAILED,
 		      "loading shared library %s failed %d - %s!",
 		      dllFileName, errno, strerror(errno));
@@ -357,7 +362,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 #ifdef WIN32
 
   code = Compiler_compile_with_tcc(sourceCode);
-
+  
 #else
 #if USE_TCC == 1
 
@@ -413,7 +418,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   returnvalue = dlerror();
   if ( returnvalue != NULL )
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_DL_SYMBOL_UNDEFINED,
-		      "dlsym(): couldn't get synbol %s from shared library %s",
+		      "dlsym(): couldn't get symbol %s from shared library %s",
 		      symbol, code->dllFileName);    
 
 #endif /* end USE_TCC */

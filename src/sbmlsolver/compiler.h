@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-08-17 15:38:55 xtof>
-  $Id: compiler.h,v 1.6 2007/08/20 18:06:49 chfl Exp $
+  Last changed Time-stamp: <2007-08-20 21:06:02 raim>
+  $Id: compiler.h,v 1.7 2007/08/20 19:10:08 raimc Exp $
 */
 /* 
  *
@@ -30,6 +30,7 @@
  *     Andrew Finney
  *
  * Contributor(s):
+ *    Christoph Flamm, Rainer Machne
  */
 
 #ifndef _COMPILER_H_
