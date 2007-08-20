@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-25 13:15:10 raim>
-  $Id: compiler.c,v 1.17 2007/06/01 10:28:35 jamescclu Exp $
+  Last changed Time-stamp: <2007-08-20 19:58:09 xtof>
+  $Id: compiler.c,v 1.18 2007/08/20 18:05:45 chfl Exp $
 */
 /* 
  *
@@ -32,39 +32,33 @@
  * Contributor(s):
  */
 
+#include <stdio.h>
 #include "compiler.h"
 #include "solverError.h"
 #include "processAST.h"
-
-/* System specific definitions,
-   created by configure script */
-#ifndef WIN32
-#include "sbmlsolver/config.h"
-#endif
 
 #ifdef WIN32
 
 #include <windows.h>
 #include <tchar.h>
-#include <stdio.h>
 
-#elif USE_TCC == 1
+#else /* default linux */
 
-#include <stdio.h>
+#include "sbmlsolver/config.h"
+#include "sbmlsolver/util.h"
+#include <dlfcn.h>
+#include <errno.h>
 #include <stdlib.h>
-#include <libtcc.h>
+#include <string.h>
 
-#endif
+#endif /* end WIN32 */
 
-/**
-   Returns a pointer to code that is compiled from the given source code
-*/
-compiled_code_t *Compiler_compile(const char *sourceCode)
-{
-  compiled_code_t *code = NULL;
-  
+
 #ifdef WIN32
 
+compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
+{
+  compiled_code_t *code = NULL;
   char tempDir[MAX_PATH+1];
   TCHAR tccFileName[MAX_PATH]; 
   int i;
@@ -87,151 +81,294 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
   /* avoid creating files in current directory if environment
      variables not set */
   if (!GetTempPath(MAX_PATH+1, tempDir))
-  {
-    SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
-    return NULL;
-  }
+    {
+      SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
+      return NULL;
+    }
 
   solverHandle = GetModuleHandle(solverFileName);
     
-    if (!solverHandle)
+  if (!solverHandle)
     {
       SolverError_storeLastWin32Error("Trying to get handle of solver dll");
       return NULL;
     }
 
-    /* compute tcc path from the path to this dll */
-    if( !GetModuleFileName( solverHandle, tccFileName, MAX_PATH ) )
+  /* compute tcc path from the path to this dll */
+  if( !GetModuleFileName( solverHandle, tccFileName, MAX_PATH ) )
     {
       SolverError_storeLastWin32Error("Trying find location of the soslib dll");
       return NULL ;
     }
 
-    for (i = strlen(tccFileName); i != -1 && tccFileName[i] != '\\'; i--);
+  for (i = strlen(tccFileName); i != -1 && tccFileName[i] != '\\'; i--);
 
-    tccFileName[i + 1] = '\0';
-    strcat(tccFileName, "tcc\\tcc.exe");
+  tccFileName[i + 1] = '\0';
+  strcat(tccFileName, "tcc\\tcc.exe");
 
-    cFileName = tempnam(tempDir, "temp_soslib_c_file");
-    dllFileName = tempnam(tempDir, "temp_soslib_dll");
-    outFileName = tempnam(tempDir, "temp_soslib_compilation_output");
-    cFile = fopen(cFileName, "w");
+  cFileName = tempnam(tempDir, "temp_soslib_c_file");
+  dllFileName = tempnam(tempDir, "temp_soslib_dll");
+  outFileName = tempnam(tempDir, "temp_soslib_compilation_output");
+  cFile = fopen(cFileName, "w");
 
-    if (!cFile)
+  if (!cFile)
     {
       SolverError_storeLastWin32Error("Unable to open C source file for write");
       return NULL;
     }
 
-    fprintf(cFile, sourceCode);
-    fclose(cFile);
+  fprintf(cFile, sourceCode);
+  fclose(cFile);
 
-    sprintf(command, "%s -o %s -shared %s > %s",
-	    tccFileName, dllFileName, cFileName, outFileName);
+  sprintf(command, "%s -o %s -shared %s > %s",
+	  tccFileName, dllFileName, cFileName, outFileName);
 
-    /*printf("Command:\n%s\n", command);*/
+  /*printf("Command:\n%s\n", command);*/
 
-    result = system(command);
+  result = system(command);
 
-    if (result == -1)
+  if (result == -1)
     {
       SolverError_storeLastWin32Error("Whilst running compile command");
       remove(cFileName);
       free(cFileName);
       return NULL ;
     }
-    else if (result != 0)
+  else if (result != 0)
     {
-      SolverError_error(
-			ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+      SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 			"Compile command failed - returned %d", result);
       remove(cFileName);
       free(cFileName);
       return NULL ;
     }
 
-    remove(cFileName);
-    free(cFileName);
-    remove(outFileName);
-    free(outFileName);
+  remove(cFileName);
+  free(cFileName);
+  remove(outFileName);
+  free(outFileName);
 
-    ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) + 2),
-			    char, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) + 2),
+			  char, NULL);
+  
+  strcpy(dllFileNameDot, dllFileName);
+  strcat(dllFileNameDot, ".");
 
-    strcpy(dllFileNameDot, dllFileName);
-    strcat(dllFileNameDot, ".");
+  dllHandle = LoadLibrary(dllFileNameDot);
+  free(dllFileNameDot);
 
-    dllHandle = LoadLibrary(dllFileNameDot);
-    free(dllFileNameDot);
-
-    if (!dllHandle)
+  if (!dllHandle)
     {
       SolverError_storeLastWin32Error("While loading compiled dll");
       return NULL;
     }
 
-    ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
+  ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
 
-    code->dllHandle = dllHandle ;
-    code->dllFileName = dllFileName;
-    
+  code->dllHandle = dllHandle ;
+  code->dllFileName = dllFileName;
 
-#elif USE_TCC == 1
-    
-    int failed;
+  return (code);
+}
 
-    ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
+#else
+#if USE_TCC == 1
 
-    code->s = tcc_new();
-    /* tcc_enable_debug(code->s);  */
+compiled_code_t *Compiler_compile_with_tcc(const char *sourceCode)
+{
+  compiled_code_t *code = NULL;
+  int failed;
 
-    if ( !code->s )
+  ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
+
+  code->s = tcc_new();
+  /* tcc_enable_debug(code->s);  */
+
+  if ( !code->s )
     {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 			"TCC compilation failed: tcc_new() was empty.");
       return NULL;
     }
  
-    /* MUST BE CALLED before any compilation or file loading */
-    tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
+  /* MUST BE CALLED before any compilation or file loading */
+  tcc_set_output_type(code->s, TCC_OUTPUT_MEMORY);
 
-    /* add include path */
-    tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
-    tcc_add_include_path(code->s, SBML_CFLAGS);
-    tcc_add_include_path(code->s, SBML_CFLAGS2);
-    tcc_add_include_path(code->s, TCC_CFLAGS);
-    tcc_add_include_path(code->s, SOSLIB_CFLAGS);
-    tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
-    tcc_add_library(code->s, SUNDIALS_LIB3);
-    tcc_add_library(code->s, SUNDIALS_LIB5);
+  /* add include path */
+  tcc_add_include_path(code->s, SUNDIALS_CFLAGS);
+  tcc_add_include_path(code->s, SBML_CFLAGS);
+  tcc_add_include_path(code->s, SBML_CFLAGS2);
+  tcc_add_include_path(code->s, TCC_CFLAGS);
+  tcc_add_include_path(code->s, SOSLIB_CFLAGS);
+  tcc_add_library_path(code->s, SUNDIALS_LDFLAGS);
+  tcc_add_library(code->s, SUNDIALS_LIB3);
+  tcc_add_library(code->s, SUNDIALS_LIB5);
     
-    /* compile with TCC :) */
-    failed = tcc_compile_string(code->s, sourceCode);
-    if ( failed != 0 )
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"Online compilation failed - returned %d", failed);
+  /* compile with TCC :) */
+  failed = tcc_compile_string(code->s, sourceCode);
+  if ( failed != 0 )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "Online compilation failed - returned %d", failed);
 
-    failed = tcc_add_symbol(code->s, "evaluateAST", (unsigned long)& evaluateAST);
-    if ( failed != 0 )
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"TCC failed: couldn't add symbol evaluateAST");
+  failed = tcc_add_symbol(code->s, "evaluateAST", (unsigned long)& evaluateAST);
+  if ( failed != 0 )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "TCC failed: couldn't add symbol evaluateAST");
 
-    failed = tcc_relocate(code->s);
-    if ( failed != 0 )
-      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"TCC failed: couldn't relocate TCCState");
+  failed = tcc_relocate(code->s);
+  if ( failed != 0 )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "TCC failed: couldn't relocate TCCState");
 
-    /* printf("TCC pointer %d\n", code->s); */
+  /* printf("TCC pointer %d\n", code->s); */
 
 #ifdef _DEBUG /* write out source file for debugging*/
-    FILE *src;
-    char *srcname =  "functions.c";
-    src = fopen(srcname, "w");
-    fprintf(src, sourceCode);
-    fclose(src);
+  FILE *src;
+  char *srcname =  "functions.c";
+  src = fopen(srcname, "w");
+  fprintf(src, sourceCode);
+  fclose(src);
 #endif
-    
+
+  return (code);
+}
+
+#else /* default case is compile with gcc */
+
+/**
+   Returns a pointer to code that is compiled from the given source code
+*/
+compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
+{
+  compiled_code_t *code = NULL;
+  char gccFileName[MAX_PATH+1] = "gcc"; 
+  int result;
+  char *tmpFileName = NULL;
+  char *cFileName   = NULL;
+  char *dllFileName = NULL;
+  char *oFileName   = NULL;
+  FILE *cFile;
+  char command[4*MAX_PATH];
+  void *dllHandle;
+#if 0
+#ifdef _DEBUG
+  char *solverFileName = "SBML_odeSolverD.so";
+#else
+  char *solverFileName = "SBML_odeSolver.so";
 #endif
+#endif
+
+  /* generate a unique temprorary filename template */
+  ASSIGN_NEW_MEMORY_BLOCK(tmpFileName, (MAX_PATH+1), char, NULL);
+  tmpFileName = tmpnam(tmpFileName);
+  Warn(NULL,"Temprorary File Name is %s\n", tmpFileName);
+
+  /* generate needed file names from the template*/
+  ASSIGN_NEW_MEMORY_BLOCK(cFileName, (strlen(tmpFileName)+3), char, NULL);
+  strcpy(cFileName, tmpFileName);
+  strcat(cFileName, ".c");
+  ASSIGN_NEW_MEMORY_BLOCK(oFileName, (strlen(tmpFileName)+3), char, NULL);
+  strcpy(oFileName, tmpFileName);
+  strcat(oFileName, ".o");  
+  ASSIGN_NEW_MEMORY_BLOCK(dllFileName, (strlen(tmpFileName)+strlen(SHAREDLIBEXT)+1), char, NULL);
+  strcpy(dllFileName, tmpFileName);
+  strcat(dllFileName, SHAREDLIBEXT);
+
+  /* open file and dump source code to it */
+  cFile = fopen(cFileName, "w");
+
+  if (!cFile) {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_OPEN_FILE,
+		      "Could not open file %s - %s!",
+		      cFileName, strerror(errno));  
+    return NULL;
+  }
+
+  fprintf(cFile,
+	  "#include <math.h>\n"
+	  "#include \"cvodes/cvodes.h\"\n"    
+	  "#include \"cvodes/cvodes_dense.h\"\n"
+	  "#include \"nvector/nvector_serial.h\"\n"
+	  "#include \"sbmlsolver/cvodeData.h\"\n"
+	  "#define DLL_EXPORT\n\n");
+
+  fprintf(cFile, sourceCode);
+  fclose(cFile);
+
+  /* construct command for compiling */
+  sprintf(command, "%s -I%s -I%s -I../src -pipe -O  -shared -fPIC -o %s %s",
+ 	  gccFileName,
+	  SUNDIALS_CFLAGS,
+	  SOSLIB_CFLAGS,
+	  dllFileName,
+	  cFileName);
+  Warn(NULL, "Command:\n%s\n", command);
+
+  /* compile source to shared library */
+  result = system(command);
+
+  /* handle possible errors */
+  if (result == -1) {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
+		      "forking gcc compiler subprocess failed!");
+    return (NULL);
+  }
+  else if (result != 0) {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+		      "compiling failed with errno %d - %s!",
+		      result, strerror(result));    
+    return (NULL);
+  }
+
+  /* clean up compilation intermediates */
+  free(tmpFileName);
+  remove(cFileName);
+  free(cFileName);
+  remove(oFileName);
+  free(oFileName);
+
+  /* load shared library */
+  dllHandle = dlopen(dllFileName, RTLD_LAZY);
+  if (dllHandle == NULL) {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_DL_LOAD_FAILED,
+		      "loading shared library %s failed %d - %s!",
+		      dllFileName, errno, strerror(errno));
+    SolverError_dumpAndClearErrors();
+    return (NULL);
+  }
+
+  ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
+  code->dllHandle   = dllHandle;
+  code->dllFileName = dllFileName;
+
+  return (code);
+}
+
+#endif /* end USE_TCC */
+#endif /* end WIN32 */
+
+/**
+   Returns a pointer to code that is compiled from the given source code
+*/
+compiled_code_t *Compiler_compile(const char *sourceCode)
+{
+  compiled_code_t *code = NULL;
+
+#ifdef WIN32
+
+  code = Compiler_compile_with_tcc(sourceCode);
+
+#else
+#if USE_TCC == 1
+
+  code = Compiler_compile_with_tcc(sourceCode);
+
+#else /* default case gcc */
+
+  code = Compiler_compile_with_gcc(sourceCode);
+
+#endif /* end USE_TCC */
+#endif /* end WIN32 */
 
    return (code);
 }
@@ -244,6 +381,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   void *result = NULL;
 
 #ifdef WIN32
+  
   result = GetProcAddress(code->dllHandle, symbol);
 
   if (result)
@@ -251,7 +389,9 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 
   SolverError_storeLastWin32Error("");
   result = NULL;
-#elif USE_TCC == 1
+
+#else
+#if USE_TCC == 1
 
   int failed;
   unsigned long val;
@@ -261,8 +401,24 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
   if ( failed != 0 )
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 		      "TCC failed: couldn't get function: %s", symbol);
+
+#else /* default case gcc */
+
+  char* returnvalue = NULL;
+
+  /* Clear any existing error */
+  returnvalue = dlerror();
+  result = dlsym(code->dllHandle, symbol);
+
+  returnvalue = dlerror();
+  if ( returnvalue != NULL )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_DL_SYMBOL_UNDEFINED,
+		      "dlsym(): couldn't get synbol %s from shared library %s",
+		      symbol, code->dllFileName);    
+
+#endif /* end USE_TCC */
+#endif /* end WIN32 */
   
-#endif
   return (result);
 }
 
@@ -271,12 +427,16 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 */
 void CompiledCode_free(compiled_code_t *code)
 {
+
 #ifdef WIN32
+
   FreeLibrary(code->dllHandle);
   remove(code->dllFileName);
   free(code->dllFileName);
   free(code);
-#elif USE_TCC == 1
+
+#else
+#if USE_TCC == 1
 
   if ( code->s != NULL ) tcc_delete(code->s);
   code->s = NULL;
@@ -284,5 +444,14 @@ void CompiledCode_free(compiled_code_t *code)
   /*!!! this somehow has no effect for the calling function */
   code = NULL;
 
-#endif
+#else /* default case gcc */
+
+  dlclose(code->dllHandle);
+  remove(code->dllFileName);
+  free(code->dllFileName);
+  free(code);
+
+#endif /* end USE_TCC */
+#endif /* end WIN32 */
+
 }
