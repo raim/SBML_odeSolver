@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 17:18:57 raim>
-  $Id: compiler.h,v 1.5 2007/05/16 16:36:16 raimc Exp $
+  Last changed Time-stamp: <2007-08-17 15:38:55 xtof>
+  $Id: compiler.h,v 1.6 2007/08/20 18:06:49 chfl Exp $
 */
 /* 
  *
@@ -43,36 +43,32 @@ extern "C" {
   
 #ifndef WIN32
 #include "config.h"
+#define MAX_PATH 256
 #endif
 
+#if USE_TCC == 1
+#include <libtcc.h>
+#endif
+  
   /* the compiled code structure */
   typedef struct compiled_code compiled_code_t ;
   
-#ifdef WIN32
-  
   /**
      A structure that stores compiled code
   */
   struct compiled_code
   {
-    HMODULE dllHandle ;
-    char *dllFileName ;
-  };
-  
-#elif USE_TCC == 1
-  
-#include <libtcc.h>
-  /**
-     A structure that stores compiled code
-  */
-
-  struct compiled_code
-  {
+#if USE_TCC == 1
     TCCState *s;
+#else
+#ifdef WIN32
+    HMODULE dllHandle;
+#else
+    void *dllHandle;
+#endif /* WIN32 */
+    char *dllFileName;
+#endif /* USE_TCC == 1 */
   };
-  
-#endif
-  
 
   /**
    * create compiled code from C source
