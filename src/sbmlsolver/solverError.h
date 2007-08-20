@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-11 18:09:32 raim>
-  $Id: solverError.h,v 1.24 2007/06/20 09:10:33 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-08-17 17:28:32 xtof>
+  $Id: solverError.h,v 1.25 2007/08/20 18:07:20 chfl Exp $ 
 */
 /* 
  *
@@ -124,6 +124,10 @@ extern "C" {
       SOLVER_ERROR_AST_COMPILATION_FAILED_MISSING_VALUE = 30503,
       SOLVER_ERROR_AST_COMPILATION_FAILED_STRANGE_NODE_TYPE = 30504,
       SOLVER_ERROR_CANNOT_COMPILE_SENSITIVTY_NOT_COMPUTED = 30505,
+      SOLVER_ERROR_GCC_FORK_FAILED = 30506,
+      SOLVER_ERROR_DL_LOAD_FAILED = 30507,
+      SOLVER_ERROR_DL_SYMBOL_UNDEFINED = 30508,
+      SOLVER_ERROR_OPEN_FILE = 30509,
       
       /** 4XXXX - assorted API errors */
       SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 40000,
