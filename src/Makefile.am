@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.25 2007/05/09 18:38:42 raimc Exp $
+# $Id: Makefile.am,v 1.26 2007/08/21 22:22:50 chfl Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -43,7 +43,9 @@ LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @TCC_LDFLAGS@ @TCC_LIBS@ 
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@ \
-             @TCC_RPATH@ 
+             @TCC_RPATH@
+AM_CFLAGS = @FPIC@
+AM_CXXFLAGS = @FPIC@
 lib_LIBRARIES = libODES.a
 
 libODES_a_SOURCES = ASTIndexNameNode.cpp \
