@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-08-20 21:07:36 raim>
-  $Id: compiler.c,v 1.19 2007/08/20 19:10:08 raimc Exp $
+  Last changed Time-stamp: <2007-08-21 17:46:12 xtof>
+  $Id: compiler.c,v 1.20 2007/08/21 22:20:58 chfl Exp $
 */
 /* 
  *
@@ -298,12 +298,13 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   fclose(cFile);
 
   /* construct command for compiling */
-  sprintf(command, "%s -I%s -I%s -I../src -pipe -O  -shared -fPIC -o %s %s",
+  sprintf(command, "%s -I%s -I%s -I../src -pipe -O  -shared -fPIC -o %s %s -L../src -L%s -lODES",
  	  gccFileName,
 	  SUNDIALS_CFLAGS,
 	  SOSLIB_CFLAGS,
 	  dllFileName,
-	  cFileName);
+	  cFileName,
+	  SOSLIB_LDFLAGS);
   Warn(NULL, "Command:\n%s\n", command);
 
   /* compile source to shared library */
