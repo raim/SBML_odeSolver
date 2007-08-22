@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-08-21 17:46:12 xtof>
-  $Id: compiler.c,v 1.20 2007/08/21 22:20:58 chfl Exp $
+  $Id: compiler.c,v 1.21 2007/08/22 11:08:38 jamescclu Exp $
 */
 /* 
  *
@@ -292,6 +292,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  "#include \"cvodes/cvodes_dense.h\"\n"
 	  "#include \"nvector/nvector_serial.h\"\n"
 	  "#include \"sbmlsolver/cvodeData.h\"\n"
+          "#include \"sbmlsolver/processAST.h\"\n" 
 	  "#define DLL_EXPORT\n\n");
 
   fprintf(cFile, sourceCode);
