@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-15 15:19:36 raim>
-  $Id: adjsenstest.c,v 1.7 2007/06/18 17:20:43 raimc Exp $
+  $Id: adjsenstest.c,v 1.8 2007/08/22 12:11:53 jamescclu Exp $
 */
 /* 
  *
@@ -133,9 +133,9 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE);
 
     if ( i < 2)
-      fprintf(stderr, "\n### Printing Forward Sensitivities");
+      fprintf(stderr, "\n### Printing Forward Sensitivities\n");
     else
-      fprintf(stderr, "\n### Printing Objective Function (since nonlinear objective is present)");  
+      fprintf(stderr, "\n### Printing Objective Function (since nonlinear objective is present)\n");  
 
      
     flag = IntegratorInstance_printQuad(ii, stderr);
@@ -164,7 +164,7 @@ main (int argc, char *argv[]){
      if (flag!=1) 
       return(EXIT_FAILURE);
 
-    fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt");
+    fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt\n");
     flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
 	return(EXIT_FAILURE); 
