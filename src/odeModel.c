@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.82 2007/06/20 09:09:23 jamescclu Exp $ 
+  $Id: odeModel.c,v 1.83 2007/09/04 13:41:38 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -2185,10 +2185,13 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
+      fprintf(stderr, "franz\n\n");
   /* if available, the whole code needs recompilation, can happen
      for subsequent runs with new sensitivity settings */
   if ( om->compiledCVODEFunctionCode != NULL )
   {
+      fprintf(stderr, "sepp\n\n");
+      
     CompiledCode_free(om->compiledCVODEFunctionCode);
     om->compiledCVODEFunctionCode = NULL;
   }
@@ -2208,7 +2211,9 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/cvodeSettings.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT __declspec(dllexport)\n");
-#elif USE_TCC == 1
+
+#else
+#if USE_TCC == 1
   CharBuffer_append(buffer,
 		    "#include <math.h>\n"\
 		    "#include <nvector/nvector_serial.h>\n"\
@@ -2222,7 +2227,17 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/odeModel.h>\n"\
                     "#include <sbmlsolver/processAST.h>\n"\
                     "#include <sbmlsolver/ASTIndexNameNode.h>\n"\
-		    "#define DLL_EXPORT\n");
+		    "#define DLL_EXPORT\n\n");
+#else
+  CharBuffer_append(buffer,
+		    "#include <math.h>\n"
+		    "#include \"cvodes/cvodes.h\"\n"
+		    "#include \"cvodes/cvodes_dense.h\"\n"
+		    "#include \"nvector/nvector_serial.h\"\n"
+		    "#include \"sbmlsolver/cvodeData.h\"\n"
+		    "#include \"sbmlsolver/processAST.h\"\n"
+		    "#define DLL_EXPORT\n\n");
+#endif
 #endif
 
   generateMacros(buffer);
@@ -2249,7 +2264,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     ODEModel_generateCVODEAdjointQuadFunction(om, buffer);
   }
 
-#ifdef USE_TCC /* write out source file for debugging*/
+#ifdef _DEBUG /* write out source file for debugging*/
   FILE *src;
   char *srcname =  "rhsfunctions.c";
   src = fopen(srcname, "w");
@@ -2327,6 +2342,8 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
+  
+      fprintf(stderr, "hias\n\n");
 
 #ifdef WIN32        
   CharBuffer_append(buffer,
@@ -2344,8 +2361,8 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 		    "#include <sbmlsolver/processAST.h>\n"\
 		    "#include <sbmlsolver/odeModel.h>\n"\
 		    "#define DLL_EXPORT __declspec(dllexport)\n");
-
-#elif USE_TCC == 1
+#else
+#if USE_TCC == 1
   CharBuffer_append(buffer,
 		    "#include <math.h>\n"\
 		    "#include <nvector/nvector_serial.h>\n"\
@@ -2360,6 +2377,16 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
                     "#include <sbmlsolver/processAST.h>\n"\
                     "#include <sbmlsolver/ASTIndexNameNode.h>\n"\
 		    "#define DLL_EXPORT\n");
+#else
+  CharBuffer_append(buffer,
+		    "#include <math.h>\n"
+		    "#include \"cvodes/cvodes.h\"\n"
+		    "#include \"cvodes/cvodes_dense.h\"\n"
+		    "#include \"nvector/nvector_serial.h\"\n"
+		    "#include \"sbmlsolver/cvodeData.h\"\n"
+		    "#include \"sbmlsolver/processAST.h\"\n"
+		    "#define DLL_EXPORT\n\n");
+#endif
 #endif
 
   generateMacros(buffer);
@@ -2533,7 +2560,9 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(ode
       compiled code structure */
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODEModel_compileCVODESenseFunctions(om);
+      fprintf(stderr, "otto\n\n");
+    ODEModel_compileCVODEFunctions(om);
+/*     ODEModel_compileCVODESenseFunctions(om); */
     RETURN_ON_ERRORS_WITH(NULL);
   }
 

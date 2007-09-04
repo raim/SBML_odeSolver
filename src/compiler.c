@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-08-21 17:46:12 xtof>
-  $Id: compiler.c,v 1.21 2007/08/22 11:08:38 jamescclu Exp $
+  $Id: compiler.c,v 1.22 2007/09/04 13:41:38 stefan_tbi Exp $
 */
 /* 
  *
@@ -251,18 +251,16 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   FILE *cFile;
   char command[4*MAX_PATH];
   void *dllHandle;
-#if 0
 #ifdef _DEBUG
   char *solverFileName = "SBML_odeSolverD.so";
 #else
   char *solverFileName = "SBML_odeSolver.so";
 #endif
-#endif
 
   /* generate a unique temprorary filename template */
   ASSIGN_NEW_MEMORY_BLOCK(tmpFileName, (MAX_PATH+1), char, NULL);
   tmpFileName = tmpnam(tmpFileName);
-  Warn(NULL,"Temprorary File Name is %s\n", tmpFileName);
+  Warn(NULL,"Temporary File Name is %s\n", tmpFileName);
 
   /* generate needed file names from the template*/
   ASSIGN_NEW_MEMORY_BLOCK(cFileName, (strlen(tmpFileName)+3), char, NULL);
@@ -286,27 +284,18 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
     return NULL;
   }
 
-  fprintf(cFile,
-	  "#include <math.h>\n"
-	  "#include \"cvodes/cvodes.h\"\n"    
-	  "#include \"cvodes/cvodes_dense.h\"\n"
-	  "#include \"nvector/nvector_serial.h\"\n"
-	  "#include \"sbmlsolver/cvodeData.h\"\n"
-          "#include \"sbmlsolver/processAST.h\"\n" 
-	  "#define DLL_EXPORT\n\n");
-
   fprintf(cFile, sourceCode);
   fclose(cFile);
 
   /* construct command for compiling */
-  sprintf(command, "%s -I%s -I%s -I../src -pipe -O  -shared -fPIC -o %s %s -L../src -L%s -lODES",
+  sprintf(command, "%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -lODES -lm",
  	  gccFileName,
 	  SUNDIALS_CFLAGS,
 	  SOSLIB_CFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SOSLIB_LDFLAGS);
-  Warn(NULL, "Command:\n%s\n", command);
+  Warn(NULL, "Command: %s\n", command);
 
   /* compile source to shared library */
   result = system(command);
