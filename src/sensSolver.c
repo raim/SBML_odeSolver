@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-12 14:42:34 xtof>
-  $Id: sensSolver.c,v 1.58 2007/06/20 15:51:11 jamescclu Exp $
+  $Id: sensSolver.c,v 1.59 2007/09/04 13:42:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -582,7 +582,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /*  Allocate abstolQA vector */
     if ( solver->abstolQA == NULL )
     {
-      solver->abstolQA = N_VNew_Serial(engine->om->neq);
+/*       solver->abstolQA = N_VNew_Serial(engine->om->neq); */
+      solver->abstolQA = N_VNew_Serial(engine->om->nsens);
       CVODE_HANDLE_ERROR((void *)solver->abstolQA,
 			 "N_VNew_Serial for vector quad abstol failed", 0);
     }
