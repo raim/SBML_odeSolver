@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-01-30 16:25:16 raim>
-  $Id: integratorSettings.h,v 1.31 2007/06/20 15:48:59 jamescclu Exp $ 
+  $Id: integratorSettings.h,v 1.32 2007/09/06 17:58:06 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -34,6 +34,7 @@
  *     
  */
 #include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/interpol.h"
 
 #ifndef _CVODESETTINGS_H_
 #define _CVODESETTINGS_H_
@@ -159,6 +160,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *); 
   SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *, char *, int);
+  SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *, time_series_t *, int);
  
   SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API void CvodeSettings_setErrors(cvodeSettings_t *, double Error, double RError, int Mxstep);

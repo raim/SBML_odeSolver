@@ -1,5 +1,5 @@
 /*   Last changed Time-stamp: <2007-05-15 20:43:56 raim> */
-/*   $Id: integratorSettings.c,v 1.45 2007/06/20 15:51:12 jamescclu Exp $ */
+/*   $Id: integratorSettings.c,v 1.46 2007/09/06 17:58:05 stefan_tbi Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -535,7 +535,7 @@ static int read_time(char *file, double *timepoints)
     (including initial time 0). Returns 1, if sucessful and 0, if not. */
 
 SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *set,
-							         char *TimeSeriesData_file, int InterStep)
+								  char *TimeSeriesData_file, int InterStep)
 {
   int i, n_time, OffSet, TotalNumStep;
   double *DataTimePoints;  
@@ -551,6 +551,78 @@ SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_
   
   /* read time data */
   read_time(TimeSeriesData_file, DataTimePoints);
+
+  OffSet = 0;
+  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  ){
+    OffSet = 1;
+  }
+ 
+  TotalNumStep = (n_time-1) * (1+InterStep) + 1 + OffSet;
+  ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, TotalNumStep, double, 0.0);
+
+  for (i=0; i< TotalNumStep-OffSet; i++){  
+
+    set->TimePoints[0] = 0.0;
+    d = div(i, 1+InterStep);
+
+    if( d.rem == 0){
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot];
+    }
+    else{
+
+      if (d.quot == n_time-1 ){
+	NextDataTime =  DataTimePoints[d.quot];
+      }
+      else{
+        NextDataTime =  DataTimePoints[d.quot+1];
+      }
+
+
+      TimeStep = NextDataTime - DataTimePoints[d.quot];
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] + ((double) d.rem/(1+InterStep) * TimeStep);
+    }
+
+  }
+
+  set->PrintStep = TotalNumStep-1;
+  set->Time = ((double) set->TimePoints[set->PrintStep]);
+  set->OffSet = OffSet;
+  set->InterStep = InterStep; 
+
+
+ if (set->AdjTimePoints != NULL)
+  free(set->AdjTimePoints);
+
+ ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, TotalNumStep, double, 0.0);
+
+ for ( i=0; i<TotalNumStep; i++ )  
+     set->AdjTimePoints[i] = ((double) set->TimePoints[TotalNumStep-i-1]);
+
+ set->AdjTime= 0.0;
+ set->AdjPrintStep =  set->PrintStep; 
+
+  return 1;
+}
+
+
+SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set, time_series_t *expm,
+							   int InterStep)
+{
+  int i, n_time, OffSet, TotalNumStep;
+  double *DataTimePoints;  
+  double ZeroTol = 1e-5, NextDataTime, TimeStep;
+  div_t d;
+
+ if (set->TimePoints != NULL)
+  free(set->TimePoints);
+
+  /* count number of lines */
+  n_time = expm->n_time;
+  ASSIGN_NEW_MEMORY_BLOCK(DataTimePoints, n_time, double, 0.0);
+  
+  /* read time data */
+  for (i=0; i<n_time; i++)
+      DataTimePoints[i] = expm->time[i];
 
   OffSet = 0;
   if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  ){

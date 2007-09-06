@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-08 18:37:31 xtof>
-  $Id: integratorInstance.c,v 1.88 2007/06/20 15:51:12 jamescclu Exp $
+  $Id: integratorInstance.c,v 1.89 2007/09/06 17:58:05 stefan_tbi Exp $
 */
 /* 
  *
@@ -842,13 +842,12 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     data->currenttime = solver->t;
    
  
-      if ( fabs(results->time[opt->PrintStep-solver->iout] - solver->t) < 1e-5)
+    if ( fabs(results->time[opt->PrintStep - solver->iout] - solver->t) < 1e-3)  /* */
        {
 	  found++;
 	  for ( j=0; j<om->neq; j++ )
 	    data->value[j] = results->value[j][opt->PrintStep-solver->iout];
        }      
- 
 
     if (found != 1){
       fprintf(stderr, "ERROR in update adjoint data: found none or more than one matchings in results data.\n");

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.83 2007/09/04 13:41:38 stefan_tbi Exp $ 
+  $Id: odeModel.c,v 1.84 2007/09/06 17:58:05 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -2185,13 +2185,10 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
-      fprintf(stderr, "franz\n\n");
   /* if available, the whole code needs recompilation, can happen
      for subsequent runs with new sensitivity settings */
   if ( om->compiledCVODEFunctionCode != NULL )
   {
-      fprintf(stderr, "sepp\n\n");
-      
     CompiledCode_free(om->compiledCVODEFunctionCode);
     om->compiledCVODEFunctionCode = NULL;
   }
@@ -2560,7 +2557,6 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(ode
       compiled code structure */
     /* only for calling independent of solver!!
        function should have been compiled already */
-      fprintf(stderr, "otto\n\n");
     ODEModel_compileCVODEFunctions(om);
 /*     ODEModel_compileCVODESenseFunctions(om); */
     RETURN_ON_ERRORS_WITH(NULL);
