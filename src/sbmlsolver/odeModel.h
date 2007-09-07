@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-12 15:47:41 xtof>
-  $Id: odeModel.h,v 1.37 2007/06/20 09:10:34 jamescclu Exp $ 
+  Last changed Time-stamp: <2007-09-07 20:01:27 raim>
+  $Id: odeModel.h,v 1.38 2007/09/07 18:18:19 raimc Exp $ 
 */
 /* 
  *
@@ -109,6 +109,19 @@ extern "C" {
     ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
 
+
+    /* COMPILED CODE OBJECTS */
+    compiled_code_t *compiledCVODEFunctionCode; /**< compiled code
+						   containing compiled
+						   functions */
+    /*!!! CURRENTLY SENSE CODE IS NOT USED !!!*/
+    compiled_code_t *compiledCVODESensitivityCode; /**< compiled code
+                                                    containing compiled
+                                                    sensitivity functions
+						    !!! currently not
+                                                    used, until TCC can handle
+						    multiple states !!!*/
+    int recompileSensitivity;
     /* compilation of forward integration functions */
     CVRhsFn compiledCVODERhsFunction; /**< CVODE rhs function created
 					 by compiling code generated
@@ -121,20 +134,11 @@ extern "C" {
     EventFn compiledEventFunction; /**< Event function created by
 				      compiling code generated from
 				      model */
-    compiled_code_t *compiledCVODEFunctionCode; /**< compiled code
-						   containing compiled
-						   functions */
     /* compilation of sensitivity functions */
     CVSensRhs1Fn compiledCVODESenseFunction; /**< Sensitivity function
                                                created by compiling
                                                code generated from
                                                model */
-    compiled_code_t *compiledCVODESensitivityCode; /**< compiled code
-                                                    containing compiled
-                                                    sensitivity functions
-						    !!! currently not
-                                                    used, until TCC can handle
-						    multiple states !!!*/
     /* compilation of adjoint functions */
     CVRhsFnB compiledCVODEAdjointRhsFunction; /**< CVODE adjoint rhs function created
 					                 by compiling code generated
@@ -183,16 +187,21 @@ extern "C" {
        v is given by a symbolic expression involving x and observation data. */
 
 
-    int discrete_observation_data;    /**< 0: data observed is of continuous type (i.e., interpolated)
-                                           1: data observed is of discrete type  */
+    int discrete_observation_data;    /**< 0: data observed is of
+					   continuous type (i.e., interpolated)
+                                           1: data observed is of
+					   discrete type  */
 
-    int compute_vector_v;            /*  if evaluateAST is called to computed vector_v  */
+    int compute_vector_v;            /*  if evaluateAST is called to
+					 computed vector_v  */
 
     time_series_t *time_series;  /**< time series of observation data
 				    or of vector v */
 
-    ASTNode_t **vector_v;     /**< the vector v, expressiing linear objective used in sensitivity solvers */
-    ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear) objective function */
+    ASTNode_t **vector_v;     /**< the vector v, expressiing linear
+				 objective used in sensitivity solvers */
+    ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
+				      objective function */
  
   };
   

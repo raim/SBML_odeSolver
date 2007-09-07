@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-15 19:01:50 raim>
-  $Id: cvodeData.c,v 1.21 2007/06/20 09:09:23 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-07 19:45:36 raim>
+  $Id: cvodeData.c,v 1.22 2007/09/07 18:18:18 raimc Exp $
 */
 /* 
  *
@@ -513,6 +513,8 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
     when necessary - problem with data->ode ODE optimization? !!!*/
   ODEModel_freeSensitivity(om);
 
+  om -> recompileSensitivity = 1;
+
   if ( data->nsens != opt->nsens )
   {
     if ( data->sensitivity != NULL ) 
@@ -669,8 +671,6 @@ static void CvodeData_freeStructures(cvodeData_t * data)
       data->ode = NULL;
   }
 }
-
-
 
 /********* cvodeResults will be created by integration runs *********/
 

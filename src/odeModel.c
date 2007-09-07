@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 21:12:18 raim>
-  $Id: odeModel.c,v 1.84 2007/09/06 17:58:05 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2007-09-07 20:09:59 raim>
+  $Id: odeModel.c,v 1.85 2007/09/07 18:18:18 raimc Exp $ 
 */
 /* 
  *
@@ -1848,7 +1848,8 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_RHS_FUNCTION_NAME);
   CharBuffer_append(buffer,
-		    "(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot, void *fA_data)\n"\
+		    "(realtype t, N_Vector y, N_Vector yA, "\
+		    " N_Vector yAdot, void *fA_data)\n"\
 		    "{\n"\
 		    "    int i;\n"\
 		    "    realtype *ydata, *yAdata, *dyAdata;\n"\
@@ -1862,7 +1863,8 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 
 
   /*  update ODE variables from CVODE */
-  for ( i=0; i<om->neq; i++ ){
+  for ( i=0; i<om->neq; i++ )
+  {
      CharBuffer_append(buffer,  "value[");
      CharBuffer_appendInt(buffer, i);
      CharBuffer_append(buffer,  "] = ydata[");
@@ -1891,6 +1893,8 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
       CharBuffer_append(buffer, "];\n");
     }
   
+    CharBuffer_append(buffer,
+		      "if (data->model->discrete_observation_data == 0)\n ");  
     CharBuffer_append(buffer, "dyAdata[");
     CharBuffer_appendInt(buffer, i);
     CharBuffer_append(buffer, "] +=");
@@ -2185,6 +2189,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
+
   /* if available, the whole code needs recompilation, can happen
      for subsequent runs with new sensitivity settings */
   if ( om->compiledCVODEFunctionCode != NULL )
@@ -2327,6 +2332,9 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
      om->compiledCVODEAdjointQuadFunction =
        CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 				COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
+     
+     om -> recompileSensitivity = 0;
+
    }
 }
 
@@ -2422,7 +2430,7 @@ void ODEModel_compileCVODESenseFunctions(odeModel_t *om)
 /** returns the compiled RHS ODE function for the given model */
 SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
 {
-  if ( !om->compiledCVODERhsFunction )
+  if ( !om->compiledCVODERhsFunction || om -> recompileSensitivity )
   {
     ODEModel_compileCVODEFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
@@ -2446,7 +2454,7 @@ SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeMod
     return NULL;
   }
 
-  if ( !om->compiledCVODEJacobianFunction )
+  if ( !om->compiledCVODEJacobianFunction || om -> recompileSensitivity )
   {
     /* only for calling independent of solver!!
        function should have been compiled already */
@@ -2471,17 +2479,15 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_
     return NULL;
   }
 
-  if ( !om->compiledCVODESenseFunction )
+  if ( !om->compiledCVODESenseFunction || om -> recompileSensitivity )
   {
     /*!!! currently not used: if TCC multiple states become possible,
       until then this must have been compiled already within the main
       compiled code structure */
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODEModel_compileCVODESenseFunctions(om);
+    ODEModel_compileCVODEFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
-
-    fprintf(stderr, "compiledd CVODE sens funcion \n"); 
   }
 
   return om->compiledCVODESenseFunction;
@@ -2501,7 +2507,7 @@ SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel
     return NULL;
   }
 
-  if ( !om->compiledCVODEAdjointRhsFunction )
+  if ( !om->compiledCVODEAdjointRhsFunction  || om -> recompileSensitivity )
   {
     ODEModel_compileCVODEFunctions(om);
     RETURN_ON_ERRORS_WITH(NULL);
@@ -2525,7 +2531,8 @@ SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunctio
     return NULL;
   }
 
-  if ( !om->compiledCVODEAdjointJacobianFunction )
+  if ( !om->compiledCVODEAdjointJacobianFunction  ||
+       om -> recompileSensitivity )
   {
     /* only for calling independent of solver!!
        function should have been compiled already */
@@ -2550,7 +2557,7 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(ode
     return NULL;
   }
 
-  if ( !om->compiledCVODEAdjointQuadFunction )
+  if ( !om->compiledCVODEAdjointQuadFunction  || om -> recompileSensitivity )
   {
     /*!!! currently not used: if TCC multiple states become possible,
       until then this must have been compiled already within the main
