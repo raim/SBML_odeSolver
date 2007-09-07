@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 20:09:59 raim>
-  $Id: odeModel.c,v 1.85 2007/09/07 18:18:18 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-07 20:28:37 raim>
+  $Id: odeModel.c,v 1.86 2007/09/07 18:40:59 raimc Exp $ 
 */
 /* 
  *
@@ -1403,6 +1403,9 @@ SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *om)
     ODEModel_freeSensitivity(om);
   }
   else success = 1;
+
+  /* set flag for recompilation */
+  om -> recompileSensitivity = 1;
 
   /* return 1 if sensitivity matrix was constructed successfully,
      and 0 otherwise */

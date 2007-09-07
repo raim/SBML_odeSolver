@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 19:45:36 raim>
-  $Id: cvodeData.c,v 1.22 2007/09/07 18:18:18 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 20:27:46 raim>
+  $Id: cvodeData.c,v 1.23 2007/09/07 18:40:59 raimc Exp $
 */
 /* 
  *
@@ -487,9 +487,9 @@ static int CvodeData_createMatrices(cvodeData_t *data,
   /* sens. matrix from former runs has been freed with initialization */
   if ( opt->Sensitivity || opt->DoAdjoint )
   {
-    /* only required if Jacobian exists or Adjoing is requested */
+    /* only required if Jacobian exists or Adjoint is requested */
     if ( om->jacobian || opt->DoAdjoint )
-       om->sensitivity = ODEModel_constructSensitivity(om);
+      om->sensitivity = ODEModel_constructSensitivity(om);
     else
       om->sensitivity = 0;
   }
@@ -512,8 +512,6 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
   /*!!! sensitivity matrix should only be freed and reconstructed
     when necessary - problem with data->ode ODE optimization? !!!*/
   ODEModel_freeSensitivity(om);
-
-  om -> recompileSensitivity = 1;
 
   if ( data->nsens != opt->nsens )
   {
