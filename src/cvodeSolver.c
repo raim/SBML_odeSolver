@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-12 15:10:43 xtof>
-  $Id: cvodeSolver.c,v 1.61 2007/08/21 13:37:32 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-07 16:56:17 raim>
+  $Id: cvodeSolver.c,v 1.62 2007/09/07 18:12:55 raimc Exp $
 */
 /* 
  *
@@ -106,30 +106,20 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   /* Forward solver is only called if not in the adjoint (backward) phase */
   if( !opt->AdjointPhase )
   { 
-    if( opt->DoAdjoint ){  
-
-        /* set desired stopping time */ 
-        flag = CVodeSetStopTime(solver->cvode_mem, solver->tout ); 
-
-
+    if( opt->DoAdjoint )
+    {  
         /* CvodeF is needed in the forward phase if the adjoint soln is
 	 desired  */  
         flag = CVodeF(solver->cvadj_mem, solver->tout,
-		    solver->y, &(solver->t), CV_NORMAL_TSTOP, &(opt->ncheck));
-        
+		    solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck));
+     
     }
-   
-
-    else 
+    else
+    {
       /* calling CVODE */
-
-       /* set desired stopping time */
-       flag = CVodeSetStopTime(solver->cvode_mem, solver->tout ); 
-
-
        flag = CVode(solver->cvode_mem, solver->tout,
-		    solver->y, &(solver->t), CV_NORMAL_TSTOP);
-
+		    solver->y, &(solver->t), CV_NORMAL);
+    }
    
 
     /*  if ( flag != CV_SUCCESS ) */
@@ -644,7 +634,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if ( opt->Sensitivity )
     {
       flag = IntegratorInstance_createCVODESSolverStructures(engine);
-      if ( flag == 0 ) return 0; /* error */ 
+     if ( flag == 0 ) return 0; /* error */ 
     }
     else
     {
