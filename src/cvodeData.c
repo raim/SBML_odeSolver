@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 20:27:46 raim>
-  $Id: cvodeData.c,v 1.23 2007/09/07 18:40:59 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 22:03:18 raim>
+  $Id: cvodeData.c,v 1.24 2007/09/07 20:33:37 raimc Exp $
 */
 /* 
  *
@@ -461,6 +461,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     CvodeData_initializeSensitivities(data, opt, om);
   /* now finally, Jacobian and sensitivity matrices can
      be constructed correctly */
+  /*!!! see comments in initializeSensitivities !!!*/
   CvodeData_createMatrices(data, opt, om);
   
   return 1;
@@ -511,6 +512,9 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
   /* free existing sensitivity matrix in any case */
   /*!!! sensitivity matrix should only be freed and reconstructed
     when necessary - problem with data->ode ODE optimization? !!!*/
+  /*!!! this should be done on first call of cvodeOneStep, and
+    instead here should be checked if requested sensitivities changed
+    and a flag set (om->index.. initialization also here?) !!!*/
   ODEModel_freeSensitivity(om);
 
   if ( data->nsens != opt->nsens )

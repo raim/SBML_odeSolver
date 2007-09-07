@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 21:38:24 raim>
-  $Id: sensSolver.c,v 1.62 2007/09/07 19:56:37 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 22:25:08 raim>
+  $Id: sensSolver.c,v 1.63 2007/09/07 20:33:37 raimc Exp $
 */
 /* 
  *
@@ -205,7 +205,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   
   /* adjoint specific*/
   int method, iteration;
- 
+
+  /*!!! free and reconstruction of sensitivity matrices should be moved
+    here from cvodeData.c, see comments there (problem with
+    optimized ODEs un data->ode ? might require re-run)
+    HOWEVER, as sens functions can currently not be compiled independently
+    the need already be compiled in createCVODESolverStructures,
+    see commment there!!!*/
   
   if( !opt->AdjointPhase )
   {
@@ -218,7 +224,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       if ( opt->compileFunctions )
       {
 	sensRhsFunction = ODEModel_getCompiledCVODESenseFunction(om);
-	if ( !sensRhsFunction ) return 0;  /* error */
+	if ( !sensRhsFunction ) return 0;  /*!!! use CVODE_HANDLE_ERROR */
       }
       else
 	sensRhsFunction = fS ;
@@ -397,7 +403,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if ( opt->compileFunctions )
     {
       jacA = ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
-      if ( !jacA ) return 0;  /* error */
+      if ( !jacA ) return 0;  /*!!! use CVODE_HANDLE_ERROR error */
       /* set adjoint quadrature function for sensitivity */
       if ( om->sensitivity )
       {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 21:54:55 raim>
-  $Id: cvodeSolver.c,v 1.64 2007/09/07 19:56:37 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 22:26:57 raim>
+  $Id: cvodeSolver.c,v 1.65 2007/09/07 20:33:37 raimc Exp $
 */
 /* 
  *
@@ -411,6 +411,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /* i.e, also for the forward phase of adjoint sens. analysis */
 
     neq = engine->om->neq; /* number of equations */
+
+  /*!!! if compilation is requested, and as sens functions can currently
+    not be compiled independently (see comments in sensSolver.c), 
+    free and reconstruction of sensitivity matrices should be moved
+    here from cvodeData.c, see comments there (problem with
+    optimized ODEs un data->ode ? might require re-run) !!!*/
 
     if ( opt->compileFunctions )
     {

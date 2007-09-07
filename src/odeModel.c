@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 20:28:37 raim>
-  $Id: odeModel.c,v 1.86 2007/09/07 18:40:59 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-07 22:06:00 raim>
+  $Id: odeModel.c,v 1.87 2007/09/07 20:33:37 raimc Exp $ 
 */
 /* 
  *
@@ -1991,7 +1991,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 		    "int i;\n"						\
 		    "realtype *ydata;\n"				\
 		    "cvodeData_t *data;\n"				\
-		    "realtype *value;\n"					\
+		    "realtype *value;\n"				\
 		    "data  = (cvodeData_t *) jac_dataB;\n"		\
 		    "value = data->value ;\n"				\
 		    "ydata = NV_DATA_S(y);\n"				\
@@ -2564,7 +2564,8 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(ode
   {
     /*!!! currently not used: if TCC multiple states become possible,
       until then this must have been compiled already within the main
-      compiled code structure */
+      compiled code structure, or main must be recompiled here on
+      second integrator runs when sens was switched on */
     /* only for calling independent of solver!!
        function should have been compiled already */
     ODEModel_compileCVODEFunctions(om);
