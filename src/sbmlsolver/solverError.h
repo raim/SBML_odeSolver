@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-08-17 17:28:32 xtof>
-  $Id: solverError.h,v 1.25 2007/08/20 18:07:20 chfl Exp $ 
+  Last changed Time-stamp: <2007-09-07 13:17:41 raim>
+  $Id: solverError.h,v 1.26 2007/09/07 18:14:22 raimc Exp $ 
 */
 /* 
  *
@@ -110,6 +110,9 @@ extern "C" {
       SOLVER_ERROR_UPDATE_ADJDATA = 20502, 
       SOLVER_ERROR_INITIALIZE_ADJDATA = 20503,
 
+      /** 2X6XX - Errors and Messages in input data */
+      SOLVER_MESSAGE_INTERPOLATION_OUT_OF_RANGE = 20600,
+      
       /** 3XXXX - Memory Exhaustion; general */
       SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE = 30000,
 
@@ -141,7 +144,8 @@ extern "C" {
       FATAL_ERROR_TYPE = 0,
       ERROR_ERROR_TYPE = 1,
       WARNING_ERROR_TYPE = 2,
-      NUMBER_OF_ERROR_TYPES = 3
+      NUMBER_OF_ERROR_TYPES = 3,
+      MESSAGE_ERROR_TYPE = 4
     } errorType_t;
 
 #define RETURN_ON_ERRORS_WITH(x)				\

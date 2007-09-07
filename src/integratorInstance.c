@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-08 18:37:31 xtof>
-  $Id: integratorInstance.c,v 1.89 2007/09/06 17:58:05 stefan_tbi Exp $
+  Last changed Time-stamp: <2007-09-07 13:13:46 raim>
+  $Id: integratorInstance.c,v 1.90 2007/09/07 18:14:21 raimc Exp $
 */
 /* 
  *
@@ -715,7 +715,6 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
-  int found, j;
   div_t d;   
 
   /* update rest of cvodeData_t **/
@@ -775,8 +774,9 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 
   /* if discrete data is observed, compute step contribution to
      the objective as well as the forward sensitivity */
- if ((opt->observation_data_type == 1)  &&
-     ( (solver->iout==opt->OffSet)  ||  ((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
+ if ( (opt->observation_data_type == 1)  &&
+      ((solver->iout==opt->OffSet) ||
+       ((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
   {
     /* set current time and state values for evaluating vector_v  */
     data->currenttime = solver->t;
@@ -786,7 +786,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     d = div(solver->iout, 1+opt->InterStep);
     data->TimeSeriesIndex = opt->OffSet + d.quot;
 
-    NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0) +  evaluateAST( data->model->ObjectiveFunction, data);
+    NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0)
+      + evaluateAST( data->model->ObjectiveFunction, data);
     om->compute_vector_v=0;
 
   } /* if (opt->observation_data_type == 1) */
@@ -1026,7 +1027,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
     /* issue warning only if steady state detection is one, and
        integration will stop */
     if ( opt->SteadyState )
-      SolverError_error(WARNING_ERROR_TYPE,
+      SolverError_error(MESSAGE_ERROR_TYPE,
 			SOLVER_MESSAGE_STEADYSTATE_FOUND,
 			"Steady state found. "
 			"Simulation aborted at %g seconds. "
@@ -1264,7 +1265,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
     if ( errorCode == CV_CONV_FAILURE && data->run == 1 &&
 	 opt->StoreResults)
     {      
-      SolverError_error(WARNING_ERROR_TYPE,
+      SolverError_error(MESSAGE_ERROR_TYPE,
 			SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN,
 			"Rerun with %s Jacobian matrix.",
 			opt->UseJacobian ?
