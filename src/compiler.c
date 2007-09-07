@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-08-21 17:46:12 xtof>
-  $Id: compiler.c,v 1.22 2007/09/04 13:41:38 stefan_tbi Exp $
+  Last changed Time-stamp: <2007-09-07 20:11:39 raim>
+  $Id: compiler.c,v 1.23 2007/09/07 18:16:57 raimc Exp $
 */
 /* 
  *
@@ -211,7 +211,8 @@ compiled_code_t *Compiler_compile_with_tcc(const char *sourceCode)
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 		      "Online compilation failed - returned %d", failed);
 
-  failed = tcc_add_symbol(code->s, "evaluateAST", (unsigned long)& evaluateAST);
+  failed = tcc_add_symbol(code->s, "evaluateAST",
+			  (unsigned long)& evaluateAST);
   if ( failed != 0 )
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
 		      "TCC failed: couldn't add symbol evaluateAST");
@@ -269,7 +270,9 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   ASSIGN_NEW_MEMORY_BLOCK(oFileName, (strlen(tmpFileName)+3), char, NULL);
   strcpy(oFileName, tmpFileName);
   strcat(oFileName, ".o");  
-  ASSIGN_NEW_MEMORY_BLOCK(dllFileName, (strlen(tmpFileName)+strlen(SHAREDLIBEXT)+1), char, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(dllFileName,
+			  (strlen(tmpFileName)+strlen(SHAREDLIBEXT)+1),
+			  char, NULL);
   strcpy(dllFileName, tmpFileName);
   strcat(dllFileName, SHAREDLIBEXT);
 
@@ -439,7 +442,6 @@ void CompiledCode_free(compiled_code_t *code)
   if ( code != NULL ) free(code);
   /*!!! this somehow has no effect for the calling function */
   code = NULL;
-
 #else /* default case gcc */
 
   dlclose(code->dllHandle);

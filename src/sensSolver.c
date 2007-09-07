@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-12 14:42:34 xtof>
-  $Id: sensSolver.c,v 1.59 2007/09/04 13:42:27 stefan_tbi Exp $
+  Last changed Time-stamp: <2007-09-07 20:05:03 raim>
+  $Id: sensSolver.c,v 1.60 2007/09/07 18:16:57 raimc Exp $
 */
 /* 
  *
@@ -431,7 +431,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       }
     }
 
-    /* update initial adjoint state if discrete experimental data is observed */
+    /* update initial adjoint state if discrete experimental data is
+       observed */
     if (opt->observation_data_type == 1)
     {
       /* set current time and state values for evaluating vector_v  */
@@ -450,11 +451,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	  fprintf(stderr, "ERROR in updating the initial adjoint data.\n");
 	  SolverError_error(FATAL_ERROR_TYPE,
 			    SOLVER_ERROR_INITIALIZE_ADJDATA,
-			    "Failed to get state value at time %g.", solver->t);
+			    "Failed to get state value at time %g.",solver->t);
         return 0;
       }
 
-      /* in discrete data case, set the initial adjoint solution to the evaluated value of vector_v */
+      /* in discrete data case, set the initial adjoint solution to
+	 the evaluated value of vector_v */
       om->compute_vector_v=1;
       data->TimeSeriesIndex = data->model->time_series->n_time-1 ;
       for ( i=0; i<om->neq; i++ )
@@ -760,7 +762,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
 		      "File not found "
 		      "in reading objective function"); 
 
-  /* read line */
+  /* a very obfuscated way to skip comment lines and read exactly one
+     line of objective function */
   for (i=0; (line = get_line(fp)) != NULL; i++)
   {   
     token = strtok(line, "");
@@ -775,7 +778,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
         free(line_formula);
       ASSIGN_NEW_MEMORY_BLOCK(line_formula, strlen(line)+1, char, 0); 
       strcpy(line_formula, line); 
-       if ( line != NULL  )
+      if ( line != NULL  )
         free(line); 
     }
   }
@@ -785,7 +788,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   {
    SolverError_error(FATAL_ERROR_TYPE,
 		     SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
-		     "Error in processing objective function file"); 
+		     "Error in processing objective function file, %d lines",
+		     i); 
    return 0;
   }
 
@@ -1042,9 +1046,10 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 	}
 
     }
-    else{
-      /* else solver->q or solver->qS already contain the objective and its sensitivity respectively */
-  
+    else
+    {
+      /* else solver->q or solver->qS already contain the objective
+	 and its sensitivity respectively */  
     }
 
   }
@@ -1182,8 +1187,8 @@ static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
     else
     {   
         /*  ASTNode_setData(copy); */
-      tempstr  = ASTNode_getName(f);
-      ASSIGN_NEW_MEMORY_BLOCK(tempstr2, strlen(tempstr)+5, char, 0);
+      tempstr  = (char *)ASTNode_getName(f);
+      ASSIGN_NEW_MEMORY_BLOCK(tempstr2, strlen(tempstr)+5, char, NULL);
       strncpy(tempstr2, tempstr, strlen(tempstr) );
       strncat(tempstr2, "_data", 5);
       ASTNode_setName(copy, tempstr2 );
