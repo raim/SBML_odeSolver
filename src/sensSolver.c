@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 21:34:21 raim>
-  $Id: sensSolver.c,v 1.61 2007/09/07 19:36:49 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 21:38:24 raim>
+  $Id: sensSolver.c,v 1.62 2007/09/07 19:56:37 raimc Exp $
 */
 /* 
  *
@@ -119,7 +119,7 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
   flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
     
   if ( flag != CV_SUCCESS )
-    return 0; /* !!! CVODES specific error handling !!! */    
+    return flag;
   else
   {
     for ( j=0; j<data->nsens; j++ )
@@ -135,7 +135,7 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
     }
   }
 
-  return 1;
+  return flag;
 }
 
 /* The Hot Stuff! */

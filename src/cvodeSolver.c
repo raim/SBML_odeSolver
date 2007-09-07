@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 21:33:40 raim>
-  $Id: cvodeSolver.c,v 1.63 2007/09/07 19:36:49 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 21:54:55 raim>
+  $Id: cvodeSolver.c,v 1.64 2007/09/07 19:56:37 raimc Exp $
 */
 /* 
  *
@@ -371,17 +371,16 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   if ( opt->Sensitivity && !opt->AdjointPhase )
   { 
     flag = IntegratorInstance_getForwardSens(engine);
-    if ( flag != 1 ) return 0;
-    else return 1;
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetFdata", 1);
   }
   else if( opt->AdjointPhase )
   {
-    flag = IntegratorInstance_getAdjSens(engine);
-    if ( flag != 1 ) return 0;
-    else return 1;
+    IntegratorInstance_getAdjSens(engine);
   }
   else
-    return 1; /* OK */    
+    return 1; /* OK, redundant? */
+  
+  return 1; /* OK, redundant? */    
 }
 
 
@@ -496,9 +495,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 
 /*       flag = CVodeSetMaxOrd(cvode_mem, opt->MaxOrder); */
 /*       CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxOrd", 1); */
-     /*!!! max. order should be set here, problem: "maxord affects
-the memory requirements for the internal cvodes memory block, its
-value cannot be increased past its previous value. !!! */  
+     /*!!! max. order should be set here, problem: "maxord affects the
+       memory requirements for the internal cvodes memory block, its
+       value cannot be increased past its previous value." !!! */  
 
       /**
        * Call CVodeMalloc to initialize the integrator memory:\n
