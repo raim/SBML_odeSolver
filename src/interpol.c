@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 15:32:29 raim>
-  $Id: interpol.c,v 1.7 2007/06/20 09:06:46 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-07 13:18:03 raim>
+  $Id: interpol.c,v 1.8 2007/09/07 18:15:32 raimc Exp $
 */
 
 
@@ -42,7 +42,9 @@ void free_data(time_series_t* ts)
   /* free warnings */
   for ( i=0; i<2; i++ )
     if ( ts->warn[i] != 0 ) /* !!! use SolverError here ? !!! */
-      Warn(stderr, "call(): %s: %d times\n", ts->mess[i], ts->warn[i]);
+      SolverError_error(MESSAGE_ERROR_TYPE,
+			SOLVER_MESSAGE_INTERPOLATION_OUT_OF_RANGE,
+			"call(): %s: %d times\n", ts->mess[i], ts->warn[i]);
   
   free(ts->mess);
   free(ts->warn); 
@@ -152,18 +154,18 @@ time_series_t *read_data(char *file, int n_var, char **var)
   time_series_t *ts;
 
   /* alloc mem */
-  ASSIGN_NEW_MEMORY_BLOCK(ts, 1, time_series_t, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(ts, 1, time_series_t, NULL);
 
   /* alloc mem for index lists */
   ts->n_var = n_var;
-  ASSIGN_NEW_MEMORY_BLOCK(ts->var,   n_var, char *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(ts->data,  n_var, double *, 0); 
-  ASSIGN_NEW_MEMORY_BLOCK(ts->data2, n_var, double *, 0);    
+  ASSIGN_NEW_MEMORY_BLOCK(ts->var,   n_var, char *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(ts->data,  n_var, double *, NULL); 
+  ASSIGN_NEW_MEMORY_BLOCK(ts->data2, n_var, double *, NULL);    
 
   /* initialize index lists */
   for ( i=0; i<n_var; i++ )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(name, strlen(var[i])+1, char , 0);
+    ASSIGN_NEW_MEMORY_BLOCK(name, strlen(var[i])+1, char , NULL);
     strcpy(name, var[i]);
     ts->var[i]   = name;
     ts->data[i]  = NULL;
@@ -171,8 +173,8 @@ time_series_t *read_data(char *file, int n_var, char **var)
   }
 
     /* alloc temp mem for column info */
-    ASSIGN_NEW_MEMORY_BLOCK(col,    n_var, int, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(index,  n_var, int, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(col,    n_var, int, NULL);
+    ASSIGN_NEW_MEMORY_BLOCK(index,  n_var, int, NULL);
 
   /* read header line */
   n_data = read_header_line(file, n_var, var, col, index);
@@ -185,11 +187,11 @@ time_series_t *read_data(char *file, int n_var, char **var)
   /* alloc mem for data */
   for ( i=0; i<n_data; i++ )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(ts->data[index[i]],   n_time, double, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(ts->data2[index[i]],  n_time, double, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data[index[i]],   n_time, double, NULL);
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data2[index[i]],  n_time, double, NULL);
   }
   /* ts->time = space(n_time * sizeof(double)); */
-  ASSIGN_NEW_MEMORY_BLOCK(ts->time,  n_time, double, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(ts->time,  n_time, double, NULL);
 
   /* read data */
   read_columns(file, n_data, col, index, ts);
@@ -203,13 +205,16 @@ time_series_t *read_data(char *file, int n_var, char **var)
   /* calculate second derivatives */
   for ( i=0; i<n_var; i++ )
     if ( ts->data[i] != NULL )
-      spline(ts->n_time, ts->time, ts->data[i], ts->data2[i]);
+    {
+      if ( spline(ts->n_time, ts->time, ts->data[i], ts->data2[i]) != 1 )
+	return NULL; /* ran out of memory during spline routine */
+    }
 
   ts->last = 0;
     
   /* alloc mem for warnings */
-  ASSIGN_NEW_MEMORY_BLOCK(ts->mess,  2, char *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(ts->warn,  2, int   , 0);   
+  ASSIGN_NEW_MEMORY_BLOCK(ts->mess,  2, char *, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(ts->warn,  2, int   , NULL);   
 
   /* initialize warnings */
   ts->mess[0] = "argument out of range (left) ";
@@ -417,12 +422,12 @@ double call(int i, double x, time_series_t *ts)
 /* spline returns y2[0..n-1] */
 /* containing the second derivatives of the cubic-spline interpolation */
 
-void spline(int n, double *x, double *y, double *y2)
+int spline(int n, double *x, double *y, double *y2)
 {    
   int i;
   double p, sig, *u;
 
-  ASSIGN_NEW_MEMORY_BLOCK(u, n-1, double, 1);
+  ASSIGN_NEW_MEMORY_BLOCK(u, n-1, double, 0);
 
   y2[0] = u[0] = 0.0;
   for ( i=1; i<=n-2; i++ )
@@ -439,7 +444,7 @@ void spline(int n, double *x, double *y, double *y2)
     y2[i] = y2[i] * y2[i+1] + u[i];
 
   free(u);
-
+  return 1;
 }
 
 /* ------------------------------------------------------------------------ */

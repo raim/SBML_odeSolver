@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:43:35 raim>
-  $Id: interpol.h,v 1.4 2006/11/02 16:04:29 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-07 13:05:00 raim>
+  $Id: interpol.h,v 1.5 2007/09/07 18:15:32 raimc Exp $
 */
 /* 
  *
@@ -75,7 +75,7 @@ extern "C" {
 
   double call(int i, double x, time_series_t *ts);
 
-  void spline(int n, double *x, double *y, double *y2);
+  int spline(int n, double *x, double *y, double *y2);
   void splint(int n, double *x, double *y, double *y2,
 	      double x_, double *y_, int *j);
 
