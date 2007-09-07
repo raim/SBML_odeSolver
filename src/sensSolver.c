@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 20:05:03 raim>
-  $Id: sensSolver.c,v 1.60 2007/09/07 18:16:57 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 21:34:21 raim>
+  $Id: sensSolver.c,v 1.61 2007/09/07 19:36:49 raimc Exp $
 */
 /* 
  *
@@ -277,8 +277,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else if ( opt->SensMethod == 1 ) sensMethod = CV_STAGGERED;
     else if ( opt->SensMethod == 2 ) sensMethod = CV_STAGGERED1;
 
-    /*!!! valgrind memcheck sensitivity: 1,248 (32 direct, 1,216 indirect)
-      bytes in 1 blocks are definitely lost !!!*/
     if ( reinit == 0 )
     {
       flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 16:56:17 raim>
-  $Id: cvodeSolver.c,v 1.62 2007/09/07 18:12:55 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 21:33:40 raim>
+  $Id: cvodeSolver.c,v 1.63 2007/09/07 19:36:49 raimc Exp $
 */
 /* 
  *
@@ -228,7 +228,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     flag = CVodeB(solver->cvadj_mem, solver->tout,
 		  solver->yA, &(solver->t), CV_NORMAL);
 
-  
+    /*!!! ==31752== Conditional jump or move depends on uninitialised
+                    value(s)
+	  ==31752==    at 0x43552B: CVodeB
+(in /home/fremdling/raim/programs/SBML_odeSolver/examples/adj_sensitivity) */
 
     if ( flag <CV_SUCCESS  )
     {
@@ -436,16 +439,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /**
      * Allocate y, abstol vectors
      */
-    /*!!! valgrind memcheck adj_sensitivity: 560 (32 direct, 528 indirect)
-      bytes  in 2 blocks are definitely lost !!!*/
     if ( solver->y == NULL )
     {
       solver->y = N_VNew_Serial(neq);
       CVODE_HANDLE_ERROR((void *)solver->y, "N_VNew_Serial for y", 0);
     }
 
-    /*!!! valgrind memcheck sensitivity:   576 (32 direct, 544 indirect)
-      bytes in 2 blocks are definitely lost !!!*/
     if ( solver->abstol == NULL )
     {
       solver->abstol = N_VNew_Serial(neq);
@@ -486,9 +485,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if ( opt->IterMethod == 1 ) iteration = CV_FUNCTIONAL;
     else iteration = CV_NEWTON;
 
-    /* !!! valgrind memcheck sensitivity: 20,632 (1,880 direct,
-       18,752 indirect) bytes in 1 blocks are definitely lost !!! */
-    /* !?? problem with ReInit: can't use new method !??
+
+     /* !?? problem with ReInit: can't use new method !??
        -> use additional methodIsValid option */
     /*!!! PROBLEM: can't reinit w/o sensitivity if once initialized */
     if ( solver->cvode_mem == NULL )
@@ -496,8 +494,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       solver->cvode_mem = CVodeCreate(method, iteration);
       CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "CVodeCreate", 0);
 
-      /* !!! max. order should be set here !!! */
-      
+/*       flag = CVodeSetMaxOrd(cvode_mem, opt->MaxOrder); */
+/*       CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxOrd", 1); */
+     /*!!! max. order should be set here, problem: "maxord affects
+the memory requirements for the internal cvodes memory block, its
+value cannot be increased past its previous value. !!! */  
+
       /**
        * Call CVodeMalloc to initialize the integrator memory:\n
        *
@@ -647,8 +649,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
        calling CVodeF  */
     if ( opt->DoAdjoint )
     {
-      /*!!! valgrind memcheck adj_sensitivity: 627,528 (280 direct,
-	627,248 indirect) bytes in 1 blocks are definitely lost !!!*/
       if ( solver->cvadj_mem == NULL )
       {
 	solver->cvadj_mem =
