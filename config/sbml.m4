@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.9 2007/05/25 11:26:34 raimc Exp $
+dnl $Id: sbml.m4,v 1.10 2007/09/08 11:12:55 raimc Exp $
 
 
 dnl
@@ -15,7 +15,7 @@ AC_DEFUN([AC_SBML_PATH],
   do
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
       ac_SBML_includes="$ac_dir"
-      with_libsbml = "$ac_dir"
+      with_libsbml="$ac_dir"
       dnl include /sbml folder for libSBML 2.3.4 bugs
       SBML_CFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
       AC_MSG_RESULT([yes])

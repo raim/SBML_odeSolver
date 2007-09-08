@@ -1,7 +1,7 @@
-dnl $Id: sundials.m4,v 1.12 2007/06/12 13:17:04 chfl Exp $
+dnl $Id: sundials.m4,v 1.13 2007/09/08 11:12:55 raimc Exp $
 
 dnl
-dnl look for SUNDAILS Library headers in some standard set of directories
+dnl look for SUNDIALS Library headers in some standard set of directories
 dnl
 AC_DEFUN([AC_SUNDIALS_PATH],
 [ AC_MSG_CHECKING([for SUNDIALS Library headers])
@@ -9,14 +9,14 @@ AC_DEFUN([AC_SUNDIALS_PATH],
     /usr/local                  \
     /usr/local/sundials         \
     /usr/local/include/sundials \
-    /usr/include/sundails       \
+    /usr/include/sundials       \
     /usr/local/share/sundials   \
-    /opt/sundails               \ 
+    /opt/sundials               \ 
     ;                           \
   do
-    if test -r "$ac_dir/include/cvodes.h"; then
+    if test -r "$ac_dir/include/cvodes/cvodes.h"; then
       ac_SUNDIALS_path=$ac_dir
-      with_sundials = "$ac_dir"
+      with_sundials="$ac_dir"
       SUNDIALS_CFLAGS="-I$ac_dir/include"
       AC_MSG_RESULT([yes])
       break
@@ -37,7 +37,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
 
 dnl
 dnl Check --with-libsundials-cvodes[=PREFIX] is specified
-dnl and libsundails is installed.
+dnl and libsundials is installed.
 dnl
 AC_DEFUN([CONFIG_LIB_SUNDIALS],
 [ AC_PREREQ(2.57)dnl
