@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-06-08 17:55:58 xtof>
-  $Id: integratorInstance.h,v 1.34 2007/06/12 13:44:12 chfl Exp $ 
+  $Id: integratorInstance.h,v 1.35 2007/09/14 16:22:00 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -142,6 +142,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_printResults(integratorInstance_t *, FILE *); /* stefan */
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
   SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);

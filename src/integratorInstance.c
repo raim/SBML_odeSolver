@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-07 13:13:46 raim>
-  $Id: integratorInstance.c,v 1.90 2007/09/07 18:14:21 raimc Exp $
+  $Id: integratorInstance.c,v 1.91 2007/09/14 16:21:59 stefan_tbi Exp $
 */
 /* 
  *
@@ -563,6 +563,40 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
   }
 
   return results;  
+}
+
+
+
+
+/** Writes results to file
+ */
+SBML_ODESOLVER_API int IntegratorInstance_printResults(integratorInstance_t *ii, FILE *fp)
+{
+  int n, j;
+  cvodeResults_t *results;
+  variableIndex_t *vi;
+  
+  results = IntegratorInstance_createResults(ii);
+
+  fprintf(fp, "#t ");
+  for (j=0; j<ii->om->neq; j++){
+    vi = ODEModel_getOdeVariableIndex(ii->om, j);
+    fprintf(fp, "%s ", ODEModel_getVariableName(ii->om, vi));
+    VariableIndex_free(vi);
+  }
+  fprintf(fp, "\n");
+  
+  for (n=0; n<CvodeResults_getNout(results); n++){
+    fprintf(fp, "%g ", CvodeResults_getTime(results, n));
+    for (j=0; j<ii->om->neq; j++){
+      vi = ODEModel_getOdeVariableIndex(ii->om, j);
+      fprintf(fp, "%g ", CvodeResults_getValue(results, vi, n));
+      VariableIndex_free(vi);
+    }
+    fprintf(fp, "\n");
+  }
+  
+  CvodeResults_free(results);
 }
 
 
