@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-09-29 13:13:17 raim>
-  $Id: sbmlResults.c,v 1.18 2006/09/30 12:11:36 raimc Exp $
+  Last changed Time-stamp: <2007-09-18 16:59:17 raim>
+  $Id: sbmlResults.c,v 1.19 2007/09/18 15:02:09 raimc Exp $
 */
 /* 
  *
@@ -130,16 +130,19 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
       num_parameters++;
   
   results->parameters = TimeCourseArray_create(num_parameters, timepoints);
+  
   /* Writing variable parameter names */
+  num_parameters = 0;
   for ( i=0; i<Model_getNumParameters(m); i++)
   {
     p = Model_getParameter(m, i);
     if ( ! Parameter_getConstant(p) )
     {
-      tc = results->parameters->tc[i];
-      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1,
-			      char, NULL);
+      tc = results->parameters->tc[num_parameters];
+      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1, char,
+			      NULL);
       sprintf(tc->name, Parameter_getId(p));
+      num_parameters++;
     }
   }  
 
