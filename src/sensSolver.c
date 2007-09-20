@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 22:25:08 raim>
-  $Id: sensSolver.c,v 1.63 2007/09/07 20:33:37 raimc Exp $
+  Last changed Time-stamp: <2007-09-20 02:22:10 raim>
+  $Id: sensSolver.c,v 1.64 2007/09/20 01:16:14 raimc Exp $
 */
 /* 
  *
@@ -195,35 +195,31 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   int found;
 
   odeModel_t *om = engine->om;
+  odeSense_t *os = engine->os;
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   CVSensRhs1Fn sensRhsFunction = NULL;
-  CVDenseJacFnB jacA = NULL;
+  CVDenseJacFnB adjointJACFunction = NULL;
   CVQuadRhsFnB adjointQuadFunction = NULL;
   CVRhsFnB adjointRHSFunction = NULL;
   
   /* adjoint specific*/
   int method, iteration;
 
-  /*!!! free and reconstruction of sensitivity matrices should be moved
-    here from cvodeData.c, see comments there (problem with
-    optimized ODEs un data->ode ? might require re-run)
-    HOWEVER, as sens functions can currently not be compiled independently
-    the need already be compiled in createCVODESolverStructures,
-    see commment there!!!*/
-  
-  if( !opt->AdjointPhase )
+  if( !engine->AdjointPhase )
   {
-
     /*****  adding sensitivity specific structures ******/
 
     /* set rhs function for sensitivity */
-    if ( om->jacobian && om->sensitivity )
+    if ( om->jacobian && os->sensitivity )
     {
       if ( opt->compileFunctions )
       {
-	sensRhsFunction = ODEModel_getCompiledCVODESenseFunction(om);
+	/* this is currently one of two ways to compilation
+	   of odeSense_t RHS functions, the other is below for
+	   adjoint functions ! */
+	sensRhsFunction = ODESense_getCompiledCVODESenseFunction(os);
 	if ( !sensRhsFunction ) return 0;  /*!!! use CVODE_HANDLE_ERROR */
       }
       else
@@ -232,10 +228,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     
     /* if the sens. problem dimension has changed since
        the last run, free all sensitivity structures */
-    if ( engine->solver->nsens != om->nsens )
+    if ( engine->solver->nsens != os->nsens )
+    {
+      /* free forward sens structures, including CVodeQuad */
       IntegratorInstance_freeForwardSensitivity(engine);
-      
-    engine->solver->nsens = om->nsens;
+      engine->solver->nsens = os->nsens;
+    }
 
     /*
      * construct sensitivity yS and  absolute tolerance senstol
@@ -245,7 +243,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     
     if ( solver->senstol == NULL )
     {
-      solver->senstol = N_VNew_Serial(data->nsens);
+      solver->senstol = N_VNew_Serial(os->nsens);
       CVODE_HANDLE_ERROR((void *)solver->senstol,
 			 "N_VNewSerial for senstol", 0);
     }
@@ -259,16 +257,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       N_Vector y;
 
       y = N_VNew_Serial(data->neq);
-      solver->yS = N_VCloneVectorArray_Serial(data->nsens, y);
-      CVODE_HANDLE_ERROR((void *)solver->yS, "N_VNewVectorArray_Serial", 0);
+      solver->yS = N_VCloneVectorArray_Serial(os->nsens, y);
+      CVODE_HANDLE_ERROR((void *)solver->yS, "N_VCloneVectorArray_Serial", 0);
       reinit = 0;
       N_VDestroy_Serial(y);
     }
 
-    /* fill sens. and senstol data, yS and senstol:
-       yS are 0.0 in a new run or
-       old values in case of events */    
-    for ( j=0; j<data->nsens; j++ )
+    /* initialize sensitivity and sensitiity tolerance
+       arrays, yS and senstol, resp.:
+       yS are 0.0 or 1.0 (variables) in a new run or
+       old values in case of events!! */    
+    for ( j=0; j<os->nsens; j++ )
     {
       NV_Ith_S(solver->senstol,j) =  NV_Ith_S(solver->abstol,0);
       for ( i=0; i<data->neq; i++ )
@@ -285,7 +284,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     if ( reinit == 0 )
     {
-      flag = CVodeSensMalloc(solver->cvode_mem, data->nsens,
+      flag = CVodeSensMalloc(solver->cvode_mem, os->nsens,
 			     sensMethod, solver->yS);
       CVODE_HANDLE_ERROR(&flag, "CVodeSensMalloc", 1);    
     }
@@ -300,8 +299,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     /* !!! plist could later be used to specify requested parameters
        for sens.analysis !!! */
     
-    /* was construction of Jacobian and parametric matrix successfull ? */
-    if ( om->sensitivity && om->jacobian )
+    /* was construction of jacobian and parametric matrix successfull ? */
+    /* if only init.cond. sensitivities, only the jacobian
+      matrix required, and os->sensitivity will also be 1 even though
+      there is no matrix */
+    if ( os->sensitivity && om->jacobian )
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn Matrix", 1);
@@ -311,12 +313,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn NULL", 1);
-      
+
+      /* difference quotient method: CV_FORWARD or CV_CENTERED
+       see, cvs_guide.pdf CVODES doc */
+      CVodeSetSensDQMethod(solver->cvode_mem, CV_CENTERED, 0.0);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensDQMethod", 1);
     }
 
-    /* initializing and setting data->p */
-    for ( i=0; i<data->nsens; i++ )
-      data->p[i] = data->p_orig[i] = data->value[om->index_sens[i]];
+    /* initializing and setting data->p, used if the jacobian or
+     the parametric matrix are not available */
+    for ( i=0; i<os->nsens; i++ )
+      data->p[i] = data->p_orig[i] = data->value[os->index_sens[i]];
 
     flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
@@ -331,26 +338,16 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     
 
     /*  If linear functional exists, initialize quadrature computation  */
-    if ( (om->ObjectiveFunction == NULL)  && (om->vector_v != NULL) )
+    if ( (om->ObjectiveFunction == NULL) && (om->vector_v != NULL) )
     {
-
-      if ( engine->solver->nsens != om->nsens && solver->qS != NULL ) 
-      {
-	N_VDestroy_Serial(solver->qS);
-	CVodeQuadFree(solver->cvode_mem);
-
-        /* Set solver->qS to NULL after calling N_VDestroy */
-        solver->qS = NULL; 
-      }
-
       if ( solver->qS == NULL )
       {
-	solver->qS = N_VNew_Serial(om->nsens);
+	solver->qS = N_VNew_Serial(os->nsens);
 	CVODE_HANDLE_ERROR((void *) solver->qS,
 			   "N_VNew_Serial for vector q", 0);
 	
 	/* Init solver->qS = 0.0;*/
-	for(i=0; i<om->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
+	for(i=0; i<os->nsens; i++) NV_Ith_S(solver->qS, i) = 0.0;
         
 	/* If quadrature memory has not been allocated (in either
 	   of CreateCVODE(S)SolverStructures) */
@@ -361,28 +358,17 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	}
 	else 
 	{
-	  if ( engine->solver->nsens != om->nsens )
-	  {
-	   /* need to do a CVodeQuadFree and CvodeQuadMalloc
-              if nsens has changed  */ 
-	    CVodeQuadFree(solver->cvode_mem);
-	    flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
-	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc", 1);
-	  }
-	  else
-	  {
-	    /* if nsens has not changed, simply CvodeQuadReInit suffices 
-               since a  CVodeQuadMalloc has been called using solver->q, 
-               as confirmed by solver->q != NULL  */
-	    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
-	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
-	  }
+	  /* if nsens has not changed, simply CvodeQuadReInit suffices 
+	     since a  CVodeQuadMalloc has been called using solver->q, 
+	     as confirmed by solver->q != NULL  */
+	  flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	}
-	  }
-      else
+      }
+      else	
       {
 	/* Init solver->qS = 0.0;*/
-	for(i=0; i<om->nsens; i++) 
+	for(i=0; i<os->nsens; i++) 
 	  NV_Ith_S(solver->qS, i) = 0.0;
 	
 	flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
@@ -392,39 +378,42 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       
       flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
-
-    }
-    
+    }    
   } 
-  else
-    /* Adjoint Phase */
+  else /* Adjoint Phase */    
   {
     /* set rhs function for sensitivity */
     if ( opt->compileFunctions )
     {
-      jacA = ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
-      if ( !jacA ) return 0;  /*!!! use CVODE_HANDLE_ERROR error */
+      adjointJACFunction =
+	ODEModel_getCompiledCVODEAdjointJacobianFunction(om);
+      if ( !adjointJACFunction ) return 0;/*!!! use CVODE_HANDLE_ERROR  */
+      
       /* set adjoint quadrature function for sensitivity */
-      if ( om->sensitivity )
+      if ( os->sensitivity )
       {
-	adjointQuadFunction = ODEModel_getCompiledCVODEAdjointQuadFunction(om);
-	if ( !adjointQuadFunction ) return 0;  /* error */
+	/* this is currently one of two ways to compilation
+	   of odeSense_t RHS functions, the other is above for
+	   forward sensitivity functions ! */
+	adjointQuadFunction = ODESense_getCompiledCVODEAdjointQuadFunction(os);
+	if ( !adjointQuadFunction ) return 0;/*!!! use CVODE_HANDLE_ERROR */
       }
 
       adjointRHSFunction = ODEModel_getCompiledCVODEAdjointRHSFunction(om);
-      if ( !adjointRHSFunction ) return 0;  /* error */
-
-     }
+      if ( !adjointRHSFunction ) return 0; /*!!! use CVODE_HANDLE_ERROR */
+    }    
     else
     {
-      jacA = JacA;
+      adjointJACFunction = JacA;
       adjointQuadFunction = fQA ;
       adjointRHSFunction = fA;
     }
+    
     /* remember which of the adj RHS function is being used */
-    om->adjointRHSFunction = adjointRHSFunction;
-    om->adjointQuadFunction = adjointQuadFunction;
-
+    om->current_AdjRHS  = adjointRHSFunction;
+    om->current_AdjJAC  = adjointJACFunction;
+    os->current_AdjQAD = adjointQuadFunction;
+ 
       /*  If ObjectiveFunction exists, compute vector_v from it */ 
     if ( om->ObjectiveFunction != NULL ) 
     {
@@ -437,25 +426,26 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /* update initial adjoint state if discrete experimental data is
        observed */
-    if (opt->observation_data_type == 1)
+    if ( opt->observation_data_type == 1 )
     {
       /* set current time and state values for evaluating vector_v  */
       data->currenttime = solver->t;
     
-        found = 0;
-	if ( fabs(engine->results->time[opt->PrintStep] - solver->t) < 1e-5)
-	{
-	    found++;
-	    for ( j=0; j<om->neq; j++ )
-	      data->value[j] = engine->results->value[j][opt->PrintStep];
+      found = 0;
+      if ( fabs(engine->results->time[opt->PrintStep] - solver->t) < 1e-5)
+      {
+	found++;
+	for ( j=0; j<om->neq; j++ )
+	  data->value[j] = engine->results->value[j][opt->PrintStep];
+	
+      }
 
-	}
-
-	if (found != 1){
-	  fprintf(stderr, "ERROR in updating the initial adjoint data.\n");
-	  SolverError_error(FATAL_ERROR_TYPE,
-			    SOLVER_ERROR_INITIALIZE_ADJDATA,
-			    "Failed to get state value at time %g.",solver->t);
+      if ( found != 1 )
+      {
+	fprintf(stderr, "ERROR in updating the initial adjoint data.\n");
+	SolverError_error(FATAL_ERROR_TYPE,
+			  SOLVER_ERROR_INITIALIZE_ADJDATA,
+			  "Failed to get state value at time %g.",solver->t);
         return 0;
       }
 
@@ -464,9 +454,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       om->compute_vector_v=1;
       data->TimeSeriesIndex = data->model->time_series->n_time-1 ;
       for ( i=0; i<om->neq; i++ )
-      {
-	  data->adjvalue[i] = -evaluateAST( data->model->vector_v[i], data);
-      }
+	data->adjvalue[i] = -evaluateAST( data->model->vector_v[i], data);
       om->compute_vector_v=0;
 
     } 
@@ -476,13 +464,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if ( solver->yA == NULL )
     {
       solver->yA = N_VNew_Serial(om->neq);
-      CVODE_HANDLE_ERROR((void *)solver->yA,
-			 "N_VNew_Serial for vector yA", 0);
+      CVODE_HANDLE_ERROR((void *)solver->yA, "N_VNew_Serial for vector yA", 0);
     }
 
     if ( solver->abstolA == NULL )
     {
-      solver->abstolA = N_VNew_Serial(engine->om->neq);
+      solver->abstolA = N_VNew_Serial(om->neq);
       CVODE_HANDLE_ERROR((void *)solver->abstolA,
 			 "N_VNew_Serial for vector abstolA", 0);
     }
@@ -521,13 +508,11 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else iteration = CV_NEWTON;
 
     /* Error if neither ObjectiveFunction nor vector_v has been set  */
-    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   ){
+    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   )
       return 0;
-    }
-
    
-    if ( data->adjrun == 1 )
-      {
+     if ( engine->adjrun == 1 )
+    {
       flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
       CVODE_HANDLE_ERROR(&flag, "CVodeCreateB", 1);
 
@@ -535,6 +520,10 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 			  solver->yA, CV_SV, solver->reltolA,
 			  solver->abstolA);
       CVODE_HANDLE_ERROR(&flag, "CVodeMallocB", 1);
+     
+      flag = CVDenseB(solver->cvadj_mem, om->neq);
+      CVODE_HANDLE_ERROR(&flag, "CVDenseB", 1);
+
     }
     else
     { 
@@ -543,15 +532,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 			  solver->abstolA);
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
     }
-     
     flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetFdataB", 1);
 
-    flag = CVDenseB(solver->cvadj_mem, om->neq);
-    CVODE_HANDLE_ERROR(&flag, "CVDenseB", 1);
-
     /*!!! could NULL be passed here if jacobian is not available ??*/
-    flag = CVDenseSetJacFnB(solver->cvadj_mem, jacA, engine->data);
+    flag = CVDenseSetJacFnB(solver->cvadj_mem, adjointJACFunction,
+			    engine->data);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
 
     /* set adjoint max steps to be same as that for forward */
@@ -561,12 +547,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
    
     if ( solver->qA == NULL )
     {
-      solver->qA = N_VNew_Serial(om->nsens);
+      solver->qA = N_VNew_Serial(os->nsens);
       CVODE_HANDLE_ERROR((void *) solver->qA,
 			 "N_VNew_Serial for vector qA failed", 0);
 
       /* Init solver->qA = 0.0;*/
-      for( i=0; i<om->nsens; i++ )
+      for( i=0; i<os->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
       flag = CVodeQuadMallocB(solver->cvadj_mem, adjointQuadFunction,
@@ -577,7 +563,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else
     {
       /* Init solver->qA = 0.0;*/
-      for( i=0; i<om->nsens; i++ )
+      for( i=0; i<os->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
       flag = CVodeQuadReInitB(solver->cvadj_mem, adjointQuadFunction,
@@ -589,13 +575,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     if ( solver->abstolQA == NULL )
     {
 /*       solver->abstolQA = N_VNew_Serial(engine->om->neq); */
-      solver->abstolQA = N_VNew_Serial(engine->om->nsens);
+      solver->abstolQA = N_VNew_Serial(engine->os->nsens);
       CVODE_HANDLE_ERROR((void *)solver->abstolQA,
 			 "N_VNew_Serial for vector quad abstol failed", 0);
     }
       
    /*  for ( i=0; i<engine->om->neq; i++ ) */
-    for ( i=0; i<engine->om->nsens; i++ )
+    for ( i=0; i<engine->os->nsens; i++ )
     {
       /* Set absolute tolerance vector components,
 	 currently the same absolute error is used for all y */ 
@@ -619,8 +605,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
 }
 
-/** \brief Prints some final statistics of the calls to CVODES forward and adjoint
-    sensitivity analysis routines
+/** \brief Prints some final statistics of the calls to CVODES
+    forward and adjoint sensitivity analysis routines
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
@@ -680,7 +666,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
 
 }
 
-/** \brief Sets a linear objective function (for sensitivity solvers) via a text input file 
+/** \brief Sets a linear objective function (for sensitivity solvers) via
+    a text input file 
 */
 SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorInstance_t *engine, char *v_file)
 {
@@ -692,41 +679,39 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
  
   if ( om->vector_v != NULL  )
   {     
-    for (i=0; i<om->neq; i++)
+    for ( i=0; i<om->neq; i++ )
       ASTNode_free(om->vector_v[i]);
     free(om->vector_v);
   }
 
   ASSIGN_NEW_MEMORY_BLOCK(vector_v, om->neq, ASTNode_t *, 0);
 
-  if ((fp = fopen(v_file, "r")) == NULL)
-    SolverError_error(   FATAL_ERROR_TYPE,
-			 SOLVER_ERROR_VECTOR_V_FAILED,
-			 "File not found "
-			 "in reading vector_v");  
+  if ( (fp = fopen(v_file, "r")) == NULL )
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_VECTOR_V_FAILED,
+		      "File %s not found in reading vector_v", v_file);  
 
   /* loop over lines */
-  for (i=0; (line = get_line(fp)) != NULL; i++){
+  for ( i=0; (line = get_line(fp)) != NULL; i++ )
+  {
     /* read column 0 */
     token = strtok(line, " ");
     /* skip empty lines and comment lines */
-    if (token == NULL || *token == '#'){
+    if ( token == NULL || *token == '#' )
+    {
       free(line);
       i--;
       continue;
     }
     /* check variable order */
     if ( i == om->neq )
-       SolverError_error(   FATAL_ERROR_TYPE,
-			    SOLVER_ERROR_VECTOR_V_FAILED,
-			    "Inconsistent number of variables (>) "
-			    "in setting vector_v");
+       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_VECTOR_V_FAILED,
+			 "Inconsistent number of variables (>) "
+			 "in setting vector_v from file %s", v_file);
     
     if ( strcmp(token, om->names[i]) != 0 )
-        SolverError_error(  FATAL_ERROR_TYPE,
-			    SOLVER_ERROR_VECTOR_V_FAILED,
-			    "Inconsistent variable order "
-			    "in setting vector_v"); 
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_VECTOR_V_FAILED,
+			"Inconsistent variable order "
+			"in setting vector_v from file %s", v_file); 
     
     /* read column 1 */
     token = strtok(NULL, "");
@@ -761,14 +746,13 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
     ASTNode_free(om->ObjectiveFunction);
 
   if ( (fp = fopen(ObjFunc_file, "r")) == NULL )
-    SolverError_error(FATAL_ERROR_TYPE,
-		      SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
-		      "File not found "
-		      "in reading objective function"); 
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
+		      "File %s not found in reading objective function",
+		      ObjFunc_file); 
 
   /* a very obfuscated way to skip comment lines and read exactly one
      line of objective function */
-  for (i=0; (line = get_line(fp)) != NULL; i++)
+  for ( i=0; (line = get_line(fp)) != NULL; i++ )
   {   
     token = strtok(line, "");
     if (token == NULL || *token == '#')
@@ -792,8 +776,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   {
    SolverError_error(FATAL_ERROR_TYPE,
 		     SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
-		     "Error in processing objective function file, %d lines",
-		     i); 
+		     "Error in processing objective function from file %s, "
+		     "%d lines", ObjFunc_file, i); 
    return 0;
   }
 
@@ -802,9 +786,9 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
   ObjectiveFunction = indexAST(tempAST, om->neq, om->names);
   ASTNode_free(tempAST);
  
-  if ( line != NULL  )
+  if ( line != NULL )
     free(line);
-  if ( line_formula != NULL  )
+  if ( line_formula != NULL )
     free(line_formula);  
 
   om->ObjectiveFunction = ObjectiveFunction;
@@ -884,7 +868,7 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
   if ( failed != 0 )
   {
     SolverError_error(WARNING_ERROR_TYPE,
-		      SOLVER_ERROR_ENTRIES_OF_THE_JACOBIAN_MATRIX_COULD_NOT_BE_CONSTRUCTED,
+		      SOLVER_ERROR_OBJECTIVE_FUNCTION_V_VECTOR_COULD_NOT_BE_CONSTRUCTED,
 		      "%d entries of vector_v could not be "
 		      "constructed, due to failure of differentiation. " ,
 		      failed);   
@@ -953,8 +937,8 @@ SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_
   /* alloc mem for data */
   for ( i=0; i<n_data; i++ )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(ts->data[index[i]],  n_time, double, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(ts->data2[index[i]],  n_time, double, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data[index[i]], n_time, double, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(ts->data2[index[i]], n_time, double, 0);
   }
   /* ts->time = space(n_time * sizeof(double)); */
   ASSIGN_NEW_MEMORY_BLOCK(ts->time,  n_time, double, 0);
@@ -1008,9 +992,10 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
   cvodeSettings_t *opt = engine->opt;
   int iS;
   odeModel_t *om = engine->om;
+  odeSense_t *os = engine->os;
   cvodeData_t *data = engine->data;
   
-  if( opt->AdjointPhase )
+  if( engine->AdjointPhase )
   {
     /* if continuous data is observed, compute quadrature;
        if discrete data is observed, quadrature has been computed already */
@@ -1021,11 +1006,10 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
     }
 
     /* For adj sensitivity components corresponding to IC as parameter */
-    for( iS=0; iS<engine->om->nsens; iS++  )
-      if ( data->model->index_sensP[iS] == -1 )
+    for( iS=0; iS<os->nsens; iS++  )
+      if ( os->index_sensP[iS] == -1 )
       {
-        NV_Ith_S(solver->qA, iS) =
-	  - data->adjvalue[data->model->index_sens[iS]];
+        NV_Ith_S(solver->qA, iS) = - data->adjvalue[os->index_sens[iS]];
       }
   }
   else
@@ -1035,29 +1019,27 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
     {  /* if continuous data is observed, compute quadrature */
       /* If an objective function exists */
       if( om->ObjectiveFunction != NULL )
-	{
-	  flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
-	}
+      {
+	flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
+	CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
+      }
 
       /* If doing forward sensitivity analysis and vector_v exists,
 	 compute sensitivity quadrature */
       if( opt->Sensitivity && om->ObjectiveFunction == NULL &&
 	  om->vector_v != NULL  )
-	{
-	  flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
-	}
-
+      {
+	flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
+	CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad", 1);
+      }
     }
     else
     {
+      /*!!! RM, Sept 2007: IS THIS INTENDED? */
       /* else solver->q or solver->qS already contain the objective
 	 and its sensitivity respectively */  
     }
-
   }
-
   return(1);
 }
 
@@ -1076,54 +1058,57 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 {
   
   int j;
+  char *formula;
   odeModel_t *om = engine->om; 
-  cvodeSettings_t *opt = engine->opt;
+  odeSense_t *os = engine->os; 
   ASTNode_t *tempAST; 
 
-  if(opt->AdjointPhase)
+  if ( engine->AdjointPhase )
   {
   /*  fprintf(f, "\nExpression for integrand of linear objective J: \n"); */
-   for(j=0;j<om->neq;j++)
-   {       
-/*      Append "_data" to observation data in the vector_v AST */
-/*      tempAST = copyRevertDataAST(om->vector_v[j]); */
-/*      fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) ); */
-/*      ASTNode_free(tempAST); */
-   }
- 
-   for(j=0;j<om->nsens;j++)
+    for(j=0;j<om->neq;j++)
+    {       
+      /*      Append "_data" to observation data in the vector_v AST */
+      /*      tempAST = copyRevertDataAST(om->vector_v[j]); */
+      /*      fprintf(f, "%d-th component: %s \n" , j, SBML_formulaToString(tempAST) ); */
+      /*      ASTNode_free(tempAST); */
+    }
+    
+    for ( j=0; j<os->nsens; j++ )
       fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qA, j));   
-   fprintf(f, "\n");
+    fprintf(f, "\n");
   }
   else
   {
-   if ( om->ObjectiveFunction != NULL  ) 
-   {  
+    if ( om->ObjectiveFunction != NULL  ) 
+    {  
       /*  Append "_data" to observation data in the vector_v AST */
-     /*   tempAST = copyRevertDataAST(om->ObjectiveFunction); */
-/*        fprintf(f, "\nExpression for integrand of objective J: %s \n\n" , */
-/* 	       SBML_formulaToString(tempAST) ); */
-       fprintf(f, "Computed J=%0.15g \n", NV_Ith_S(engine->solver->q, 0));
+      /*   tempAST = copyRevertDataAST(om->ObjectiveFunction); */
+      /*        fprintf(f, "\nExpression for integrand of objective J: %s \n\n" , */
+      /* 	       SBML_formulaToString(tempAST) ); */
+      fprintf(f, "Computed J=%0.15g \n", NV_Ith_S(engine->solver->q, 0));
       /*  ASTNode_free(tempAST); */
-   }
-   else if ( engine->om->vector_v != NULL  )
-   {
+    }
+    else if ( engine->om->vector_v != NULL  )
+    {
       fprintf(f, "\nExpression for integrand of linear objective J: \n");
       for(j=0;j<om->neq;j++)
       {    
         /* Append "_data" to observation data in the vector_v AST  */
-	tempAST = copyRevertDataAST(om->vector_v[j]); 
-	fprintf(f, "%d-th component: %s \n" , j,
-		SBML_formulaToString(tempAST) );
+	tempAST = copyRevertDataAST(om->vector_v[j]);
+	formula = SBML_formulaToString(tempAST);
+	
+	fprintf(f, "%d-th component: %s \n" , j, formula);
+	free(formula);
         ASTNode_free(tempAST);
       }      
-
-      for(j=0;j<om->nsens;j++)
+      
+      for ( j=0; j<os->nsens; j++ )
 	fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qS, j));
       fprintf(f, "\n");
-   }
-   else fprintf(f, "\nNo quadrature was performed \n");
- }
+    }
+    else fprintf(f, "\nNo quadrature was performed \n");
+  }
 
   return(1);
 }
@@ -1138,21 +1123,21 @@ SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine
   
   int j;
   odeModel_t *om = engine->om; 
-  cvodeSettings_t *opt = engine->opt;
+  odeSense_t *os = engine->os; 
 
   data = (realtype *) data;
 
-  if(opt->AdjointPhase)
+  if ( engine->AdjointPhase )
   { 
-   for(j=0;j<om->nsens;j++)
+   for ( j=0; j<os->nsens; j++ )
      data[j] = NV_Ith_S(engine->solver->qA, j);
   }
   else
   {
    if ( om->ObjectiveFunction != NULL  )
      data[0] = NV_Ith_S(engine->solver->q, 0); 
-   else if  (engine->opt->Sensitivity)
-      for(j=0;j<om->nsens;j++)
+   else if  ( engine->opt->Sensitivity )
+      for ( j=0; j<os->nsens; j++ )
 	data[j] = NV_Ith_S(engine->solver->qS, j); 
   }
 
@@ -1254,9 +1239,9 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
     dySdata[i] = 0;
     for (j=0; j<data->model->neq; j++) 
       dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
-    if ( data->model->index_sensP[iS] != -1 )
+    if ( data->os->index_sensP[iS] != -1 )
       dySdata[i] +=
-	evaluateAST(data->model->sens[i][data->model->index_sensP[iS]], data);
+	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
   }
   /* printf("s"); */
 
@@ -1367,14 +1352,14 @@ static int fQA(realtype t, N_Vector y, N_Vector yA,
   data->currenttime = t;
 
   /* evaluate quadrature integrand: yA^T * df/dp */
-  for ( i=0; i<data->model->nsens; i++ )
+  for ( i=0; i<data->os->nsens; i++ )
   {
     dqAdata[i] = 0.0;
 
-    if ( data->model->index_sensP[i] != -1 )
+    if ( data->os->index_sensP[i] != -1 )
       for ( j=0; j<data->model->neq; j++ )
 	dqAdata[i] += yAdata[j] *
-	  evaluateAST(data->model->sens[j][data->model->index_sensP[i]], data);
+	  evaluateAST(data->os->sens[j][data->os->index_sensP[i]], data);
   }
 
   return (0);
@@ -1406,7 +1391,7 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 
   /* update sensitivities */
   yy = N_VNew_Serial(data->model->neq);
-  yS = N_VCloneVectorArray_Serial(data->model->nsens, yy);
+  yS = N_VCloneVectorArray_Serial(data->os->nsens, yy);
   N_VDestroy_Serial(yy);
 
   /*  At t=0, yS is initialized to 0. In this case, CvodeGetSens
@@ -1425,7 +1410,7 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 
 
   /* evaluate quadrature integrand: (y-ydata) * yS_i for each i */
-  for(i=0; i<data->model->nsens; i++)
+  for(i=0; i<data->os->nsens; i++)
   {
     dqdata[i] = 0.0;
     for(j=0; j<data->model->neq; j++)
@@ -1433,7 +1418,7 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 	NV_Ith_S(yS[i], j);
   }
 
-  N_VDestroyVectorArray_Serial(yS, data->model->nsens);
+  N_VDestroyVectorArray_Serial(yS, data->os->nsens);
 
   return (0);
 }

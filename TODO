@@ -80,4 +80,12 @@ ___TODO MAY 2007___
   best probably to first call of sensitivity, complete free or not
   upon IntegratorInstance_(re)set
 
+____TODO SEPT 2007___
 
+* find better solution to avoid problems with II_setVariableValue (events 
+  and external use)
+
+* cvodeSettings: set a flag, whether a change to settings requires reinit of solver
+  (reset, etc) to become active already for the next run
+
+* doxygen: link structure documentation to respective modules  

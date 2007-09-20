@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-15 15:19:36 raim>
-  $Id: adjsenstest.c,v 1.8 2007/08/22 12:11:53 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-19 14:55:16 raim>
+  $Id: adjsenstest.c,v 1.9 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -54,7 +54,7 @@ main (int argc, char *argv[]){
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, 1000, 10);
-  CvodeSettings_setErrors(set, 1e-15, 1e-8, 1e10);
+  CvodeSettings_setErrors(set, 1e-15, 1e-8, 1e4);
   CvodeSettings_setMethod(set, 0, 5);
   /*   CvodeSettings_setStoreResults(set, 0); */
   CvodeSettings_setJacobian(set, 1); /* for testing only */
@@ -145,7 +145,6 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE);
 
      /* Now go into adjoint phase */   
-    CvodeSettings_setAdjPhase(ii->opt); 
     IntegratorInstance_resetAdjPhase(ii); 
     /* Adjoint phase */
     printf("\n\nIntegration time is %g\n",
@@ -170,7 +169,6 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE); 
 
 
-    CvodeSettings_unsetAdjPhase(ii->opt); 
     fprintf(stderr, "\n############# DONE RUN NUMBER %d  #############\n", i); 
     i++;
   }

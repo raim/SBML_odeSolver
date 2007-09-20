@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 22:03:18 raim>
-  $Id: cvodeData.c,v 1.24 2007/09/07 20:33:37 raimc Exp $
+  Last changed Time-stamp: <2007-09-19 14:57:03 raim>
+  $Id: cvodeData.c,v 1.25 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -67,11 +67,8 @@
 static void CvodeData_freeStructures(cvodeData_t *);
 static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq);
 static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
-static int CvodeData_createMatrices(cvodeData_t *,cvodeSettings_t *,
-				    odeModel_t *);
-static int CvodeData_initializeSensitivities(cvodeData_t *,cvodeSettings_t *,
-				    odeModel_t *);
 static void CvodeData_freeSensitivities(cvodeData_t *);
+static void CvodeResults_freeSensitivities(cvodeResults_t *);
 /* static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq); */
 
 
@@ -95,6 +92,7 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
   data->p_orig  = NULL;
 
   /* Adjoint specific */
+  /*!!! should this be moved to adjoint specific initiation? */
   ASSIGN_NEW_MEMORY_BLOCK(data->adjvalue, nvalues, double, NULL);
 
 
@@ -115,8 +113,6 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 
   return 1;
 }
-
-
 
 /* Step I.2: */
 /** Creates cvodeData from an odeModel and initial values from the
@@ -149,13 +145,6 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 
   /* set pointer to input model */
   data->model = om ;
-
-  /* set integration run counter to 0,
-     used for multiple reruns of integration  */
-  data->run = 0;
-
-  /* Adjoint specific stuff */
-  data->adjrun = 0;
 
   /* initialize values, this function call is only required for
      separate creation of data for analytic purposes */
@@ -235,9 +224,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   /* set current time to 0 */
   data->currenttime = 0.0;
 
-  /* Zeroing initial adjoint values */  
-  for ( i=0; i<data->neq; i++ ) 
-    data->adjvalue[i] = 0.0;
+  /* Zeroing initial adjoint values */
+  if ( data->adjvalue != NULL )
+    for ( i=0; i<data->neq; i++ )
+      data->adjvalue[i] = 0.0;
 
 }
 
@@ -336,9 +326,10 @@ SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results,
 /** Frees results structure cvodeResults filled by the
     CVODE integrator
 */
-SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
-
-  int i, j;
+SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
+{
+  int i;
+  
   /* free CVODE results if filled */
   if(results != NULL){
     for( i=0; i<results->nvalues; i++ ) 
@@ -346,25 +337,9 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results) {
     free(results->time);
     free(results->value);
 
-    if ( results->sensitivity != NULL )
-    {
-      for ( i=0; i<results->neq; i++ )
-      {
-	for ( j=0; j<results->nsens; j++ )
-	  free(results->sensitivity[i][j]);
-	free(results->sensitivity[i]);
-      }
-      free(results->sensitivity);
-      free(results->index_sens);
-    }
-
-    if ( results->directional != NULL )
-    {
-      for ( i=0; i<results->neq; i++ )
-	free(results->directional[i]);
-      free(results->directional);
-    }
-
+    /* free sensitivities */
+    CvodeResults_freeSensitivities(results);
+    
     /* Adjoint free  */
     if ( results->adjvalue != NULL )
     {
@@ -390,15 +365,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   Event_t *e;
   ASTNode_t *trigger;
 
-  if ( data->ode )
-  {
-    /* free ODEs */
-    for ( i=0; i<data->neq; i++ )
-      if ( data->ode[i] )
-	ASTNode_free(data->ode[i]);
-    free(data->ode);
-    data->ode = NULL;
-  }
 
   /* data now also depends on cvodeSettings */
   data->opt = opt;
@@ -409,7 +375,17 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   else
     om->discrete_observation_data=0;
 
-  /* initialize memory for optimized ODEs, only if compilation is off */
+  /* free and re-create/initialize memory for optimized ODEs,
+     only if compilation is off */
+  if ( data->ode )
+  {
+    /* free ODEs */
+    for ( i=0; i<data->neq; i++ )
+      if ( data->ode[i] )
+	ASTNode_free(data->ode[i]);
+    free(data->ode);
+    data->ode = NULL;
+  }
   if ( !data->opt->compileFunctions )
     ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
   
@@ -443,6 +419,8 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
      results structure, where the time series will be stored ...  */
 
   /* allow results only for finite integrations */
+  /* this is the only place where options structure is changed
+     internally! StoreResults is overruled by Indefinitely */
   opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
 
   /* free former results */
@@ -456,154 +434,56 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     RETURN_ON_FATALS_WITH(0);
   }
 
-  /* create structures for forward/adjoint sensitivity analysis */
-  if (( opt->Sensitivity ) || ( opt->DoAdjoint ))
-    CvodeData_initializeSensitivities(data, opt, om);
-  /* now finally, Jacobian and sensitivity matrices can
-     be constructed correctly */
-  /*!!! see comments in initializeSensitivities !!!*/
-  CvodeData_createMatrices(data, opt, om);
-  
   return 1;
 }
 
-/* create Jacobian and sensitivity matrices, call this only after
-   a fresh initialization of the sensitivity matrix */
-static int CvodeData_createMatrices(cvodeData_t *data,
-				    cvodeSettings_t *opt, odeModel_t *om)
-{
-  /*!!! OPTIM: should use simplified ASTs for construction !!!*/
-  /* construct jacobian, if wanted and not yet existing */
-  if ( opt->UseJacobian && om->jacob == NULL ) 
-    /* reset UseJacobian option, depending on success */
-    opt->UseJacobian = ODEModel_constructJacobian(om);
-  else if ( !opt->UseJacobian )
-  {
-    /* free jacobian from former runs (not necessary frees also
-       unsuccessful jacobians from former runs) */
-    ODEModel_freeJacobian(om);
-    om->jacobian = opt->UseJacobian;
-  }
-    
-  /* sens. matrix from former runs has been freed with initialization */
-  if ( opt->Sensitivity || opt->DoAdjoint )
-  {
-    /* only required if Jacobian exists or Adjoint is requested */
-    if ( om->jacobian || opt->DoAdjoint )
-      om->sensitivity = ODEModel_constructSensitivity(om);
-    else
-      om->sensitivity = 0;
-  }
-
-  return 1;  
-}
 
 /* initialize sensitivity initial values at time 0 */
-static int CvodeData_initializeSensitivities(cvodeData_t *data,
-					     cvodeSettings_t *opt,
-					     odeModel_t *om)
+int CvodeData_initializeSensitivities(cvodeData_t *data,
+				      cvodeSettings_t *opt,
+				      odeModel_t *om, odeSense_t *os)
 {
-  int i, j, k;
+  int i, j, nsens;
 
   /* 0. catch default case, no parameters/variables selected */
-  if ( opt->sensIDs == NULL ) opt->nsens = om->nconst;
-
-  /* 1: free cvodeData and odeModel structures from former run */
-  /* free existing sensitivity matrix in any case */
-  /*!!! sensitivity matrix should only be freed and reconstructed
-    when necessary - problem with data->ode ODE optimization? !!!*/
-  /*!!! this should be done on first call of cvodeOneStep, and
-    instead here should be checked if requested sensitivities changed
-    and a flag set (om->index.. initialization also here?) !!!*/
-  ODEModel_freeSensitivity(om);
-
-  if ( data->nsens != opt->nsens )
-  {
-    if ( data->sensitivity != NULL ) 
-      CvodeData_freeSensitivities(data);
-    if ( om->index_sens != NULL  ) /* redundant condition?? */
-    {
-      free(om->index_sens);
-      free(om->index_sensP);
-      om->index_sens = NULL;
-      om->index_sensP = NULL;
-    }
-  }
-
+  if ( opt->sensIDs == NULL ) nsens = om->nconst;
+  else nsens = opt->nsens;
+  
+  /* 1: free former sens. results, if different number is requested */
+  if ( data->nsens != nsens &&  data->sensitivity != NULL ) 
+    CvodeData_freeSensitivities(data);
+  
   /* 2: create cvodeData and odeModel structures */
   if ( data->sensitivity == NULL )
   {
-    CvodeData_allocateSens(data, om->neq, opt->nsens);
+    CvodeData_allocateSens(data, om->neq, nsens);
     RETURN_ON_FATALS_WITH(0);
   }
-  if ( om->index_sens == NULL )
-  {
-    ASSIGN_NEW_MEMORY_BLOCK(om->index_sens, opt->nsens, int, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(om->index_sensP, opt->nsens, int, 0);
-    /* set om->nsens equal to nsens in input option */
-    om->nsens = opt->nsens;
-  }
-  
-  /* 3: map odeModel indices */
-  /* 3a: non-default case: read in parameters and variables */
-  k = 0;
-  if ( opt->sensIDs != NULL )
-  {
-    for ( i=0; i<om->nsens; i++ )
-    {
-      /* index_sens: map between cvodeSettings and om->index_sens */
-      om->index_sens[i] =
-	ODEModel_getVariableIndexFields(om, opt->sensIDs[i]);
-      /* indes_sensP:
-	 map sensitivities for parameters to sensitivity matrix */
-      /* distinguish between parameters and variables */
-      if ( om->index_sens[i] < om->neq )
-	/* set to -1 for variable sensitivities */
-	om->index_sensP[i] = -1;
-      else
-      {
-	/* index_sensP: set index for the optional sensitivity matrix */
-	om->index_sensP[i] = k;
-	k++;
-      }	
-    }
-    /* store number of parameter sensitivities */
-    om->nsensP = k;     
-  }
-  /* 3b: default: take all model parameters */
-  else
-  {
-    for ( i=0; i<om->nsens; i++ )
-    {
-      /* index_sens: map between cvodeSettings and om->index_sens */
-      om->index_sens[i] = om->neq + om->nass + i;
-      /* index_sensP: set index for the optional sensitivity matrix */
-      om->index_sensP[i] = i;
-    }
-    /* store number of parameter sensitivities */
-    om->nsensP = om->nconst;
-  }
 
-  /* 4: write initial values */
+  /* bind to odeSense model */
+  data->os = os;
+  
+  /* 3: write initial values */
   /* (re)set to initial values 0.0 or 1.0 for parameter and
      variable sensitivities, respectively */
   for ( i=0; i<data->neq; i++ )
     for ( j=0; j<data->nsens; j++ )
-      if ( om->index_sensP[j] == -1 && om->index_sens[j] == i )
+      if ( os->index_sensP[j] == -1 && os->index_sens[j] == i )
 	data->sensitivity[i][j] = 1.0; /* variable A: dA(0)/dA(0) */
       else
-	data->sensitivity[i][j] = 0.0;  
+	data->sensitivity[i][j] = 0.0; /* variable or parameter */
 
   /* map initial sensitivities to optional result structure */
-  if  ( opt->StoreResults )
-  {
-    /* results from former runs have already been freed */
+  if  ( data->results != NULL )
+ {
+    /* results from former runs have already been freed before
+      result structure was re-allocated */
     CvodeResults_allocateSens(data->results, om->neq, data->nsens,
 			      opt->PrintStep);
     /* write initial values for sensitivity */
-    for ( i=0; i<om->nsens; i++ )
+    for ( i=0; i<os->nsens; i++ )
     {
-      data->results->index_sens[i] = om->index_sens[i];
+      data->results->index_sens[i] = os->index_sens[i];
       for ( j=0; j<data->results->neq; j++ )
 	data->results->sensitivity[j][i][0] = data->sensitivity[j][i];
     }
@@ -612,7 +492,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
     if  ( opt->DoAdjoint )
     {
       CvodeResults_allocateAdjSens(data->results, om->neq,
-				   om->nsens, opt->PrintStep);
+				   nsens, opt->PrintStep);
       /* write initial values for adj sensitivity */
       for ( i=0; i<data->results->neq; i++ )
 	data->results->adjvalue[i][0] = data->adjvalue[i];
@@ -623,7 +503,7 @@ static int CvodeData_initializeSensitivities(cvodeData_t *data,
 }
 
 
-/* frees all internal stuff of cvodeData */
+/* frees all sensitivity stuff of cvodeData */
 static void CvodeData_freeSensitivities(cvodeData_t * data)
 {
   int i;
@@ -634,12 +514,16 @@ static void CvodeData_freeSensitivities(cvodeData_t * data)
     for ( i=0; i<data->neq; i++ )
       free(data->sensitivity[i]);
     free(data->sensitivity);
+    data->sensitivity = NULL;
   }
   if ( data->p != NULL ) free(data->p);
   if ( data->p_orig != NULL ) free(data->p_orig);
 	   
   data->p = data->p_orig = NULL;
   data->sensitivity = NULL;
+
+  if ( data->results )
+    CvodeResults_freeSensitivities(data->results);
 }
   
 /* frees all internal stuff of cvodeData */
@@ -676,7 +560,8 @@ static void CvodeData_freeStructures(cvodeData_t * data)
 
 /********* cvodeResults will be created by integration runs *********/
 
-int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int nout)
+int CvodeResults_allocateSens(cvodeResults_t *results,
+			      int neq, int nsens, int nout)
 {
   int i, j;
 
@@ -701,27 +586,23 @@ int CvodeResults_allocateSens(cvodeResults_t *results, int neq, int nsens, int n
 
 
 
-int CvodeResults_allocateAdjSens(cvodeResults_t *results, int neq, int nadjsens, int nout)
+int CvodeResults_allocateAdjSens(cvodeResults_t *results,
+				 int neq, int nadjsens, int nout)
 {
   int i;
 
   ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue, neq, double *, 0);
-
   for ( i=0; i<neq; i++ ) 
-    ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue[i], nout+1, double, 0);
-
- 
+    ASSIGN_NEW_MEMORY_BLOCK(results->adjvalue[i], nout+1, double, 0); 
 
   return 1;
 }
 
 
-
-
 /* Creates cvodeResults, the structure that stores
    CVODE integration results */
-cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
-
+cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout)
+{
   int i;
   cvodeResults_t *results;
 
@@ -748,4 +629,30 @@ cvodeResults_t *CvodeResults_create(cvodeData_t * data, int nout) {
   return results;  
 }
 
+/* frees all sensitivity structures of cvodeResults */
+static void CvodeResults_freeSensitivities(cvodeResults_t *results)
+{
+  int i, j;
+  if ( results->sensitivity != NULL )
+  {
+    for ( i=0; i<results->neq; i++ )
+    {
+      for ( j=0; j<results->nsens; j++ )
+	free(results->sensitivity[i][j]);
+      free(results->sensitivity[i]);
+    }
+    free(results->sensitivity);
+    free(results->index_sens);
+    results->sensitivity = NULL;
+    results->index_sens = NULL;
+  }
+  
+  if ( results->directional != NULL )
+  {
+    for ( i=0; i<results->neq; i++ )
+      free(results->directional[i]);
+    free(results->directional);
+    results->directional = NULL;
+  }
+}
 /* End of file */

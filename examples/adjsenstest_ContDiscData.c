@@ -67,7 +67,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setJacobian(set, 1);
   CvodeSettings_setStoreResults(set, 1);
 
-  CvodeSettings_setCompileFunctions(set, 0); /* to not compile RHS functions */
+  CvodeSettings_setCompileFunctions(set, 1); /* do not compile RHS functions */
   CvodeSettings_setSensitivity(set, 0);
   CvodeSettings_setSensMethod(set, 0);
 
@@ -100,8 +100,6 @@ main (int argc, char *argv[]){
   {
     fprintf(stderr, "\n\n");
 
-    CvodeSettings_unsetAdjPhase(set); 
-    
     if (RunIndexOuter >=NRuns )
     {   
         CvodeSettings_unsetDiscreteObservation(set);
@@ -123,7 +121,6 @@ main (int argc, char *argv[]){
     CvodeSettings_setForwAdjTimeSeriesFromData(set, DataFileNames[RunIndex], 3);   
     IntegratorInstance_reset(ii);
     IntegratorInstance_setVariableValue(ii, vi, 9.2);
-
    
     if (ii->opt->observation_data_type == 1)
     { /* discrete observation */
@@ -141,60 +138,63 @@ main (int argc, char *argv[]){
     }
 
     fprintf(stderr, "and data '%s'\n", DataFileNames[RunIndex] );
+
     flag = IntegratorInstance_readTimeSeriesData(ii, DataFileNames[RunIndex]);
+
+     
     if (flag!=1)
       return(EXIT_FAILURE);
     
     while( !IntegratorInstance_timeCourseCompleted(ii) ){
-      if ( !IntegratorInstance_integrateOneStep(ii) )
+      if ( !IntegratorInstance_integrateOneStep(ii) )	
 	break;
     }
+
 
     flag = IntegratorInstance_CVODEQuad(ii);
     if (flag!=1)
       return(EXIT_FAILURE);
+    
+    printf("\nForward integration time was %g\n",
+	   IntegratorInstance_getIntegrationTime(ii));
 
-   printf("\nForward integration time was %g\n", IntegratorInstance_getIntegrationTime(ii));
-
-   fprintf(stderr, "### Printing Objective Value:\n"); 
-   flag = IntegratorInstance_printQuad(ii, stderr);
+    
+    fprintf(stderr, "### Printing Objective Value:\n"); 
+    flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
       return(EXIT_FAILURE);
-
-   
-
-    /* Now go into adjoint phase */   
-    CvodeSettings_setAdjPhase(ii->opt); 
+    
+    
+     
+    /* Now go into adjoint phase */     
     IntegratorInstance_resetAdjPhase(ii); 
-
+    
     /* Adjoint phase */
     /* Print out adjoint soln */
     while( !IntegratorInstance_timeCourseCompleted(ii) ){
-     /*  if (RunIndex == 0) */
-/* 	 IntegratorInstance_dumpAdjData(ii); */
+      /*  if (RunIndex == 0) */
+      /* 	 IntegratorInstance_dumpAdjData(ii); */
       if ( !IntegratorInstance_integrateOneStep(ii) )
-	{ 
-	  fprintf(stderr, "Error in integrating one step!\n");
-	  break;
-	}     
+      { 
+	fprintf(stderr, "Error in integrating one step!\n");
+	break;
+      }     
     }
     
-
-  /* adjoint quadrature */
-  flag = IntegratorInstance_CVODEQuad(ii);
-  if (flag!=1) 
-     return(EXIT_FAILURE);
-
-   printf("\nAdjoint integration time was %g\n", IntegratorInstance_getIntegrationTime(ii));
-
-  fprintf(stderr, "### Printing Adjoint Sensitivities:\n");
-  flag = IntegratorInstance_printQuad(ii, stderr);
-  if (flag!=1)
-      return(EXIT_FAILURE); 
-
-  
+    
+    /* adjoint quadrature */
+    flag = IntegratorInstance_CVODEQuad(ii);
+    if (flag!=1) 
+      return(EXIT_FAILURE);
+    
+    printf("\nAdjoint integration time was %g\n", IntegratorInstance_getIntegrationTime(ii));
+    
+    fprintf(stderr, "### Printing Adjoint Sensitivities:\n");
+    flag = IntegratorInstance_printQuad(ii, stderr);
+    if (flag!=1)
+      return(EXIT_FAILURE);     
+ 
   }
-
 
   IntegratorInstance_printStatistics(ii, stderr);
 

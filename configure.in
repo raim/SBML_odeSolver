@@ -80,7 +80,7 @@ dnl AC_MSG_NOTICE([LIBS=$LIBS])
 	
 CONFIG_LIB_SBML
 CONFIG_LIB_SUNDIALS
-CONFIG_LIB_TCC
+dnl CONFIG_LIB_TCC
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
 	
@@ -227,14 +227,14 @@ if test $yes_libsundials       = yes; then
   echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
   echo "       LIBS            = $SUNDIALS_LIBS"
 fi
-echo "  TCC Library       = $yes_tcc"
-if test $yes_tcc               = yes; then
-  echo "       CFLAGS          = $TCC_CFLAGS"
-  echo "       LDFLAGS         = $TCC_LDFLAGS"
-  echo "       LIBS            = $TCC_LIBS"
-else
-   echo "TCC online compilation will NOT be installed!"	
-fi	
+dnl echo "  TCC Library       = $yes_tcc"
+dnl if test $yes_tcc               = yes; then
+dnl   echo "       CFLAGS          = $TCC_CFLAGS"
+dnl   echo "       LDFLAGS         = $TCC_LDFLAGS"
+dnl   echo "       LIBS            = $TCC_LIBS"
+dnl else
+dnl    echo "TCC online compilation will NOT be installed!"	
+dnl fi	
 echo "  GRACE                = $yes_grace"
 if test $yes_grace = yes; then
   echo "       CFLAGS          = $GRACE_CFLAGS"
@@ -258,5 +258,5 @@ echo "     SOSlib has the following dependencies:"
 echo "     (*) SUNDIALS suite v3.2.0"
 echo "     (*) libsbml v2.3.4"
 echo "     (*) libxerces-c v2.7.0 or expat v2.0.0"
-echo "     (*) tcc from http://savannah.nongnu.org/projects/tinycc"
+dnl echo "     (*) tcc from http://savannah.nongnu.org/projects/tinycc"
 echo ""

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.26 2007/08/21 22:22:50 chfl Exp $
+# $Id: Makefile.am,v 1.27 2007/09/20 01:16:12 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -31,19 +31,16 @@
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
 INCLUDES = @SUNDIALS_CFLAGS@ \
-           @GRAPHVIZ_CFLAGS@ \
            @SBML_CFLAGS@ \
+           @GRAPHVIZ_CFLAGS@ \
            @GRACE_CFLAGS@ \
-           @TCC_CFLAGS@ \
            -I.
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
-        @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-        @TCC_LDFLAGS@ @TCC_LIBS@ 
+        @GRACE_LDFLAGS@ @GRACE_LIBS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
-             @SBML_RPATH@ \
-             @TCC_RPATH@
+             @SBML_RPATH@
 AM_CFLAGS = @FPIC@
 AM_CXXFLAGS = @FPIC@
 lib_LIBRARIES = libODES.a

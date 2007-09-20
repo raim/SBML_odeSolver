@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 20:01:27 raim>
-  $Id: odeModel.h,v 1.38 2007/09/07 18:18:19 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-20 02:31:34 raim>
+  $Id: odeModel.h,v 1.39 2007/09/20 01:16:14 raimc Exp $ 
 */
 /* 
  *
@@ -45,6 +45,7 @@
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/interpol.h"
 #include "sbmlsolver/compiler.h"
+#include "sbmlsolver/integratorSettings.h"
 
 
 #ifdef __cplusplus
@@ -52,6 +53,8 @@ extern "C" {
 #endif
 
   typedef struct odeModel odeModel_t;
+  typedef struct odeSense odeSense_t;
+  typedef struct objFunc objFunc_t;
   typedef struct variableIndex variableIndex_t;
   typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 					    pointer with void pointer
@@ -79,7 +82,14 @@ extern "C" {
     int neq;    /**< number of ODEs */
     int nalg;   /**< number of algebraic rules */ 
     int nass;   /**< number of assigned variables (nass) */
-    int nconst; /**< number of constant parameters */ 
+    int nconst; /**< number of constant parameters */
+
+    /** piecewise expressions as well as events can lead to problems
+        and will result in CVODES running in CV_NORMAL_TSTOP mode
+        which avoids that the solver internally integrates beyond the
+        next requested timestep */
+    int nevents;     /**< number of model events */
+    int npiecewise;  /**< number of piecewise expression in equations */
 
     /** Assigned variables: stores species, compartments and parameters,
 	that are set by an assignment rule */
@@ -96,71 +106,39 @@ extern "C" {
     ASTNode_t ***jacob;
     /** was the jacobian matrix constructed ? */
     int jacobian;
-
-    /* forward sensitivity analysis structure, neq x nsens */
-    int nsens;               /**< number of parameters and initial conditions
-				for sens. analysis, nsens = nsensP + nsensIC */
-    int *index_sens;         /**< indices of parameters and init.cond.
-				for sens. anal. in the main ID and data
-				arrays char **names, char *value */
-    int nsensP;
-    int *index_sensP;        /**< indices of sensitivity parameters in the
-				sensitivity matrix (or -1 variables) */
-    ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
-    int sensitivity;         /**< was the sensitivity matrix constructed ? */
-
+    /** flag indicating that jacobian matrix construction had failed for
+     this model already and does not need to be tried again */
+    int jacobianFailed;
 
     /* COMPILED CODE OBJECTS */
-    compiled_code_t *compiledCVODEFunctionCode; /**< compiled code
-						   containing compiled
-						   functions */
-    /*!!! CURRENTLY SENSE CODE IS NOT USED !!!*/
-    compiled_code_t *compiledCVODESensitivityCode; /**< compiled code
-                                                    containing compiled
-                                                    sensitivity functions
-						    !!! currently not
-                                                    used, until TCC can handle
-						    multiple states !!!*/
-    int recompileSensitivity;
-    /* compilation of forward integration functions */
-    CVRhsFn compiledCVODERhsFunction; /**< CVODE rhs function created
-					 by compiling code generated
-					 from model */
-    CVDenseJacFn compiledCVODEJacobianFunction; /**< CVODE jacobian
-						   function created by
-						   compiling code
-						   generated from
-						   model */
-    EventFn compiledEventFunction; /**< Event function created by
-				      compiling code generated from
-				      model */
-    /* compilation of sensitivity functions */
-    CVSensRhs1Fn compiledCVODESenseFunction; /**< Sensitivity function
-                                               created by compiling
-                                               code generated from
-                                               model */
+    /** compiled code containing compiled ODE and Jacobian functions */
+    compiled_code_t *compiledCVODEFunctionCode; 
+
+    /** CVODE rhs function created by compiling code generated from model */
+    CVRhsFn compiledCVODERhsFunction;
+    /** CVODE jacobian function created by compiling
+	code generated from model */
+    CVDenseJacFn compiledCVODEJacobianFunction;
+
+    /** Event function created by compiling code generated from model */
+    EventFn compiledEventFunction; 
+
+
     /* compilation of adjoint functions */
-    CVRhsFnB compiledCVODEAdjointRhsFunction; /**< CVODE adjoint rhs function created
-					                 by compiling code generated
-					                 from model */
+    /** CVODE adjoint rhs function created by compiling
+       code generated from model */
+    CVRhsFnB compiledCVODEAdjointRhsFunction;
+    /* remember which function is used (compiled or hard-coded) */
+    CVRhsFnB current_AdjRHS; 
+    /** CVODE adjoint jacobian function created by compiling code
+	generated from model */
+    CVDenseJacFnB compiledCVODEAdjointJacobianFunction;
+    /* remember which function is used (compiled or hard-coded) */
+    CVDenseJacFnB current_AdjJAC; 
 
-    CVDenseJacFnB compiledCVODEAdjointJacobianFunction; /**< CVODE
-							   adjoint
-							   jacobian
-							   function
-							   created by
-							   compiling
-							   code
-							   generated
-							   from
-							   model */
-    CVQuadRhsFnB compiledCVODEAdjointQuadFunction; /**< CVODE adjoint
-						      quadrature function */
+    /* EVALUATION ORDERING */
+    /** timing of assignment rule evaluation */
 
-    CVRhsFnB      adjointRHSFunction; /**< CVODE adjoint rhs function being used by solver */
-    CVQuadRhsFnB adjointQuadFunction; /**< CVODE adjoint quad rhs function being used by solver */ 
-
-    /* assignment Rule Optimization */
     List_t *observables ; /**< set of symbols that the user wishes to
 			     have computed for output (list contains
 			     char *) by default contains all
@@ -202,9 +180,70 @@ extern "C" {
 				 objective used in sensitivity solvers */
     ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
 				      objective function */
- 
+ };
+
+  struct odeSense
+  {
+    odeModel_t *om;    /**< odeModel_t structure from which sensitivity
+			  structures where derived */    
+    /* forward sensitivity analysis structure, neq x nsens */
+    int nsens;               /**< number of parameters and initial conditions
+				for sens. analysis, nsens = nsensP + nsensIC */
+    int *index_sens;         /**< indices of parameters and init.cond.
+				for sens. anal. in the main ID and data
+				arrays char **names, char *value in
+				odeModel_t and cvodeData_t */
+    int nsensP;
+    int *index_sensP;        /**< indices of sensitivity parameters in the
+				sensitivity matrix (or -1 variables) */
+    ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
+    int sensitivity;         /**< was the sensitivity matrix constructed ? */
+
+    
+    /** compiled code containing compiled sensitivity functions */
+    compiled_code_t *compiledCVODESensitivityCode; 
+
+    /** flag that indicates whether compilation is required,
+	upon first request or when required parameters have
+	changed since last compilation*/
+    int recompileSensitivity;
+
+    /** Sensitivity function created by compiling code generated from model */
+    CVSensRhs1Fn compiledCVODESenseFunction;
+    
+    /* compilation of adjoint functions */
+    /** CVODE adjoint quadrature function */
+    CVQuadRhsFnB compiledCVODEAdjointQuadFunction;
+    /* remember which function is used (compiled or hard-coded) */
+    CVQuadRhsFnB current_AdjQAD;
   };
   
+  struct objFunc
+  {
+    /* adjoint */
+    /* Adjoint: Given a parameter to observation map F(p),
+       computes the adjoint operator applied to the vector v, F'*(p)v.
+       v is given by a symbolic expression involving x and observation data. */
+
+
+    int discrete_observation_data;    /**< 0: data observed is of
+					   continuous type (i.e., interpolated)
+                                           1: data observed is of
+					   discrete type  */
+
+    int compute_vector_v;            /*  if evaluateAST is called to
+					 computed vector_v  */
+
+    time_series_t *time_series;  /**< time series of observation data
+				    or of vector v */
+
+    ASTNode_t **vector_v;     /**< the vector v, expressiing linear
+				 objective used in sensitivity solvers */
+    ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
+				      objective function */
+ 
+  };
+
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *);
@@ -219,7 +258,6 @@ extern "C" {
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getSensParamIndexByNum(odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *);
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
@@ -229,13 +267,11 @@ extern "C" {
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
-  SBML_ODESOLVER_API CVQuadRhsFnB ODEModel_getCompiledCVODEAdjointQuadFunction(odeModel_t *);
-  SBML_ODESOLVER_API CVSensRhs1Fn ODEModel_getCompiledCVODESenseFunction(odeModel_t *);
+
   SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNsens(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
@@ -246,19 +282,27 @@ extern "C" {
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_constructSensitivity(odeModel_t *);
-  SBML_ODESOLVER_API void ODEModel_freeSensitivity(odeModel_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensIJEntry(odeModel_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getSensEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API odeSense_t *ODEModel_constructSensitivity(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *);
-  SBML_ODESOLVER_API void ODEModel_compileCVODESenseFunctions(odeModel_t *);
-  
+
+  /* Sensitivity Model */
+  SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *, cvodeSettings_t *);
+  SBML_ODESOLVER_API void ODESense_free(odeSense_t *);
+  SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *, int);
+SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(odeSense_t *);
+  SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_t *);
+  SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API void ODESense_compileCVODESenseFunctions(odeSense_t *);
 #ifdef __cplusplus
 }
 #endif
 
 /* internal functions, not be used by calling applications */  
-int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol);
-
+int ODEModel_getVariableIndexFields(odeModel_t *, const char *SBML_ID);
+int ODESense_constructMatrix(odeSense_t *, odeModel_t *);
+void ODESense_freeMatrix(odeSense_t *);
+void ODESense_freeStructures(odeSense_t *os);
 
 #endif

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-19 09:47:11 raim>
-  $Id: odeSolver.c,v 1.43 2006/07/18 09:12:16 raimc Exp $
+  Last changed Time-stamp: <2007-09-13 20:20:09 raim>
+  $Id: odeSolver.c,v 1.44 2007/09/20 01:16:13 raimc Exp $
 */
 /* 
  *
@@ -603,6 +603,7 @@ static int SBMLResults_createSens(SBMLResults_t *Sres, cvodeData_t *data)
 {
   int i, j, k;
   odeModel_t *om = data->model;
+  odeSense_t *os = data->os;
   cvodeResults_t *res = data->results;
   timeCourse_t *tc;
 
@@ -612,8 +613,8 @@ static int SBMLResults_createSens(SBMLResults_t *Sres, cvodeData_t *data)
   for ( i=0; i<res->nsens; i++ )
   {
     ASSIGN_NEW_MEMORY_BLOCK(Sres->param[i],
-			    strlen(om->names[om->index_sens[i]]+1), char, 0);
-    sprintf(Sres->param[i], om->names[om->index_sens[i]]);
+			    strlen(om->names[os->index_sens[i]]+1), char, 0);
+    sprintf(Sres->param[i], "%s", om->names[os->index_sens[i]]);
   }
   for ( i=0; i<res->neq; i++ )
   {

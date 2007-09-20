@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-12-15 19:52:09 raim>
-  $Id: variableIndex.h,v 1.9 2005/12/15 19:54:06 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-20 03:10:44 raim>
+  $Id: variableIndex.h,v 1.10 2007/09/20 01:16:14 raimc Exp $ 
 */
 /* 
  *
@@ -45,7 +45,15 @@ typedef enum variableType
     ALGEBRAIC_VARIABLE
   } variableType_t; 	 
 
-/** stores index number and variableType */
+/** The variableIndex is the main interface to model
+    variables and constants.
+
+    It can be retrieved from an odeModel, and used to get its name
+    or associated symbolic constructs from the odeModel structure
+    AND to get and set the values of all model constants and variables
+    via the integratorInstance during any time of an integration run.
+    Please see documentation of these modules to learn about the full
+    use of variableIndex */
 struct variableIndex
 {
   variableType_t type;

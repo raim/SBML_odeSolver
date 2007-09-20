@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.7 2007/05/09 18:38:42 raimc Exp $
+# $Id: Makefile.am,v 1.8 2007/09/20 01:16:12 raimc Exp $
 ## 
 ## This application is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU Lesser General Public License as published
@@ -29,8 +29,8 @@
 ##
 ##
 
-INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @GRACE_CFLAGS@ @SUNDIALS_CFLAGS@ @TCC_CFLAGS@
-AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@ @TCC_RPATH@
+INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @GRACE_CFLAGS@ @SUNDIALS_CFLAGS@
+AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c \
 		    commandLine.c \
@@ -39,9 +39,8 @@ odeSolver_SOURCES = main.c \
 		    interactive.c \
                     getopt.c getopt1.c
 odeSolver_LDADD   = -L../src -L/@prefix@/lib -lODES \
-                    @GRACE_LDFLAGS@ @GRACE_LIBS@ \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
-                    @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
-                    @TCC_LDFLAGS@ @TCC_LIBS@ 
+                    @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                    @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 

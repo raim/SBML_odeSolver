@@ -1,5 +1,5 @@
-/*   Last changed Time-stamp: <2007-05-15 20:43:56 raim> */
-/*   $Id: integratorSettings.c,v 1.46 2007/09/06 17:58:05 stefan_tbi Exp $ */
+/*   Last changed Time-stamp: <2007-09-19 21:40:57 raim> */
+/*   $Id: integratorSettings.c,v 1.47 2007/09/20 01:16:13 raimc Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -162,11 +162,14 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
 
   /* Default: not doing adjoint solution  */
   set->DoAdjoint = 0;
-  set->AdjointPhase = 0;
+  /* set->AdjointPhase = 0; */
  
   /* default: use continuous observation */
   set->observation_data_type = 0;
 
+  /* deactivate TSTOP mode of CVODE */
+  set->SetTStop = 0;
+  
   return set;
 }
 
@@ -260,19 +263,6 @@ SBML_ODESOLVER_API void CvodeSettings_unsetDoAdj(cvodeSettings_t *set)
   set->DoAdjoint = 0;
 }
 
-/** Sets flag that tells solver that the forward phase is complete,
-    ready to initialize the adjoint phase  */
-SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *set) 
-{
-  set->AdjointPhase = 1;
-}
-
-/** Sets flag that tells solver that the forward phase is complete,
-    ready to initialize the adjoint phase  */
-SBML_ODESOLVER_API void CvodeSettings_unsetAdjPhase(cvodeSettings_t *set) 
-{
-  set->AdjointPhase = 0;
-}
 
 /** Sets absolute and relative error tolerances and maximum number of
     internal steps during CVODE adjoint integration 
@@ -377,6 +367,19 @@ SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set,
   set->ResetCvodeOnEvent = ResetCvodeOnEvent;  
 }
 
+/** Activates the TSTOP mode of CVODES. This is highly recommended when
+    IntegratorInstance_setVariableValue affects ODE right hand side
+    equations (e.g. rate laws), PLEASE CLICK AND READ MORE BELOW
+
+    Setting TStop is not required for all model types, but mainly necessary
+    for very "unstiff" (easy-to-solve) models, for which CVODE internally can
+    integrate far beyond the next time step. It will then not evaluate the
+    right hand side of the ODE system for one or more output time steps and
+    thus not realize the change.   */
+SBML_ODESOLVER_API void CvodeSettings_setTStop(cvodeSettings_t *set, int i)
+{
+  set->SetTStop = i;
+}
 /** Sets integration switches in cvodeSettings. WARNING: this
     function's type signature will change with time, as new settings
     will be required for other solvers!
@@ -494,7 +497,8 @@ SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *
   set->observation_data_type = 0;
 }
 
-/** Reads time point column of data, for use in CvodeSettings_setForwAdjTimeSeriesFromData   */
+/* Reads time point column of data, for use in
+   CvodeSettings_setForwAdjTimeSeriesFromData   */
 static int read_time(char *file, double *timepoints)
 {    
   FILE *fp;
@@ -534,15 +538,14 @@ static int read_time(char *file, double *timepoints)
     Assigns memory for (forward and adjoint) arrays of requested time points with size PrintStep + 1 
     (including initial time 0). Returns 1, if sucessful and 0, if not. */
 
-SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *set,
-								  char *TimeSeriesData_file, int InterStep)
+SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *set, char *TimeSeriesData_file, int InterStep)
 {
   int i, n_time, OffSet, TotalNumStep;
   double *DataTimePoints;  
   double ZeroTol = 1e-5, NextDataTime, TimeStep;
   div_t d;
 
- if (set->TimePoints != NULL)
+ if ( set->TimePoints != NULL )
   free(set->TimePoints);
 
   /* count number of lines */
@@ -553,15 +556,14 @@ SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_
   read_time(TimeSeriesData_file, DataTimePoints);
 
   OffSet = 0;
-  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  ){
+  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  )
     OffSet = 1;
-  }
  
   TotalNumStep = (n_time-1) * (1+InterStep) + 1 + OffSet;
   ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, TotalNumStep, double, 0.0);
 
-  for (i=0; i< TotalNumStep-OffSet; i++){  
-
+  for (i=0; i< TotalNumStep-OffSet; i++)
+  {  
     set->TimePoints[0] = 0.0;
     d = div(i, 1+InterStep);
 
@@ -579,11 +581,12 @@ SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_
 
 
       TimeStep = NextDataTime - DataTimePoints[d.quot];
-      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] + ((double) d.rem/(1+InterStep) * TimeStep);
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] +
+	((double) d.rem/(1+InterStep) * TimeStep);
     }
 
   }
-
+  free(DataTimePoints);
   set->PrintStep = TotalNumStep-1;
   set->Time = ((double) set->TimePoints[set->PrintStep]);
   set->OffSet = OffSet;
@@ -605,34 +608,33 @@ SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_
 }
 
 
-SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set, time_series_t *expm,
-							   int InterStep)
+SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set, time_series_t *expm, int InterStep)
 {
   int i, n_time, OffSet, TotalNumStep;
   double *DataTimePoints;  
   double ZeroTol = 1e-5, NextDataTime, TimeStep;
   div_t d;
 
- if (set->TimePoints != NULL)
-  free(set->TimePoints);
-
+  if (set->TimePoints != NULL)
+    free(set->TimePoints);
+  
   /* count number of lines */
   n_time = expm->n_time;
   ASSIGN_NEW_MEMORY_BLOCK(DataTimePoints, n_time, double, 0.0);
   
   /* read time data */
-  for (i=0; i<n_time; i++)
+  for ( i=0; i<n_time; i++ )
       DataTimePoints[i] = expm->time[i];
 
   OffSet = 0;
-  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  ){
+  if ( fabs(DataTimePoints[0] - 0.0) > ZeroTol  )
     OffSet = 1;
-  }
  
   TotalNumStep = (n_time-1) * (1+InterStep) + 1 + OffSet;
   ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, TotalNumStep, double, 0.0);
 
-  for (i=0; i< TotalNumStep-OffSet; i++){  
+  for ( i=0; i< TotalNumStep-OffSet; i++ )
+  {  
 
     set->TimePoints[0] = 0.0;
     d = div(i, 1+InterStep);
@@ -642,7 +644,7 @@ SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set,
     }
     else{
 
-      if (d.quot == n_time-1 ){
+      if ( d.quot == n_time-1 ){
 	NextDataTime =  DataTimePoints[d.quot];
       }
       else{
@@ -651,29 +653,32 @@ SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set,
 
 
       TimeStep = NextDataTime - DataTimePoints[d.quot];
-      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] + ((double) d.rem/(1+InterStep) * TimeStep);
+      set->TimePoints[OffSet+i] = DataTimePoints[d.quot] +
+	((double) d.rem/(1+InterStep) * TimeStep);
     }
 
   }
-
+  
+  free(DataTimePoints);
+  
   set->PrintStep = TotalNumStep-1;
   set->Time = ((double) set->TimePoints[set->PrintStep]);
   set->OffSet = OffSet;
   set->InterStep = InterStep; 
 
 
- if (set->AdjTimePoints != NULL)
+ if ( set->AdjTimePoints != NULL )
   free(set->AdjTimePoints);
 
  ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, TotalNumStep, double, 0.0);
 
  for ( i=0; i<TotalNumStep; i++ )  
      set->AdjTimePoints[i] = ((double) set->TimePoints[TotalNumStep-i-1]);
-
+ 
  set->AdjTime= 0.0;
  set->AdjPrintStep =  set->PrintStep; 
-
-  return 1;
+ 
+ return 1;
 }
 
 
@@ -811,12 +816,7 @@ SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *set, char **
 { 
   int i;
 
-  if ( set->sensIDs != NULL )
-    for ( i=0; i<set->nsens; i++ )
-      free(set->sensIDs[i]);
-  free(set->sensIDs);
-  set->sensIDs = NULL;
-  set->nsens = 0;
+  CvodeSettings_unsetSensParams(set);
   
   if ( sensIDs != NULL )
   {
@@ -832,6 +832,18 @@ SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *set, char **
   return 1;
 }
 
+/** De-activate defined sensitivities, and activated default
+    sensitivity for all parameters of the model */
+SBML_ODESOLVER_API void CvodeSettings_unsetSensParams(cvodeSettings_t *set)
+{
+  int i;
+  if ( set->sensIDs != NULL )
+    for ( i=0; i<set->nsens; i++ )
+      free(set->sensIDs[i]);
+  free(set->sensIDs);
+  set->sensIDs = NULL;
+  set->nsens = 0;  
+}
 
 /** Set method for sensitivity analysis:
     0: simultaneous 1: staggered, 2: staggered1.    

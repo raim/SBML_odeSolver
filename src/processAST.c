@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-03-08 18:33:20 raim>
-  $Id: processAST.c,v 1.49 2007/06/20 15:51:12 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-19 23:50:33 raim>
+  $Id: processAST.c,v 1.50 2007/09/20 01:16:13 raimc Exp $
 */
 /* 
  *
@@ -2290,6 +2290,21 @@ int ASTNode_containsTime(ASTNode_t *node)
 	(strcmp(ASTNode_getName(node),"time") == 0 ||
 	 strcmp(ASTNode_getName(node),"Time") == 0 ||
 	 strcmp(ASTNode_getName(node),"TIME") == 0)) )
+    return 1;
+
+  for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
+    if ( ASTNode_containsTime(ASTNode_getChild(node, i)) )
+      return 1;
+
+  return 0;
+}
+
+/* returns boolean result: whether the given AST contains a time symbol. */
+int ASTNode_containsPiecewise(ASTNode_t *node)
+{
+  int i ;
+
+  if ( ASTNode_getType(node) == AST_FUNCTION_PIECEWISE )
     return 1;
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )

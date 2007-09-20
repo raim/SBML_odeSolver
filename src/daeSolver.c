@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-08 18:35:02 xtof>
-  $Id: daeSolver.c,v 1.13 2007/06/12 13:21:22 chfl Exp $
+  Last changed Time-stamp: <2007-09-19 14:59:33 raim>
+  $Id: daeSolver.c,v 1.14 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -203,149 +203,143 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 int
 IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
 {
-    int i, flag, neq, nalg;
-    realtype *ydata, *abstoldata, *dydata;
-
-    odeModel_t *om = engine->om;
-    cvodeData_t *data = engine->data;
-    cvodeSolver_t *solver = engine->solver;
-    cvodeSettings_t *opt = engine->opt;
-
-    neq = engine->om->neq;   /* number of ODEs */
-    nalg = engine->om->nalg; /* number of algebraic constraints */
-
-     /* construct jacobian, if wanted and not yet existing */
-    if ( opt->UseJacobian && om->jacob == NULL ) 
-      /* reset UseJacobian option, depending on success */
-      opt->UseJacobian = ODEModel_constructJacobian(om);
-    else if ( !opt->UseJacobian ) {
-      /* free jacobian from former runs (not necessary, frees also
-         unsuccessful jacobians from former runs ) */
-      if ( om->jacob != NULL)
-      {
-        for ( i=0; i<om->neq; i++ )
-          free(om->jacob[i]);
-        free(om->jacob);
-        om->jacob = NULL;
-      }
-      SolverError_error(WARNING_ERROR_TYPE,
-                        SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
-                        "Jacobian matrix construction skipped.");
-      om->jacobian = opt->UseJacobian;
-    }
-
-    /* construct algebraic `Jacobian' (or do that in constructJacobian */
+  int i, flag, neq, nalg;
+  realtype *ydata, *abstoldata, *dydata;
   
-    /* CVODESolverStructures from former runs must be freed */
-    if ( data->run > 1 )
-      IntegratorInstance_freeIDASolverStructures(engine);
-
-    
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+  cvodeSolver_t *solver = engine->solver;
+  cvodeSettings_t *opt = engine->opt;
+  
+  neq = engine->om->neq;   /* number of ODEs */
+  nalg = engine->om->nalg; /* number of algebraic constraints */
+  
+  /* construct jacobian, if wanted and not yet existing */
+  if ( opt->UseJacobian && om->jacob == NULL ) 
+    /* reset UseJacobian option, depending on success */
+    engine->UseJacobian = ODEModel_constructJacobian(om);
+  else if ( !opt->UseJacobian )
+  {
+    /* free jacobian from former runs (not necessary, frees also
+       unsuccessful jacobians from former runs ) */
+    ODEModel_freeJacobian(om);
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
+		      "Jacobian matrix construction skipped.");
+    engine->UseJacobian = om->jacobian;
+  }
+  /* construct algebraic `Jacobian' (or do that in constructJacobian */
+  
+  /* CVODESolverStructures from former runs must be freed */
+  if ( engine->run > 1 )
+    IntegratorInstance_freeIDASolverStructures(engine);
+  
+  
     /*
      * Allocate y, abstol vectors
      */
-    solver->y = N_VNew_Serial(neq + nalg);
-    CVODE_HANDLE_ERROR((void *)solver->y, "N_VNew_Serial for vector y", 0);
+  solver->y = N_VNew_Serial(neq + nalg);
+  CVODE_HANDLE_ERROR((void *)solver->y, "N_VNew_Serial for vector y", 0);
+  
+  solver->dy = N_VNew_Serial(neq + nalg);
+  CVODE_HANDLE_ERROR((void *)solver->dy, "N_VNew_Serial for vector dy", 0);
     
-    solver->dy = N_VNew_Serial(neq + nalg);
-    CVODE_HANDLE_ERROR((void *)solver->dy, "N_VNew_Serial for vector dy", 0);
-		       
-    solver->abstol = N_VNew_Serial(neq + nalg);
-    CVODE_HANDLE_ERROR((void *)solver->abstol,
-		       "N_VNew_Serial for vector abstol", 0);
+  solver->abstol = N_VNew_Serial(neq + nalg);
+  CVODE_HANDLE_ERROR((void *)solver->abstol,
+		     "N_VNew_Serial for vector abstol", 0);
+  
+  /*
+   * Initialize y, abstol vectors
+   */
+  ydata      = NV_DATA_S(solver->y);
+  abstoldata = NV_DATA_S(solver->abstol);
+  dydata     = NV_DATA_S(solver->dy);
+  
+  for ( i=0; i<neq; i++ )
+  {
+    /* Set initial value vector components of y and y' */
+    ydata[i] = data->value[i];
+    /* Set absolute tolerance vector components,
+       currently the same absolute error is used for all y */ 
+    abstoldata[i] = opt->Error;
+    dydata[i] = evaluateAST(om->ode[i], data);
+  }
+  /* set initial value vector components for algebraic rule variables  */
     
-    /*
-     * Initialize y, abstol vectors
-     */
-    ydata      = NV_DATA_S(solver->y);
-    abstoldata = NV_DATA_S(solver->abstol);
-    dydata     = NV_DATA_S(solver->dy);
-    
-    for ( i=0; i<neq; i++ )
-    {
-      /* Set initial value vector components of y and y' */
-      ydata[i] = data->value[i];
-      /* Set absolute tolerance vector components,
-         currently the same absolute error is used for all y */ 
-      abstoldata[i] = opt->Error;
-      dydata[i] = evaluateAST(om->ode[i], data);
-    }
-    /* set initial value vector components for algebraic rule variables  */
-    
-    /* scalar relative tolerance: the same for all y */
-    solver->reltol = opt->RError;
+  /* scalar relative tolerance: the same for all y */
+  solver->reltol = opt->RError;
 
-    /*
-     * Call IDACreate to create the solver memory:
-     *
-     */
-    solver->cvode_mem = IDACreate();
-    CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "IDACreate", 0);
+  /*
+   * Call IDACreate to create the solver memory:
+   *
+   */
+  solver->cvode_mem = IDACreate();
+  CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "IDACreate", 0);
 
-    /*
-     * Call IDAMalloc to initialize the integrator memory:
-     *
-     * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
-     * fRes         user's right hand side function
-     * t0         initial value of time
-     * y          the dependent variable vector
-     * dy         the ODE value vector
-     * IDA_SV     specifies scalar relative and vector absolute tolerances
-     * reltol     the scalar relative tolerance
-     * abstol     pointer to the absolute tolerance vector
-     */
-    flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
-		     solver->dy, IDA_SV, solver->reltol, solver->abstol);
-    CVODE_HANDLE_ERROR(&flag, "IDAMalloc", 1);
+  /*
+   * Call IDAMalloc to initialize the integrator memory:
+   *
+   * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
+   * fRes         user's right hand side function
+   * t0         initial value of time
+   * y          the dependent variable vector
+   * dy         the ODE value vector
+   * IDA_SV     specifies scalar relative and vector absolute tolerances
+   * reltol     the scalar relative tolerance
+   * abstol     pointer to the absolute tolerance vector
+   */
+  flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
+		   solver->dy, IDA_SV, solver->reltol, solver->abstol);
+  CVODE_HANDLE_ERROR(&flag, "IDAMalloc", 1);
 
-    /* 
-     * Link the main integrator with data for right-hand side function
-     */ 
-    flag = IDASetRdata(solver->cvode_mem, engine->data);
-    CVODE_HANDLE_ERROR(&flag, "IDASetRdata", 1);
+  /* 
+   * Link the main integrator with data for right-hand side function
+   */ 
+  flag = IDASetRdata(solver->cvode_mem, engine->data);
+  CVODE_HANDLE_ERROR(&flag, "IDASetRdata", 1);
     
-    /*
-     * Link the main integrator with the IDADENSE linear solver
-     */
-    flag = IDADense(solver->cvode_mem, neq);
-    CVODE_HANDLE_ERROR(&flag, "IDADense", 1);
+  /*
+   * Link the main integrator with the IDADENSE linear solver
+   */
+  flag = IDADense(solver->cvode_mem, neq);
+  CVODE_HANDLE_ERROR(&flag, "IDADense", 1);
 
 
-    /*
-     * Set the routine used by the IDADense linear solver
-     * to approximate the Jacobian matrix to ...
-     */
-    if ( opt->UseJacobian == 1 ) 
-      /* ... user-supplied routine JacRes : put JacRes instead of NULL
-        when working */
-      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, data);
-    else 
-      /* ... the internal default difference quotient routine IDADenseDQJac */
-      flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);    
+  /*
+   * Set the routine used by the IDADense linear solver
+   * to approximate the Jacobian matrix to ...
+   */
+  if ( opt->UseJacobian == 1 ) 
+    /* ... user-supplied routine JacRes : put JacRes instead of NULL
+       when working */
+    flag = IDADenseSetJacFn(solver->cvode_mem, NULL, data);
+  else 
+    /* ... the internal default difference quotient routine IDADenseDQJac */
+    flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);    
     
-    CVODE_HANDLE_ERROR(&flag, "IDADenseSetJacFn", 1);
+  CVODE_HANDLE_ERROR(&flag, "IDADenseSetJacFn", 1);
      
-    return 1; /* OK */
+  return 1; /* OK */
 }
 
 /* frees N_V vector structures, and the cvode_mem solver */
 void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *engine)
 {
-    /* Free CVODE structures: the same for both */ 
-    IntegratorInstance_freeCVODESolverStructures(engine);
+  /* Free CVODE structures: the same for both */ 
+  IntegratorInstance_freeCVODESolverStructures(engine);
 }
 
 /* frees only sensitivity structure, not used at the moment  */
 static void
 IntegratorInstance_freeIDASpecSolverStructures(integratorInstance_t *engine)
 {
-    /* Free sensitivity vector yS */
-    N_VDestroy_Serial(engine->solver->dy);
-    engine->solver->dy = NULL;
+  /* Free sensitivity vector yS */
+  N_VDestroy_Serial(engine->solver->dy);
+  engine->solver->dy = NULL;
 }
 
 /** \brief Prints some final statistics of the calls to CVODE routines
-*/
+ */
 
 SBML_ODESOLVER_API void IntegratorInstance_printIDAStatistics(integratorInstance_t *engine, FILE *f)
 {
@@ -403,18 +397,18 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
 
 
 /*
-   Jacobian residual routine. Compute J(t,y).
-   This function is (optionally) called by IDA's integration routines
-   every time needed.
-   Very similar to the f routine, it evaluates the Jacobian matrix
-   equations with IDA's current values and writes the results
-   back to IDA's internal vector DENSE_ELEM(J,i,j).
+  Jacobian residual routine. Compute J(t,y).
+  This function is (optionally) called by IDA's integration routines
+  every time needed.
+  Very similar to the f routine, it evaluates the Jacobian matrix
+  equations with IDA's current values and writes the results
+  back to IDA's internal vector DENSE_ELEM(J,i,j).
 */
 
 static int
 JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
-           N_Vector resvec, realtype cj, void *jac_data, DenseMat J,
-           N_Vector tempv1, N_Vector tempv2, N_Vector tempv3)
+       N_Vector resvec, realtype cj, void *jac_data, DenseMat J,
+       N_Vector tempv1, N_Vector tempv2, N_Vector tempv3)
 {
   
   int i, j;
@@ -443,7 +437,7 @@ JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
       if ( i == j )
 	DENSE_ELEM(J, i, j) -= cj;
-     }
+    }
   }
   
   for ( i=0; i<data->model->nalg; i++ ) 

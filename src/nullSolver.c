@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-12 12:51:36 xtof>
-  $Id: nullSolver.c,v 1.12 2007/06/12 13:27:28 chfl Exp $
+  Last changed Time-stamp: <2007-09-19 14:59:46 raim>
+  $Id: nullSolver.c,v 1.13 2007/09/20 01:16:13 raimc Exp $
 */
 /* 
  *
@@ -145,26 +145,20 @@ int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
   /* construct jacobian, if wanted and not yet existing */
   if ( opt->UseJacobian && om->jacob == NULL ) 
     /* reset UseJacobian option, depending on success */
-    opt->UseJacobian = ODEModel_constructJacobian(om);
+    engine->UseJacobian = ODEModel_constructJacobian(om);
   else if ( !opt->UseJacobian )
   {
     /* free jacobian from former runs (not necessary, frees also
        unsuccessful jacobians from former runs ) */
-    if ( om->jacob != NULL)
-    {
-      for ( i=0; i<om->neq; i++ )
-	free(om->jacob[i]);
-      free(om->jacob);
-      om->jacob = NULL;
-    }
+    ODEModel_freeJacobian(om);
     SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_ERROR_MODEL_NOT_SIMPLIFIED,
 		      "Jacobian matrix construction skipped.");
-    om->jacobian = opt->UseJacobian;
+    engine->UseJacobian = om->jacobian;
   }
   
   /* CVODESolverStructures from former runs must be freed */
-  if ( data->run > 1 )
+  if ( engine->run > 1 )
     IntegratorInstance_freeKINSolverStructures(engine);
     
   /*

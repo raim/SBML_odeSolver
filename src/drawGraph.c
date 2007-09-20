@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 20:37:12 raim>
-  $Id: drawGraph.c,v 1.26 2007/05/16 18:38:20 raimc Exp $
+  Last changed Time-stamp: <2007-09-12 20:08:50 raim>
+  $Id: drawGraph.c,v 1.27 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -382,11 +382,12 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
   char *formatopt;
   char *outfile;
   odeModel_t *om;
+  odeSense_t *os;
   double *highest;
   double *lowest;
 
   om = data->model;
-  
+  os = data->os;
 
   /* setting name of outfile */
   ASSIGN_NEW_MEMORY_BLOCK(outfile, strlen(file)+ strlen(format)+7, char, 0);
@@ -458,11 +459,11 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
       if ( (data->sensitivity[i][j] > threshold*highest[j]) ||
 	   (data->sensitivity[i][j] < threshold*lowest[j]) )
       {	
-	sprintf(name, "%s", om->names[om->index_sens[j]]);
+	sprintf(name, "%s", om->names[os->index_sens[j]]);
 	r = agnode(g,name);
-	agset(r, "label", om->names[om->index_sens[j]]);
+	agset(r, "label", om->names[os->index_sens[j]]);
 
-	sprintf(label, "%s.htm", om->names[om->index_sens[j]]);
+	sprintf(label, "%s.htm", om->names[os->index_sens[j]]);
 	a = agnodeattr(g, "URL", "");
 	agxset(r, a->index, label);
 	
@@ -555,11 +556,13 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
   char filename[WORDSIZE];
   FILE *f;
   odeModel_t *om;
+  odeSense_t *os;
   double *highest;
   double *lowest;
   
   om = data->model;
-
+  os = data->os;
+  
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
   fprintf(f ,"digraph jacoby {\n");
@@ -605,7 +608,7 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
 	   (data->sensitivity[i][j] < threshold*lowest[j]) )
       {	
 	fprintf(f ,"%s->%s [label=\"%g\" ",
-		om->names[om->index_sens[j]],
+		om->names[os->index_sens[j]],
 		om->names[i],
 		data->sensitivity[i][j]);
 	
@@ -620,8 +623,8 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
     fprintf(f ,"%s [label=\"%s\"];", om->names[i], om->names[i]);
   
   for ( i=0; i<data->nsens; i++ ) 
-    fprintf(f ,"%s [label=\"%s\"];", om->names[om->index_sens[i]],
-	    om->names[om->index_sens[i]]);
+    fprintf(f ,"%s [label=\"%s\"];", om->names[os->index_sens[i]],
+	    om->names[os->index_sens[i]]);
 
   fprintf(f, "}\n");
   free(highest);

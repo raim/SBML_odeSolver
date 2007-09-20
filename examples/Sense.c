@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:16:00 raim>
-  $Id: Sense.c,v 1.3 2007/01/30 15:17:06 raimc Exp $
+  Last changed Time-stamp: <2007-09-13 15:21:45 raim>
+  $Id: Sense.c,v 1.4 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -178,7 +178,8 @@ int doit(int argc, char *argv[])
     CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
     CvodeSettings_setStoreResults(settings, 1);     /* don't Store time course history */
     CvodeSettings_setSensitivity(settings, 1); /* switch on sensitivity */
-    CvodeSettings_setSensMethod(settings, 0); 
+    CvodeSettings_setSensMethod(settings, 0);
+    CvodeSettings_setCompileFunctions(settings, 1);
 
     integratorInstance = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);

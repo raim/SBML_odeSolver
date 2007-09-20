@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 15:08:16 raim>
-  $Id: sensitivity.c,v 1.9 2006/04/19 13:11:38 raimc Exp $
+  Last changed Time-stamp: <2007-09-13 18:10:06 raim>
+  $Id: sensitivity.c,v 1.10 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -43,6 +43,7 @@ main (int argc, char *argv[]){
   int i, j;
   
   odeModel_t *om;
+  odeSense_t *os;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
   cvodeResults_t *results;
@@ -60,6 +61,9 @@ main (int argc, char *argv[]){
   CvodeSettings_setSensMethod(set, 0);
   CvodeSettings_setJacobian(set, 1); /* for testing only */
   /* CvodeSettings_dump(set); */
+
+  CvodeSettings_setCompileFunctions(set, 1);
+
   
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
@@ -79,11 +83,10 @@ main (int argc, char *argv[]){
 
   while( !IntegratorInstance_timeCourseCompleted(ii) ) {
      if ( !IntegratorInstance_integrateOneStep(ii) ) {
-      break;
+       break;
      }
      IntegratorInstance_dumpPSensitivities(ii, p);
   }
-
   VariableIndex_free(p);
   
   
@@ -94,15 +97,18 @@ main (int argc, char *argv[]){
   }
 
 
-  y = ODEModel_getVariableIndex(om, "MAPK_P"); 
+  y = ODEModel_getVariableIndex(om, "MAPK_P");
+
+  os = IntegratorInstance_getSensitivityModel(ii);
+  
   printf("\nLet's look at a specific ODE variable:\n");
   /* print sensitivities again, but now from stored results */
   printf("### RESULTS for Sensitivity Analysis for one ODE variable\n");
   printf("#time  Variable  Sensitivity Params...\n");
   printf("#time  ");
   printf("%s  ", ODEModel_getVariableName(om, y));
-  for ( j=0; j<ODEModel_getNsens(om); j++ ) {
-    p = ODEModel_getSensParamIndexByNum(om, j);
+  for ( j=0; j<ODESense_getNsens(os); j++ ) {
+    p = ODESense_getSensParamIndexByNum(os, j);
     printf("%s ", ODEModel_getVariableName(om, p));
     VariableIndex_free(p);
   }
@@ -113,8 +119,8 @@ main (int argc, char *argv[]){
   for ( i=0; i<CvodeResults_getNout(results); i++ ) {
     printf("%g  ", CvodeResults_getTime(results, i));
     printf("%g  ", CvodeResults_getValue(results, y, i));
-    for ( j=0; j<ODEModel_getNsens(om); j++ ) {
-      p = ODEModel_getSensParamIndexByNum(om, j);
+    for ( j=0; j<ODESense_getNsens(os); j++ ) {
+      p = ODESense_getSensParamIndexByNum(os, j);
       printf("%g ", CvodeResults_getSensitivity(results, y, p, i));
       VariableIndex_free(p);
     }

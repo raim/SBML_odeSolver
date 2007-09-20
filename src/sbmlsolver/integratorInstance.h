@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-08 17:55:58 xtof>
-  $Id: integratorInstance.h,v 1.35 2007/09/14 16:22:00 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2007-09-20 01:52:04 raim>
+  $Id: integratorInstance.h,v 1.36 2007/09/20 01:16:14 raimc Exp $ 
 */
 /* 
  *
@@ -90,11 +90,33 @@ extern "C" {
   {
     /** implies that the 'data' field state is consistant with the
 	'solver' field */ 
-    int isValid; 
+    int isValid;
+
+
+    /** number of (forward) runs with the one integratorInstance */
+    int run;
+    
+    /** number of adjoint runs with the one integratorInstance */
+    int adjrun;
+
+    /* indicates whether this solver uses the analytic Jacobian matrix or
+       internal approximation, it combines user request via
+       opt->UseJacobian and success of matrix construction via om->jacobian */
+    int UseJacobian;
+
+    /** if 0, do the forward phase of the normal run or the forward
+	phase in preparation for the adjoint, if 1 start the backward phase
+	of the adjoint solver */
+    int AdjointPhase;
 
     /** the ODE Model as passed for construction of cvodeData and
 	cvodeSolver */
     odeModel_t *om;
+    /** the sensitivity structures, matrices etc. as constructed
+        from odeModel_t */
+    odeSense_t *os;
+    /** objective function and experimental data for adjoint solver */
+    objFunc_t *of;
     /** the integrator settings as passed for construction
 	of cvodeData and cvodeSolver  */
     cvodeSettings_t *opt;
@@ -122,6 +144,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);
+
   SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
@@ -137,12 +160,13 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
+  SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_printResults(integratorInstance_t *, FILE *); /* stefan */
+  SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *, FILE *); /* stefan */
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
   SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);

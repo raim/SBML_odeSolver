@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:25:16 raim>
-  $Id: integratorSettings.h,v 1.32 2007/09/06 17:58:06 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2007-09-19 19:51:10 raim>
+  $Id: integratorSettings.h,v 1.33 2007/09/20 01:16:14 raimc Exp $ 
 */
 /* 
  *
@@ -78,6 +78,8 @@ extern "C" {
 			     Newton (0) or Functional (1) */
     int MaxOrder;         /**< set maximum order of ADAMS or BDF method */
     int ResetCvodeOnEvent; /**< restart CVODE when event is triggered */
+    int SetTStop;          /**< runs CVODES with TSTOP, save mode for using
+			      IntegratorInstance_setVariableValue */
     int Sensitivity;      /**< if not 0: use CVODES for sensitivity analysis */
     char **sensIDs;       /**< ID's for parameters and initial conditions 
 			     for sensitivity analysis */ 
@@ -102,7 +104,7 @@ extern "C" {
 
     /** Adjoint related flags and settings   */   
     int DoAdjoint;          /**< if 1, the adjoint solution is desired   */
-    int AdjointPhase;       /**< if 0, do the forward phase of the normal run 
+    /* int AdjointPhase;   */     /**< if 0, do the forward phase of the normal run 
 			       or the forward phase in preparation for
 			       the adjoint  */
     
@@ -167,14 +169,13 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setTStop(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *, int);
 
   /* Adjoint setttings */
   SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_unsetDoAdj(cvodeSettings_t *);
-  SBML_ODESOLVER_API void CvodeSettings_setAdjPhase(cvodeSettings_t *); 
-  SBML_ODESOLVER_API void CvodeSettings_unsetAdjPhase(cvodeSettings_t *); 
   SBML_ODESOLVER_API void CvodeSettings_setAdjErrors(cvodeSettings_t *, double Error, double RError);
   SBML_ODESOLVER_API void CvodeSettings_setAdjError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setAdjRError(cvodeSettings_t *, double);
@@ -194,6 +195,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setStoreResults(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setSensitivity(cvodeSettings_t *, int);
   SBML_ODESOLVER_API int CvodeSettings_setSensParams(cvodeSettings_t *, char **, int);
+  SBML_ODESOLVER_API void CvodeSettings_unsetSensParams(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_setSensMethod(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_dump(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *);

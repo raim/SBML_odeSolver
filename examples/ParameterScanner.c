@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-10 22:54:09 raim>
-  $Id: ParameterScanner.c,v 1.14 2007/06/22 14:02:23 raimc Exp $
+  Last changed Time-stamp: <2007-09-07 15:33:41 raim>
+  $Id: ParameterScanner.c,v 1.15 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -136,14 +136,16 @@ int doit(int argc, char *argv[])
         IntegratorInstance_reset( integratorInstance);
         RETURN_ON_ERRORS_WITH(1);
 
-        IntegratorInstance_setVariableValue(integratorInstance, parameterVI, parameter); 
+        IntegratorInstance_setVariableValue(integratorInstance,
+					    parameterVI, parameter); 
         DumpState(integratorInstance, parameterVI, speciesVI);
 
         for (i=0; i != numberOfTimeSteps && !error; i++)
         {
             IntegratorInstance_integrateOneStep(integratorInstance);
             
-            if (SolverError_getNum(ERROR_ERROR_TYPE) || SolverError_getNum(FATAL_ERROR_TYPE))
+            if (SolverError_getNum(ERROR_ERROR_TYPE) ||
+		SolverError_getNum(FATAL_ERROR_TYPE))
             {
                 printf("Parameter = %g\n", parameter);
                 DumpErrors();

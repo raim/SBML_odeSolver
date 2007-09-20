@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-10-01 15:58:44 raim>
-  $Id: adj_sensitivity.c,v 1.11 2006/11/21 15:37:15 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-19 15:23:29 raim>
+  $Id: adj_sensitivity.c,v 1.12 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -108,7 +108,11 @@ main (int argc, char *argv[]){
  
   flag = IntegratorInstance_setObjectiveFunction(ii, objfun_file);
   if (flag!=1)
-      return(EXIT_FAILURE);
+  {
+    SolverError_dumpAndClearErrors();
+    return(EXIT_FAILURE);
+  }
+
 
   /* read observations */
   flag = IntegratorInstance_readTimeSeriesData(ii, data_file);
@@ -174,7 +178,6 @@ main (int argc, char *argv[]){
   /* Adjoint Integration */
   fprintf(stderr, "\n### Commencing adjoint integration:\n");
  
-  CvodeSettings_setAdjPhase(ii->opt); 
   IntegratorInstance_resetAdjPhase(ii);
 
   printf("#time  ");
@@ -204,7 +207,7 @@ main (int argc, char *argv[]){
   IntegratorInstance_free(ii);
   CvodeSettings_free(set);
   ODEModel_free(om);
-
+  free(dp);
   return (EXIT_SUCCESS);  
 }
 

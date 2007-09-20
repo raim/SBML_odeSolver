@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 17:10:53 raim>
-  $Id: printModel.c,v 1.20 2007/05/09 18:37:10 raimc Exp $
+  Last changed Time-stamp: <2007-09-12 20:56:25 raim>
+  $Id: printModel.c,v 1.21 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -669,6 +669,7 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   int i,j, k;
   cvodeResults_t *results;
   odeModel_t *om;
+  odeSense_t *os;
 
   if ( data == NULL || data->results == NULL ) {
     Warn(stderr, "No results, please integrate first.\n");
@@ -684,6 +685,7 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   
   results = data->results;
   om = data->model;
+  os = data->os;
 
   if ( Opt.PrintMessage ) {
     fprintf(stderr,
@@ -698,8 +700,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   if ( Opt.Sensitivity  && results->sensitivity != NULL ) {
     fprintf(f, "#t ");
     for( j=0; j<om->neq; j++ )
-      for ( k=0; k<om->nsens; k++ )
-	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
+      for ( k=0; k<os->nsens; k++ )
+	fprintf(f, "d%s/d%s ", om->names[j], om->names[os->index_sens[k]]);
 
     fprintf(f, "\n");
     fprintf(f, "##SENSITIVITIES\n");
@@ -707,7 +709,7 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
     for ( i=0; i<=results->nout; ++i ) {
       fprintf(f, "%g ", results->time[i]);      
       for ( j=0; j<om->neq; j++ ) 
-        for ( k=0; k<om->nsens; k++ ) 
+        for ( k=0; k<os->nsens; k++ ) 
 	  fprintf(f, "%g ", results->sensitivity[j][k][i]);
       fprintf(f, "\n");
     }
@@ -717,8 +719,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
     fprintf(f, "#t ");
     
     for( j=0; j<om->neq; j++ ) 
-      for ( k=0; k<om->nsens; k++ )
-	fprintf(f, "d%s/d%s ", om->names[j], om->names[om->index_sens[k]]);
+      for ( k=0; k<os->nsens; k++ )
+	fprintf(f, "d%s/d%s ", om->names[j], om->names[os->index_sens[k]]);
     
   }
   /* print concentrations */

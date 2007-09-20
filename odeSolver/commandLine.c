@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-25 13:30:06 raim>
-  $Id: commandLine.c,v 1.23 2007/01/25 12:33:37 raimc Exp $
+  Last changed Time-stamp: <2007-09-20 01:12:12 raim>
+  $Id: commandLine.c,v 1.24 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -349,31 +349,36 @@ odeSolver (int argc, char *argv[])
 	no other printing needed
 	-a, --all: print all results
     */
-    if ( !Opt.PrintOnTheFly && !Opt.PrintAll ) {
+    if ( !Opt.PrintOnTheFly && !Opt.PrintAll )
+    {
       /** -y: print time course of the jacobian matrix
 	  expressions
       */	  
-      if ( Opt.PrintJacobian == 1 ) {
+      if ( Opt.PrintJacobian == 1 )
+      {
 	printJacobianTimeCourse(ii->data, outfile);
       }
 
       /** -k: print time course of the reactions, i.e.
 	  kinetic law expressions
       */      
-      else if ( Opt.PrintReactions == 1 ) {
+      else if ( Opt.PrintReactions == 1 )
+      {
 	printReactionTimeCourse(ii->data, m, outfile);
       }
 
       /** -r: print time coures of ODE values
       */
-      else if ( Opt.PrintRates == 1 ) {
+      else if ( Opt.PrintRates == 1 )
+      {
 	printOdeTimeCourse(ii->data, outfile);
       }
       
       /** -d: print time course of the determinant
 	  of the jacobian matrix
       */
-      else if ( Opt.Determinant == 1 ) {
+      else if ( Opt.Determinant == 1 )
+      {
 	ODEModel_constructJacobian(om);
 	det = determinantNAST(om->jacob, om->neq);
 	printDeterminantTimeCourse(ii->data, det, outfile);
@@ -383,13 +388,15 @@ odeSolver (int argc, char *argv[])
       /** Default (no printing options):
 	  print species concentrations
        */
-      else {
+      else
+      {
 	printConcentrationTimeCourse(ii->data, outfile);
       }      
     }
     /** -a, --all: print all results
     */
-    else if ( !Opt.PrintOnTheFly && Opt.PrintAll ) {
+    else if ( !Opt.PrintOnTheFly && Opt.PrintAll )
+    {
       printJacobianTimeCourse(ii->data, outfile);
       printReactionTimeCourse(ii->data, m, outfile);
       printOdeTimeCourse(ii->data, outfile);
@@ -402,7 +409,8 @@ odeSolver (int argc, char *argv[])
 	for negative values, black, activating for positive
 	values.
     */
-    if ( Opt.DrawJacobian == 1 ) {
+    if ( Opt.DrawJacobian == 1 )
+    {
       if ( Opt.PrintMessage )
         fprintf(stderr,
 	  "\n\nTrying to draw a species interaction graph %s_jm.%s from\n  \
@@ -421,11 +429,13 @@ odeSolver (int argc, char *argv[])
 
     
   /* Print some final statistics   */
-  if ( Opt.PrintMessage ) {
+  if ( Opt.PrintMessage )
+  {
     IntegratorInstance_printStatistics(ii, stdout);
   }
 
-  if ( Opt.Benchmark ) {
+  if ( Opt.Benchmark )
+  {
     printf("## execution time %f\n",
 	   ((double)(endTime-startTime))/CLOCKS_PER_SEC);
     printf("## integrationTime %f\n",
@@ -435,7 +445,8 @@ odeSolver (int argc, char *argv[])
     
     /* thx and good bye. */
     /* save and close results file */
-    if ( Opt.Write && !Opt.Xmgrace ) {
+    if ( Opt.Write && !Opt.Xmgrace )
+    {
       fclose(outfile);
       fprintf(stderr, "Saved results to file %s.\n\n", filename);
       free(filename);
@@ -474,37 +485,39 @@ int integrator(integratorInstance_t *engine,
 {
   int i, j;
   odeModel_t *om = engine->om;
+  odeSense_t *os = engine->os;
   cvodeData_t *data = engine->data;
   cvodeSolver_t *solver = engine->solver;
   
  /** Command-line option -f/--onthefly:
       print initial values, if on-the-fly printint is set
  */
-  if ( PrintOnTheFly && data->run == 1 ) {
+  if ( PrintOnTheFly && engine->run == 1 )
+  {
     fprintf(stderr,
 	    "\nPrinting concentrations or sensitivities on the fly !\n");
     fprintf(stderr, "Overruling all other print options!!\n\n");
     
     
     /* print sensitivities */
-    if ( Opt.Sensitivity && data->sensitivity != NULL ) {
-      
+    if ( Opt.Sensitivity && data->sensitivity != NULL )
+    {      
       fprintf(outfile, "##SENSITIVITIES\n");
       fprintf(outfile, "#t ");
       for ( i=0; i<om->neq; i++ ) 
-	for ( j=0; j<om->nsens; j++ )
+	for ( j=0; j<os->nsens; j++ )
 	  fprintf(outfile, "d%s/%s ",
-		  om->names[i], om->names[om->index_sens[j]]);
+		  om->names[i], om->names[os->index_sens[j]]);
       fprintf(outfile, "\n");
        
       for ( i=0; i<om->neq; i++ ) 
-	for ( j=0; j<om->nsens; j++ )
+	for ( j=0; j<os->nsens; j++ )
 	  fprintf(outfile, "%g ", data->sensitivity[i][j]);
       fprintf(outfile, "\n");
     }
     /* print concentrations */
-    else {
-      
+    else
+    {      
       fprintf(outfile, "##CONCENTRATIONS\n");
       fprintf(outfile, "#t ");      
       for ( i=0; i<data->nvalues; i++ )
@@ -521,7 +534,8 @@ int integrator(integratorInstance_t *engine,
       fprintf(outfile, "\n");
     }
   }
-  else {
+  else
+  {
     if ( PrintMessage )
       fprintf(stderr,"Integrating        ");
   }
@@ -534,9 +548,10 @@ int integrator(integratorInstance_t *engine,
     stdout).
   */
   
-  while (!IntegratorInstance_timeCourseCompleted(engine)) {
-
-    if (!IntegratorInstance_integrateOneStep(engine)) {
+  while (!IntegratorInstance_timeCourseCompleted(engine))
+  {
+    if (!IntegratorInstance_integrateOneStep(engine))
+    {
       /* SolverError_dump(); */
       return IntegratorInstance_handleError(engine);
     }
@@ -545,11 +560,11 @@ int integrator(integratorInstance_t *engine,
        with '-d' or '--onthefly'
     */
  
-    if ( PrintOnTheFly ) {
-
+    if ( PrintOnTheFly )
+    {
       /* print sensitivities */
-      if ( Opt.Sensitivity && data->sensitivity != NULL ) {
-
+      if ( Opt.Sensitivity && data->sensitivity != NULL )
+      {
 	fprintf(outfile, "%g ", solver->t);
 	for ( i=0; i<data->neq; i++ ) 
 	  for ( j=0; j<data->nsens; j++ ) 
@@ -558,8 +573,8 @@ int integrator(integratorInstance_t *engine,
 
       }
       /* print concentrations */
-      else {
-	
+      else
+      {	
 	fprintf(outfile, "%g ", solver->t);
 	for ( i=0; i<engine->data->nvalues; i++ )
           if (om->observablesArray[i])
@@ -568,7 +583,8 @@ int integrator(integratorInstance_t *engine,
 	
       }
     }
-    else if ( PrintMessage ) {
+    else if ( PrintMessage )
+    {
       const  char chars[5] = "|/-\\";
       fprintf(stderr, "\b\b\b\b\b\b");
       fprintf(stderr, "%.2f %c",
@@ -577,24 +593,24 @@ int integrator(integratorInstance_t *engine,
     }
   }
   
-  if ( PrintOnTheFly && data->run == 1 ) {
-    
+  if ( PrintOnTheFly && engine->run == 1 )
+  {    
     fprintf(outfile, "#t ");
     /* print sensitivities */
-    if ( Opt.Sensitivity && data->sensitivity != NULL ) {
-      
+    if ( Opt.Sensitivity && data->sensitivity != NULL )
+    {      
       for ( i=0; i<om->neq; i++ ) 
-	for ( j=0; j<om->nsens; j++ )
+	for ( j=0; j<os->nsens; j++ )
 	  fprintf(outfile, "d%s/%s ",
-		  om->names[i], om->names[om->index_sens[j]]);
+		  om->names[i], om->names[os->index_sens[j]]);
       fprintf(outfile, "\n");
       fprintf(outfile, "##SENSITIVITIES\n");
     }
     /* print concentrations */
-    else {
-
+    else
+    {
       for ( i=0; i<data->nvalues; i++ )
-          if (om->observablesArray[i])
+          if ( om->observablesArray[i] )
               fprintf(outfile, "%s ", om->names[i]);
 
       fprintf(outfile, "\n");

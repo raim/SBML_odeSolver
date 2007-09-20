@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-07 16:54:22 raim>
-  $Id: analyzeSensitivity.c,v 1.4 2006/03/07 15:58:35 raimc Exp $
+  Last changed Time-stamp: <2007-09-20 01:36:51 raim>
+  $Id: analyzeSensitivity.c,v 1.5 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -42,21 +42,21 @@
 #include "sbmlsolver/solverError.h"
 
 
-static void printSensiMatrix(odeModel_t *odeModel, cvodeData_t *data)
+static void printSensiMatrix(odeSense_t *os, cvodeData_t *data)
 {
 
   int i, j;
   const ASTNode_t *f  = NULL;
 
   printf("i\\j ");
-  for ( j=0; j<ODEModel_getNsens(odeModel); j++ )
+  for ( j=0; j<ODESense_getNsens(os); j++ )
     printf("%d   ", j);
   printf("\n");
       
-  for ( i=0; i<ODEModel_getNeq(odeModel); i++ ) {
+  for ( i=0; i<ODEModel_getNeq(os->om); i++ ) {
     printf("%d   ", i);
-    for ( j=0; j<ODEModel_getNsens(odeModel); j++ ) {
-      f = ODEModel_getSensIJEntry(odeModel, i, j);
+    for ( j=0; j<ODESense_getNsens(os); j++ ) {
+      f = ODESense_getSensIJEntry(os, i, j);
       /* now let's see wether the entry is positive or negative at
 	 this point */
       if ( evaluateAST((ASTNode_t *)f, data) < 0 )
@@ -80,23 +80,26 @@ int main(void)
     variableIndex_t *vj = NULL;
     const ASTNode_t *f  = NULL;
     cvodeData_t *data   = NULL;
+    odeSense_t *os;
 
     /* first load an SBML model and directly construct the
        internal odeModel from it */
     odeModel_t *odeModel = ODEModel_createFromFile("MAPK.xml");
 
- 
-    if ( ODEModel_constructSensitivity(odeModel) &&
-	 ODEModel_getNeq(odeModel) ) {
+   /* create the default sensitivity matrix to retrieve formulas */
+    os = ODEModel_constructSensitivity(odeModel);
+    
+    if ( os != NULL && ODEModel_getNeq(odeModel) ) {
       printf("\n\nSuccessfully constructed the parametric matrix S ");
       printf("as used for CVODES sensitivity analysis\n\n");
       printf("We might be interested in the `sparsity' of S,\n");
       printf("... we can just evaluate the parametric entries:\n\n");
       
-      /* we need cvodeData for evaluating formulas */
+      /* we need cvodeData for evaluating formulas ... */
       data = CvodeData_create(odeModel);
+      
       printf("... how many parametric entries: %d\n\n",
-	     ODEModel_getNsens(odeModel));
+	     ODESense_getNsens(os));
       
       /* now take a look at a all entries of S: */
       
@@ -113,12 +116,13 @@ int main(void)
 	printf("dY/dt =  %s \n", formula);
 	free(formula);
       
-	for ( j=0; j<ODEModel_getNsens(odeModel); j++ ) {
-	  vj = ODEModel_getSensParamIndexByNum(odeModel, j);
+	for ( j=0; j<ODESense_getNsens(os); j++ ) {
+	  vj = ODESense_getSensParamIndexByNum(os, j);
 	  printf("  Parameter %d: %s   ", j,
 		 ODEModel_getVariableName(odeModel, vj));
-	  f = ODEModel_getSensIJEntry(odeModel, i, j);
-	  formula = SBML_formulaToString(f); 
+	  f = ODESense_getSensIJEntry(os, i, j);	  
+
+	  formula = SBML_formulaToString(f);
 	  printf("  S[%d][%d] = %s \n", i, j, formula);
 	  free(formula);
 	  VariableIndex_free(vj);
@@ -129,7 +133,7 @@ int main(void)
       printf("\n\n");      
       
       printf("Sensitivity: parametric matrix with initial conditions:\n");
-      printSensiMatrix(odeModel, data);
+      printSensiMatrix(os, data);
       /* we must free this cvodeData structure */ 
       CvodeData_free(data);
       
@@ -141,7 +145,7 @@ int main(void)
       printf("Sensitivity can still be run with internal approximation.\n");
     }
       
-    
+    ODESense_free(os);
     ODEModel_free(odeModel);
     return 1;
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-08 17:47:13 xtof>
-  $Id: cvodeData.h,v 1.7 2007/06/20 15:46:11 jamescclu Exp $
+  Last changed Time-stamp: <2007-09-19 15:00:30 raim>
+  $Id: cvodeData.h,v 1.8 2007/09/20 01:16:14 raimc Exp $
 */
 /* 
  *
@@ -67,6 +67,11 @@ typedef struct cvodeResults cvodeResults_t ;
 struct cvodeData {
 
   odeModel_t *model;
+  /** the sensitivity structures, matrices etc. as constructed
+      from odeModel_t */
+  odeSense_t *os;
+  /** objective function and experimental data for adjoint solver */
+  objFunc_t *of;
   
   /* ODEs f(x,p,t) = dx/dt and values x. The ODEs are usually
      optimized versions of the same array in odeModel */
@@ -111,10 +116,6 @@ struct cvodeData {
   /** Results: time series of integration are stored in this
       structure (see above) */
   cvodeResults_t *results;
-
-  /** number of (forward) runs with the one integratorInstance */
-  int run;
-
   
 
   /* Adjoint specific  */
@@ -122,9 +123,6 @@ struct cvodeData {
       all adjoint variables \psi(t) (of which there are `neq') */  
   double *adjvalue;  
  
-  /** number of adjoint runs with the one integratorInstance */
-  int adjrun;
-
   /* for computing vector_v using discrete observation data */
   int TimeSeriesIndex;
 } ;
@@ -192,7 +190,8 @@ extern "C" {
 /* internal functions used by integratorInstance.c */
 cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
-
+int CvodeData_initializeSensitivities(cvodeData_t *,cvodeSettings_t *,
+				      odeModel_t *, odeSense_t *);
 /* Adjoint specific internal functions used by integratorInstance.c */
 int CvodeResults_allocateAdjSens(cvodeResults_t *, int neq, int nadjsens, int nout);
 

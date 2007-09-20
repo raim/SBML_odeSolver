@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-06-29 18:49:36 raim>
-  $Id: bistability.c,v 1.1 2007/09/07 10:40:09 raimc Exp $
+  Last changed Time-stamp: <2007-09-20 01:54:22 raim>
+  $Id: bistability.c,v 1.2 2007/09/20 01:16:12 raimc Exp $
 */
 /* 
  *
@@ -62,7 +62,7 @@ int doit(int argc, char *argv[])
 {
   double i, j ;
   cvodeSettings_t *settings = CvodeSettings_create();
-  variableIndex_t *speciesVI, *species2VI, *parameterVI, *parameter2VI;
+  variableIndex_t *speciesVI, *parameterVI, *parameter2VI;
   integratorInstance_t *integratorInstance;
   char *modelStr, *parameterStr, *parameter2Str, *speciesStr, *observable[1];
   double parameter, parameterEnd, parameterStepSize,
