@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-19 19:51:10 raim>
-  $Id: integratorSettings.h,v 1.33 2007/09/20 01:16:14 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.34 2007/09/20 13:55:46 jamescclu Exp $ 
 */
 /* 
  *
@@ -72,6 +72,9 @@ extern "C" {
     double Error;         /**< absolute tolerance in Cvode integration */
     double RError;        /**< relative tolerance in Cvode integration */
     int Mxstep;           /**< maximum step number for CVode integration */
+    int DetectNegState; /**< makes the RHS evaluation function return 1 
+			        (i.e., a recoverable error)
+			        if negative state inputs are encountered */
     int CvodeMethod;      /**< set ADAMS-MOULTON (1) or BDF (0)
 			     nonlinear solver */
     int IterMethod;       /**< set type of nonlinear solver iteration
@@ -169,6 +172,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setRError(cvodeSettings_t *, double);
   SBML_ODESOLVER_API void CvodeSettings_setMxstep(cvodeSettings_t *, int);
+  SBML_ODESOLVER_API void CvodeSettings_setDetectNegState(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setTStop(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *, int);

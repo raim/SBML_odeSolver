@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-20 02:21:32 raim>
-  $Id: cvodeSolver.c,v 1.66 2007/09/20 01:16:12 raimc Exp $
+  $Id: cvodeSolver.c,v 1.67 2007/09/20 13:54:34 jamescclu Exp $
 */
 /* 
  *
@@ -931,6 +931,11 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
+
+  if ( data->opt->DetectNegState  )  
+    for ( i=0; i<data->model->neq; i++ )
+      if (data->value[i] < 0)
+	       return (1);
 
   /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 

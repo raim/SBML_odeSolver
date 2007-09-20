@@ -1,5 +1,5 @@
 /*   Last changed Time-stamp: <2007-09-19 21:40:57 raim> */
-/*   $Id: integratorSettings.c,v 1.47 2007/09/20 01:16:13 raimc Exp $ */
+/*   $Id: integratorSettings.c,v 1.48 2007/09/20 13:54:34 jamescclu Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -169,7 +169,10 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
 
   /* deactivate TSTOP mode of CVODE */
   set->SetTStop = 0;
-  
+   
+  /* do not trigger numerical refinement upon detection of negative state values */
+  set->DetectNegState = 0;
+
   return set;
 }
 
@@ -349,6 +352,13 @@ SBML_ODESOLVER_API void CvodeSettings_setMaxOrder(cvodeSettings_t *set, int MaxO
   set->MaxOrder = MaxOrder;  
 }
 
+/** Activates the detection of negative state values. CVodes would then perform
+    numerical refinement if negative state inputs are encountered. */
+SBML_ODESOLVER_API void CvodeSettings_setDetectNegState(cvodeSettings_t *set, int i)
+{
+  set->DetectNegState = i;
+}
+
 /** Sets whether the simulator uses compiled functions
     for computing ODEs, the Jacabian or events
 */
@@ -380,6 +390,7 @@ SBML_ODESOLVER_API void CvodeSettings_setTStop(cvodeSettings_t *set, int i)
 {
   set->SetTStop = i;
 }
+
 /** Sets integration switches in cvodeSettings. WARNING: this
     function's type signature will change with time, as new settings
     will be required for other solvers!
