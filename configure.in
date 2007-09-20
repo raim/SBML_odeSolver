@@ -185,11 +185,11 @@ else
   yes_libsundials="no"
 fi
 	
-if test $tcc_functional != no; then
-  yes_tcc="yes"
-else
-  yes_tcc="no"
-fi
+dnl if test $tcc_functional != no; then
+dnl  yes_tcc="yes"
+dnl else
+dnl  yes_tcc="no"
+dnl fi
 	
 if test $grace_functional != no; then
   yes_grace="yes"
