@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 02:27:40 raim>
-  $Id: integratorInstance.c,v 1.92 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-09-21 15:22:52 raim>
+  $Id: integratorInstance.c,v 1.93 2007/09/21 13:54:12 raimc Exp $
 */
 /* 
  *
@@ -203,7 +203,8 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   engine->solver->abstolQA = NULL;
 
   engine->os = NULL;
-  engine->of = NULL;
+/*   engine->solver->nsens = 0; */
+  engine->os = NULL;
 
   if (IntegratorInstance_initializeSolver(engine, data, opt, om))
     return engine;
@@ -255,7 +256,7 @@ odeSense_t *IntegratorInstance_initializeSensitivity(odeModel_t *om,
   /* free old and reconstruct sensitivities */
   if ( changed )
   {
-    /* free old and ... */
+     /* free old and ... */
     ODESense_free(os);
     /* ... construct new sensitivity */
     return ODESense_create(om, opt);    
@@ -319,7 +320,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   RETURN_ON_FATALS_WITH(0);
   
   /* construct sensitivities, if not yet existing */
-  /*!!! BETTER ERROR HANDLING !!!*/
+  /*!!! BETTER ERROR HANDLING?? !!!*/
   if ( (opt->Sensitivity || opt->DoAdjoint) && !engine->AdjointPhase )
   {
     engine->os = IntegratorInstance_initializeSensitivity(engine->om, opt,
@@ -390,6 +391,7 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
   /* reset integrator clock */
   engine->clockStarted = 0;
+  
   return 1;  
 }
 
@@ -945,13 +947,16 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     data->currenttime = solver->t;
   
     /* update objective quadrature  */
-    om->compute_vector_v=1;
-    d = div(solver->iout, 1+opt->InterStep);
-    data->TimeSeriesIndex = opt->OffSet + d.quot;
-
-    NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0)
-      + evaluateAST( data->model->ObjectiveFunction, data);
-    om->compute_vector_v=0;
+    if ( om->ObjectiveFunction )
+    {
+      om->compute_vector_v=1;
+      d = div(solver->iout, 1+opt->InterStep);
+      data->TimeSeriesIndex = opt->OffSet + d.quot;
+      
+      NV_Ith_S(solver->q, 0) = NV_Ith_S(solver->q, 0)
+	+ evaluateAST( data->model->ObjectiveFunction, data);
+      om->compute_vector_v=0;
+    }
 
   } /* if (opt->observation_data_type == 1) */
 
