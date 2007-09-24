@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 14:55:16 raim>
-  $Id: adjsenstest.c,v 1.9 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-09-21 15:30:39 raim>
+  $Id: adjsenstest.c,v 1.10 2007/09/24 09:41:54 raimc Exp $
 */
 /* 
  *
@@ -64,7 +64,6 @@ main (int argc, char *argv[]){
   /* creating the odeModel */
   om = ODEModel_createFromFile("MAPK.xml");
   ii = IntegratorInstance_create(om, set);
-
   
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
@@ -104,6 +103,7 @@ main (int argc, char *argv[]){
   i = 0;
   while ( i < 4 ) {
 
+   /*  if ( i == 2) break; */
     /* Set nonlinear objective function after 2 loops  */
     if ( i == 2)
     {
@@ -115,12 +115,10 @@ main (int argc, char *argv[]){
 
     IntegratorInstance_reset(ii);
     
-    printf("\n\nIntegration time is %g\n",
-	 IntegratorInstance_getIntegrationTime(ii));
     while( !IntegratorInstance_timeCourseCompleted(ii) )
      if ( !IntegratorInstance_integrateOneStep(ii) )
        break;
-    printf("Integration time was %g\n\n",
+    printf("\nIntegration time was %g\n\n",
 	 IntegratorInstance_getIntegrationTime(ii));
      
 
@@ -145,14 +143,12 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE);
 
      /* Now go into adjoint phase */   
-    IntegratorInstance_resetAdjPhase(ii); 
+    IntegratorInstance_resetAdjPhase(ii);
     /* Adjoint phase */
-    printf("\n\nIntegration time is %g\n",
-	   IntegratorInstance_getIntegrationTime(ii));
     while( !IntegratorInstance_timeCourseCompleted(ii) )
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	break;
-    printf("Integration time was %g\n\n",
+    printf("\nIntegration time was %g\n\n",
 	   IntegratorInstance_getIntegrationTime(ii));
     
     /* Print out adjoint soln */
@@ -178,7 +174,7 @@ main (int argc, char *argv[]){
   /* now we have the results and can free the inputs */
   IntegratorInstance_free(ii);
   CvodeSettings_free(set);
-  ODEModel_free(om); 
+  ODEModel_free(om);
 
   return (EXIT_SUCCESS);  
 }

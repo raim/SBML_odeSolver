@@ -67,7 +67,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setJacobian(set, 1);
   CvodeSettings_setStoreResults(set, 1);
 
-  CvodeSettings_setCompileFunctions(set, 1); /* do not compile RHS functions */
+  CvodeSettings_setCompileFunctions(set, 0); /* do not compile RHS functions */
   CvodeSettings_setSensitivity(set, 0);
   CvodeSettings_setSensMethod(set, 0);
 
@@ -80,7 +80,7 @@ main (int argc, char *argv[]){
   sensIDTest[0] = "MAPK";
   sensIDTest[1] = "MAPK_P";
   sensIDTest[2] = "K1";
-  sensIDTest[3] = "Ki";  
+  sensIDTest[3] = "Ki";
   printf("Sensitivity analysis for 2 ICs: %s, %s\n2 parameters: %s, %s\n", 
 	 sensIDTest[0], sensIDTest[1], sensIDTest[2], sensIDTest[3]); 
   CvodeSettings_setSensParams(set, sensIDTest, 4);
