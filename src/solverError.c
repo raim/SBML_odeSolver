@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 18:26:06 raim>
-  $Id: solverError.c,v 1.16 2006/06/09 17:04:35 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-27 19:18:05 raim>
+  $Id: solverError.c,v 1.17 2007/09/27 17:18:46 raimc Exp $ 
 */
 /* 
  *
@@ -95,19 +95,19 @@ SBML_ODESOLVER_API solverErrorMessage_t *SolverError_getError(errorType_t type, 
 }
 
 /** get a stored error message */
-char *SolverError_getMessage(errorType_t type, int errorNum)
+SBML_ODESOLVER_API char *SolverError_getMessage(errorType_t type, int errorNum)
 {
   return SolverError_getError(type, errorNum)->message ;
 }
 
 /** get error code */
-errorCode_t SolverError_getCode(errorType_t type, int errorNum)
+SBML_ODESOLVER_API errorCode_t SolverError_getCode(errorType_t type, int errorNum)
 {
   return SolverError_getError(type, errorNum)->errorCode ; 
 }
 
 /** get error code of last error stored of given type */
-errorCode_t SolverError_getLastCode(errorType_t type)
+SBML_ODESOLVER_API errorCode_t SolverError_getLastCode(errorType_t type)
 {
   if ( !SolverError_getNum(type) )
     return 0;
@@ -189,90 +189,6 @@ SBML_ODESOLVER_API void SolverError_haltOnErrors()
     exit(EXIT_FAILURE);
 }
 
-/* our portable clone of itoa */
-char* SolverError_itoa( int value, char* result, int base )
-{
-  char *out = result, *reverseSource, *reverseTarget;
-  int quotient = value;
-
-  /* check that the base if valid */
-  if ( base < 2 || base > 16 ) { *result = 0; return result; }
-
-  do
-  {
-    *out = "0123456789abcdef"[ abs( quotient % base ) ];
-    ++out;
-    quotient /= base;
-  }
-  while ( quotient );
-
-  if ( value < 0 ) *out++ = '-';
-
-  reverseTarget = result ;
-  reverseSource = out;
-
-  while ( reverseSource > reverseTarget )
-  {
-    char temp;
-
-    reverseSource--;
-    temp = *reverseSource ;
-    *reverseSource = *reverseTarget;
-    *reverseTarget = temp ;
-    reverseTarget++;
-  }
-
-  *out = 0;
-  return result;
-}
-
-
-int SolverError_dumpHelper(char *s)
-{
-  int result = 1;
-
-  static char *solverErrorTypeString[] =
-    { "Fatal Error",
-      "      Error",
-      "    Warning" } ;
-
-  int i, j;
-
-  for ( i=0; i != NUMBER_OF_ERROR_TYPES; i++ )
-  {
-    List_t *errors = solverErrors[i];
-
-    if ( errors )
-    {
-      for ( j=0; j != List_size(errors); j++ )
-      {
-	char errorCodeString[35] ;
-	solverErrorMessage_t *error = List_get(errors, j);
-
-	SolverError_itoa(error->errorCode, errorCodeString, 10);
-                    
-	if ( s )
-	{
-	  result = sprintf(s, "%s\t%s\t%s\n",
-			   solverErrorTypeString[i],
-			   errorCodeString, error->message);
-	  s += result ;
-	}
-	else
-	  result +=
-	    3 +
-	    strlen(solverErrorTypeString[i]) +
-	    strlen(error->message) +
-	    strlen(errorCodeString);
-      }
-    }
-  }
-
-  if ( s )
-    *s = '\0';
-
-  return result ;
-}
 
 /** write all errors and warnings to a string (owned by caller
     unless memoryExhaustion) */
@@ -365,3 +281,87 @@ void SolverError_storeLastWin32Error(const char *context)
 #endif
 
 /** @} */
+/* our portable clone of itoa */
+char* SolverError_itoa( int value, char* result, int base )
+{
+  char *out = result, *reverseSource, *reverseTarget;
+  int quotient = value;
+
+  /* check that the base if valid */
+  if ( base < 2 || base > 16 ) { *result = 0; return result; }
+
+  do
+  {
+    *out = "0123456789abcdef"[ abs( quotient % base ) ];
+    ++out;
+    quotient /= base;
+  }
+  while ( quotient );
+
+  if ( value < 0 ) *out++ = '-';
+
+  reverseTarget = result ;
+  reverseSource = out;
+
+  while ( reverseSource > reverseTarget )
+  {
+    char temp;
+
+    reverseSource--;
+    temp = *reverseSource ;
+    *reverseSource = *reverseTarget;
+    *reverseTarget = temp ;
+    reverseTarget++;
+  }
+
+  *out = 0;
+  return result;
+}
+
+
+int SolverError_dumpHelper(char *s)
+{
+  int result = 1;
+
+  static char *solverErrorTypeString[] =
+    { "Fatal Error",
+      "      Error",
+      "    Warning" } ;
+
+  int i, j;
+
+  for ( i=0; i != NUMBER_OF_ERROR_TYPES; i++ )
+  {
+    List_t *errors = solverErrors[i];
+
+    if ( errors )
+    {
+      for ( j=0; j != List_size(errors); j++ )
+      {
+	char errorCodeString[35] ;
+	solverErrorMessage_t *error = List_get(errors, j);
+
+	SolverError_itoa(error->errorCode, errorCodeString, 10);
+                    
+	if ( s )
+	{
+	  result = sprintf(s, "%s\t%s\t%s\n",
+			   solverErrorTypeString[i],
+			   errorCodeString, error->message);
+	  s += result ;
+	}
+	else
+	  result +=
+	    3 +
+	    strlen(solverErrorTypeString[i]) +
+	    strlen(error->message) +
+	    strlen(errorCodeString);
+      }
+    }
+  }
+
+  if ( s )
+    *s = '\0';
+
+  return result ;
+}
