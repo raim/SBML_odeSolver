@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-18 16:59:17 raim>
-  $Id: sbmlResults.c,v 1.19 2007/09/18 15:02:09 raimc Exp $
+  Last changed Time-stamp: <2007-09-26 19:59:21 raim>
+  $Id: sbmlResults.c,v 1.20 2007/09/27 14:34:27 raimc Exp $
 */
 /* 
  *
@@ -63,103 +63,7 @@ static timeCourse_t *TimeCourseArray_getTimeCourse(const char *,
 static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *);
 
 
-/*** results as returned by _odeSolver ***/
-
-/* The function SBMLResults SBMLResults_create(Model_t *m, int timepoints)
-   allocates memory for simulation results (time courses) mapped back
-   on SBML structures (i.e. species, and non-constant compartments
-   and parameters. It takes CvodeData as an argument, that has to
-   contain CVODE integraton results.
-*/
-
-SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
-{
-  int i, num_reactions, num_species, num_compartments, num_parameters;
-  Species_t *s;
-  Compartment_t *c;
-  Parameter_t *p;
-  Reaction_t *r;
-  SBMLResults_t *results;
-  timeCourse_t *tc;
-
-  ASSIGN_NEW_MEMORY(results, struct _SBMLResults, NULL);
-  
-  /* Allocating the time array  */
-  results->time =  TimeCourse_create(timepoints);
-  ASSIGN_NEW_MEMORY_BLOCK(results->time->name, 5, char, NULL);
-  sprintf(results->time->name, "time");
-  
-  /* Allocating arrays for all SBML species */
-  num_species = Model_getNumSpecies(m);
-  results->species = TimeCourseArray_create(num_species, timepoints);
-
-  
-  /* Writing species names */
-  for ( i=0; i<Model_getNumSpecies(m); i++)
-  {
-    s = Model_getSpecies(m, i);
-    tc = results->species->tc[i];
-    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Species_getId(s))+1, char, NULL);
-    sprintf(tc->name, "%s", Species_getId(s));
-  }
-
-  /* Allocating arrays for all variable SBML compartments */
-  num_compartments = 0;
-  for ( i=0; i<Model_getNumCompartments(m); i++ ) 
-    if ( ! Compartment_getConstant(Model_getCompartment(m, i)) )
-      num_compartments++;
-  
-  results->compartments = TimeCourseArray_create(num_compartments, timepoints);
-  /* Writing variable compartment names */
-  for ( i=0; i<Model_getNumCompartments(m); i++)
-  {
-    c = Model_getCompartment(m, i);
-    if ( ! Compartment_getConstant(c) )
-    {
-      tc = results->compartments->tc[i];
-      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Compartment_getId(c))+1,
-			      char, NULL);
-      sprintf(tc->name, Compartment_getId(c));
-    }
-  }
-
-  /* Allocating arrays for all variable SBML parameters */
-  num_parameters = 0;
-  for ( i=0; i<Model_getNumParameters(m); i++ ) 
-    if ( ! Parameter_getConstant(Model_getParameter(m, i)) )
-      num_parameters++;
-  
-  results->parameters = TimeCourseArray_create(num_parameters, timepoints);
-  
-  /* Writing variable parameter names */
-  num_parameters = 0;
-  for ( i=0; i<Model_getNumParameters(m); i++)
-  {
-    p = Model_getParameter(m, i);
-    if ( ! Parameter_getConstant(p) )
-    {
-      tc = results->parameters->tc[num_parameters];
-      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1, char,
-			      NULL);
-      sprintf(tc->name, Parameter_getId(p));
-      num_parameters++;
-    }
-  }  
-
-  /* Allocating arrays for all variable SBML reactions */
-  num_reactions = Model_getNumReactions(m);
-  results->fluxes = TimeCourseArray_create(num_reactions, timepoints);
-  /* Writing reaction names */
-  for ( i=0; i<Model_getNumReactions(m); i++ )
-  {
-    r = Model_getReaction(m, i);
-    tc = results->fluxes->tc[i];
-    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Reaction_getId(r))+1, char, NULL);
-    sprintf(tc->name, Reaction_getId(r));
-  }
-
-  return results;
-}
+/** results as returned by _odeSolver ***/
 
 
 /** Returns the timeCourse for the integration time points
@@ -249,61 +153,11 @@ SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(SBMLResults_t *result
     return tc;
 
   tc = TimeCourseArray_getTimeCourse(id, results->fluxes);
-  return tc;
-}
+  if ( tc != NULL )
+    return tc;
 
-static timeCourse_t *TimeCourseArray_getTimeCourse(const char *id, timeCourseArray_t *tcA)
-{
-  int i;
-  timeCourse_t *tc;
-  for ( i=0; i<tcA->num_val; i++ )
-  {
-    tc = tcA->tc[i];
-    if ( strcmp(id, tc->name) == 0 )
-      return tc;
-  }
   return NULL;
 }
-
-
-/** Returns the variable name (SBML ID) of a timeCourse
-*/
-
-SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
-{
-  return (const char*) tc->name;
-}
-
-
-/** Returns the number of timepoints in a timeCourse
-*/
-
-SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
-{
-  return tc->timepoints;
-}
-
-
-/**  Returns ith value in a timeCourse, where
-     0 <= i < TimeCourse_getNumValues
-*/
-
-SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
-{
-  return tc->values[i];
-}
-
-/**  Returns the sensitivity to ith constant at jth time step, where
-     0 <= i < SBMLResults_getNumSens, and
-     0 <= j < TimeCourse_getNumValues
-*/
-
-SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *tc, int i, int j)
-{
-  return tc->sensitivity[i][j];
-}
-
-
 /** Frees SBMLResults structure
 */
 
@@ -315,83 +169,6 @@ SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results)
   TimeCourseArray_free(results->parameters);
   TimeCourseArray_free(results->fluxes);
   free(results);
-}
-
-static timeCourseArray_t *TimeCourseArray_create(int num_val, int timepoints)
-{
-  int i;
-  timeCourseArray_t *tcA;
-
-  ASSIGN_NEW_MEMORY(tcA, struct timeCourseArray, NULL);
-  tcA->num_val = num_val;
-   /* num_val time course structures */  
-  ASSIGN_NEW_MEMORY_BLOCK(tcA->tc, num_val, struct timeCourse *, NULL);
-  for ( i=0; i<num_val; i++ )
-    tcA->tc[i] = TimeCourse_create(timepoints);
-  
-  return tcA;
-}
-
-static void TimeCourseArray_free(timeCourseArray_t *tcA)
-{
-  int i;
-  for ( i=0; i<tcA->num_val; i++ )
-    TimeCourse_free(tcA->tc[i]);
-  free(tcA->tc);
-  free(tcA);  
-}
-
-static timeCourse_t *TimeCourse_create(int timepoints)
-{
-  timeCourse_t *tc;
-  ASSIGN_NEW_MEMORY(tc, struct timeCourse, NULL);
-  tc->timepoints = timepoints;
-  /* timecourses variable matrix */
-  ASSIGN_NEW_MEMORY_BLOCK(tc->values, timepoints, double, NULL);  
-  return tc;
-}
-
-static void TimeCourse_free(timeCourse_t *tc)
-{
-  free(tc->name);
-  free(tc->values);
-  free(tc);
-}
-
-
-/* */
-static
-void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
-{
-  int i, j;
-  timeCourse_t *tc;
-  
-  /* print all species  */
-  /* print variable compartments */
-  if ( tcA == NULL ) 
-    printf("## No Values.\n");
-  else if ( tcA->num_val == 0 ) 
-    printf("## No Values.\n");
-  else
-  {    
-    printf("#time ");
-    for ( j=0; j<tcA->num_val; j++)
-    {
-      tc = tcA->tc[j];
-      printf("%s ", tc->name);
-    }
-    printf("\n");
-    for ( i=0; i<time->timepoints; i++ )
-    {
-      printf("%g ", time->values[i]);
-      for ( j=0; j<tcA->num_val; j++)
-      {
-	tc = tcA->tc[j];
-	printf("%g ", tc->values[i]);
-      }
-      printf("\n");
-    }
-  }  
 }
 
 
@@ -479,6 +256,60 @@ SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
   free(resM);    
 }
 
+/** @} */
+
+/*! \defgroup timeCourse TimeCourse Interface
+    \ingroup sbmlResults
+    
+    This module contains interfaces to the timeCourse structure
+    which can be retrieved from the SBMLResults structure
+
+*/
+/*@{*/
+
+
+/** Returns the variable name (SBML ID) of a timeCourse
+*/
+
+SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
+{
+  return (const char*) tc->name;
+}
+
+
+/** Returns the number of timepoints in a timeCourse
+*/
+
+SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
+{
+  return tc->timepoints;
+}
+
+
+/**  Returns ith value in a timeCourse, where
+     0 <= i < TimeCourse_getNumValues
+*/
+
+SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
+{
+  return tc->values[i];
+}
+
+/**  Returns the sensitivity to ith constant at jth time step, where
+     0 <= i < SBMLResults_getNumSens, and
+     0 <= j < TimeCourse_getNumValues
+*/
+
+SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *tc, int i, int j)
+{
+  return tc->sensitivity[i][j];
+}
+
+
+/** @} */
+
+/**** NON-API FUNCTIONS ****/
+
 SBMLResultsMatrix_t *
 SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
 {
@@ -494,6 +325,188 @@ SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
   return(resM);
 }
 
-/*\@}*/
+/* The function SBMLResults SBMLResults_create(Model_t *m, int timepoints)
+   allocates memory for simulation results (time courses) mapped back
+   on SBML structures (i.e. species, and non-constant compartments
+   and parameters.  */
+SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
+{
+  int i, num_reactions, num_species, num_compartments, num_parameters;
+  Species_t *s;
+  Compartment_t *c;
+  Parameter_t *p;
+  Reaction_t *r;
+  SBMLResults_t *results;
+  timeCourse_t *tc;
+
+  ASSIGN_NEW_MEMORY(results, struct _SBMLResults, NULL);
+  
+  /* Allocating the time array  */
+  results->time =  TimeCourse_create(timepoints);
+  ASSIGN_NEW_MEMORY_BLOCK(results->time->name, 5, char, NULL);
+  sprintf(results->time->name, "time");
+  
+  /* Allocating arrays for all SBML species */
+  num_species = Model_getNumSpecies(m);
+  results->species = TimeCourseArray_create(num_species, timepoints);
+
+  
+  /* Writing species names */
+  for ( i=0; i<Model_getNumSpecies(m); i++)
+  {
+    s = Model_getSpecies(m, i);
+    tc = results->species->tc[i];
+    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Species_getId(s))+1, char, NULL);
+    sprintf(tc->name, "%s", Species_getId(s));
+  }
+
+  /* Allocating arrays for all variable SBML compartments */
+  num_compartments = 0;
+  for ( i=0; i<Model_getNumCompartments(m); i++ ) 
+    if ( ! Compartment_getConstant(Model_getCompartment(m, i)) )
+      num_compartments++;
+  
+  results->compartments = TimeCourseArray_create(num_compartments, timepoints);
+  /* Writing variable compartment names */
+  for ( i=0; i<Model_getNumCompartments(m); i++)
+  {
+    c = Model_getCompartment(m, i);
+    if ( ! Compartment_getConstant(c) )
+    {
+      tc = results->compartments->tc[i];
+      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Compartment_getId(c))+1,
+			      char, NULL);
+      sprintf(tc->name, Compartment_getId(c));
+    }
+  }
+
+  /* Allocating arrays for all variable SBML parameters */
+  num_parameters = 0;
+  for ( i=0; i<Model_getNumParameters(m); i++ ) 
+    if ( ! Parameter_getConstant(Model_getParameter(m, i)) )
+      num_parameters++;
+  
+  results->parameters = TimeCourseArray_create(num_parameters, timepoints);
+  
+  /* Writing variable parameter names */
+  num_parameters = 0;
+  for ( i=0; i<Model_getNumParameters(m); i++)
+  {
+    p = Model_getParameter(m, i);
+    if ( ! Parameter_getConstant(p) )
+    {
+      tc = results->parameters->tc[num_parameters];
+      ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1, char,
+			      NULL);
+      sprintf(tc->name, Parameter_getId(p));
+      num_parameters++;
+    }
+  }  
+
+  /* Allocating arrays for all variable SBML reactions */
+  num_reactions = Model_getNumReactions(m);
+  results->fluxes = TimeCourseArray_create(num_reactions, timepoints);
+  /* Writing reaction names */
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
+    r = Model_getReaction(m, i);
+    tc = results->fluxes->tc[i];
+    ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Reaction_getId(r))+1, char, NULL);
+    sprintf(tc->name, Reaction_getId(r));
+  }
+
+  return results;
+}
+
+static timeCourseArray_t *TimeCourseArray_create(int num_val, int timepoints)
+{
+  int i;
+  timeCourseArray_t *tcA;
+
+  ASSIGN_NEW_MEMORY(tcA, struct timeCourseArray, NULL);
+  tcA->num_val = num_val;
+   /* num_val time course structures */  
+  ASSIGN_NEW_MEMORY_BLOCK(tcA->tc, num_val, struct timeCourse *, NULL);
+  for ( i=0; i<num_val; i++ )
+    tcA->tc[i] = TimeCourse_create(timepoints);
+  
+  return tcA;
+}
+
+static void TimeCourseArray_free(timeCourseArray_t *tcA)
+{
+  int i;
+  for ( i=0; i<tcA->num_val; i++ )
+    TimeCourse_free(tcA->tc[i]);
+  free(tcA->tc);
+  free(tcA);  
+}
+
+static timeCourse_t *TimeCourse_create(int timepoints)
+{
+  timeCourse_t *tc;
+  ASSIGN_NEW_MEMORY(tc, struct timeCourse, NULL);
+  tc->timepoints = timepoints;
+  /* timecourses variable matrix */
+  ASSIGN_NEW_MEMORY_BLOCK(tc->values, timepoints, double, NULL);  
+  return tc;
+}
+
+static void TimeCourse_free(timeCourse_t *tc)
+{
+  free(tc->name);
+  free(tc->values);
+  free(tc);
+}
+
+
+/* */
+static
+void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
+{
+  int i, j;
+  timeCourse_t *tc;
+  
+  /* print all species  */
+  /* print variable compartments */
+  if ( tcA == NULL ) 
+    printf("## No Values.\n");
+  else if ( tcA->num_val == 0 ) 
+    printf("## No Values.\n");
+  else
+  {    
+    printf("#time ");
+    for ( j=0; j<tcA->num_val; j++)
+    {
+      tc = tcA->tc[j];
+      printf("%s ", tc->name);
+    }
+    printf("\n");
+    for ( i=0; i<time->timepoints; i++ )
+    {
+      printf("%g ", time->values[i]);
+      for ( j=0; j<tcA->num_val; j++)
+      {
+	tc = tcA->tc[j];
+	printf("%g ", tc->values[i]);
+      }
+      printf("\n");
+    }
+  }  
+}
+
+static timeCourse_t *TimeCourseArray_getTimeCourse(const char *id, timeCourseArray_t *tcA)
+{
+  int i;
+  timeCourse_t *tc;
+  for ( i=0; i<tcA->num_val; i++ )
+  {
+    tc = tcA->tc[i];
+    if ( strcmp(id, tc->name) == 0 )
+      return tc;
+  }
+  return NULL;
+}
+
 
 /* End of file */
