@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 02:31:34 raim>
-  $Id: odeModel.h,v 1.39 2007/09/20 01:16:14 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-25 17:20:17 raim>
+  $Id: odeModel.h,v 1.40 2007/09/27 14:37:01 raimc Exp $ 
 */
 /* 
  *
@@ -262,7 +262,6 @@ extern "C" {
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *, variableIndex_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumberOfValues(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *);

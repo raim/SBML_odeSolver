@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-13 14:09:34 raim>
-  $Id: odeSolver.h,v 1.22 2006/06/13 15:07:49 raimc Exp $
+  Last changed Time-stamp: <2007-09-25 17:21:14 raim>
+  $Id: odeSolver.h,v 1.23 2007/09/27 14:37:01 raimc Exp $
 */
 /* 
  *
@@ -94,8 +94,6 @@ extern "C" {
 
 
 /* not part of official API */
-int VarySettings_addParameterSeries(varySettings_t *,
-				    char *id, char *rid, double *designpoints);
 int VarySettings_addParameterSet(varySettings_t *,
 				 double **designpoints, char **id, char **rid);
 
