@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 02:57:11 raim>
-  $Id: odeModel.c,v 1.88 2007/09/20 01:16:13 raimc Exp $ 
+  Last changed Time-stamp: <2007-09-27 20:04:22 raim>
+  $Id: odeModel.c,v 1.89 2007/09/27 20:02:33 raimc Exp $ 
 */
 /* 
  *
@@ -62,13 +62,24 @@
 #define COMPILED_SENSITIVITY_FUNCTION_NAME "sense_f"
 #define COMPILED_ADJOINT_QUAD_FUNCTION_NAME "adj_quad"
 
+typedef struct assignmentStage assignmentStage_t ;
+
 static odeModel_t *ODEModel_fillStructures(Model_t *ode);
 static odeModel_t *ODEModel_allocate(int neq, int nconst,
 				     int nass, int nalg, int nevents);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
+static assignmentStage_t *AssignmentStage_create(List_t *, int *, int);
+static void List_append(List_t *, List_t *);
+static int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *, ASTNode_t *,
+						    List_t *, int);
+static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *, char *,
+                                                       List_t *, int *, int *,
+                                                       int);
+static int *ODEModel_computeAssignmentRuleSet(odeModel_t *, List_t *, List_t *);
+static void ODEModel_computeAssignmentRuleSets(odeModel_t *);
 
 
-typedef struct assignmentStage assignmentStage_t ;
+
 
 /** represents a step in a function which contains assignments */
 struct assignmentStage
@@ -217,9 +228,9 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
    the operation.
    'assignmentsBeforeChange' is a boolean array corresponding
    to the odeMode_t assignment field */ 
-assignmentStage_t *AssignmentStage_create(List_t *changedSymbols,
-					  int *assignmentsBeforeChange,
-					  int timeChanged)
+static assignmentStage_t *AssignmentStage_create(List_t *changedSymbols,
+						 int *assignmentsBeforeChange,
+						 int timeChanged)
 {
   assignmentStage_t *result ;
 
@@ -234,7 +245,7 @@ assignmentStage_t *AssignmentStage_create(List_t *changedSymbols,
 
 /* adds the contents of 'source' to the end of 'target'.
    List items are only shallow copied. */
-void List_append(List_t *target, List_t *source)
+static void List_append(List_t *target, List_t *source)
 {
   int i;
 
@@ -244,7 +255,7 @@ void List_append(List_t *target, List_t *source)
 
 /* returns boolean result: whether the given AST is dependant on a given
    set of variables */
-int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om,
+static int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om,
 					     ASTNode_t *rule,
 					     List_t *changedSet,
 					     int timeChanged)
@@ -295,12 +306,12 @@ int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om,
    to compute the given 'targetSymbol' given the set of
    'changedSymbols'.  'requiredRules' and 'computedRules' are boolean
    arrays corresponding to the odeMode_t assignment field */
-void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *om,
-						char *targetSymbol,
-						List_t *changedSymbols,
-						int *requiredRules,
-						int *computedRules,
-						int timeChanged)
+static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *om,
+						       char *targetSymbol,
+						       List_t *changedSymbols,
+						       int *requiredRules,
+						       int *computedRules,
+						       int timeChanged)
 {
   int i;
      
@@ -342,9 +353,9 @@ void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *om,
    'targetSymbols' is a list of char *. 'changes' is the
    is a list of assignmentStage_t * and assumed to be in reverse order
    of operation execution */
-int *ODEModel_computeAssignmentRuleSet(odeModel_t *om,
-				       List_t *targetSymbols,
-				       List_t *changes)
+static int *ODEModel_computeAssignmentRuleSet(odeModel_t *om,
+					      List_t *targetSymbols,
+					      List_t *changes)
 {
   int *requiredRules, *computedRules ;
   int i, timeChanged = 0 ;
@@ -397,7 +408,7 @@ int *ODEModel_computeAssignmentRuleSet(odeModel_t *om,
 /* computes the values for the 'assignmentsBeforeODEs',
    'assignmentsBeforeEvents', 'assignmentsAfterEvents'
    fields on the given 'odeModel_t' structure */
-void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
+static void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
 {
   int i ;
   assignmentStage_t *firstAssignmentStage, *secondAssignmentStage;
@@ -1016,16 +1027,6 @@ SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
   return om->neq + om->nass + om->nconst + om->nalg ;
 }
 
-/** \brief Returns the name of the variable corresponding to passed
-    variableIndex. The returned string (const char *) may NOT be
-    changed or freed by calling applications.
-*/
-
-SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *om,
-							variableIndex_t *vi)
-{
-  return (const char*) om->names[vi->index];
-}
 
 /** \brief Returns the number of ODEs (number of equations) in the
     odeModel
@@ -1629,7 +1630,6 @@ int VariableIndex_getIndex(variableIndex_t *vi)
 */
 /*@{*/
 
-
 /** \brief Creates and returns a variable index for ith variable
 
 Returns NULL if i > nvalues. This functions works for all types of
@@ -1758,6 +1758,17 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
     return ODEModel_getVariableIndexByNum(om, i + om->neq + om->nass);
   else
     return NULL;
+}
+
+/** \brief Returns the name of the variable corresponding to passed
+    variableIndex. The returned string (const char *) may NOT be
+    changed or freed by calling applications.
+*/
+
+SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *om,
+							variableIndex_t *vi)
+{
+  return (const char*) om->names[vi->index];
 }
 
 /** \brief  Frees a variableIndex structure
