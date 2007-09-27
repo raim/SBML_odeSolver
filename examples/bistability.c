@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 01:54:22 raim>
-  $Id: bistability.c,v 1.2 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-09-27 16:09:06 raim>
+  $Id: bistability.c,v 1.3 2007/09/27 14:18:16 raimc Exp $
 */
 /* 
  *
@@ -40,13 +40,13 @@
 #include "sbmlsolver/solverError.h"
 
 void DumpState(
-	       integratorInstance_t *ii, variableIndex_t *s,  variableIndex_t *u, variableIndex_t *a/* , variableIndex_t *a2 */)
+	       integratorInstance_t *ii, variableIndex_t *s,  variableIndex_t *u, variableIndex_t *a)
 {
   printf(
 	 " %g %g %g\n", 
 	 IntegratorInstance_getVariableValue(ii, s),
 	 IntegratorInstance_getVariableValue(ii, u),
-	 IntegratorInstance_getVariableValue(ii, a)/* +IntegratorInstance_getVariableValue(ii, a2) */);
+	 IntegratorInstance_getVariableValue(ii, a));
 }
 
 void DumpErrors()
@@ -64,10 +64,10 @@ int doit(int argc, char *argv[])
   cvodeSettings_t *settings = CvodeSettings_create();
   variableIndex_t *speciesVI, *parameterVI, *parameter2VI;
   integratorInstance_t *integratorInstance;
-  char *modelStr, *parameterStr, *parameter2Str, *speciesStr, *observable[1];
+  char *modelStr, *parameterStr, *parameter2Str, *speciesStr;
   double parameter, parameterEnd, parameterStepSize,
     parameter2, parameter2End, parameter2StepSize,
-    errorTolerance, relativeErrorTolerance;
+    errorTolerance, relativeErrorTolerance, endtime, initCond, maxDiff, diff;
   int maximumIntegrationSteps;
   odeModel_t *model ;
         
@@ -75,7 +75,7 @@ int doit(int argc, char *argv[])
   {
     fprintf(
             stderr,
-            "usage %s sbml-model variable parameter1 parameter1-start parameter1-end parameter1-step parameter1 parameter2-start parameter2-end parameter2-step [error-tolerance] [relative-error-tolerance] [maximum integration steps]\n",
+            "usage %s sbml-model variable parameter1 parameter1-start parameter1-end parameter1-step parameter1 parameter2-start parameter2-end parameter2-step [endtime] [error-tolerance] [relative-error-tolerance] [maximum integration steps]\n",
             argv[0]);
 
     exit(0);
@@ -94,45 +94,62 @@ int doit(int argc, char *argv[])
   parameter2End = atof(argv[9]);
   parameter2StepSize = atof(argv[10]);
 
-  if (argc > 11)
-    errorTolerance = atof(argv[11]);
+  if (argc > 12)    
+    endtime = atof(argv[11]);
+  else 
+    endtime = 10000;
+
+  if (argc > 13)
+    errorTolerance = atof(argv[12]);
   else
     errorTolerance = 1e-6;
 
-  if (argc > 12)
-    relativeErrorTolerance = atof(argv[12]);
+  if (argc > 14)
+    relativeErrorTolerance = atof(argv[13]);
   else
     relativeErrorTolerance = 1e-4;
 
-  if (argc > 13)
-    maximumIntegrationSteps = atoi(argv[13]);
+  if (argc > 15)
+    maximumIntegrationSteps = atoi(argv[14]);
   else
     maximumIntegrationSteps = 1e9;
 
-  observable[0] = "v1s";
-  model = ODEModel_createFromFileWithObservables(modelStr, observable);
+  model = ODEModel_createFromFile(modelStr);
   RETURN_ON_ERRORS_WITH(1);
 
   speciesVI = ODEModel_getVariableIndex(model, speciesStr);
-/*   species2VI = ODEModel_getVariableIndex(model, "A2"); */
   parameterVI = ODEModel_getVariableIndex(model, parameterStr);
   parameter2VI = ODEModel_getVariableIndex(model, parameter2Str);
   RETURN_ON_ERRORS_WITH(1);
-    
-  CvodeSettings_setIndefinitely(settings, 0);
-  /* run without a defined end time */
-  CvodeSettings_setTime(settings, 100000, 1000);
-  /*  end time is the step size - Indefinitely == 1 */
-  CvodeSettings_setError(settings, errorTolerance);
+
+  /* integrate until steady state */
+  if ( endtime == 0 )
+  {
+    /* stop integration upon a steady state */
+    CvodeSettings_setIndefinitely(settings, 1);
+    CvodeSettings_setSteadyStateThreshold(settings, 1e-9);
+    CvodeSettings_setHaltOnSteadyState(settings, 1);
+    CvodeSettings_setTime(settings, 1, 1);
+  }
+  else
+  {
+    CvodeSettings_setHaltOnSteadyState(settings, 0);
+    CvodeSettings_setIndefinitely(settings, 0);
+    CvodeSettings_setTime(settings, 100000, 1000);
+  }
+
   /* absolute tolerance in Cvode integration */
-  CvodeSettings_setRError(settings, relativeErrorTolerance);        /* relative tolerance in Cvode integration */
-  CvodeSettings_setMxstep(settings, maximumIntegrationSteps);        /* maximum step number for CVode integration */
-  CvodeSettings_setHaltOnEvent(settings, 0);      /* doesn't stop integration upon an event */
-  CvodeSettings_setSteadyStateThreshold(settings, 1e-9);  
-  CvodeSettings_setHaltOnSteadyState(settings, 0);      /* doesn't stop integration upon a steady state */
-  CvodeSettings_setJacobian(settings, 1);      /* Toggle use of Jacobian ASTs or approximation */
-  CvodeSettings_setStoreResults(settings, 0);     /* don't Store time course history */
-  CvodeSettings_setCompileFunctions(settings, 0); /* compile model */ 
+  CvodeSettings_setError(settings, errorTolerance);
+  /* relative tolerance in Cvode integration */
+  CvodeSettings_setRError(settings, relativeErrorTolerance);
+  /* maximum step number for CVode integration */
+  CvodeSettings_setMxstep(settings, maximumIntegrationSteps);
+  /* doesn't stop integration upon an event */
+  CvodeSettings_setHaltOnEvent(settings, 0);      
+  /* don't Store time course history */
+  CvodeSettings_setStoreResults(settings, 0);
+  /* compile model */ 
+  CvodeSettings_setCompileFunctions(settings, 1); 
 
     
   integratorInstance = IntegratorInstance_create(model, settings);
@@ -141,64 +158,85 @@ int doit(int argc, char *argv[])
   printf("set ylabel '%s'\n", ODEModel_getVariableName(model, parameter2VI));
   printf("splot '-' using 1:2:3 title '%s' with points pointtype 1 pointsize 1 palette\n",
 	 ODEModel_getVariableName(model, speciesVI) );
-        
+
+
+  /* remember initial condition of observed variable */
+  initCond = IntegratorInstance_getVariableValue(integratorInstance, speciesVI);
+  maxDiff = 0.0;
+
+  
   int error = 0 ;
-  for (i = parameter;
-       i <= parameterEnd;
-       i += parameterStepSize)
+  int run = 0;
+  for ( run=0; run<2; run++ )
   {
-    for (j = parameter2;
-	 j <= parameter2End;
-	 j += parameter2StepSize)
+    for (i = parameter; i <= parameterEnd; i += parameterStepSize)
     {
-      /* add fourth parameter here */
-
-      IntegratorInstance_reset( integratorInstance);
-      RETURN_ON_ERRORS_WITH(1);
-
-      IntegratorInstance_setVariableValue(integratorInstance,
-					  parameterVI, i);
-      IntegratorInstance_setVariableValue(integratorInstance,
-					  parameter2VI, j);
-      while(!IntegratorInstance_checkSteadyState(integratorInstance) &&
-	    IntegratorInstance_getTime(integratorInstance) < 1e4 )
+      for (j = parameter2; j <= parameter2End; j += parameter2StepSize)
       {
-	IntegratorInstance_integrateOneStep(integratorInstance);
+	/* add fourth parameter here */
 
+	IntegratorInstance_reset( integratorInstance);
+	RETURN_ON_ERRORS_WITH(1);
 
-	  
-	if (SolverError_getNum(ERROR_ERROR_TYPE) ||
-	    SolverError_getNum(FATAL_ERROR_TYPE))
+	/* for the second run reset the initial condition of the
+	   observed variable to a multiple of the maximum observed
+	   difference of its value wrt to its initial condition */
+	if ( run == 1 )
+	  IntegratorInstance_setVariableValue(integratorInstance,
+					      speciesVI,
+					      fabs(5*(initCond-maxDiff)));
+	
+	IntegratorInstance_setVariableValue(integratorInstance,
+					  parameterVI, i);
+	IntegratorInstance_setVariableValue(integratorInstance,
+					    parameter2VI, j);
+        /* printf("ic %g\t", IntegratorInstance_getVariableValue(integratorInstance, speciesVI)); */
+
+	while(!IntegratorInstance_checkSteadyState(integratorInstance) &&
+	      !IntegratorInstance_timeCourseCompleted(integratorInstance) )
 	{
-	  printf("ERROR at parameter 1 = %g, parameter 2 = %g\n", i, j);
-	  DumpErrors();
-	  error++;	  
+	  IntegratorInstance_integrateOneStep(integratorInstance);
+	  
+	  if (SolverError_getNum(ERROR_ERROR_TYPE) ||
+	      SolverError_getNum(FATAL_ERROR_TYPE))
+	  {
+	    printf("ERROR at parameter 1 = %g, parameter 2 = %g\n", i, j);
+	    DumpErrors();
+	    error++;	  
+	  }
+	  
 	}
-
+        /* printf("end %g\n", IntegratorInstance_getVariableValue(integratorInstance, speciesVI)); */
+	
+	/* check whether the final value has largest difference to initial condition */
+	diff =  fabs(initCond - IntegratorInstance_getVariableValue(integratorInstance, speciesVI));
+	if ( diff > maxDiff ) maxDiff = diff;
+	DumpState(integratorInstance, parameterVI, parameter2VI, speciesVI);
       }
-/*       DumpState(integratorInstance, parameterVI, parameter2VI, speciesVI, species2VI); */
-      DumpState(integratorInstance, parameterVI, parameter2VI, speciesVI);
     }
-    /* printf("\n"); */
-
   }
-      
-    printf("end\n");
-    if ( error ) printf("\t%d errors occured\n", error);
-    IntegratorInstance_free(integratorInstance);
-    VariableIndex_free(parameterVI);
-    VariableIndex_free(parameter2VI);
-    VariableIndex_free(speciesVI);
-    ODEModel_free(model);
-    CvodeSettings_free(settings);
+  
+  printf("end\n");
+  /* printf("end\n init %g, MAX DIFF %g, abs %g\n", initCond, maxDiff, fabs(initCond-maxDiff)); */
+  
 
-    return 0;
-  }
+  
+  
+  if ( error ) printf("\t%d errors occured\n", error);
+  IntegratorInstance_free(integratorInstance);
+  VariableIndex_free(parameterVI);
+  VariableIndex_free(parameter2VI);
+  VariableIndex_free(speciesVI);
+  ODEModel_free(model);
+  CvodeSettings_free(settings);
+  
+  return 0;
+}
 
-  int main (int argc, char *argv[])
-  {
-    int result = doit(argc, argv);
-    DumpErrors();
-
-    return result;
-  }
+int main (int argc, char *argv[])
+{
+  int result = doit(argc, argv);
+  DumpErrors();
+  
+  return result;
+}
