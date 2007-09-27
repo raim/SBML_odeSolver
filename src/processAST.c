@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 23:50:33 raim>
-  $Id: processAST.c,v 1.50 2007/09/20 01:16:13 raimc Exp $
+  Last changed Time-stamp: <2007-09-26 20:11:16 raim>
+  $Id: processAST.c,v 1.51 2007/09/27 14:20:28 raimc Exp $
 */
 /* 
  *
@@ -1743,9 +1743,22 @@ ASTNode_t *determinantNAST(ASTNode_t ***A, int N)
 /*! \addtogroup simplifyAST */
 /*@{*/
 
-/** Takes an AST and a string array `names' and converts AST_NAME to
-    AST_IndexName, which holds the name of the variable and
-    additionally its index in the passed array `names' */
+/** takes an ASTNode and odeModel and returns a corresponding indexed ASTNode,
+
+    The function converts AST_NAME to AST_IndexName, which holds the
+    name of the variable and additionally the index used in odeModel,
+    integratorInstance and cvodeData */
+SBML_ODESOLVER_API ASTNode_t *ASTNode_modelIndex(const ASTNode_t *f, odeModel_t *om)
+{
+  return indexAST(f, om->neq+om->nass+om->nconst+om->nalg, om->names);
+}
+
+/** takes an ASTNode and a string array `names' and returns
+    a corresponding indexed ASTNode.
+
+    The function converts AST_NAME to AST_IndexName, which holds the
+    name of the variable and additionally the index of the variable
+    in the passed array `names' */
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
 {
   int i, found;
