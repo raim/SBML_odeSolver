@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-26 20:11:16 raim>
-  $Id: processAST.c,v 1.51 2007/09/27 14:20:28 raimc Exp $
+  Last changed Time-stamp: <2007-09-27 21:16:25 raim>
+  $Id: processAST.c,v 1.52 2007/09/27 20:03:06 raimc Exp $
 */
 /* 
  *
@@ -521,7 +521,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       int j;
       j = floor(evaluateAST(child(n,0),data));
       if ( evaluateAST(child(n,0),data) != j )      
-	SolverError_error(ERROR_ERROR_TYPE,
+	SolverError_error(FATAL_ERROR_TYPE,
 			  SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL,
 			  "The factorial is only implemented."
 			  "for integer values. The floor value of the "
@@ -563,11 +563,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       result = evaluateAST(child(n, i), data);
     }
     if ( found == 0 )
-      SolverError_error(ERROR_ERROR_TYPE,
+      SolverError_error(FATAL_ERROR_TYPE,
 			SOLVER_ERROR_AST_EVALUATION_FAILED_PIECEWISE,
 			"Piecewise function failed; no true piece");
     if ( found > 1 )
-      SolverError_error(ERROR_ERROR_TYPE,
+      SolverError_error(FATAL_ERROR_TYPE,
 			SOLVER_ERROR_AST_EVALUATION_FAILED_PIECEWISE,
 			"Piecewise function failed; several true pieces");
     break;
@@ -1748,7 +1748,7 @@ ASTNode_t *determinantNAST(ASTNode_t ***A, int N)
     The function converts AST_NAME to AST_IndexName, which holds the
     name of the variable and additionally the index used in odeModel,
     integratorInstance and cvodeData */
-SBML_ODESOLVER_API ASTNode_t *ASTNode_modelIndex(const ASTNode_t *f, odeModel_t *om)
+SBML_ODESOLVER_API ASTNode_t *ASTNode_indexAST(const ASTNode_t *f, odeModel_t *om)
 {
   return indexAST(f, om->neq+om->nass+om->nconst+om->nalg, om->names);
 }
