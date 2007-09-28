@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.28 2007/09/25 19:44:47 raimc Exp $
+# $Id: Makefile.am,v 1.29 2007/09/28 13:41:49 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -60,5 +60,9 @@ EXTRA_DIST = Win32/* \
              examples/Makefile.am \
              examples/Makefile.in \
 	     examples/Makefile.batch \
-             examples/Makefile.integrate 
+             examples/Makefile.integrate \
+             tutorial/Makefile \
+             tutorial/*.c \
+             tutorial/*.pl \
+             tutorial/*.xml
 
