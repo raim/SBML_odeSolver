@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-28 15:28:47 raim>
-  $Id: odemodel.c,v 1.2 2007/09/28 13:29:40 raimc Exp $
+  Last changed Time-stamp: <2007-09-29 20:54:18 raim>
+  $Id: odemodel.c,v 1.3 2007/09/29 18:57:31 raimc Exp $
 */
 /* 
  *
@@ -42,12 +42,13 @@ int main (void)
   odeModel_t *odemodel = ODEModel_createFromFile("MAPK.xml");
   variableIndex_t *vi = ODEModel_getVariableIndex(odemodel, "MAPK_PP");
   
-  const ASTNode_t *ode = ODEModel_getOde(odemodel, vi);  
-  printf ("%s/dt = %s\n", ODEModel_getVariableName(odemodel, vi),
-	  SBML_formulaToString(ode));
+  const ASTNode_t *ode = ODEModel_getOde(odemodel, vi);
+  char *equation = SBML_formulaToString(ode); 
+  printf ("%s/dt = %s\n", ODEModel_getVariableName(odemodel, vi), equation);
 
   ODEModel_free(odemodel);
   VariableIndex_free(vi);
+  free(equation);
   
   return (EXIT_SUCCESS);  
 }
