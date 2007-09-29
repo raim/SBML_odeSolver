@@ -1,7 +1,7 @@
-# $Id: Makefile,v 1.2 2007/09/28 13:29:25 raimc Exp $ 
+# $Id: Makefile,v 1.3 2007/09/29 05:07:16 raimc Exp $ 
 # PLEASE CHANGE THE FLAGS BELOW TO YOUR INSTALLATION PATHS
-CCFLAGS  = -g -O2 -I/scr/fremdling/raim/include
-LDFLAGS  = -L/scr/fremdling/raim/lib -lODES -lsbml \
+CCFLAGS  = -g -O2 -I/usr/local/include
+LDFLAGS  = -L/usr/local/lib -lODES -lsbml \
            -lsundials_cvodes -lsundials_nvecserial \
            -ldl -lm -lstdc++
 # rules
