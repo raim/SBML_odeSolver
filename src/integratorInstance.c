@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-21 15:22:52 raim>
-  $Id: integratorInstance.c,v 1.93 2007/09/21 13:54:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-02 01:02:52 raim>
+  $Id: integratorInstance.c,v 1.94 2007/10/01 23:05:25 raimc Exp $
 */
 /* 
  *
@@ -44,7 +44,6 @@
 */
 /*@{*/
 
-#include <malloc.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>

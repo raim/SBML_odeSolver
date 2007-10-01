@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-27 19:18:05 raim>
-  $Id: solverError.c,v 1.17 2007/09/27 17:18:46 raimc Exp $ 
+  Last changed Time-stamp: <2007-10-02 01:03:12 raim>
+  $Id: solverError.c,v 1.18 2007/10/01 23:05:25 raimc Exp $ 
 */
 /* 
  *
@@ -43,7 +43,6 @@
 #include "sbmlsolver/solverError.h"
 
 #include <stdio.h>
-#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -62,6 +61,7 @@ typedef struct solverErrorMessage
   int errorCode ;
 } solverErrorMessage_t ;
 
+static int SolverError_dumpHelper(char *);
 static List_t *solverErrors[NUMBER_OF_ERROR_TYPES] = { NULL, NULL, NULL };
 
 static int memoryExhaustion = 0;
@@ -319,7 +319,7 @@ char* SolverError_itoa( int value, char* result, int base )
 }
 
 
-int SolverError_dumpHelper(char *s)
+static int SolverError_dumpHelper(char *s)
 {
   int result = 1;
 

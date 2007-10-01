@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-27 20:04:22 raim>
-  $Id: odeModel.c,v 1.89 2007/09/27 20:02:33 raimc Exp $ 
+  Last changed Time-stamp: <2007-10-02 01:02:46 raim>
+  $Id: odeModel.c,v 1.90 2007/10/01 23:05:25 raimc Exp $ 
 */
 /* 
  *
@@ -40,8 +40,6 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 
