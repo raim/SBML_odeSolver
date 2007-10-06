@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-27 21:16:25 raim>
-  $Id: processAST.c,v 1.52 2007/09/27 20:03:06 raimc Exp $
+  Last changed Time-stamp: <2007-10-07 01:29:12 raim>
+  $Id: processAST.c,v 1.53 2007/10/06 23:38:21 raimc Exp $
 */
 /* 
  *
@@ -574,7 +574,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_FUNCTION_POWER:
     result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
     break;
-  case AST_FUNCTION_ROOT:
+  case AST_FUNCTION_ROOT: /*!!! neg. numbers vs. odd root degree? */
     result = pow(evaluateAST(child(n,1),data),
 		 (1./evaluateAST(child(n,0),data)));
     break;
