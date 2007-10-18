@@ -1,6 +1,10 @@
 #!/bin/bash
 
-odeSolver-wrapper-once.pl 1e-21 $@
+odeSolver-wrapper-once.pl 1e-22 $@
+if grep "TRY AGAIN" $4; then
+    echo trying error 1e-21
+    odeSolver-wrapper-once.pl 1e-21 $@
+fi
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-20
     odeSolver-wrapper-once.pl 1e-20 $@
@@ -16,4 +20,16 @@ fi
 if grep "TRY AGAIN" $4; then
     echo trying error 1e-17
     odeSolver-wrapper-once.pl 1e-17 $@
+fi
+if grep "TRY AGAIN" $4; then
+    echo trying error 1e-16
+    odeSolver-wrapper-once.pl 1e-16 $@
+fi
+if grep "TRY AGAIN" $4; then
+    echo trying error 1e-15
+    odeSolver-wrapper-once.pl 1e-15 $@
+fi
+if grep "TRY AGAIN" $4; then
+    echo trying error 1e-14
+    odeSolver-wrapper-once.pl 1e-14 $@
 fi

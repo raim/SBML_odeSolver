@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 
 #use lib "$ENV{HOME}/perl/L";
 #use LibSBML;
@@ -13,62 +13,83 @@ my $test = "";
 open(LOGFILE, ">>testlog.txt");
 print LOGFILE "\nTEST $test\n";
 
-print(LOGFILE "SBML_odeSolverApp $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10\n");
+print(LOGFILE "../../../odeSolver/odeSolver $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10\n");
 open(TESTRUN,
-     "SBML_odeSolverApp $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10 2>> testlog.txt |");
-while(<TESTRUN>) {
+     "../../../odeSolver/odeSolver $ARGV[1] --time=$ARGV[2] --printstep=$ARGV[3] --error=$ARGV[0] --rerror=1e-10 2>> \"singletestlog\" |");
 
+`cat singletestlog >> testlog.txt`;
+
+while(<TESTRUN>)
+{
     @values = split(/ /, $_);
     
-    if ( $#values > 1 && $values[0] eq "#t" ) {
-	foreach $num (1 .. $#values-1) {
+    if ( $#values > 1 && $values[0] eq "#t" )
+    {
+	foreach $num (1 .. $#values-1)
+	{
 	    $SPECIES[$num] = sprintf $values[$num];
 	}
     }
     
-    if ($#values > 1 && $values[0]=~/^\d.*/ )  {
-	foreach $num (1 .. $#values-1) {
+    if ($#values > 1 && $values[0]=~/^\d.*/ )
+    {
+	foreach $num (1 .. $#values-1)
+	{
 	    $VAL{$values[0]}{$SPECIES[$num]} = $values[$num];
 	    $time[$steps] = $values[0];
 	}
 	$steps++;
     }
 
-
-    if ($_=~/CVode\ failed/) {
+    if ($_=~/CVODES ERROR/)
+    {
 	$flag6 =1;
-	$error = $_;
+        $error = $_;
+	print $_;
     }
-
 }
 close TESTRUN;
 
+open(TESTERROR, "<singletestlog");
+while(<TESTERROR>)
+{
+    if ($_=~/CVODES ERROR/)
+    {
+	$flag6 =1;
+        $error = $_;
+	print $_;
+    }    
+}
+unlink("singletestlog");
 unlink($ARGV[4]);
 open(CSVFILE, ">$ARGV[4]" );
 
 
-if ( $flag6 == 1 ) {
+if ( $flag6 == 1 )
+{
     print CSVFILE "TRY AGAIN";    
     print LOGFILE "CVODE FAILURE using --error $ARGV[0]: $error";    
 }
-else {
-    
+else
+{    
     print CSVFILE "time";
-    foreach $argnum (6 .. $#ARGV) {
+    foreach $argnum (6 .. $#ARGV)
+    {
 	print CSVFILE ",$ARGV[$argnum]";
     }
     print CSVFILE "\n";
 
-    foreach $stepnum (0 .. $#time) {
+    foreach $stepnum (0 .. $#time)
+    {
 	print CSVFILE "$time[$stepnum]";
-	foreach $argnum (6 .. $#ARGV) {
+	foreach $argnum (6 .. $#ARGV)
+	{
 	    print CSVFILE ",$VAL{$time[$stepnum]}{$ARGV[$argnum]}";
 	}
 	print CSVFILE "\n";
     }
     print LOGFILE "SUCCESS, using --error $ARGV[0]\n";
 }
-
 print LOGFILE "\n";
 
 close CSVFILE;
