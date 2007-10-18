@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-07 01:29:12 raim>
-  $Id: processAST.c,v 1.53 2007/10/06 23:38:21 raimc Exp $
+  Last changed Time-stamp: <2007-10-18 17:00:16 raim>
+  $Id: processAST.c,v 1.54 2007/10/18 15:05:22 raimc Exp $
 */
 /* 
  *
@@ -234,7 +234,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   ASTNodeType_t type;
   /* ASTNode_t **child; */
 
-  double result;
+  double value1, value2, value3, result;
 
   if ( n == NULL )
   {
@@ -471,9 +471,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 			   (evaluateAST(child(n,0),data)+1.) ) );
     break;
   case AST_FUNCTION_ARCSECH:
+    /* arcsech(x) = arccosh(1/x) */
+    result = aCosh( 1. /  evaluateAST(child(n,0),data));
     /** arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
-    result = log((1.+pow((1-MySQR(evaluateAST(child(n,0),data))),0.5))/
-		 evaluateAST(child(n,0),data));      
+    /* result = log( (1.+ MySQRT(1- MySQR( evaluateAST(child(n,0),data) ) ) )/ */
+/* 		 evaluateAST(child(n,0),data) );    */   
     break;
   case AST_FUNCTION_ARCSIN:
     result = asin(evaluateAST(child(n,0),data));
@@ -574,9 +576,21 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_FUNCTION_POWER:
     result = pow(evaluateAST(child(n,0),data),evaluateAST(child(n,1),data));
     break;
-  case AST_FUNCTION_ROOT: /*!!! neg. numbers vs. odd root degree? */
-    result = pow(evaluateAST(child(n,1),data),
-		 (1./evaluateAST(child(n,0),data)));
+  case AST_FUNCTION_ROOT:
+    /*!!! ALSO do this in compiled code */
+    value1 = evaluateAST(child(n,1),data);
+    value2 = evaluateAST(child(n,0),data);
+    value3 = floor(value2);
+    /* for odd root degrees, negative numbers are OK */
+    if ( value2 == value3 ) /* check whether degree is integer */
+    {
+      if ( (value1 < 0) && ((int)value2 % 2 != 0) )
+	result = - pow(fabs(value1), 1./value2);
+      else
+	result = pow(value1, 1./value2);	
+    }
+    else
+      result = pow(value1, 1./value2);
     break;
   case AST_FUNCTION_SEC:
     /** sec x = 1 / cos x */
@@ -1209,12 +1223,12 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 		       differentiateAST(ASTNode_getChild(f,0),x));
       /* ... a * ... */
       ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);    
+      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
       ASTNode_addChild(ASTNode_getChild(fprime,1),
-		       copyAST(ASTNode_getChild(f,0)));    
+		       copyAST(ASTNode_getChild(f,0)));
       /*  sqrt(...)  */
       ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
+      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);
       ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
       ASTNode_setInteger(child3(fprime,1,1,0), 2);
       /*  1  - */
@@ -1222,8 +1236,8 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
       ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
       ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),0), 1);
-      /*  a^2  */   
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
+      /*  a^2  */
+      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
       ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),1), AST_POWER);
    
       ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
@@ -1232,6 +1246,10 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
 		       ASTNode_create());
       ASTNode_setInteger(child2(child3(fprime,1,1,1),1,1), 2);
+      /* SolverError_error(WARNING_ERROR_TYPE, */
+/* 			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LAMBDA, */
+/*                         "differentiateAST: arcsech: not implemented"); */
+/*       ASTNode_setName(fprime, "differentiation_failed"); */
       break;
     case AST_FUNCTION_ARCSIN:
       /** f(x)=arcsin(a(x)) => f' = a' / sqrt(1 - a^2)  */
@@ -2537,7 +2555,8 @@ void generateMacros(charBuffer_t *buffer)
 		    "#define csch(x) (1.0/sinh(x))\n"\
 		    "#define MyLog(x,y) (log10(y)/log10(x))\n"\
 		    "#define piecewise(x, y, z) ((x) ? (y) : (z))\n"\
-		    "#define root(x, y) pow(y, 1.0 / (x))\n"\
+		    /*!!! account for odd root degrees of negative values!*/
+		    "#define root(x, y) pow(y, 1.0 / (x))\n"\ 
 		    "#define sec(x) (1.0/cos(x))\n"\
 		    "#define sech(x) (1.0/cosh(x))\n"\
 		    "#define acosh(x) (log((x) + (sqrt((x) - 1.0) * sqrt((x) + 1.0))))\n"\
