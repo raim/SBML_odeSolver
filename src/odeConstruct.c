@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 17:24:03 raim>
-  $Id: odeConstruct.c,v 1.35 2007/05/09 15:27:02 raimc Exp $
+  Last changed Time-stamp: <2007-10-18 17:39:06 raim>
+  $Id: odeConstruct.c,v 1.36 2007/10/18 15:43:15 raimc Exp $
 */
 /* 
  *
@@ -571,16 +571,19 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 
   c = Model_getCompartmentById(m, Species_getCompartment(s)); 
 
-  if( ode != NULL && !Species_getHasOnlySubstanceUnits(s) &&
-      Compartment_getSpatialDimensions(c) !=0 )
+  if( ode != NULL )
   {
-    tmp = copyAST(ode);
-    ASTNode_free(ode);
-    ode = ASTNode_create();
-    ASTNode_setCharacter(ode, '/');
-    ASTNode_addChild(ode, tmp);
-    ASTNode_addChild(ode, ASTNode_create());
-    ASTNode_setName(ASTNode_getChild(ode,1), Species_getCompartment(s));
+    if ( !Species_getHasOnlySubstanceUnits(s) &&
+	 Compartment_getSpatialDimensions(c) !=0 )
+    {
+      tmp = copyAST(ode);
+      ASTNode_free(ode);
+      ode = ASTNode_create();
+      ASTNode_setCharacter(ode, '/');
+      ASTNode_addChild(ode, tmp);
+      ASTNode_addChild(ode, ASTNode_create());
+      ASTNode_setName(ASTNode_getChild(ode,1), Species_getCompartment(s));
+    }
   }
   else
   {
