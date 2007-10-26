@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 14:57:03 raim>
-  $Id: cvodeData.c,v 1.25 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 16:45:15 raim>
+  $Id: cvodeData.c,v 1.26 2007/10/26 14:47:22 raimc Exp $
 */
 /* 
  *
@@ -183,9 +183,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 	else if ( Species_isSetInitialAmount(s) )
 	  data->value[i] = Species_getInitialAmount(s);
 	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(FATAL_ERROR_TYPE,
+	  SolverError_error(WARNING_ERROR_TYPE,
 			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for species %s",
+			    "No value found for species %s, value " \
+			    "remains uninitialized!",
 			    om->names[i]);
       }
       else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
@@ -193,9 +194,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 	if ( Compartment_isSetSize(c) )
 	  data->value[i] = Compartment_getSize(c);
 	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(FATAL_ERROR_TYPE,
+	  SolverError_error(WARNING_ERROR_TYPE,
 			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for compartment %s",
+			    "No value found for compartment %s, value " \
+			    "remains uninitialized!",
 			    om->names[i]);      
       }
       else if ( (p = Model_getParameterById(ode, om->names[i])) )
@@ -203,9 +205,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 	if ( Parameter_isSetValue(p) )
 	  data->value[i] = Parameter_getValue(p);
 	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(FATAL_ERROR_TYPE,
+	  SolverError_error(WARNING_ERROR_TYPE,
 			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for parameter %s",
+			    "No value found for parameter %s, value " \
+			    "remains uninitialized!",
 			    om->names[i]);      	
       }
     }
