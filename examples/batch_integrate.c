@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:15:29 raim>
-  $Id: batch_integrate.c,v 1.20 2007/01/30 15:17:06 raimc Exp $
+  Last changed Time-stamp: <2007-10-24 15:58:46 raim>
+  $Id: batch_integrate.c,v 1.21 2007/10/26 12:48:55 raimc Exp $
 */
 /* 
  *
@@ -107,8 +107,13 @@ main (int argc, char *argv[]){
      and retrieving SBMLResults */
   resM = SBML_odeSolverBatch(d, set, vs);
 
-  if ( resM == NULL ) {
+  if ( resM == NULL )
+  {
     printf("### Parameter variation not succesful!\n");
+    SolverError_dumpAndClearErrors();
+    CvodeSettings_free(set);  
+    SBMLDocument_free(d);
+    VarySettings_free(vs);
     return(0);
   }
     /* we don't need these anymore */
