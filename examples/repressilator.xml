@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Model by stefan@tbi.univie.ac.at -->
-<!-- $Id: repressilator.xml,v 1.1 2006/02/14 15:38:03 jamescclu Exp $ -->
+<!-- $Id: repressilator.xml,v 1.2 2007/10/26 12:47:35 raimc Exp $ -->
 
 <sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
-  <model id="repressilator(scaled)">
+  <model id="repressilator_scaled">
     <listOfCompartments>
       <compartment id="compartment" size="1"/>
     </listOfCompartments>
