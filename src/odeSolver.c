@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-13 20:20:09 raim>
-  $Id: odeSolver.c,v 1.44 2007/09/20 01:16:13 raimc Exp $
+  Last changed Time-stamp: <2007-10-24 18:05:09 raim>
+  $Id: odeSolver.c,v 1.45 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -116,7 +116,7 @@ SBML_ODESOLVER_API SBMLResultsMatrix_t *SBML_odeSolverBatch(SBMLDocument_t *d, c
   if ( SBMLDocument_getLevel(d) != 2 )
   {
     d2 = convertModel(d);
-    m = SBMLDocument_getModel(d2);    
+    m = SBMLDocument_getModel(d2);
   }
   else m = SBMLDocument_getModel(d);
 
@@ -229,14 +229,15 @@ SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch (Model_t *m, cvodeS
   /** Then create internal odeModel: attempts to construct a simplified
      SBML model with reactions replaced by ODEs.
      See comments in Model_odeSolver for details.  */
-  om = ODEModel_create(m);      
+  om = ODEModel_create(m);
+  ODEModel_dumpNames(om);
   RETURN_ON_FATALS_WITH(NULL);
- 
+
   /** an integratorInstance is created from the odeModel and the passed
      cvodeSettings. If that worked out ...  */  
   ii = IntegratorInstance_create(om, set);
   RETURN_ON_FATALS_WITH(NULL);
-      
+    
   /** now, work through the passed parameters in varySettings */
   for ( i=0; i<vs->nrparams; i++ )
   {
@@ -433,19 +434,14 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
     p = KineticLaw_getParameter(kl, i);
     if ( strcmp(Parameter_getId(p), id) == 0 )
     {
-      p_global = Model_createParameter(m);
-      Parameter_setConstant(p_global, 1);
+      p_global = Parameter_clone(p);
       Parameter_setId(p_global, newname);
-      if (Parameter_isSetValue(p))
-	Parameter_setValue(p_global, Parameter_getValue(p));
-      if(Parameter_isSetUnits(p)) 
-	Parameter_setUnits(p_global, Parameter_getUnits(p));
-      if (Parameter_isSetName(p)) 
-	Parameter_setName(p_global, Parameter_getName(p));
+      Model_addParameter(m, p_global);
+      Parameter_free(p_global);
       found = 1;
     }
   }
-  free(newname);
+  free(newname);  
   return (found);
 }
 
@@ -476,7 +472,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
   {
     found = 1;
     pl = Model_getListOfParameters(m);
-    p = (Parameter_t *) ListOf_remove(pl, ListOf_getNumItems(pl) - 1);
+    p = (Parameter_t *) ListOf_remove(pl, ListOf_size(pl) - 1);
     Parameter_free(p);
   }  
 

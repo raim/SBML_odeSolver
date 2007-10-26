@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-12 20:08:50 raim>
-  $Id: drawGraph.c,v 1.27 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 17:39:56 raim>
+  $Id: drawGraph.c,v 1.28 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -678,7 +678,7 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
   Reaction_t *re;
   const ASTNode_t *math;  
   SpeciesReference_t *sref;
-  ModifierSpeciesReference_t *mref;
+  SpeciesReference_t *mref; 
   char *output[4];
   char *command = "dot";
   char *formatopt;
@@ -746,7 +746,7 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
     for ( j=0; j<Reaction_getNumModifiers(re); j++ )
     {
       mref = Reaction_getModifier(re,j);
-      sp = Model_getSpeciesById(m, ModifierSpeciesReference_getSpecies(mref));
+      sp = Model_getSpeciesById(m, SpeciesReference_getSpecies(mref));
       
       sprintf(name,"%s", Species_getId(sp));
       s = agnode(g,name);
@@ -807,7 +807,7 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = SpeciesReference_getStoichiometryMath(sref);
+	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
 	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  agxset (e, a->index, SBML_formulaToString(math));	
       }
@@ -857,7 +857,7 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
       
       if ( SpeciesReference_isSetStoichiometryMath(sref) )
       {
-	math = SpeciesReference_getStoichiometryMath(sref);
+	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
 	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  agxset (e, a->index, SBML_formulaToString(math));	
       }

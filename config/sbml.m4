@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.10 2007/09/08 11:12:55 raimc Exp $
+dnl $Id: sbml.m4,v 1.11 2007/10/26 17:52:29 raimc Exp $
 
 
 dnl
@@ -137,7 +137,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
     AC_MSG_ERROR([Can not link to SBML Library:
-		  Please, make sure to use libSBML version >= 2.3.2])
+		  Please, make sure to use libSBML version >= 3.0.1])
   fi
 
   dnl work around broken include-header-paths in libsbml-2.3.4

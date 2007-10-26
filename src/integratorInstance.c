@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-02 01:02:52 raim>
-  $Id: integratorInstance.c,v 1.94 2007/10/01 23:05:25 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 18:33:14 raim>
+  $Id: integratorInstance.c,v 1.95 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -826,7 +826,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
   for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Event_getTrigger(e);
+    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
     /** if a trigger has not been fired in the last time step \n */
     if ( data->trigger[i] == 0 )
     {
@@ -903,8 +903,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	{
 	  buffer =
 	    SBML_formulaToString((ASTNode_t *)
-				 Event_getTrigger(Model_getEvent(om->simple,
-								 i)));
+				 Trigger_getMath(Event_getTrigger( \
+				 Model_getEvent(om->simple, i))));
 	  SolverError_error(
 			    ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
@@ -1112,7 +1112,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
   for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Event_getTrigger(e);
+    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
     /* check each trigger flag */
     if ( data->trigger[i] == 0 )
     {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 01:12:12 raim>
-  $Id: commandLine.c,v 1.24 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 19:41:49 raim>
+  $Id: commandLine.c,v 1.25 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -132,16 +132,7 @@ odeSolver (int argc, char *argv[])
     */
     if ( (d = parseModelWithArguments(sbmlFilename)) == 0 )
     {
-        if ( Opt.Validate )
-            SolverError_error(WARNING_ERROR_TYPE,
-			      SOLVER_ERROR_MAKE_SURE_SCHEMA_IS_ON_PATH,
-			      "Please make sure that path >%s< contains"
-			      "the correct SBML schema for validation."
-			      "Or try running without validation.",
-			      Opt.SchemaPath);
-
-        SolverError_error(ERROR_ERROR_TYPE,
-			  SOLVER_ERROR_CANNOT_PARSE_MODEL,
+        SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_CANNOT_PARSE_MODEL,
 			  "Can't parse Model >%s<", sbmlFilename);
         SolverError_dump();
         SolverError_haltOnErrors();
@@ -323,7 +314,8 @@ odeSolver (int argc, char *argv[])
     CvodeSettings_setCompileFunctions(set, Opt.Compile);
     CvodeSettings_setSteadyStateThreshold(set, Opt.ssThreshold);
     CvodeSettings_setResetCvodeOnEvent(set, Opt.ResetCvodeOnEvents);
-
+    CvodeSettings_setDetectNegState(set, 1);
+    
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);
    
@@ -469,8 +461,7 @@ odeSolver (int argc, char *argv[])
 SBMLDocument_t*
 parseModelWithArguments (char *file)
 {
-    return parseModel(file, Opt.PrintMessage, Opt.Validate, Opt.SchemaPath,
-        Opt.Schema11, Opt.Schema12, Opt.Schema21);
+    return parseModel(file, Opt.PrintMessage, Opt.Validate);
 }
 
 /************************ Integrator Program *************************/

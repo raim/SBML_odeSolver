@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 16:45:15 raim>
-  $Id: cvodeData.c,v 1.26 2007/10/26 14:47:22 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 18:31:07 raim>
+  $Id: cvodeData.c,v 1.27 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -414,7 +414,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   for ( i=0; i<data->nevents; i++ )
   {
     e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Event_getTrigger(e);
+    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
     data->trigger[i] = evaluateAST(trigger, data);
   }
     

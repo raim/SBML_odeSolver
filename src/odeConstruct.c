@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-18 17:39:06 raim>
-  $Id: odeConstruct.c,v 1.36 2007/10/18 15:43:15 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 19:35:35 raim>
+  $Id: odeConstruct.c,v 1.37 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -139,113 +139,51 @@ static Model_t *Model_copyInits(Model_t *old)
 {
   int i;
   Model_t *new;
-  Compartment_t *c, *c_new;
-  Parameter_t *p, *p_new;
+  Compartment_t *c;
   Species_t *s, *s_new;
-  FunctionDefinition_t *f, *f_new;
-  ASTNode_t *math;
 
   new = Model_create();
 
   if ( Model_isSetId(old) )
     Model_setId(new, Model_getId(old));
-  if ( Model_isSetName(old) )
+  else if ( Model_isSetName(old) ) /* problematic? necessary ?*/
     Model_setId(new, Model_getName(old));
 
+  if ( Model_isSetName(old) )
+    Model_setName(new, Model_getName(old));
+  else if ( Model_isSetId(old) )
+    Model_setName(new, Model_getId(old));
+
   for ( i=0; i<Model_getNumCompartments(old); i++)
-  {
-    c = Model_getCompartment(old, i);    
-    c_new = Compartment_create();
-    /* copy existing attributes  */
-    Compartment_setConstant(c_new, Compartment_getConstant(c));
-    Compartment_setSpatialDimensions(c_new,
-				     Compartment_getSpatialDimensions(c));    
-    if ( Compartment_isSetId(c) )
-      Compartment_setId(c_new, Compartment_getId(c));
-    if ( Compartment_isSetName(c) )
-      Compartment_setName(c_new, Compartment_getName(c));
-    if ( Compartment_isSetSize(c) )
-      Compartment_setSize(c_new, Compartment_getSize(c));
-    if ( Compartment_isSetUnits(c) )
-      Compartment_setUnits(c_new, Compartment_getUnits(c));
-    if ( Compartment_isSetOutside(c) )
-      Compartment_setOutside(c_new, Compartment_getOutside(c));
-    
-    Model_addCompartment(new, c_new);
-  }
+    Model_addCompartment(new, Model_getCompartment(old, i));
   
   for ( i=0; i<Model_getNumParameters(old); i++)
-  {
-    p = Model_getParameter(old, i);
-    p_new = Parameter_create();
-    /* copy existing attributes  */
-    Parameter_setConstant(p_new, Parameter_getConstant(p));
-    if ( Parameter_isSetId(p) )
-      Parameter_setId(p_new, Parameter_getId(p));
-    if ( Parameter_isSetName(p) )
-      Parameter_setName(p_new, Parameter_getName(p));
-    if ( Parameter_isSetValue(p) )
-      Parameter_setValue(p_new, Parameter_getValue(p));
-    if ( Parameter_isSetUnits(p) )
-      Parameter_setUnits(p_new, Parameter_getUnits(p));
-
-    Model_addParameter(new, p_new);
-  }
+    Model_addParameter(new, Model_getParameter(old, i));
   
   for ( i=0; i<Model_getNumSpecies(old); i++)
   {
     s = Model_getSpecies(old, i);
-    s_new = Species_create();
-    /* copy existing attributes  */
-    Species_setBoundaryCondition(s_new, Species_getBoundaryCondition(s));
-    Species_setConstant(s_new, Species_getConstant(s));
-    Species_setHasOnlySubstanceUnits(s_new,
-				     Species_getHasOnlySubstanceUnits(s));
-    if ( Species_isSetId(s) )
-      Species_setId(s_new, Species_getId(s));
-    if ( Species_isSetName(s) ) 
-      Species_setName(s_new, Species_getName(s));
-    if ( Species_isSetCompartment(s) )
-      Species_setCompartment(s_new, Species_getCompartment(s));
-    if ( Species_isSetSubstanceUnits(s) )
-      Species_setSubstanceUnits(s_new, Species_getSubstanceUnits(s));
-    if ( Species_isSetSpatialSizeUnits(s) )
-      Species_setSpatialSizeUnits(s_new,
-				  Species_getSpatialSizeUnits(s));
-    if ( Species_isSetUnits(s) )
-      Species_setUnits(s_new, Species_getUnits(s));
-    if ( Species_isSetCharge(s) )
-      Species_setCharge(s_new, Species_getCharge(s));    
+    s_new = Species_clone(s);
 
     /* convert initial amount to concentration, unless species has only
        substance units */
-    if ( Species_isSetInitialConcentration(s) )
-      Species_setInitialConcentration(s_new,
-				      Species_getInitialConcentration(s));
-    else 
+    if ( Species_isSetInitialAmount(s_new) &&
+	 !Species_getHasOnlySubstanceUnits(s_new) )
     {
-      c = Model_getCompartmentById(old, Species_getCompartment(s));
-      if ( Compartment_getSpatialDimensions(c) != 0 &&
-	   !Species_getHasOnlySubstanceUnits(s) )
+      c = Model_getCompartmentById(new, Species_getCompartment(s_new));
+      if (Compartment_getSpatialDimensions(c) != 0 )
+      {
 	Species_setInitialConcentration(s_new, Species_getInitialAmount(s)/
 					Compartment_getSize(c));
-      else
-	Species_setInitialAmount(s_new, Species_getInitialAmount(s));
-    }    
-
+      }    
+    }
     Model_addSpecies(new, s_new);
+    Species_free(s_new);
   }
   
   /* Function Definitions  */
   for ( i=0; i<Model_getNumFunctionDefinitions(old); i++ )
-  {
-    f = Model_getFunctionDefinition(old, i);
-    f_new = FunctionDefinition_create();
-    FunctionDefinition_setId(f_new, FunctionDefinition_getId(f));
-    math = copyAST(FunctionDefinition_getMath(f));
-    FunctionDefinition_setMath(f_new, math);
-    Model_addFunctionDefinition(new, f_new);
-  }
+    Model_addFunctionDefinition(new, Model_getFunctionDefinition(old, i));
 
   return(new);
 }
@@ -256,7 +194,7 @@ static Model_t *Model_copyInits(Model_t *old)
 static void Model_copyOdes(Model_t *m, Model_t*ode )
 {  
   Rule_t *rl;
-  RateRule_t *rr, *rl_new;
+  Rule_t *rr, *rl_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;
   
@@ -270,14 +208,16 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_RATE_RULE )
     {
-      rr = (RateRule_t *)rl;
-      if ( Rule_isSetMath(rl) && RateRule_isSetVariable(rr) )
+      rr = rl;
+      if ( Rule_isSetMath(rl) && Rule_isSetVariable(rr) )
       {
 	math = copyAST(Rule_getMath(rl));
-	rl_new = RateRule_create();
-	RateRule_setVariable(rl_new, RateRule_getVariable(rr));
+	rl_new = Rule_createRate();
+	Rule_setVariable(rl_new, Rule_getVariable(rr));
 	Rule_setMath((Rule_t *)rl_new, math);
 	Model_addRule(ode, (Rule_t *)rl_new);
+	Rule_free(rl_new);
+	ASTNode_free(math);
       }
     }
   }
@@ -291,9 +231,7 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
 static int Model_createOdes(Model_t *m, Model_t *ode)
 {
   Species_t *s;
-  Rule_t *rl;
-  RateRule_t *rr, *rl_new;
-  AssignmentRule_t *ar;
+  Rule_t *rule, *rule_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;
 
@@ -326,18 +264,16 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
     /* search `m' if a rule exists for this species */
     for ( j=0; j<Model_getNumRules(m); j++ )
     {
-      rl = Model_getRule(m, j);
-      type = SBase_getTypeCode((SBase_t *)rl);
+      rule = Model_getRule(m, j);
+      type = SBase_getTypeCode((SBase_t *)rule);
       if ( type == SBML_RATE_RULE )
       {
-	rr = (RateRule_t *)rl;
-	if ( strcmp(Species_getId(s), RateRule_getVariable(rr)) == 0 )
+	if ( strcmp(Species_getId(s), Rule_getVariable(rule)) == 0 )
 	  found = 1;
       }
       else if ( type == SBML_ASSIGNMENT_RULE )
       {
-	ar = (AssignmentRule_t *)rl;
-	if ( strcmp(Species_getId(s), AssignmentRule_getVariable(ar)) == 0 ) 
+	if ( strcmp(Species_getId(s), Rule_getVariable(rule)) == 0 ) 
 	  found = 1;	
       }
     }
@@ -363,21 +299,23 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
 	else if (( ASTNode_getType(math) == AST_REAL &&
 		   ASTNode_getReal(math) == 0.0 ) ||
 		 ( ASTNode_getType(math) == AST_INTEGER &&
-		   ASTNode_getInteger(math) == 0.0 ) )
+		   ASTNode_getInteger(math) == 0 ) )
 	  /* don't create redundant rate rules for species */
 	  ASTNode_free(math);
 	else
 	{
-	  rl_new = RateRule_create();
-	  RateRule_setVariable(rl_new, Species_getId(s));
-	  Rule_setMath((Rule_t *)rl_new, math);
-	  Model_addRule(ode, (Rule_t *)rl_new);
+	  rule_new = Rule_createRate();
+	  Rule_setVariable(rule_new, Species_getId(s));
+	  Rule_setMath((Rule_t *)rule_new, math);
+	  Model_addRule(ode, (Rule_t *)rule_new);
+	  ASTNode_free(math);
+	  Rule_free(rule_new);
 	}
       }
     }
   }
 
-  for (i = 0; i != Model_getNumReactions(m); i++)
+  for ( i=0; i != Model_getNumReactions(m); i++ )
   {
     Reaction_t *reaction =
       (Reaction_t *)ListOf_get(Model_getListOfReactions(m), i);
@@ -387,16 +325,19 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
     Parameter_setId(parameter, Reaction_getId(reaction));
     Parameter_setConstant(parameter, 0);
     Model_addParameter(ode, parameter);
+    Parameter_free(parameter);
 
-    if (kineticLaw)
+    if ( kineticLaw )
     {
-      ar = AssignmentRule_create();
-      AssignmentRule_setVariable(ar, Reaction_getId(reaction));
+      rule = Rule_createAssignment();
+      Rule_setVariable(rule, Reaction_getId(reaction));
       math = copyAST(KineticLaw_getMath(kineticLaw));
       AST_replaceNameByParameters(math,
 				  KineticLaw_getListOfParameters(kineticLaw));
-      Rule_setMath((Rule_t *)ar, math);
-      Model_addRule(ode, (Rule_t *)ar);
+      Rule_setMath(rule, math);
+      Model_addRule(ode, rule);
+      Rule_free(rule);
+      ASTNode_free(math);
     }
   }
 
@@ -449,9 +390,9 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
   {
     r = Model_getReaction(m,j);
 
-    reactionSymbol = ASTNode_create();
+    reactionSymbol = ASTNode_createWithType(AST_NAME);
     ASTNode_setName(reactionSymbol, Reaction_getId(r));
-    ASTNode_setType(reactionSymbol, AST_NAME);
+   /*  ASTNode_setType(reactionSymbol, AST_NAME); */
 
     kl = Reaction_getKineticLaw(r);
 
@@ -478,7 +419,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 	  reactant = ASTNode_create();
 	  ASTNode_setCharacter(reactant, '*');
 	  ASTNode_addChild(reactant,
-			   copyAST(SpeciesReference_getStoichiometryMath(sref)));
+			   copyAST(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));
 	  ASTNode_addChild(reactant, copyAST(reactionSymbol));
 	}
 	else
@@ -531,7 +472,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 
 	if ( SpeciesReference_isSetStoichiometryMath(sref) ) 
 	  ASTNode_addChild(reactant,
-			   copyAST(SpeciesReference_getStoichiometryMath(sref)));	
+			   copyAST(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));	
 	else
 	{
 	  ASTNode_addChild(reactant, ASTNode_create());
@@ -612,39 +553,13 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
     copy events to new model and print warning */
 static void Model_copyEvents(Model_t *m, Model_t*ode)
 {
-  int i, j;
-  Event_t *e, *e_new;
-  EventAssignment_t *ea, *ea_new;
+  int i;
     
   for ( i=0; i<Model_getNumEvents(m); i++ )
   {
-    e = Model_getEvent(m, i);
-    e_new = Event_create();
-    if ( Event_isSetTrigger(e) ) 
-      Event_setTrigger(e_new, copyAST(Event_getTrigger(e)));
-    if ( Event_isSetId(e) ) 
-      Event_setId(e_new, Event_getId(e));
-    if ( Event_isSetTimeUnits(e) ) 
-      Event_setTimeUnits(e_new, Event_getTimeUnits(e));
-    if ( Event_isSetName(e) ) 
-      Event_setName(e_new, Event_getName(e));
-    if ( Event_isSetDelay(e) ) 
-      Event_setDelay(e_new, copyAST(Event_getDelay(e)));
+    Model_addEvent(ode, Model_getEvent(m, i));
     
-    for ( j=0; j<Event_getNumEventAssignments(e); j++ )
-    {
-      ea = Event_getEventAssignment(e, j);
-      ea_new = EventAssignment_create();
-      if ( EventAssignment_isSetVariable(ea) ) 
-	EventAssignment_setVariable(ea_new, EventAssignment_getVariable(ea));
-      if ( EventAssignment_isSetMath(ea) ) 
-	EventAssignment_setMath(ea_new, copyAST(EventAssignment_getMath(ea)));
-      
-      Event_addEventAssignment(e_new, ea_new);
-    }
-    Model_addEvent(ode, e_new);
-    
-    if (!i)
+    if ( !i )
       SolverError_error(
 			WARNING_ERROR_TYPE,
 			SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
@@ -657,15 +572,13 @@ static void Model_copyEvents(Model_t *m, Model_t*ode)
 }
 
 
-
 /* C.4.b: Copy Algebraic Rules
    copy algebraic rules to new model and create error
    message, return number of AlgebraicRules */
 static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
 {
   int i, j;
-  Rule_t *rl;
-  AlgebraicRule_t *alr, *alr_new;
+  Rule_t *rl, *alr_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;
   int errors;
@@ -678,13 +591,14 @@ static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_ALGEBRAIC_RULE )
     {
-      alr = (AlgebraicRule_t *)rl;
       if ( Rule_isSetMath(rl) )
       {
 	math = copyAST(Rule_getMath(rl));
-	alr_new = AlgebraicRule_create();
-	Rule_setMath((Rule_t *)alr_new, math);
-	Model_addRule(ode, (Rule_t *)alr_new);
+	alr_new = Rule_createAlgebraic();
+	Rule_setMath(alr_new, math);
+	Model_addRule(ode, alr_new);
+	ASTNode_free(math);
+	Rule_free(alr_new);
 	errors++;
 	if ( !j ) 
 	  SolverError_error(ERROR_ERROR_TYPE,
@@ -704,8 +618,7 @@ static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 {
   int i;
-  Rule_t *rl;
-  AssignmentRule_t *ar, *ar_new;
+  Rule_t *rl, *ar_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;  
 
@@ -716,14 +629,15 @@ static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 
     if ( type == SBML_ASSIGNMENT_RULE )
     {
-      ar = (AssignmentRule_t *)rl;
-      if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) )
+      if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) )
       {
 	math = copyAST(Rule_getMath(rl));
-	ar_new = AssignmentRule_create();
-	AssignmentRule_setVariable(ar_new, AssignmentRule_getVariable(ar));
+	ar_new = Rule_createAssignment();
+	Rule_setVariable(ar_new, Rule_getVariable(rl));
 	Rule_setMath((Rule_t *)ar_new, math);
 	Model_addRule(ode, (Rule_t *)ar_new);
+	ASTNode_free(math);
+	Rule_free(ar_new);
       }
     }
   }
@@ -739,6 +653,7 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
   Rule_t *rl_new;
   FunctionDefinition_t *f;
   Event_t *e;
+  Trigger_t *tr;
   EventAssignment_t *ea;
   ASTNode_t *math;
   
@@ -766,6 +681,7 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
 				    FunctionDefinition_getId(f),
 				    FunctionDefinition_getMath(f));
       Rule_setMath(rl_new, math);
+      ASTNode_free(math);
     }
     /*
       replacing functions in all events
@@ -782,13 +698,17 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
 				      FunctionDefinition_getId(f),
 				      FunctionDefinition_getMath(f));
 	EventAssignment_setMath(ea, math);
+	ASTNode_free(math);
       }
-      
-      math = copyAST(Event_getTrigger(e));
+
+      /*??? problem: returned Trigger structure is const ???*/
+      tr = (Trigger_t *)Event_getTrigger(e);
+      math = copyAST(Trigger_getMath(tr));
       AST_replaceFunctionDefinition(math,
 				    FunctionDefinition_getId(f),
 				    FunctionDefinition_getMath(f));
-      Event_setTrigger(e, math);
+      Trigger_setMath(tr, math);
+      ASTNode_free(math);
     }
   }
 }
@@ -814,9 +734,7 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
   
   if ( (c = Model_getCompartmentById(m, id)) !=NULL ) 
     if ( Compartment_isSetSize(c) ) 
-      return Compartment_getSize(c);
-    
-  
+      return Compartment_getSize(c);  
 
   if ( (s = Model_getSpeciesById(m, id)) !=NULL )
   {

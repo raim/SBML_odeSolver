@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 16:57:37 raim>
-  $Id: interactive.c,v 1.5 2007/05/09 18:37:10 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 14:59:19 raim>
+  $Id: interactive.c,v 1.6 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -104,13 +104,8 @@ interactive() {
 
   sbmlFilename = concat(Opt.ModelPath, Opt.ModelFile);
 
-  if ( (d = parseModelWithArguments(sbmlFilename)) == 0 ) {
-    if ( Opt.Validate ) {
-	Warn(stderr, "Please make sure that path >%s< contains",
-	     Opt.SchemaPath);
-	Warn(stderr, "the correct SBML schema for validation.");
-	Warn(stderr, "Or try running without validation.");
-    }
+  if ( (d = parseModelWithArguments(sbmlFilename)) == 0 )
+  {
     Warn(stderr, "%s:%d interactive(): Can't parse Model >%s<",
 	  __FILE__, __LINE__, sbmlFilename);
     d = loadFile();

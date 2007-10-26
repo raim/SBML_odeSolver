@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-02 01:02:46 raim>
-  $Id: odeModel.c,v 1.90 2007/10/01 23:05:25 raimc Exp $ 
+  Last changed Time-stamp: <2007-10-26 18:35:34 raim>
+  $Id: odeModel.c,v 1.91 2007/10/26 17:52:29 raimc Exp $ 
 */
 /* 
  *
@@ -433,7 +433,7 @@ static void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
       int j ;
       Event_t *event = Model_getEvent(om->simple, i);
 
-      ASTNode_getSymbols((ASTNode_t *)Event_getTrigger(event),
+      ASTNode_getSymbols((ASTNode_t *)Trigger_getMath(Event_getTrigger(event)),
 			 eventExpressionFunctionOfSet);
       
       for ( j = 0; j != Event_getNumEventAssignments(event); j++ ) 
@@ -512,9 +512,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   Parameter_t *p;
   Species_t *s;
   Rule_t *rl;
-  AssignmentRule_t *ar;
-  AlgebraicRule_t *alr;
-  RateRule_t *rr;
   SBMLTypeCode_t type;  
   ASTNode_t *math;  
   odeModel_t *om;
@@ -568,31 +565,25 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 
     if ( type == SBML_RATE_RULE )
     {
-      rr = (RateRule_t *)rl;
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq],
-			      strlen(RateRule_getVariable(rr))+1,
+			      strlen(Rule_getVariable(rl))+1,
 			      char, NULL);
-      sprintf(om->names[neq], RateRule_getVariable(rr));
+      sprintf(om->names[neq], Rule_getVariable(rl));
       neq++;
     }
     else if ( type == SBML_ASSIGNMENT_RULE )
     {
-      
-      ar = (AssignmentRule_t *)rl;
       ASSIGN_NEW_MEMORY_BLOCK(om->names[om->neq+nass],
-			      strlen(AssignmentRule_getVariable(ar))+1,
+			      strlen(Rule_getVariable(rl))+1,
 			      char, NULL);
-      sprintf(om->names[om->neq + nass], AssignmentRule_getVariable(ar));
+      sprintf(om->names[om->neq + nass], Rule_getVariable(rl));
       nass++;      
     }
     else if ( type == SBML_ALGEBRAIC_RULE )
     {
-      
-      alr = (AlgebraicRule_t *)rl;
       /* find variables defined by algebraic rules here! */
       ASSIGN_NEW_MEMORY_BLOCK(om->names[nvalues + nalg],
-			      strlen("tmp")+3,
-			      char, NULL);
+			      strlen("tmp")+3, char, NULL);
       sprintf(om->names[om->neq+om->nass+om->nconst+ nalg], "tmp%d", nalg);
       /* printf("tmp%d \n", nalg); */
       nalg++;
@@ -677,7 +668,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   
     if ( type == SBML_RATE_RULE )
     {
-      rr = (RateRule_t *)rl;
       math = indexAST(Rule_getMath(rl), nvalues, om->names);
       /*AST_dump("assigning om->ode", math);*/
       om->ode[neq] = math;
@@ -686,7 +676,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     }
     else if ( type == SBML_ASSIGNMENT_RULE )
     {
-      ar = (AssignmentRule_t *)rl;
       math = indexAST(Rule_getMath(rl), nvalues, om->names); 
       om->assignment[nass] = math;
       om->npiecewise += ASTNode_containsPiecewise(math);
@@ -694,7 +683,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     }
     else if ( type == SBML_ALGEBRAIC_RULE )
     {
-      alr = (AlgebraicRule_t *)rl;
       math = indexAST(Rule_getMath(rl), nvalues, om->names); 
       om->algebraic[nalg] = math;
       om->npiecewise += ASTNode_containsPiecewise(math);
@@ -788,8 +776,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char
 
   d =  parseModel((char *)sbmlFileName,
 		  0 /* print message */,
-		  0 /* don't validate */,
-		  0, 0, 0, 0 /* empty validation parameters */);
+		  0 /* don't validate */);
     
   RETURN_ON_ERRORS_WITH(NULL);
     
@@ -1857,7 +1844,7 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
       int setIsValidFalse = 0;
       
       e = Model_getEvent(om->simple, i);
-      trigger = (ASTNode_t *) Event_getTrigger(e);
+      trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
       
       CharBuffer_append(buffer, "if ((trigger[");
       CharBuffer_appendInt(buffer, i);
@@ -2016,9 +2003,9 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
       CharBuffer_append(buffer, "dyAdata[");
       CharBuffer_appendInt(buffer, i);
       CharBuffer_append(buffer, "]");
-      CharBuffer_append(buffer, "-= ");
+      CharBuffer_append(buffer, "-= ( ");
       generateAST(buffer, om->jacob[j][i]);
-      CharBuffer_append(buffer, " * yAdata[");
+      CharBuffer_append(buffer, " ) * yAdata[");
       CharBuffer_appendInt(buffer, j);
       CharBuffer_append(buffer, "];\n");
     }
@@ -2211,9 +2198,9 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
     {
       CharBuffer_append(buffer, "dySdata[");
       CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] +=  ");
+      CharBuffer_append(buffer, "] += ( ");
       generateAST(buffer, os->om->jacob[i][j]);
-      CharBuffer_append(buffer, " * ySdata[");
+      CharBuffer_append(buffer, ") * ySdata[");
       CharBuffer_appendInt(buffer, j);
       CharBuffer_append(buffer, "]; ");
       CharBuffer_append(buffer, " /* om->jacob[");
@@ -2246,7 +2233,7 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"S\");"); */
-   CharBuffer_append(buffer, "return (0);\n");
+  CharBuffer_append(buffer, "return (0);\n");
 
   CharBuffer_append(buffer, "}\n\n");
 }
@@ -2302,9 +2289,9 @@ void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
 	CharBuffer_append(buffer, "] += ");
 	CharBuffer_append(buffer, "yAdata[");
 	CharBuffer_appendInt(buffer, j);
-	CharBuffer_append(buffer, "] * ");
+	CharBuffer_append(buffer, "] * ( ");
 	generateAST(buffer, os->sens[j][os->index_sensP[i]]);
-	CharBuffer_append(buffer, "; /* om->sens[");
+	CharBuffer_append(buffer, " ); /* om->sens[");
 	CharBuffer_appendInt(buffer, j);
 	CharBuffer_append(buffer, "][");
 	CharBuffer_appendInt(buffer,os->index_sensP[i]);
@@ -2314,7 +2301,7 @@ void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
   }
 
   CharBuffer_append(buffer, "return (0);\n");
-
+  
   /* CharBuffer_append(buffer, "printf(\"qa\");"); */
   CharBuffer_append(buffer, "}\n\n");
 }

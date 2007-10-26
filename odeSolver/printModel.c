@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-12 20:56:25 raim>
-  $Id: printModel.c,v 1.21 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-24 11:30:21 raim>
+  $Id: printModel.c,v 1.22 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -166,9 +166,6 @@ void printReactions(Model_t *m, FILE *f)
   SpeciesReference_t *sref;
   KineticLaw_t *kl;
   Rule_t *rl;
-  AssignmentRule_t *asr;
-  AlgebraicRule_t *alr;
-  RateRule_t *rr;
   Event_t *e;
   EventAssignment_t *ea;
   Parameter_t *p;
@@ -211,8 +208,7 @@ void printReactions(Model_t *m, FILE *f)
 
       if ( SpeciesReference_isSetStoichiometryMath(sref) )	
 	fprintf(f, "%s ",
-		SBML_formulaToString(\
-		SpeciesReference_getStoichiometryMath(sref)));
+		SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));
       else 
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
 	  fprintf(f, "%g ",  SpeciesReference_getStoichiometry(sref));
@@ -227,8 +223,7 @@ void printReactions(Model_t *m, FILE *f)
       sref = Reaction_getProduct(r,k);
       if ( SpeciesReference_isSetStoichiometryMath(sref) )
 	fprintf(f, "%s ",
-	       SBML_formulaToString(\
-		   SpeciesReference_getStoichiometryMath(sref)));
+	       SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));
       else
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
 	  fprintf(f, "%g ", SpeciesReference_getStoichiometry(sref));
@@ -262,57 +257,48 @@ void printReactions(Model_t *m, FILE *f)
     fprintf(f, "\n");
   }
     
-  for(i=0;i<Model_getNumRules(m);i++){
+  for ( i=0; i<Model_getNumRules(m); i++ )
+  {
     rl = Model_getRule(m,i);
-    if ( i == 0 ) {
+    if ( i == 0 )
       fprintf(f, "# Rules:\n");
-    }
     type = SBase_getTypeCode((SBase_t *)rl);
      
-     
-    if ( type == SBML_RATE_RULE ) {
-      rr =  (RateRule_t *) rl;
-      fprintf(f, " rateRule:       d%s/dt = ", RateRule_getVariable(rr));
-    }
-    if ( type == SBML_ALGEBRAIC_RULE ) {
-      alr = (AlgebraicRule_t *) rl;
+    if ( type == SBML_RATE_RULE ) 
+      fprintf(f, " rateRule:       d%s/dt = ", Rule_getVariable(rl));
+    if ( type == SBML_ALGEBRAIC_RULE ) 
       fprintf(f, " algebraicRule:       0 = ");
-    }
-    if ( type == SBML_ASSIGNMENT_RULE ) {
-      asr = (AssignmentRule_t *) rl;
-      fprintf(f, " assignmentRule (%s): %s = ",
-	     RuleType_toString(AssignmentRule_getType(asr)),
-	     AssignmentRule_getVariable(asr));
-    }
-    if(!Rule_isSetMath(rl)){
-      if(Rule_isSetFormula(rl)){
-	Rule_setMathFromFormula(rl);
-	
-      }
-    }
-    if(Rule_isSetMath(rl))
+    if ( type == SBML_ASSIGNMENT_RULE ) 
+      fprintf(f, " assignmentRule: %s = ", Rule_getVariable(rl));
+
+    if ( Rule_isSetMath(rl) )
       fprintf(f, "%s\n", SBML_formulaToString(Rule_getMath(rl)));
 	     
   }
   fprintf(f, "\n");
 
-  for(i=0;i<Model_getNumEvents(m);i++){
-    if(i==0)
+  for ( i=0; i<Model_getNumEvents(m); i++ )
+  {
+    if ( i==0 )
       fprintf(f, "# Events:\n");
+    
     e = Model_getEvent(m,i);
-    if(Event_isSetId(e))
+    if ( Event_isSetId(e) )
       fprintf(f, "%s: ", Event_getId(e));
-    if(Event_isSetName(e))
+    if ( Event_isSetName(e) )
       fprintf(f, "(%s) ", Event_getName(e));   
-    if(Event_isSetTrigger(e)) {
-      math = Event_getTrigger(e);
+    if ( Event_isSetTrigger(e) )
+    {
+      math = Trigger_getMath(Event_getTrigger(e));
       fprintf(f, "trigger: %s\n", SBML_formulaToString(math));
     }
-    if(Event_isSetDelay(e))
-      fprintf(f, "delay: %s;\n", SBML_formulaToString(Event_getDelay(e)));
-    if(Event_isSetTimeUnits(e))
+    if ( Event_isSetDelay(e) )
+      fprintf(f, "delay: %s;\n",
+	      SBML_formulaToString(Delay_getMath(Event_getDelay(e))));
+    if ( Event_isSetTimeUnits(e) )
       fprintf(f, "time Units: %s;\n", Event_getTimeUnits(e));
-    for(k=0;k<Event_getNumEventAssignments(e);k++){      
+    for ( k=0; k<Event_getNumEventAssignments(e); k++ )
+    {      
       ea = Event_getEventAssignment(e,k);
       if(EventAssignment_isSetVariable(ea))
 	fprintf(f, "  event:  %s = %s;\n",
@@ -322,7 +308,7 @@ void printReactions(Model_t *m, FILE *f)
 	       "# no math set;\n");
     }
 
-    if(i==Model_getNumEvents(m)-1)
+    if ( i == Model_getNumEvents(m)-1 )
        fprintf(f, "\n"); 
   }  
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-09 18:11:25 raim>
-  $Id: sbml.c,v 1.15 2006/06/09 17:04:35 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 15:37:26 raim>
+  $Id: sbml.c,v 1.16 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -39,123 +39,115 @@
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
-#include <sbml/xml/ParseMessage.h> 
+#include <sbml/SBMLDocument.h>
+
 
 /* own header files */
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
 
-void storeSBMLError(errorType_t type, const ParseMessage_t *pm)
-{
-  SolverError_error(type, ParseMessage_getId(pm),
-		    (char*) ParseMessage_getMessage(pm)); 
+void storeSBMLError(errorType_t type, const SBMLError_t *error )
+{  
+  SolverError_error(type, XMLError_getErrorId((const XMLError_t *)error),
+		    "libSBML ERROR\n\t\t\tSEVERITY: %d\n\t\t\tMESSAGE:  %s\n",
+		    XMLError_getSeverity((const XMLError_t *)error),
+		    XMLError_getMessage((const XMLError_t *)error));
 }
 
 /** Loads, validates and parses an SBML file
-    
-also converts SBML level 1 to level 2 files,
-return NULL if errors were encountered during libSBML
-validation and consistency check, stores libSBML warngings */
+
+    also converts SBML level 1 to level 2 files, return NULL if errors
+    were encountered during libSBML validation and consistency check,
+    stores libSBML warngings */
 SBMLDocument_t *
-parseModel(char *file, int printMessage, int validate, char *schemaPath,
-	   char *schema11FileName,
-	   char *schema12FileName,
-	   char *schema21FileName)
+parseModel(char *file, int printMessage, int validate)
 {
-  unsigned int i, errors ;
+  unsigned int i, errors, severity;
   SBMLDocument_t *d;
   SBMLDocument_t *d2;
   SBMLReader_t *sr;
+  const SBMLError_t *error;
 
-  if ( validate )
+  if (  printMessage )
   {
-    if (  printMessage )
-    {
-      fprintf(stderr, "Validating SBML.\n");
-      fprintf(stderr, "This can take a while for SBML level 2.\n");
-    }
-    sr = newSBMLReader(schemaPath,
-		       schema11FileName,
-		       schema12FileName,
-		       schema21FileName);
+    fprintf(stderr, "Validating SBML.\n");
+    fprintf(stderr, "This can take a while for SBML level 2.\n");
   }
-  else
-    sr = SBMLReader_create();
-    
-
+  
+  sr = SBMLReader_create();
   d = SBMLReader_readSBML(sr, file);
   SBMLReader_free(sr);
-    
-  errors = 0;
-  if ( validate ) 
-    errors = SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d);
-    
-    
-  if ( SBMLDocument_getNumFatals(d) + SBMLDocument_getNumErrors(d) == 0 )
-    SBMLDocument_checkConsistency(d);
-  /* AMF 9th Dec 2005 added back because inconsistent models can
-     cause the solver to crash despite the consistancy check
-     causing memory leaks - talk to Ben B! */  
 
-  /* check for warnings and errors */
-  for ( i =0 ; i != SBMLDocument_getNumWarnings(d); i++ )
-    storeSBMLError(WARNING_ERROR_TYPE, SBMLDocument_getWarning(d, i)); 
-
-  for ( i =0 ; i != SBMLDocument_getNumErrors(d); i++ )
-    storeSBMLError(ERROR_ERROR_TYPE, SBMLDocument_getError(d, i)); 
-
-  for ( i =0 ; i != SBMLDocument_getNumFatals(d); i++ )
-    storeSBMLError(FATAL_ERROR_TYPE, SBMLDocument_getFatal(d, i)); 
-
-  RETURN_ON_ERRORS_WITH(NULL);
+  errors = SBMLDocument_getNumErrors(d); 
     
+  /*!!! redo error handling with libsbml 3 */
+   
+  if ( errors != 0 )
+    errors += SBMLDocument_checkConsistency(d); 
+
+  for ( i =0 ; i != errors; i++ )
+  {
+    error = SBMLDocument_getError(d, i);
+    severity = XMLError_getSeverity((const XMLError_t *)error);
+    if ( severity < 2 ) /* infos and warnings */
+      storeSBMLError(WARNING_ERROR_TYPE, error);
+    else /* errors and fatals */
+      storeSBMLError(FATAL_ERROR_TYPE, error);
+  }
+
+  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
+  {
+    SBMLDocument_free(d);
+    return NULL;
+  }
+
+  
   /* convert level 1 models to level 2 */
   if ( SBMLDocument_getLevel(d) == 1 )
-  {      
-    d2 = convertModel(d);
+  {
+    d2 = convertModel(d); 
     SBMLDocument_free(d);
+
     if ( printMessage )
       fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
-    return (d2);
+    d = d2; 
   }
-  return (d);
-}
 
-SBMLReader_t *newSBMLReader (char *schemaPath,
-			     char *schema11, char *schema12, char *schema21)
-{
-  SBMLReader_t *sr;
-  char *schema[3];
-
-  schema[0] = concat(schemaPath, schema11);
-  schema[1] = concat(schemaPath, schema12);
-  schema[2] = concat(schemaPath, schema21);
-
-  sr = SBMLReader_create();
-
-  SBMLReader_setSchemaValidationLevel(sr, XML_SCHEMA_VALIDATION_BASIC);
-  /*   SBMLReader_setSchemaFilenameL1v1(sr, schema[0]); */
-  /*   SBMLReader_setSchemaFilenameL1v2(sr, schema[1]); */
-  /*   SBMLReader_setSchemaFilenameL2v1(sr, schema[2]); */
-
-  free(schema[0]);
-  free(schema[1]);
-  free(schema[2]);
+  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
+  {
+    SBMLDocument_free(d);
+    return NULL;
+  }
   
-  return (sr);  
+  return (d);
 }
 
 SBMLDocument_t *convertModel (SBMLDocument_t *d1)
 {
-  char *model;
+  int i, severity;
   SBMLDocument_t *d2;
+  const SBMLError_t *error;
+  
+  d2 = SBMLDocument_clone(d1);
+  SBMLDocument_setLevelAndVersion(d2, 2, 1);
+  
+  for ( i =0 ; i != SBMLDocument_getNumErrors(d1); i++ )
+  {
+    error = SBMLDocument_getError(d1, i);
+    severity = XMLError_getSeverity((const XMLError_t *)error);
+    if ( severity < 2 ) /* infos and warnings */
+      storeSBMLError(WARNING_ERROR_TYPE, error);
+    else /* errors and fatals */
+      storeSBMLError(FATAL_ERROR_TYPE, error);
+  }
+  
+  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
+  {
+    SBMLDocument_free(d2);
+    return NULL;
+  }
 
-  SBMLDocument_setLevel(d1, 2);
-  SBMLDocument_setVersion(d1, 1);
-  model = writeSBMLToString(d1);
-  d2 = readSBMLFromString(model); 
-  free(model);
   return d2;
 }
 

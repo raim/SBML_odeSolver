@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-09 17:11:43 raim>
-  $Id: modelSimplify.c,v 1.16 2007/05/09 15:27:02 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 17:52:43 raim>
+  $Id: modelSimplify.c,v 1.17 2007/10/26 17:52:29 raimc Exp $
 */
 /* 
  *
@@ -99,9 +99,9 @@ SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *l
   Parameter_t *p;
   List_t *names;
 
-  for ( i=0; i<ListOf_getNumItems(lp); i++ )
+  for ( i=0; i<ListOf_size(lp); i++ ) 
   {
-    p = ListOf_get(lp, i);
+    p = (Parameter_t *)ListOf_get(lp, i);
     names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
     for ( j=0; j<List_size(names); j++ )    
@@ -231,8 +231,6 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
   Compartment_t *c;
   Species_t *s;
   Rule_t *rl;
-  AssignmentRule_t *ar;
-  RateRule_t *rr;
   SBMLTypeCode_t type;
   FunctionDefinition_t *f;
 
@@ -252,14 +250,8 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
     rl = Model_getRule(m, i);
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_ASSIGNMENT_RULE )
-    {
-      ar = (AssignmentRule_t *)rl;
-      if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) 
-	AST_replaceNameByFormula(math,
-				 AssignmentRule_getVariable(ar),
-				 Rule_getMath(rl));
-      
-    }
+      if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) ) 
+	AST_replaceNameByFormula(math, Rule_getVariable(rl), Rule_getMath(rl));
   }
 
  
@@ -339,16 +331,14 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
 	type = SBase_getTypeCode((SBase_t *)rl);
 	if ( type == SBML_RATE_RULE )
 	{
-	  rr = (RateRule_t *)rl;
-	  if ( Rule_isSetMath(rl) && RateRule_isSetVariable(rr) )
-	    if ( strcmp(RateRule_getVariable(rr), Species_getId(s)) == 0 )
+	  if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) )
+	    if ( strcmp(Rule_getVariable(rl), Species_getId(s)) == 0 )
 	      ++found;
 	}
 	else if ( type == SBML_ASSIGNMENT_RULE )
 	{
-	  ar = (AssignmentRule_t *)rl;	  
-	  if ( Rule_isSetMath(rl) && AssignmentRule_isSetVariable(ar) ) 
-	    if ( strcmp(AssignmentRule_getVariable(ar),Species_getId(s))== 0 ) 
+	  if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) ) 
+	    if ( strcmp(Rule_getVariable(rl),Species_getId(s))== 0 ) 
 	      ++found;	  
 	}
       }
