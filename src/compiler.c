@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-15 05:17:50 raim>
-  $Id: compiler.c,v 1.24 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2007-10-26 17:38:01 raim>
+  $Id: compiler.c,v 1.25 2007/10/26 17:51:36 raimc Exp $
 */
 /* 
  *
@@ -233,9 +233,17 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  dllFileName,
 	  cFileName,
 	  SOSLIB_LDFLAGS);
-  
+ 
 #ifdef _DEBUG
   Warn(NULL, "Command: %s\n", command);
+  Warn(NULL,
+       "%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -lODES -lm",
+       gccFileName,
+       SUNDIALS_CFLAGS,
+       SOSLIB_CFLAGS,
+       dllFileName,
+       cFileName,
+       SOSLIB_LDFLAGS);
 #endif
   
   /* compile source to shared library */
