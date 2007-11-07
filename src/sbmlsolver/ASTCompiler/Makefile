@@ -1,0 +1,2 @@
+DEFAULT:
+	gcc arithmeticCompilerTest.c
