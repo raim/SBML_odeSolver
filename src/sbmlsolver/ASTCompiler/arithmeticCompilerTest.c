@@ -705,6 +705,7 @@ int main (int argc, char **argv) {
 	int maxnodes = 20;
 	int functionnum = 60;
 	double x;
+	directCode *code = (directCode *)malloc(sizeof(directCode));
 	cvodeData_t *data = (cvodeData_t *)malloc(sizeof(cvodeData_t));
 	void (**tests)() = (void (**)())malloc(sizeof(void (*)())*functionnum);
 	nodes = (ASTNode_t *)malloc(sizeof(ASTNode_t)*maxnodes);
@@ -774,10 +775,11 @@ int main (int argc, char **argv) {
 	/* tests */
 	for(i = 0 ; i < num ; i++) {
 		tests[i]();
-		generateFunction(&nodes[0], data);
-		x = evaluate();
+		generateFunction(code, &nodes[0], data);
+		x = code->evaluate();
+		destructFunction(code);
 		printf("%s %8.3f\n", string, x);
 		}
-	
+
 	return 0;
 	}
