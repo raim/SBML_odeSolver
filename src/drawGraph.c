@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-10-26 17:39:56 raim>
-  $Id: drawGraph.c,v 1.28 2007/10/26 17:52:29 raimc Exp $
+  $Id: drawGraph.c,v 1.29 2007/11/21 14:40:40 stefan_tbi Exp $
 */
 /* 
  *
@@ -940,7 +940,7 @@ static int drawModelTxt(Model_t *m, char *file)
   Reaction_t *re;
   const ASTNode_t *math;
   SpeciesReference_t *sref;
-  ModifierSpeciesReference_t *mref;
+  SpeciesReference_t *mref;
   int i,j;
   int reversible;
   char filename[WORDSIZE];
@@ -964,7 +964,7 @@ static int drawModelTxt(Model_t *m, char *file)
     {
       mref = Reaction_getModifier(re,j);
       fprintf(f ,"%s->%s [style=dashed arrowhead=odot];\n",
-	      ModifierSpeciesReference_getSpecies(mref), Reaction_getId(re));
+	      SpeciesReference_getSpecies(mref), Reaction_getId(re));
     }
 
     for ( j=0; j<Reaction_getNumReactants(re); j++ )
