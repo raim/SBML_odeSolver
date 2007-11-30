@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-25 17:21:14 raim>
-  $Id: odeSolver.h,v 1.23 2007/09/27 14:37:01 raimc Exp $
+  $Id: odeSolver.h,v 1.24 2007/11/30 16:21:42 stefan_tbi Exp $
 */
 /* 
  *
@@ -53,6 +53,11 @@
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/sbmlResults.h"
 #include "sbmlsolver/exportdefs.h"
+
+/* needed by sm */
+#include "sbmlsolver/ASTIndexNameNode.h"
+#include "sbmlsolver/variableIndex.h"
+#include "sbmlsolver/odeModel.h"
 
 
 #ifdef __cplusplus
