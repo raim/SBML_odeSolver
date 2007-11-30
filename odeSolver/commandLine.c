@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 19:41:49 raim>
-  $Id: commandLine.c,v 1.25 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2007-11-30 16:37:08 raim>
+  $Id: commandLine.c,v 1.26 2007/11/30 16:06:09 raimc Exp $
 */
 /* 
  *
@@ -314,7 +314,7 @@ odeSolver (int argc, char *argv[])
     CvodeSettings_setCompileFunctions(set, Opt.Compile);
     CvodeSettings_setSteadyStateThreshold(set, Opt.ssThreshold);
     CvodeSettings_setResetCvodeOnEvent(set, Opt.ResetCvodeOnEvents);
-    CvodeSettings_setDetectNegState(set, 1);
+    CvodeSettings_setDetectNegState(set, Opt.DetectNegState);
     
     /* ... we can create an integratorInstance */
     ii = IntegratorInstance_create(om, set);

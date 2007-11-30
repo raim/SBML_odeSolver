@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 18:35:34 raim>
-  $Id: odeModel.c,v 1.91 2007/10/26 17:52:29 raimc Exp $ 
+  Last changed Time-stamp: <2007-11-30 17:04:46 raim>
+  $Id: odeModel.c,v 1.92 2007/11/30 16:06:09 raimc Exp $ 
 */
 /* 
  *
@@ -1929,7 +1929,11 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
     CharBuffer_appendInt(buffer, i);
     CharBuffer_append(buffer, "];\n");
   }
-
+  /* negative state detection */
+  CharBuffer_append(buffer, "if ( data->opt->DetectNegState  )\n");  
+  CharBuffer_append(buffer, "  for ( i=0; i<data->model->neq; i++ )\n");
+  CharBuffer_append(buffer, "    if (data->value[i] < 0) return (1);\n");
+  
   /* update assignment rules */
   ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeODEs, buffer);
 

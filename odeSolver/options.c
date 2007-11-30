@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-25 13:29:07 raim>
-  $Id: options.c,v 1.8 2007/01/25 12:33:37 raimc Exp $
+  Last changed Time-stamp: <2007-11-30 16:37:42 raim>
+  $Id: options.c,v 1.9 2007/11/30 16:06:09 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +29,7 @@ static struct option const long_options[] =
   {"message",       no_argument,       0, 'l'},
   {"matrixgraph",   no_argument,       0, 'm'},
   {"event",         no_argument,       0, 'n'},
+  {"negative",      no_argument,       0, 'N'},
   {"printsbml",     no_argument,       0, 'o'},
   {"rates",         no_argument,       0, 'r'},
   {"steadyState",   no_argument,       0, 's'},
@@ -91,6 +92,7 @@ initializeOptions (void)
   Opt.PrintStep       = 50;
   Opt.Time            = 1;
   Opt.HaltOnEvent     = 1;
+  Opt.DetectNegState  = 0;
   Opt.InterActive     = 0;
   Opt.Jacobian        = 1;
   Opt.Determinant     = 0;
@@ -128,7 +130,7 @@ processOptions (int argc, char *argv[])
   }
   
   /* process command line options */
-  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxyz",
+  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxyzN",
                            long_options, &option_index)) != EOF) {
     switch (c) {
     case 0:
@@ -310,6 +312,9 @@ processOptions (int argc, char *argv[])
     case 'n':
       /* AMF removed 10 June 2005 Opt.PrintOnTheFly = 1; */
       Opt.HaltOnEvent   = 0;
+      break;
+    case 'N':
+      Opt.DetectNegState = 1;
       break;
     case 'e':
       Opt.PrintModel = 1;

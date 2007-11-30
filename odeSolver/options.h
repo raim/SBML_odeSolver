@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-25 13:22:05 raim>
-  $Id: options.h,v 1.7 2007/01/25 12:33:37 raimc Exp $
+  Last changed Time-stamp: <2007-11-30 16:32:18 raim>
+  $Id: options.h,v 1.8 2007/11/30 16:06:09 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -29,6 +29,7 @@ typedef struct _Options {
   int DrawJacobian;     /* Calculate a graph of species interaction
 			   as determined by the jacobian matrix */
   int HaltOnEvent;      /* stop integration if event is detected */
+  int DetectNegState;   /* detect negative values for ODE variables */
   int InterActive;      /* Start program in interactive mode */
   int Jacobian;         /* Do not use jacobian matrix for integration */
   int Sensitivity;      /* Activate Sensitivity Analysis */
