@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-06 19:58:05 raim>
-  $Id: integratorInstance.c,v 1.97 2007/12/06 19:08:03 raimc Exp $
+  Last changed Time-stamp: <2007-12-06 20:17:36 raim>
+  $Id: integratorInstance.c,v 1.98 2007/12/06 19:22:05 raimc Exp $
 */
 /* 
  *
@@ -411,7 +411,12 @@ SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorIns
 
 
 /**  Copies current time, variable and parameter values between two
-     integratorInstances that have been created from the same odeModel
+     integratorInstances (source->target) which
+     have been created from the same odeModel
+
+     WARNING: does NOT copy the time of the other integrator! use
+     IntegratorInstace_setInitialTime and/or IntegratorInstance_setNextTimeStep
+     to also set the time of the target integrator
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
@@ -445,10 +450,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 	evaluateAST(om->assignment[i], targetData);
     
     /* optimize ODEs for evaluation again */
-    IntegratorInstance_optimizeOdes(target);
-    
-    /* copy the time state of the source */
-    IntegratorInstance_setInitialTime(target, source->data->currenttime);
+    IntegratorInstance_optimizeOdes(target);    
   }
 }
 
