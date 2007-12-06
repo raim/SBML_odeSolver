@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-06 18:34:04 raim>
-  $Id: integratorInstance.c,v 1.96 2007/12/06 17:37:12 raimc Exp $
+  Last changed Time-stamp: <2007-12-06 19:58:05 raim>
+  $Id: integratorInstance.c,v 1.97 2007/12/06 19:08:03 raimc Exp $
 */
 /* 
  *
@@ -397,10 +397,10 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
 
 /**  Returns the settings of this integratorInstance.
 
-These settings can then be change with cvodeSettings interface
-functions. The changes become only effective after
-IntegratorInstance_reset has been called. Don't use during an
-integration run!
+     These settings can then be changed with cvodeSettings interface
+     functions. The changes become only effective after
+     IntegratorInstance_reset has been called. Don't use during an
+     integration run!
 */
 
 SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *engine)
@@ -410,11 +410,8 @@ SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorIns
 
 
 
-/**  Copies variable and parameter values between two
+/**  Copies current time, variable and parameter values between two
      integratorInstances that have been created from the same odeModel
-
-     WARNING: this does only work for a fresh integrator `target' , which has
-     not been integrated yet.
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
@@ -435,7 +432,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 		      "different models");
 
   /* reset if the integrator had already been run */
-  if ( IntegratorInstance_getTime(target) > 0.0 || target->isValid )
+  if ( target->isValid )
   {
     /* set engine to invalid to cause reinitialization of solver */
     target->isValid = 0;
@@ -449,6 +446,9 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
     
     /* optimize ODEs for evaluation again */
     IntegratorInstance_optimizeOdes(target);
+    
+    /* copy the time state of the source */
+    IntegratorInstance_setInitialTime(target, source->data->currenttime);
   }
 }
 
@@ -460,6 +460,34 @@ SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engin
   return engine->solver->t;
 }
 
+/** Sets the initial time of the solver, see WARNING below
+
+    WARNING:
+    This function can only be used for fresh or reset integrators!
+    Use with care, i.e. only when you know what you are doing!
+*/
+/*!!! needs testing and consideration of possible pitfalls */
+SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *engine, double initialtime)
+{
+  if ( (engine->isValid == 0 &&	
+	engine->solver->t == engine->solver->t0) &&
+       engine->solver->tout > initialtime )
+  {
+    engine->solver->t0 = initialtime;
+    engine->solver->t  = initialtime;
+    engine->data->currenttime = initialtime;
+    return 1;
+  }
+  else
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME,
+		      "Requested intial time (%f) is not possible! "\
+		      "Reset integrator first, and make sure that the first "\
+		      "output time (%f) is smaller then the requested "\
+		      "initial time!", initialtime,
+		      engine->solver->tout);
+  return 0;
+}
 
 /** Sets the next output time for infinite integration
 
@@ -756,10 +784,6 @@ SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *ii
   CvodeResults_free(results);
   
 }
-
-
-
-
 
 /**  Writes current simulation data to the original model.
  */

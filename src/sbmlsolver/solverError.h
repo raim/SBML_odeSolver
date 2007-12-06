@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-25 12:43:33 raim>
-  $Id: solverError.h,v 1.28 2007/10/26 17:52:29 raimc Exp $ 
+  Last changed Time-stamp: <2007-12-06 19:37:51 raim>
+  $Id: solverError.h,v 1.29 2007/12/06 19:08:04 raimc Exp $ 
 */
 /* 
  *
@@ -142,7 +142,8 @@ extern "C" {
       
       /** 14XXXX - assorted API errors */
       SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL = 140000,
-      SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 140001
+      SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 140001,
+      SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME = 140002
 
     } errorCode_t;
 

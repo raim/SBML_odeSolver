@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 01:52:04 raim>
-  $Id: integratorInstance.h,v 1.36 2007/09/20 01:16:14 raimc Exp $ 
+  Last changed Time-stamp: <2007-12-06 19:46:51 raim>
+  $Id: integratorInstance.h,v 1.37 2007/12/06 19:08:04 raimc Exp $ 
 */
 /* 
  *
@@ -150,6 +150,7 @@ extern "C" {
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *, variableIndex_t *y,  variableIndex_t *p);
+  SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *, double);
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
   SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *);
