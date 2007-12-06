@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 18:33:14 raim>
-  $Id: integratorInstance.c,v 1.95 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2007-12-06 18:34:04 raim>
+  $Id: integratorInstance.c,v 1.96 2007/12/06 17:37:12 raimc Exp $
 */
 /* 
  *
@@ -412,6 +412,9 @@ SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorIns
 
 /**  Copies variable and parameter values between two
      integratorInstances that have been created from the same odeModel
+
+     WARNING: this does only work for a fresh integrator `target' , which has
+     not been integrated yet.
 */
 
 SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source)
@@ -419,9 +422,9 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
   int i;
   cvodeData_t *targetData = target->data;
   cvodeData_t *sourceData = source->data;
-  odeModel_t *model = target->om;
+  odeModel_t *om = target->om;
 
-  if (model == source->om)
+  if ( om == source->om )
     for ( i=0; i<sourceData->nvalues; i++ )
       targetData->value[i] = sourceData->value[i];
   else
@@ -430,6 +433,23 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 		      SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS,
 		      "Attempting to copy variable state between instances of "
 		      "different models");
+
+  /* reset if the integrator had already been run */
+  if ( IntegratorInstance_getTime(target) > 0.0 || target->isValid )
+  {
+    /* set engine to invalid to cause reinitialization of solver */
+    target->isValid = 0;
+
+    /* and finally assignment rules, potentially depending on that variable
+       but otherwise rarely executed need to be evaluated */
+    /*!!! this could use only dependent assignments ? */
+    for ( i=0; i<om->nass; i++ )
+      targetData->value[om->neq+i] =
+	evaluateAST(om->assignment[i], targetData);
+    
+    /* optimize ODEs for evaluation again */
+    IntegratorInstance_optimizeOdes(target);
+  }
 }
 
 
@@ -443,10 +463,11 @@ SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engin
 
 /** Sets the next output time for infinite integration
 
-WARNING: the next output time must always be bigger then the
-previous. This function can only be used for infinite integration
-(CvodeSettings_setIndefinite(set, 1)).  Returns 1 if successful
-and 0 otherwise.
+    This function can only be used for infinite integration
+    (CvodeSettings_setIndefinite(set, 1)).
+    Returns 1 if successful and 0 otherwise.
+
+    WARNING: the next output time must always be bigger then the previous.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *engine, double nexttime)
@@ -1291,7 +1312,7 @@ void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
   
   for ( i=0; i<om->neq; i++ )
   {
-    /* optimize ODE only if no sensitivity was requested or no
+    /* optimize ODE only if no sensitivity was requested OR no
        sensitivity matrix was constructed */
     if ( !opt->Sensitivity  || os->sensitivity )
     {
