@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-21 15:51:14 raim>
-  $Id: cvodeSolver.c,v 1.68 2007/09/21 13:52:10 raimc Exp $
+  Last changed Time-stamp: <2007-12-14 14:59:58 raim>
+  $Id: cvodeSolver.c,v 1.69 2007/12/14 14:00:23 raimc Exp $
 */
 /* 
  *
@@ -106,8 +106,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
      might not be necessary in all cases */
   /*!!! this is probably required for all RHS expressions which
    can lead to discontinuities, AND !!! maybe this is only required
-   for those discontinuities which depend explicitly on time ??? */
-  if ( opt->SetTStop || om->nevents || om->npiecewise )
+   for those discontinuities which depend explicitly on time ??? 
+   and alternative to using the TSTOP mode might be to just update the
+   respective equations within this function!!! */
+  if ( opt->SetTStop || om->npiecewise )
   {
     CV_MODE = CV_NORMAL_TSTOP;
     CVodeSetStopTime(solver->cvode_mem, solver->tout);
