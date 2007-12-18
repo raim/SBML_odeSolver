@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-07 13:18:03 raim>
-  $Id: interpol.c,v 1.9 2007/11/30 16:22:35 stefan_tbi Exp $
+  $Id: interpol.c,v 1.10 2007/12/18 14:05:34 stefan_tbi Exp $
 */
 
 /* written 2005 by stefan mueller */
@@ -229,7 +229,7 @@ time_series_t *read_data(char *file, int n_var, char **var)
 
 /* given a file name and a variable list, */
 /* read_header_line finds the header line in the file, */
-/* finds the columns (of the header line) in the variable list, */
+/* finds the columns (in the header line) of the variables (in the list), */
 /* and returns the list of found columns (their indices) */
 /* and the corresponding variables (their indices). */
 
