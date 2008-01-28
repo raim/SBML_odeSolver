@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-10-26 14:57:16 raim>
-  $Id: sbml.h,v 1.7 2007/10/26 17:52:29 raimc Exp $
+  $Id: sbml.h,v 1.8 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -39,16 +39,16 @@
 
 #include <sbml/SBMLTypes.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "sbmlsolver/exportdefs.h"
 
 SBMLDocument_t *convertModel (SBMLDocument_t *d1);
 
-SBML_ODESOLVER_API SBMLDocument_t*parseModel(char *file, int printMessage,
-					     int validate);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+  SBML_ODESOLVER_API SBMLDocument_t*parseModel(char *file, int printMessage,
+					       int validate);
 
 #endif
 

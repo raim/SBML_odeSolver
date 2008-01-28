@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-19 15:00:30 raim>
-  $Id: cvodeData.h,v 1.8 2007/09/20 01:16:14 raimc Exp $
+  $Id: cvodeData.h,v 1.9 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -37,6 +37,9 @@
 #ifndef _CVODEDATA_H_
 #define _CVODEDATA_H_
 
+typedef struct cvodeData cvodeData_t ;
+typedef struct cvodeResults cvodeResults_t ;
+
 /* Header Files for CVODE: required only for realtype *p  */
 #include "nvector/nvector_serial.h"
 
@@ -46,10 +49,7 @@
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/odeModel.h"
-
-
-typedef struct cvodeData cvodeData_t ;
-typedef struct cvodeResults cvodeResults_t ;
+#include "sbmlsolver/variableIndex.h"
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel

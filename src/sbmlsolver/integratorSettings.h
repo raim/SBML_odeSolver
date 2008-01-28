@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-19 19:51:10 raim>
-  $Id: integratorSettings.h,v 1.34 2007/09/20 13:55:46 jamescclu Exp $ 
+  $Id: integratorSettings.h,v 1.35 2008/01/28 19:25:27 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -30,22 +30,18 @@
  *     Rainer Machne
  *
  * Contributor(s):
-
  *     
  */
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/interpol.h"
 
 #ifndef _CVODESETTINGS_H_
 #define _CVODESETTINGS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* structures */
+typedef struct timeSettings timeSettings_t;
+typedef struct cvodeSettings cvodeSettings_t;
 
-  /* structures */
-  typedef struct timeSettings timeSettings_t;
-  typedef struct cvodeSettings cvodeSettings_t;
+#include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/interpol.h"
   
   /** Settings for CVODE Integration
 
@@ -147,6 +143,10 @@ extern "C" {
     double tend;
     int nout;
   } ;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   /* functions */
   /* ??might be implented?? */

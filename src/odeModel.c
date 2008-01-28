@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-11-30 17:04:46 raim>
-  $Id: odeModel.c,v 1.92 2007/11/30 16:06:09 raimc Exp $ 
+  $Id: odeModel.c,v 1.93 2008/01/28 19:25:26 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -725,6 +725,10 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignment, nass, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
+/*   /\* compiled equations *\/ */
+/*   ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL); */
+/*   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL); */
+/*   ASSIGN_NEW_MEMORY_BLOCK(om->algebraiccode, nalg, directCode_t *, NULL); */
 
   om->neq    = neq;
   om->nconst = nconst;
@@ -933,6 +937,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   for ( i=0; i<om->neq; i++ )
     ASTNode_free(om->ode[i]);
   free(om->ode);
+
+  /* free compiled ODEs */
+/*   for ( i=0; i<om->neq; i++ ) */
+/*     destructFunction(om->odecode[i]); */
+/*   free(om->odecode); */
   
   /* free assignments */
   for ( i=0; i<om->nass; i++ )

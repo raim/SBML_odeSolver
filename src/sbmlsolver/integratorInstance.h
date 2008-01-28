@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-12-06 19:46:51 raim>
-  $Id: integratorInstance.h,v 1.37 2007/12/06 19:08:04 raimc Exp $ 
+  $Id: integratorInstance.h,v 1.38 2008/01/28 19:25:27 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -37,24 +37,19 @@
 #define _INTEGRATORINSTANCE_H_
 
 #include <time.h>
-/* Header Files for CVODE */
 #include "nvector/nvector_serial.h"
+
+typedef struct cvodeSolver cvodeSolver_t;
+typedef struct integratorInstance integratorInstance_t ;
 
 #include "sbmlsolver/exportdefs.h"
 #include "sbmlsolver/integratorSettings.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/cvodeData.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-  typedef struct cvodeSolver cvodeSolver_t;
-  typedef struct integratorInstance integratorInstance_t ;
-
-  /** Solver State Information */
-  struct cvodeSolver
-  {
+/** Solver State Information */
+struct cvodeSolver
+{
     double t0;        /**< initial time of last solver initialization */
     double t;         /**< current time of the integrator */
     double tout;      /**< next time of the integrator */
@@ -82,11 +77,11 @@ extern "C" {
     N_Vector abstolA, abstolQA; 
     N_Vector qA;
 
-  };
+};
 
 
-  /** the main structure for numerical integration */
-  struct integratorInstance
+/** the main structure for numerical integration */
+struct integratorInstance
   {
     /** implies that the 'data' field state is consistant with the
 	'solver' field */ 
@@ -137,10 +132,14 @@ extern "C" {
     /** indicates that events should be processed at the end of
 	this time step */
     int processEvents;
-  };
+};
   
-  /* common to all solvers */
-  SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* common to all solvers */
+    SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);

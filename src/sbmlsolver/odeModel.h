@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-25 17:20:17 raim>
-  $Id: odeModel.h,v 1.40 2007/09/27 14:37:01 raimc Exp $ 
+  $Id: odeModel.h,v 1.41 2008/01/28 19:25:27 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -36,31 +36,24 @@
 #ifndef _ODEMODEL_H_
 #define _ODEMODEL_H_
 
-#include <cvodes/cvodes.h>
-#include <cvodes/cvodes_dense.h>
-
-#include <sbml/SBMLTypes.h>
-
-
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/interpol.h"
-#include "sbmlsolver/compiler.h"
-#include "sbmlsolver/integratorSettings.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-  typedef struct odeModel odeModel_t;
-  typedef struct odeSense odeSense_t;
-  typedef struct objFunc objFunc_t;
-  typedef struct variableIndex variableIndex_t;
-  typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
+typedef struct odeModel odeModel_t;
+typedef struct odeSense odeSense_t;
+typedef struct objFunc objFunc_t;
+typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 					    pointer with void pointer
 					    because of dependency
 					    problems */
 
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_dense.h>
+#include <sbml/SBMLTypes.h>
+
+#include "sbmlsolver/exportdefs.h"
+#include "sbmlsolver/interpol.h"
+#include "sbmlsolver/integratorSettings.h"
+#include "sbmlsolver/compiler.h"
+#include "sbmlsolver/arithmeticCompiler.h"
+#include "sbmlsolver/variableIndex.h"
 
   /** The internal ODE Model as constructed in odeModel.c from an SBML
       input file, that only contains rate rules (constructed from
@@ -94,16 +87,21 @@ extern "C" {
     /** Assigned variables: stores species, compartments and parameters,
 	that are set by an assignment rule */
     ASTNode_t **assignment;
+    directCode_t **assignmentcode;
 
     /** Algebraic Rules (constraints) as used for DAE systems */
     ASTNode_t **algebraic;
+    directCode_t **algebraiccode;
   
     /** The Ordinary Differential Equation System (ODE)s: f(x,p,t) = dx/dt */
     ASTNode_t **ode; 
+    directCode_t **odecode;
 
     /** The jacobian matrix df(x)/dx of the ODE system 
 	neq x neq */
     ASTNode_t ***jacob;
+    directCode_t ***jacobcode;
+
     /** was the jacobian matrix constructed ? */
     int jacobian;
     /** flag indicating that jacobian matrix construction had failed for
@@ -243,6 +241,10 @@ extern "C" {
 				      objective function */
  
   };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *);
   SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *);

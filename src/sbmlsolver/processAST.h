@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-27 21:16:45 raim>
-  $Id: processAST.h,v 1.19 2007/09/27 20:03:07 raimc Exp $
+  $Id: processAST.h,v 1.20 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -52,7 +52,6 @@
 #define child(x,y)  ASTNode_getChild(x,y)
 #define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
 #define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
-
 
 #ifdef __cplusplus
 extern "C" {

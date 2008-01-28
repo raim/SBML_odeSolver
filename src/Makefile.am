@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.27 2007/09/20 01:16:12 raimc Exp $
+# $Id: Makefile.am,v 1.28 2008/01/28 19:25:26 stefan_tbi Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -46,6 +46,7 @@ AM_CXXFLAGS = @FPIC@
 lib_LIBRARIES = libODES.a
 
 libODES_a_SOURCES = ASTIndexNameNode.cpp \
+                    arithmeticCompiler.c \
                     charBuffer.cpp \
                     compiler.c \
                     cvodeData.c \
@@ -67,6 +68,7 @@ libODES_a_SOURCES = ASTIndexNameNode.cpp \
                     solverError.c \
                     util.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
+                     sbmlsolver/arithmeticCompiler.h \
                      sbmlsolver/charBuffer.h \
                      sbmlsolver/compiler.h \
                      sbmlsolver/config.h \

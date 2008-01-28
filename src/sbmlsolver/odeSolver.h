@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-25 17:21:14 raim>
-  $Id: odeSolver.h,v 1.24 2007/11/30 16:21:42 stefan_tbi Exp $
+  $Id: odeSolver.h,v 1.25 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -36,11 +36,12 @@
 #ifndef _ODESOLVER_H_
 #define _ODESOLVER_H_
 
+typedef struct varySettings varySettings_t;
+
 /* libSBML header files */
-#include<sbml/SBMLTypes.h>
+#include <sbml/SBMLTypes.h>
 
 /* own header files */
-
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/sbml.h"
 #include "sbmlsolver/modelSimplify.h"
@@ -60,11 +61,6 @@
 #include "sbmlsolver/odeModel.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-  typedef struct varySettings varySettings_t;
   /** Settings for batch integration with parameter variation */
   struct varySettings {
     int nrdesignpoints; /**< defines how many design points are set*/
@@ -76,6 +72,10 @@ extern "C" {
 			     varied */
     double **params;    /**< two dimensional array for parameter values */
   };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API SBMLResultsMatrix_t *SBML_odeSolverBatch(SBMLDocument_t *, cvodeSettings_t *, varySettings_t *);

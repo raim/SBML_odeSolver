@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-12-06 19:37:51 raim>
-  $Id: solverError.h,v 1.29 2007/12/06 19:08:04 raimc Exp $ 
+  $Id: solverError.h,v 1.30 2008/01/28 19:25:27 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -38,18 +38,18 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+
 #include "sbmlsolver/exportdefs.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef enum errorCode errorCode_t;
+typedef enum errorType errorType_t;
 
   /** error codes.
       codes < 0 reserved for CVODE\n
       codes 0 throu 99999 reserved for LibSBML\n
       codes 0 throu 9999 libSBML, XML layer\n
       codes 10000 throu 99999 libSBML, SBML Errors\n */
-  typedef enum errorCode
+  enum errorCode
     {
 
       /** 10XXXX - conversion to ode model failures in odeConstruct.c */
@@ -145,17 +145,17 @@ extern "C" {
       SOLVER_ERROR_ATTEMPTING_TO_COPY_VARIABLE_STATE_BETWEEN_INSTANCES_OF_DIFFERENT_MODELS = 140001,
       SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME = 140002
 
-    } errorCode_t;
+    } ;
 
   /** error types */
-  typedef enum errorType
+  enum errorType
     {
       FATAL_ERROR_TYPE = 0,
       ERROR_ERROR_TYPE = 1,
       WARNING_ERROR_TYPE = 2,
       NUMBER_OF_ERROR_TYPES = 3,
       MESSAGE_ERROR_TYPE = 4
-    } errorType_t;
+    } ;
 
 #define RETURN_ON_ERRORS_WITH(x)				\
   {if (SolverError_getNum(ERROR_ERROR_TYPE) ||			\
@@ -172,6 +172,9 @@ extern "C" {
   ASSIGN_NEW_MEMORY_BLOCK(_ref, 1, _type, _return)
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
   /* get number of stored errors  of given type */
   SBML_ODESOLVER_API int SolverError_getNum(errorType_t); 

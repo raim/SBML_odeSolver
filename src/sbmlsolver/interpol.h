@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-07 13:05:00 raim>
-  $Id: interpol.h,v 1.5 2007/09/07 18:15:32 raimc Exp $
+  $Id: interpol.h,v 1.6 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -30,20 +30,16 @@
  *     Stefan Müller
  *
  * Contributor(s):
-
  *     
  */
-#include "sbmlsolver/exportdefs.h"
 
 #ifndef _INTERPOL_H_
 #define _INTERPOL_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct ts time_series_t;
 
   /** Stores Interpolation Data */
-  typedef struct ts {
+  struct ts {
     int    n_var;   /**< number of variables in the list */
     char   **var;   /**< list of variables */
 
@@ -59,7 +55,7 @@ extern "C" {
 
     char   **mess;  /**< list of warning messages */
     int    *warn;   /**< number of warnings */
-  } time_series_t;
+  } ;
 
 
   int read_header_line(char *file, int n_var, char **var,
@@ -85,10 +81,6 @@ extern "C" {
   int  bisection(int n, double *x, double x_);
   void hunt(int n, double *x, double x_, int *low);
   
-#ifdef __cplusplus
-}
-#endif
-
 #endif
 
 /* end of file */

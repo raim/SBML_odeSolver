@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 19:04:45 raim>
-  $Id: nullSolver.h,v 1.1 2005/11/04 19:31:44 raimc Exp $
+  $Id: nullSolver.h,v 1.2 2008/01/28 19:25:27 stefan_tbi Exp $
 */
 /* 
  *
@@ -46,14 +46,14 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInstance_t *, FILE *f);
 
-  /* internal functions that are not part of the API (yet?) */
-  int IntegratorInstance_createKINSolverStructures(integratorInstance_t *);
-  void IntegratorInstance_freeKINSolverStructures(integratorInstance_t *);
-  
 #ifdef __cplusplus
 }
 #endif
 
+/* internal functions that are not part of the API (yet?) */
+int IntegratorInstance_createKINSolverStructures(integratorInstance_t *);
+void IntegratorInstance_freeKINSolverStructures(integratorInstance_t *);
+  
 #endif
 
 /* End of file */

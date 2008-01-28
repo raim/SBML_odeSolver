@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-09-20 03:10:44 raim>
-  $Id: variableIndex.h,v 1.10 2007/09/20 01:16:14 raimc Exp $ 
+  $Id: variableIndex.h,v 1.11 2008/01/28 19:25:27 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -36,14 +36,17 @@
 #ifndef _VARIABLEINDEX_H_
 #define _VARIABLEINDEX_H_
 
+typedef enum variableType variableType_t; 
+typedef struct variableIndex variableIndex_t;
+
 /** variable types */
-typedef enum variableType
+enum variableType
   {
     ODE_VARIABLE,
     ASSIGNMENT_VARIABLE,
     CONSTANT,
     ALGEBRAIC_VARIABLE
-  } variableType_t; 	 
+  } ; 	 
 
 /** The variableIndex is the main interface to model
     variables and constants.
