@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-18 17:00:16 raim>
-  $Id: processAST.c,v 1.54 2007/10/18 15:05:22 raimc Exp $
+  Last changed Time-stamp: <2008-01-30 14:47:45 raim>
+  $Id: processAST.c,v 1.55 2008/01/30 13:48:27 raimc Exp $
 */
 /* 
  *
@@ -1504,13 +1504,17 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       /** f(x)=root(a(x),b(x)) = a(x)^(1/b(x))  \n
 	  replace and differentiate */
       helper = ASTNode_create();
+      /* a ^ . */
       ASTNode_setType (helper, AST_FUNCTION_POWER);
       ASTNode_addChild(helper, copyAST(ASTNode_getChild(f,0)));
-      ASTNode_addChild(helper, ASTNode_create());
+      ASTNode_addChild(helper, ASTNode_create());      
+      /* a ^ . / . */     
       help_1 = ASTNode_getChild(helper, 1);
       ASTNode_setType (help_1, AST_DIVIDE);
       ASTNode_addChild(help_1, ASTNode_create());
-      ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f,1)));
+      /* a ^ . / b */     
+      ASTNode_addChild(help_1, copyAST(ASTNode_getChild(f,1)));      
+      /* a ^ 1 / b */     
       help_2 = ASTNode_getChild(help_1, 0);
       ASTNode_setReal (help_2, 1.0);
 
@@ -2556,7 +2560,7 @@ void generateMacros(charBuffer_t *buffer)
 		    "#define MyLog(x,y) (log10(y)/log10(x))\n"\
 		    "#define piecewise(x, y, z) ((x) ? (y) : (z))\n"\
 		    /*!!! account for odd root degrees of negative values!*/
-		    "#define root(x, y) pow(y, 1.0 / (x))\n"\ 
+		    "#define root(x, y) pow(y, 1.0 / (x))\n"\
 		    "#define sec(x) (1.0/cos(x))\n"\
 		    "#define sech(x) (1.0/cosh(x))\n"\
 		    "#define acosh(x) (log((x) + (sqrt((x) - 1.0) * sqrt((x) + 1.0))))\n"\
