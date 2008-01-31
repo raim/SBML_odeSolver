@@ -67,7 +67,7 @@ typedef struct {
 	int codePosition, FPUstackPosition, storagePosition;
 	unsigned char *prog;
 	double *FPUstack, *storage;
-	double (*evaluate)(void);
+	double (*evaluate)(cvodeData_t*);
 } directCode;
 
 /* initializes the basic parameters and allocated the memory */
@@ -106,7 +106,7 @@ void addByte (directCode *code, unsigned char byte) {
 	code->prog[code->codePosition++] = byte;
 	}
 
-/* adds an code word of the code->codeSize of an integer (addresses or integers) to the code */
+/* adds an integer to the code */
 void addInt (directCode *c, int number) {
 	unsigned int num;
 	num = number;
@@ -116,22 +116,29 @@ void addInt (directCode *c, int number) {
 	addByte(c,num%256);
 	}
 
+/* adds an adress to the code */
+void addAddress (directCode *c, long long addy) {
+	int i, addressLength = sizeof(void (*)());
+	
+	for(i = 0 ; i < addressLength ; i++) {
+		addByte(c,addy%256);
+		addy /= 256;
+		}
+	}
+
 /* adds the parameter to the CPU stack, computes the necessary jump parameters for a function call and adds a call to the code */
-void callMathFunction (directCode *c, unsigned int fun) {
-	unsigned int num;
+void callMathFunction (directCode *c, long long fun) {
 	addByte(c,0x83); addByte(c,0xec); addByte(c,0x08); /* SUB ESP 8 (parameter) */
 	addByte(c,0xdd); addByte(c,0x1c); addByte(c,0x24); /* load parameter 1 */
-	num = fun - ((unsigned int)c->prog + c->codePosition + 5);
-	addByte(c, 0xe8); addInt(c, num); /* CALL */
+	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
+	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
 	addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter) */
 	}
 
 /* computes the necessary jump parameters for a function call and adds a call to the code */
-void callFunction (directCode *code, unsigned int fun) {
-	unsigned int num;
-	num = fun - ((unsigned int)code->prog + code->codePosition + 5);
-	addByte(code, 0xe8); /* CALL */
-	addInt(code, num);
+void callFunction (directCode *c, long long fun) {
+	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
+	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
 	}
 
 /* adds an element of the FPU stack to the external stack */
@@ -139,7 +146,7 @@ void pushStorage (directCode *c) {
 	if(c->FPUstackPosition >= c->FPUstackSize)
 		printf("code->FPUstack overflow\n");
 	ass_FSTP_mem
-	addInt(c, (int)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
+	addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
 	}
 
 /* pops an element from the external stack into the FPU stack */
@@ -147,7 +154,7 @@ void popAddress (directCode *code) {
 	if(code->FPUstackPosition <= 0)
 		printf("code->FPUstack underflow\n");
 //	addByte(c,0xdd); addByte(c,0x05); /* FLD */
-	addInt(code, (int)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
+	addAddress(code, (long long)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
 	}
 
 /* saves a constant in the code->storage an adds the address to the code */
@@ -155,7 +162,7 @@ void addConstant (directCode *code, double value) {
 	if(code->storagePosition >= code->storageSize)
 		printf("code->storage overflow\n");
 	code->storage[code->storagePosition] = value;
-	addInt(code, (int)&code->storage[code->storagePosition++]);
+	addAddress(code, (long long)&code->storage[code->storagePosition++]);
 	}
 
 /* extern function for the case AST_NAME */
@@ -221,6 +228,10 @@ double getAST_Name(ASTNode_t *n, cvodeData_t *data) {
 	return result;
 	}
 
+double getAST_Name_Time(cvodeData_t *data) {
+	return data->currenttime;
+	}
+
 /* some mathematical functions */
 static double aCosh(double x) {
 	return log(x + (sqrt(x - 1) * sqrt(x + 1)));
@@ -254,9 +265,10 @@ static double factorial(double x) {
 	}
 
 /* generates the code from the abstract syntax tree */
-void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
+void generate (directCode *c, ASTNode_t *AST) {
 	
-	int i, childnum, save;
+	int i, childnum;
+	long long save;
 	double st;
 	ASTNodeType_t type;
 	type = ASTNode_getType(AST);
@@ -276,17 +288,20 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			addConstant(c,st);
 			break;
 		case AST_NAME:
-			addByte(c,0x68); addInt(c,(unsigned int)data); /* PUSH data */
-			addByte(c,0x68); addInt(c,(unsigned int)AST); /* PUSH AST */
-			callFunction(c,(unsigned int)getAST_Name);
+			addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
+			addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
+			addByte(c,0x68); addAddress(c,(long long)AST); /* PUSH AST */
+			callFunction(c,(long long)getAST_Name);
 			addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter)  // delete parameter from the stack */
 			break;
 		case AST_FUNCTION_DELAY: /* not implemented */
 			ass_FLDZ
 			break;
 		case AST_NAME_TIME:
-			ass_FLD_mem
-			addInt(c,(int)&data->currenttime);
+			addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
+			addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
+			callFunction(c,(long long)getAST_Name_Time);
+			addByte(c,0x83); addByte(c,0xc4); addByte(c,0x04); /* ADD ESP 4 (parameter)  // delete parameter from the stack */
 			break;
 
 		case AST_CONSTANT_E:
@@ -311,68 +326,68 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			break;
 
 		case AST_PLUS: /* add values */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				if(analyseFPU(child(AST,i)) >= 8) {
 					pushStorage(c); /* save old result */
-					generate(c,child(AST,i), data);
+					generate(c,child(AST,i));
 					ass_FADD_mem popAddress(c); /* reload old result and add */
 					} else {
-					generate(c,child(AST,i), data);
+					generate(c,child(AST,i));
 					ass_FADDP_st(1)
 					}
 				}
 			break;
 		case AST_MINUS: /* sub values */
 		    if ( childnum<2 ) {
-				generate(c,child(AST,0), data);
+				generate(c,child(AST,0));
 				ass_FCHS
 				} else {
-				generate(c,child(AST,0), data);
+				generate(c,child(AST,0));
 				if(analyseFPU(child(AST,1)) >= 8) {
 					pushStorage(c); /* save old result */
-					generate(c,child(AST,1), data);
+					generate(c,child(AST,1));
 					ass_FSUBR_mem popAddress(c); /* reload old result and subtract */
 					} else {
-					generate(c,child(AST,1), data);
+					generate(c,child(AST,1));
 					ass_FSUBP_st(1)
 					}
 				}
 			break;
 		case AST_TIMES: /* mult values */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				if(analyseFPU(child(AST,i)) >= 8) {
 					pushStorage(c); /* save old result */
-					generate(c,child(AST,i), data);
+					generate(c,child(AST,i));
 					ass_FMUL_mem popAddress(c); /* reload old result and mult */
 					} else {
-					generate(c,child(AST,i), data);
+					generate(c,child(AST,i));
 					ass_FMULP_st(1)
 					}
 				}
 			break;
 		case AST_DIVIDE: /* divide values */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			if(analyseFPU(child(AST,1)) >= 8) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,1), data);
+				generate(c,child(AST,1));
 				ass_FDIVR_mem popAddress(c); /* reload old result and divide */
 				} else {
-				generate(c,child(AST,1), data);
+				generate(c,child(AST,1));
 				ass_FDIVP_st(1)
 				}
 			break;
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			if(analyseFPU(child(AST,1)) >= 8) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,1), data);
+				generate(c,child(AST,1));
 				ass_FLD1
 				ass_FLD_mem popAddress(c); /* load value 1 */
 				} else {
-				generate(c,child(AST,1), data);
+				generate(c,child(AST,1));
 				ass_FXCH_st(1)
 				ass_FLD1
 				ass_FXCH_st(1)
@@ -399,26 +414,26 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 				}
 				else
 				{
-				save = (int)&c->FPUstack[c->FPUstackPosition];
+				save = (long long)&c->FPUstack[c->FPUstackPosition];
 				for (i = 0 ; i < childnum ; i++) { /* compute parameters and store them on the external stack */
-					generate(c,child(AST,i), data);
+					generate(c,child(AST,i));
 					ass_FSTP_mem
-					addInt(c,(int)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
+					addInt(c,(long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
 					}
-				addByte(c,0x68); addInt(c,save); /* PUSH array pointer */
+				addByte(c,0x68); addAddress(c,save); /* PUSH array pointer */
 				addByte(c,0x68); addInt(c,childnum); /* PUSH childnum */
-				addByte(c,0x68); addInt(c,(int)(char *)ASTNode_getName(AST)); /* PUSH name */
-				callFunction(c,(unsigned int)UsrDefFunc);
+				addByte(c,0x68); addAddress(c,(long long)(char *)ASTNode_getName(AST)); /* PUSH name */
+				callFunction(c,(long long)UsrDefFunc);
 				addByte(c,0x83); addByte(c,0xc4); addByte(c,0x0c); /* ADD ESP 12 (parameter) */
 				c->FPUstackPosition -= childnum;
 				}
 			break;
 		case AST_FUNCTION_ABS: /* absolut value */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FABS
 			break;
 		case AST_FUNCTION_ARCCOS: /* arccos = pi/2.0 - arcsin  = pi/2.0 - arctan(value / sqrt(1.0-value^2)) */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD_st(0)
 			ass_FMUL_st(0)
 			ass_FLD1
@@ -432,11 +447,11 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSUBRP_st(1)
 			break;
 		case AST_FUNCTION_ARCCOSH: /* arccos hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aCosh); /* aCosh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aCosh); /* aCosh */
 			break;
 		case AST_FUNCTION_ARCCOT: /* arccot = pi/2.0 - arctan */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD1
 			ass_FPATAN
 			ass_FLDPI
@@ -446,11 +461,11 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSUBRP_st(1)
 			break;
 		case AST_FUNCTION_ARCCOTH: /* arccot hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aCoth); /* aCoth */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aCoth); /* aCoth */
 			break;
 		case AST_FUNCTION_ARCCSC: /* arccsc = arcsin(1.0/value) */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FMUL_st(0)
 			ass_FLD1
 			ass_FSUBP_st(1)
@@ -460,11 +475,11 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FPATAN
 			break;
 		case AST_FUNCTION_ARCCSCH: /* arccsc hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aCsch); /* aCsch */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aCsch); /* aCsch */
 			break;
 		case AST_FUNCTION_ARCSEC: /* arccsc = arccos(1.0/value) =  pi/2.0 - arcsin(1.0/value) */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FMUL_st(0)
 			ass_FLD1
 			ass_FSUBP_st(1)
@@ -479,11 +494,11 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSUBRP_st(1)
 			break;
 		case AST_FUNCTION_ARCSECH: /* arcsec hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aSech); /* aSech */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aSech); /* aSech */
 			break;
 		case AST_FUNCTION_ARCSIN: /* arcsin */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD_st(0)
 			ass_FMUL_st(0)
 			ass_FLD1
@@ -492,20 +507,20 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FPATAN
 			break;
 		case AST_FUNCTION_ARCSINH: /* arcsin hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aSinh); /* asinh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aSinh); /* asinh */
 			break;
 		case AST_FUNCTION_ARCTAN: /* arctan */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD1
 			ass_FPATAN
 			break;
 		case AST_FUNCTION_ARCTANH: /* arctan hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)aTanh); /* atanh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)aTanh); /* atanh */
 			break;
 		case AST_FUNCTION_CEILING: /* rounds value to next integer */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD_st(0)
 			ass_FRNDINT
 			ass_FXCH_st(1)
@@ -516,38 +531,38 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSTP_st(1)
 			break;
 		case AST_FUNCTION_COS: /* cosinus */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FCOS
 			break;
 		case AST_FUNCTION_COSH: /* cosinus hyperbilic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)cosh); /* cosh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)cosh); /* cosh */
 			break;
 		case AST_FUNCTION_COT: /* cotangens = 1/tan */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FPTAN
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_COTH: /* coth = 1/tanh */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)tanh); /* tanh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)tanh); /* tanh */
 			ass_FLD1
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_CSC: /* cosec = 1/sinus */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FSIN
 			ass_FLD1
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_CSCH: /* csch = 1/sinh */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)sinh); /* sinh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)sinh); /* sinh */
 			ass_FLD1
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_EXP: /* exp( value ) */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLDL2E
 			ass_FMULP_st(1)
 			ass_FLD_st(0)
@@ -561,11 +576,11 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSTP_st(1)
 			break;
 		case AST_FUNCTION_FACTORIAL:
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)factorial); /* factorial */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)factorial); /* factorial */
 			break;
 		case AST_FUNCTION_FLOOR: /* rounds value to next integer */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD_st(0)
 			ass_FRNDINT
 			ass_FXCH_st(1)
@@ -576,13 +591,13 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSTP_st(1)
 			break;
 		case AST_FUNCTION_LN: /* log_e */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLDLN2
 			ass_FXCH_st(1)
 			ass_FYL2X
 			break;
 		case AST_FUNCTION_LOG: /* log_10 */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLDLG2
 			ass_FXCH_st(1)
 			ass_FYL2X
@@ -591,9 +606,9 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FLDZ
 			pushStorage(c); /* save result */
 		    for ( i = 0 ; i < childnum-1 ; i = i + 2) {
-				generate(c,child(AST,i+1), data);
+				generate(c,child(AST,i+1));
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				ass_FLD_mem popAddress(c); /* load value 1 */
 				ass_FLDZ
 				ass_FCOMIP_st(1)
@@ -609,14 +624,14 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			break;
 		/* AST_FUNCTION_POWER see AST_POWER */
 		case AST_FUNCTION_ROOT:
-			generate(c,child(AST,1), data);
+			generate(c,child(AST,1));
 			if(analyseFPU(child(AST,0)) >= 8) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,0), data);
+				generate(c,child(AST,0));
 				ass_FLD1
 				ass_FLD_mem popAddress(c); /* load value 1 */
 				} else {
-				generate(c,child(AST,0), data);
+				generate(c,child(AST,0));
 				ass_FXCH_st(1)
 				ass_FLD1
 				ass_FXCH_st(1)
@@ -634,58 +649,58 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSTP_st(1)
 			break;
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FCOS
 			ass_FLD1
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_SECH: /* sech = 1/cosh */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)cosh); /* cosh */
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)cosh); /* cosh */
 			ass_FLD1
 			ass_FDIVRP_st(1)
 			break;
 		case AST_FUNCTION_SIN: /* sinus */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FSIN
 			break;
 		case AST_FUNCTION_SINH: /* sinus hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)sinh);
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)sinh);
 			break;
 		case AST_FUNCTION_TAN: /* tangens */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FPTAN
 			ass_FFREE_st(0)
 			ass_FINCSTP
 			break;
 
 			case AST_FUNCTION_TANH: /* tangens hyperbolic */
-			generate(c,child(AST,0), data);
-			callMathFunction(c,(unsigned int)tanh);
+			generate(c,child(AST,0));
+			callMathFunction(c,(long long)tanh);
 			break;
 
 /* logical cases depends from 0.0 and 1.0 as initial values */
 		case AST_LOGICAL_AND:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				ass_FMUL_mem popAddress(c); /* reload old result and mult */
 				}
 			break;
 		case AST_LOGICAL_NOT:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD1
 			ass_FSUBRP_st(1)
 			break;
 		case AST_LOGICAL_OR: /* !(AND !values) */
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 			ass_FLD1
 			ass_FSUBRP_st(1)
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				ass_FLD1
 				ass_FSUBRP_st(1)
 				ass_FMUL_mem popAddress(c); /* reload old result and mult */
@@ -694,20 +709,20 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FSUBRP_st(1)
 			break;
 		case AST_LOGICAL_XOR:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result */
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				ass_FLD_mem popAddress(c); /* load value 1 */
 				ass_FSUBP_st(1)
 				ass_FABS
 				}
 			break;
 		case AST_RELATIONAL_EQ:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result to stack*/
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				}
 			ass_FLD1
 			ass_FXCH_st(1)
@@ -726,10 +741,10 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FINCSTP
 			break;
 		case AST_RELATIONAL_GEQ:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result to stack*/
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				}
 			ass_FLD1
 			ass_FXCH_st(1)
@@ -749,10 +764,10 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FINCSTP
 			break;
 		case AST_RELATIONAL_GT:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result to stack*/
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				}
 			ass_FLD1
 			ass_FXCH_st(1)
@@ -772,10 +787,10 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FINCSTP
 			break;
 		case AST_RELATIONAL_LEQ:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result to stack*/
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				}
 			ass_FLD1
 			ass_FXCH_st(1)
@@ -795,10 +810,10 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 			ass_FINCSTP
 			break;
 		case AST_RELATIONAL_LT:
-			generate(c,child(AST,0), data);
+			generate(c,child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				pushStorage(c); /* save old result to stack*/
-				generate(c,child(AST,i), data);
+				generate(c,child(AST,i));
 				}
 			ass_FLD1
 			ass_FXCH_st(1)
@@ -825,7 +840,7 @@ void generate (directCode *c, ASTNode_t *AST, cvodeData_t *data) {
 		}
 	}
 
-/* analyses the abrstract syntax tree according to code and stack size */
+/* analyses the abstract syntax tree according to code and stack size */
 int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
@@ -843,15 +858,15 @@ int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it
 			c->codeSize += 6;
 			return 1;
 		case AST_NAME:
-			c->codeSize += 18;
+			c->codeSize += 13 + sizeof(void (*)());
 			return 8;
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
 			c->codeSize += 2;
 			return 1;
 		case AST_NAME_TIME:
-			c->codeSize += 6;
-			return 1;
+			c->codeSize += 8 + sizeof(void (*)());
+			return 8;
 
 		case AST_CONSTANT_E:
 			c->codeSize += 18;
@@ -923,7 +938,7 @@ int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it
 						save = save1 + i;
 					}
 				c->codeSize += 6*childnum;
-				c->codeSize += 23;
+				c->codeSize += 15 + 3*sizeof(void (*)());
 				}
 			return save;
 		case AST_FUNCTION_ARCSEC: /* arccsc = arccos(1.0/value) =  pi/2.0 - arcsin(1.0/value) */
@@ -1006,7 +1021,7 @@ int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it
 			save = analyse(c,child(AST,0));
 			if(save < 8)
 				save = 8;
-			c->codeSize += 14;
+			c->codeSize += 10 + sizeof(void (*)());
 			return save;
 
 /* logical cases depends from 0.0 and 1.0 as initial values */
@@ -1076,12 +1091,12 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 		case AST_RATIONAL:
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
-		case AST_NAME_TIME:
 		case AST_CONSTANT_FALSE: /* 0.0 */
 		case AST_CONSTANT_PI: /* pi */
 		case AST_CONSTANT_TRUE: /* 1.0 */
 			return 1;
 		case AST_NAME:
+		case AST_NAME_TIME:
 			return 8;
 		case AST_CONSTANT_E:
 			return 2;
@@ -1242,7 +1257,7 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 	}
 
 /* generates the basic elements of the function - CALL THIS FUNCTION TO GENERATE THE FUNCTION */
-void generateFunction(directCode *code, ASTNode_t *AST, cvodeData_t *data) {
+void generateFunction(directCode *code, ASTNode_t *AST) {
 
 	int i;
 	
@@ -1250,7 +1265,7 @@ void generateFunction(directCode *code, ASTNode_t *AST, cvodeData_t *data) {
 
 	addByte(code, 0x55); /* PUSH EBP */
 	addByte(code, 0x89); addByte(code, 0xe5); /* MOV EBP, ESP */
-	generate(code, AST, data);
+	generate(code, AST);
 	addByte(code, 0x5d); /* POP EBP */
 	addByte(code, 0xc3); /* RETN */
 	}

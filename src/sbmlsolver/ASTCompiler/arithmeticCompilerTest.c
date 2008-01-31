@@ -775,8 +775,8 @@ int main (int argc, char **argv) {
 	/* tests */
 	for(i = 0 ; i < num ; i++) {
 		tests[i]();
-		generateFunction(code, &nodes[0], data);
-		x = code->evaluate();
+		generateFunction(code, &nodes[0]);
+		x = code->evaluate(data);
 		destructFunction(code);
 		printf("%s %8.3f\n", string, x);
 		}
