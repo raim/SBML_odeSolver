@@ -117,7 +117,7 @@ void addInt (directCode_t *c, int number) {
 	}
 
 /* adds an adress to the code */
-void addAddress (directCode *c, long long addy) {
+void addAddress (directCode_t *c, long long addy) {
 	int i, addressLength = sizeof(void (*)());
 	
 	for(i = 0 ; i < addressLength ; i++) {
@@ -129,7 +129,7 @@ void addAddress (directCode *c, long long addy) {
 
 
 /* adds the parameter to the CPU stack, computes the necessary jump parameters for a function call and adds a call to the code */
-void callMathFunction (directCode *c, long long fun) {
+void callMathFunction (directCode_t *c, long long fun) {
 	addByte(c,0x83); addByte(c,0xec); addByte(c,0x08); /* SUB ESP 8 (parameter) */
 	addByte(c,0xdd); addByte(c,0x1c); addByte(c,0x24); /* load parameter 1 */
 	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
@@ -138,13 +138,13 @@ void callMathFunction (directCode *c, long long fun) {
 	}
 
 /* computes the necessary jump parameters for a function call and adds a call to the code */
-void callFunction (directCode *c, long long fun) {
+void callFunction (directCode_t *c, long long fun) {
 	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
 	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
 	}
 
 /* adds an element of the FPU stack to the external stack */
-void pushStorage (directCode *c) {
+void pushStorage (directCode_t *c) {
 	if(c->FPUstackPosition >= c->FPUstackSize)
 		printf("code->FPUstack overflow\n");
 	ass_FSTP_mem
@@ -152,7 +152,7 @@ void pushStorage (directCode *c) {
 	}
 
 /* pops an element from the external stack into the FPU stack */
-void popAddress (directCode *code) {
+void popAddress (directCode_t *code) {
 	if(code->FPUstackPosition <= 0)
 		printf("code->FPUstack underflow\n");
 //	addByte(c,0xdd); addByte(c,0x05); /* FLD */
@@ -160,7 +160,7 @@ void popAddress (directCode *code) {
 	}
 
 /* saves a constant in the code->storage an adds the address to the code */
-void addConstant (directCode *code, double value) {
+void addConstant (directCode_t *code, double value) {
 	if(code->storagePosition >= code->storageSize)
 		printf("code->storage overflow\n");
 	code->storage[code->storagePosition] = value;
@@ -267,7 +267,7 @@ static double factorial(double x) {
 	}
 
 /* generates the code from the abstract syntax tree */
-void generate (directCode *c, ASTNode_t *AST) {
+void generate (directCode_t *c, ASTNode_t *AST) {
 	
 	int i, childnum;
 	long long save;
@@ -843,7 +843,7 @@ void generate (directCode *c, ASTNode_t *AST) {
 	}
 
 /* analyses the abstract syntax tree according to code and stack size */
-int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
+int analyse (directCode_t *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
 	double st;
@@ -1259,7 +1259,7 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 	}
 
 /* generates the basic elements of the function - CALL THIS FUNCTION TO GENERATE THE FUNCTION */
-void generateFunction(directCode *code, ASTNode_t *AST) {
+void generateFunction(directCode_t *code, ASTNode_t *AST) {
 
 	int i;
 	

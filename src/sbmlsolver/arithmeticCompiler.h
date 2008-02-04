@@ -12,10 +12,10 @@ struct directCode
     int codePosition, FPUstackPosition, storagePosition;
     unsigned char *prog;
     double *FPUstack, *storage;
-    double (*evaluate)(void);
+    double (*evaluate)(cvodeData_t*);
 } ;
 
-void generateFunction(directCode_t *, ASTNode_t *, cvodeData_t *);
+void generateFunction(directCode_t *, ASTNode_t *);
 void destructFunction(directCode_t *);
 
 #endif /* _ARITHMETICCOMPILER_H_ */
