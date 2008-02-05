@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-02-05 15:42:47 raim>
-  $Id: arithmeticCompiler.c,v 1.4 2008/02/05 14:44:34 raimc Exp $
+  Last changed Time-stamp: <2008-02-05 16:02:23 raim>
+  $Id: arithmeticCompiler.c,v 1.5 2008/02/05 16:19:58 raimc Exp $
 */
 /* 
  *
@@ -35,10 +35,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
-
-/* IN THIS FILE EMULATES THE ENVIRONMENT FOR THE CODE GENERATOR AND MUST BE CHANGED IN THE FRAMEWORK */
 
 #include "sbmlsolver/arithmeticCompiler.h"
 #include "sbmlsolver/processAST.h"
@@ -190,7 +188,7 @@ void pushStorage (directCode_t *c) {
 void popAddress (directCode_t *code) {
 	if(code->FPUstackPosition <= 0)
 		printf("code->FPUstack underflow\n");
-//	addByte(c,0xdd); addByte(c,0x05); /* FLD */
+	/*	addByte(c,0xdd); addByte(c,0x05);  *//* FLD */
 	addAddress(code, (long long)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
 	}
 
@@ -881,7 +879,6 @@ void generate (directCode_t *c, ASTNode_t *AST) {
 int analyse (directCode_t *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
-	double st;
 	ASTNodeType_t type;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
@@ -1116,7 +1113,6 @@ int analyse (directCode_t *c, ASTNode_t *AST) { /* returns the number of places 
 int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
-	double st;
 	ASTNodeType_t type;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
@@ -1296,8 +1292,6 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 /* generates the basic elements of the function - CALL THIS FUNCTION TO GENERATE THE FUNCTION */
 void generateFunction(directCode_t *code, ASTNode_t *AST) {
 
-	int i;
-	
 	initCode(code, AST); /* dynamic allocation of necessary memory */
 
 	addByte(code, 0x55); /* PUSH EBP */
