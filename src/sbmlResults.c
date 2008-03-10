@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-26 19:59:21 raim>
-  $Id: sbmlResults.c,v 1.20 2007/09/27 14:34:27 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 17:40:47 raim>
+  $Id: sbmlResults.c,v 1.21 2008/03/10 19:24:29 raimc Exp $
 */
 /* 
  *
@@ -229,31 +229,27 @@ SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
 
 /*** results matrix as returned by _odeSolverBatch parameter variation ***/
 
-/** Returns the SBMLResults for the jth value of the ith parameter from
-    a parameter variation batch run SBMLResultMatrix
+/** Returns the SBMLResults for the ith designpoint, i.e. 
+    parameter combination, from the a batch run
 */
 
-SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *resM, int i, int j)
+SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *resA, int i)
 {
-  return resM->results[i][j];  
+  return resA->results[i];  
 }
 
 
-/** Frees the SBMLResultMatrix from a parameter variation batch run 
+/** Frees the SBMLResultArray from a parameter variation batch run 
 */
 
-
-SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *resM)
+SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *resA)
 {
-  int i, j;  
-  for ( i=0; i<resM->i; i++ )
-  {
-    for ( j=0; j<resM->j; j++ )
-      SBMLResults_free(resM->results[i][j]);
-    free(resM->results[i]);
-  }
-  free(resM->results);    
-  free(resM);    
+  int i;  
+  for ( i=0; i<resA->size; i++ )
+    SBMLResults_free(resA->results[i]);
+  
+  free(resA->results);    
+  free(resA);    
 }
 
 /** @} */
@@ -310,20 +306,18 @@ SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *tc, int i, int
 
 /**** NON-API FUNCTIONS ****/
 
-SBMLResultsMatrix_t *
-SBMLResultsMatrix_allocate(int nrparams, int nrdesignpoints)
+/* size is numsteps^numparams !! */
+SBMLResultsArray_t *
+SBMLResultsArray_allocate(int size)
 {
-  int i;
-  SBMLResultsMatrix_t *resM;
-  ASSIGN_NEW_MEMORY(resM, struct _SBMLResultsMatrix, NULL);
-  ASSIGN_NEW_MEMORY(resM->results, struct _SBMLResults **, NULL);
-  resM -> i = nrparams;
-  resM -> j = nrdesignpoints;
-  for ( i=0; i<nrparams; i++ )
-    ASSIGN_NEW_MEMORY_BLOCK(resM->results[i], nrdesignpoints,
-			    struct _SBMLResults *, NULL);  
-  return(resM);
+  SBMLResultsArray_t * res;
+  
+  ASSIGN_NEW_MEMORY(res, struct _SBMLResultsArray, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(res->results, size, struct _SBMLResults *, NULL);
+  res->size = size;
+  return(res);
 }
+
 
 /* The function SBMLResults SBMLResults_create(Model_t *m, int timepoints)
    allocates memory for simulation results (time courses) mapped back

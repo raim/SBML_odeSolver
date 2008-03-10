@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-24 15:58:46 raim>
-  $Id: batch_integrate.c,v 1.21 2007/10/26 12:48:55 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 20:13:28 raim>
+  $Id: batch_integrate.c,v 1.22 2008/03/10 19:24:29 raimc Exp $
 */
 /* 
  *
@@ -42,10 +42,12 @@
 int
 main (int argc, char *argv[]){
   int i, j;
-  char *model, *parameter, *reaction;
-  double start, end, steps;
+  char *model, *parameter1, *parameter2, *reaction2;
+  double start1, end1, steps1;
+  double start2, end2, steps2;
   double time ;
   double printstep;
+  double values[2];
 
   /* libSBML types */
   SBMLDocument_t *d;
@@ -54,15 +56,16 @@ main (int argc, char *argv[]){
   /* SOSlib types */
   cvodeSettings_t *set;
   varySettings_t *vs;
-  SBMLResultsMatrix_t *resM;
+  SBMLResultsArray_t *resM;
   SBMLResults_t *results;
  
   /* parsing command-line arguments */
   if (argc < 8 ) {
     fprintf(stderr,
 	    "usage %s sbml-model-file simulation-time time-steps"
-	    " start-value end-value step-number parameter-id"
-	    " [optional reaction-id]\n",
+	    " start-value1 end-value1 step-number1 parameter-id1"
+	    " start-value2 end-value2 step-number2 parameter-id2"
+	    " [optional reaction-id for param2]\n",
             argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -70,20 +73,27 @@ main (int argc, char *argv[]){
   time = atof(argv[2]);
   printstep = atoi(argv[3]);
   
-  parameter = argv[7];
-  start = atof(argv[4]);
-  end = atof(argv[5]);
-  steps = atoi(argv[6]);
+  start1 = atof(argv[4]);
+  end1 = atof(argv[5]);
+  steps1 = atoi(argv[6]);
+  parameter1 = argv[7];
+   
+
+  printf("### Varying parameter %s from %f to %f in %f steps\n",
+	 parameter1, start1, end1, steps1);
+
+  start2 = atof(argv[8]);
+  end2 = atof(argv[9]);
+  steps2 = atoi(argv[10]);
+  parameter2 = argv[11];
   
-  if ( argc > 8 ) {
-      reaction = argv[8];
-  }
-  else{
-    reaction = NULL;
-  }
+  if ( argc > 12 ) 
+    reaction2 = argv[12];
+  else
+    reaction2 = NULL;
   
   printf("### Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
-	 parameter, reaction, start, end, steps);
+	 parameter2, reaction2, start2, end2, steps2);
   
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
@@ -99,9 +109,22 @@ main (int argc, char *argv[]){
   CvodeSettings_setHaltOnSteadyState(set, 1); 
 
   /* Setting SBML Ode Solver batch integration parameters */
-  vs = VarySettings_allocate(1, steps+1);
-  VarySettings_addParameter(vs, parameter, reaction, start, end);
+  vs = VarySettings_allocate(2, steps1*steps2);
+  
+  VarySettings_addParameter(vs, parameter1, NULL);
+  VarySettings_addParameter(vs, parameter2, reaction2);
+
+  for ( i=0; i<steps1; i++ )
+  {
+    values[0] = start1 + i*(end1-start1)/steps1;
+    for ( j=0; j<steps2; j++ )
+    {
+      values[1] = start2 + j*(end2-start2)/steps2;
+      VarySettings_addDesignPoint(vs, values);    
+    }
+  }
   VarySettings_dump(vs);
+
 
   /* calling the SBML ODE Solver Batch function,
      and retrieving SBMLResults */
@@ -116,24 +139,28 @@ main (int argc, char *argv[]){
     VarySettings_free(vs);
     return(0);
   }
-    /* we don't need these anymore */
+  
+  /* we don't need these anymore */
   CvodeSettings_free(set);  
   SBMLDocument_free(d);
-  VarySettings_free(vs);
 
-  results = resM->results[0][0];
-
-  for ( i=0; i<resM->i; i++ ) {
-    for ( j=0; j<resM->j; j++ ) {
-      results = SBMLResultsMatrix_getResults(resM, i, j);
-      printf("### RESULTS Parameter %d, Step %d \n", i+1, j+1);
-      /* printing results only for species*/
-      SBMLResults_dumpSpecies(results);
-    }
+  for ( i=0; i<resM->size; i++ )
+  {
+    results = SBMLResultsArray_getResults(resM, i);
+    printf("### Parameters: "); 
+    for ( j=0; j<2; j++ )
+      printf("%s=%f, ",
+	     VarySettings_getName(vs, j),
+	     VarySettings_getValue(vs, i, j));
+    printf("\n");
+    /* printing results only for species*/
+    SBMLResults_dumpSpecies(results);
+    printf("\n");
   }
-
+  
   /* SolverError_dumpAndClearErrors(); */
-  SBMLResultsMatrix_free(resM);
+  SBMLResultsArray_free(resM);
+  VarySettings_free(vs);
   return (EXIT_SUCCESS);  
 }
 

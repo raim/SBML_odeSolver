@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-25 17:21:14 raim>
-  $Id: odeSolver.h,v 1.25 2008/01/28 19:25:27 stefan_tbi Exp $
+  Last changed Time-stamp: <2008-03-10 20:07:56 raim>
+  $Id: odeSolver.h,v 1.26 2008/03/10 19:24:30 raimc Exp $
 */
 /* 
  *
@@ -65,42 +65,44 @@ typedef struct varySettings varySettings_t;
   struct varySettings {
     int nrdesignpoints; /**< defines how many design points are set*/
     int nrparams;       /**< defines the number of parameters to be varied */
-    int cnt_params;     /**< counts the number of parameters to be varied */
     char **id;          /**< array of SBML ID of the species, compartment
 			     or parameter to be varied */
     char **rid;         /**< SBML Reaction ID, if a local parameter is to be
 			     varied */
     double **params;    /**< two dimensional array for parameter values */
+
+    /* just used during construction */
+    int cnt_params;     /**< counts the number of parameters added */
+    int cnt_points;     /**< counts the number of designpoints filled */
   };
+
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
   SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *, cvodeSettings_t *);
-  SBML_ODESOLVER_API SBMLResultsMatrix_t *SBML_odeSolverBatch(SBMLDocument_t *, cvodeSettings_t *, varySettings_t *);
+  SBML_ODESOLVER_API SBMLResultsArray_t *SBML_odeSolverBatch(SBMLDocument_t *, cvodeSettings_t *, varySettings_t *);
   SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *, cvodeSettings_t *);
-  SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatch(Model_t *, cvodeSettings_t *, varySettings_t *);
-  SBML_ODESOLVER_API SBMLResultsMatrix_t *Model_odeSolverBatchFull(Model_t *, cvodeSettings_t *, varySettings_t *);
+  SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *, cvodeSettings_t *, varySettings_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *, integratorInstance_t *);
 
   /* settings for parameter variation batch runs */
   SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints);
-  SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *id, char *rid, double start, double end);
-  SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *, int i, char *id, char *rid);
-  SBML_ODESOLVER_API void VarySettings_setValue(varySettings_t *, int i, int j, double value);
-
-  SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *, int i, int j);
-  SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *, int i);
-  SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, int i);
+  SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *, double *);
+  SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *, char *);
+  SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *, int, char *, char *);
+  SBML_ODESOLVER_API int VarySettings_setValue(varySettings_t *, int, int, double);
+  SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *, int, int);
+  SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *, int, char *, char*, double);
+  SBML_ODESOLVER_API double VarySettings_getValueID(varySettings_t *, int, char *, char*);
+  SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *, int);
+  SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *, int);
 
   SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
   SBML_ODESOLVER_API void VarySettings_free();
 
-
-/* not part of official API */
-int VarySettings_addParameterSet(varySettings_t *,
-				 double **designpoints, char **id, char **rid);
 
  
 #ifdef __cplusplus

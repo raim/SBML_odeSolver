@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-06-12 11:53:02 raim>
-  $Id: sbmlResults.h,v 1.12 2008/01/28 19:25:27 stefan_tbi Exp $
+  Last changed Time-stamp: <2008-03-10 17:26:45 raim>
+  $Id: sbmlResults.h,v 1.13 2008/03/10 19:24:30 raimc Exp $
 */
 /* 
  *
@@ -42,6 +42,7 @@ typedef struct timeCourse timeCourse_t ;
 typedef struct timeCourseArray timeCourseArray_t ;
 typedef struct _SBMLResults SBMLResults_t;
 typedef struct _SBMLResultsMatrix SBMLResultsMatrix_t;
+typedef struct _SBMLResultsArray SBMLResultsArray_t;
 
 
   /** A simple structure containing a variable name,
@@ -66,8 +67,8 @@ typedef struct _SBMLResultsMatrix SBMLResultsMatrix_t;
       SBML structures, such as species, non-constant compartments
       and parameters and reaction fluxes.
   */
-  struct _SBMLResults {
-
+  struct _SBMLResults
+  {
     timeCourse_t *time;                /**< the time points */
 
     /* concentration and variable parameter and compartment time series */
@@ -87,11 +88,18 @@ typedef struct _SBMLResultsMatrix SBMLResultsMatrix_t;
 
   /** A matrix of _SBMLResults used for batch integration with
       parameter variation via varySettings */
-  struct _SBMLResultsMatrix {
+  struct _SBMLResultsMatrix
+  {
     SBMLResults_t ***results;
     int i;
     int j;
   } ;
+
+  struct _SBMLResultsArray
+  {
+    SBMLResults_t ** results;
+    int size; /* numsteps^numparams */
+  }; 
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,6 +125,8 @@ extern "C" {
   SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
+  SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *);
+  SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *, int i);
 
  
 #ifdef __cplusplus
@@ -126,7 +136,7 @@ extern "C" {
 /* not part of the API */
 SBMLResults_t *SBMLResults_create(Model_t *, int timepoints);
 SBMLResultsMatrix_t *SBMLResultsMatrix_allocate(int values, int timepoints);
-
+SBMLResultsArray_t *SBMLResultsArray_allocate(int size);
 #endif
 
 /* End of file */
