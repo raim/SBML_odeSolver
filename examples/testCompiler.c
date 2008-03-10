@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-05-16 22:06:03 raim>
-  $Id: testCompiler.c,v 1.6 2007/06/18 17:20:43 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 16:35:43 raim>
+  $Id: testCompiler.c,v 1.7 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,6 @@
  * Contributor(s):
  */
 #include <stdio.h>
-#include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -104,6 +103,7 @@ int doit(int argc, char *argv[])
   CvodeSettings_setMxstep(settings, maximumIntegrationSteps);     
   CvodeSettings_setJacobian(settings, 1);
   CvodeSettings_setStoreResults(settings, 0);
+  CvodeSettings_setSensitivity(settings, 1);
 
   if (sensi)
   {

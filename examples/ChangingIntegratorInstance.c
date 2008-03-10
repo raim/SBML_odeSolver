@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 15:04:54 raim>
-  $Id: ChangingIntegratorInstance.c,v 1.13 2006/04/19 13:10:56 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 16:36:58 raim>
+  $Id: ChangingIntegratorInstance.c,v 1.14 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -34,7 +34,6 @@
  */
 
 #include <stdio.h>
-#include <malloc.h>
 
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/integratorInstance.h"

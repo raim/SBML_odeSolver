@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-03 11:03:20 raim>
-  $Id: ChangingParameterIntegrator.c,v 1.7 2006/03/09 17:23:49 afinney Exp $
+  Last changed Time-stamp: <2008-03-10 16:37:28 raim>
+  $Id: ChangingParameterIntegrator.c,v 1.8 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,6 @@
  * Contributor(s):
  */
 #include <stdio.h>
-#include <malloc.h>
 
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/solverError.h"

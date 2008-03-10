@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-13 15:21:45 raim>
-  $Id: Sense.c,v 1.4 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 16:38:11 raim>
+  $Id: Sense.c,v 1.5 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,6 @@
  * Contributor(s):
  */
 #include <stdio.h>
-#include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>

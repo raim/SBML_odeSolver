@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-01-30 16:16:11 raim>
-  $Id: simpleIntegratorInstance.c,v 1.16 2007/01/30 15:17:06 raimc Exp $
+  Last changed Time-stamp: <2007-12-06 19:48:05 raim>
+  $Id: simpleIntegratorInstance.c,v 1.17 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -80,7 +80,7 @@ int doIt(void)
     CvodeSettings_dump(settings);
     integratorInstance = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
-
+    IntegratorInstance_setInitialTime(integratorInstance, .05);
     /* print variable (ODE, assignments) and constant names */
     printf("#time  ");
     IntegratorInstance_dumpNames(integratorInstance);
@@ -103,7 +103,7 @@ int doIt(void)
 
     set2 = CvodeSettings_create();
     /* as Indefinitely will be set to 0, a finite integration
-       to time 0.24 in 6 steps will be run */
+       to time 1.2 in 6 steps will be run */
     CvodeSettings_setTime(set2, 1.2, 6);
     CvodeSettings_setErrors(set2, 1e-16, 1e-14, 500);
     /* switches can be set all together, same order as above */
@@ -113,6 +113,7 @@ int doIt(void)
     CvodeSettings_dump(set2);
     
     IntegratorInstance_set(integratorInstance, set2);
+    IntegratorInstance_setInitialTime(integratorInstance, .5);
 
     IntegratorInstance_dumpData(integratorInstance);  
 

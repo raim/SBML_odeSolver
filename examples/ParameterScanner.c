@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-07 15:33:41 raim>
-  $Id: ParameterScanner.c,v 1.15 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2008-03-10 16:37:42 raim>
+  $Id: ParameterScanner.c,v 1.16 2008/03/10 19:24:47 raimc Exp $
 */
 /* 
  *
@@ -32,7 +32,6 @@
  * Contributor(s):
  */
 #include <stdio.h>
-#include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
 
