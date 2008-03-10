@@ -21,3 +21,7 @@
 2007-05-11 Rainer Machne <raim@tbi.univie.ac.at>
 	* added Tiny C Compiler (TCC) compilation on-the-fly
 	capability (problems: TCC only works for 32 bit architecture).
+
+2008-03-10 Rainer Machne <raim@tbi.univie.ac.at>
+	* repaired varySettings and batch integration for design points
+	as initially intended by Witold Eryk Wolski
