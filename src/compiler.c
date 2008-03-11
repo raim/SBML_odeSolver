@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-10-26 17:38:01 raim>
-  $Id: compiler.c,v 1.25 2007/10/26 17:51:36 raimc Exp $
+  $Id: compiler.c,v 1.26 2008/03/11 18:21:26 funa Exp $
 */
 /* 
  *
@@ -226,6 +226,17 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   fclose(cFile);
 
   /* construct command for compiling */
+#if defined (__APPLE__) && defined (__MACH__)
+  sprintf(command, "%s -I%s -I%s -I%s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -lODES -lsbml -lm -lstdc++",
+ 	  gccFileName,
+	  SUNDIALS_CFLAGS,
+      SBML_CFLAGS,
+	  SOSLIB_CFLAGS,
+	  dllFileName,
+	  cFileName,
+      SBML_LDFLAGS,
+	  SOSLIB_LDFLAGS);
+#else
   sprintf(command, "%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -lODES -lm",
  	  gccFileName,
 	  SUNDIALS_CFLAGS,
@@ -233,9 +244,22 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  dllFileName,
 	  cFileName,
 	  SOSLIB_LDFLAGS);
+#endif
  
 #ifdef _DEBUG
   Warn(NULL, "Command: %s\n", command);
+#if defined (__APPLE__) && defined (__MACH__)
+  Warn(NULL,
+       "%s -I%s -I%s -I%s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -lODES -lsbml -lm -lstdc++",
+       gccFileName,
+       SUNDIALS_CFLAGS,
+       SBML_CFLAGS,
+       SOSLIB_CFLAGS,
+       dllFileName,
+       cFileName,
+       SBML_LDFLAGS,
+       SOSLIB_LDFLAGS);
+#else
   Warn(NULL,
        "%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -lODES -lm",
        gccFileName,
@@ -244,6 +268,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
        dllFileName,
        cFileName,
        SOSLIB_LDFLAGS);
+#endif
 #endif
   
   /* compile source to shared library */
