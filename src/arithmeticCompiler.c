@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-02-05 16:02:23 raim>
-  $Id: arithmeticCompiler.c,v 1.5 2008/02/05 16:19:58 raimc Exp $
+  Last changed Time-stamp: <2008-03-14 18:15:23 raim>
+  $Id: arithmeticCompiler.c,v 1.6 2008/03/14 17:23:36 raimc Exp $
 */
 /* 
  *
@@ -47,6 +47,8 @@ static double (*UsrDefFunc)(char*, int, double*) = NULL;
 static int analyse (directCode_t *c, ASTNode_t *AST);
 static int analyseFPU (ASTNode_t *AST);
 
+/*!!! TODO check if all function evaluations are equivalent to evaluateAST,
+      e.g. are odd roots of negative numbers possible? */
 /* quasi assembler, helps for better readability */
 #define ass_F2XM1			addByte(c,0xd9); addByte(c,0xf0);
 #define ass_FABS			addByte(c,0xd9); addByte(c,0xe1);
