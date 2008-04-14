@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 03:10:44 raim>
-  $Id: variableIndex.h,v 1.11 2008/01/28 19:25:27 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2008-04-14 10:22:14 raim>
+  $Id: variableIndex.h,v 1.12 2008/04/14 08:23:33 raimc Exp $ 
 */
 /* 
  *
@@ -36,9 +36,6 @@
 #ifndef _VARIABLEINDEX_H_
 #define _VARIABLEINDEX_H_
 
-typedef enum variableType variableType_t; 
-typedef struct variableIndex variableIndex_t;
-
 /** variable types */
 enum variableType
   {
@@ -63,6 +60,9 @@ struct variableIndex
   int type_index;
   int index ;
 } ;
+
+typedef enum variableType variableType_t; 
+typedef struct variableIndex variableIndex_t;
 
 #endif
 /* _VARIABLEINDEX_H_ */
