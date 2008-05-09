@@ -7,6 +7,17 @@
 
 #ifndef WIN32
 #include <sys/mman.h> /* LINUX ONLY! */
+#ifndef MAP_ANONYMOUS /* test, please verify! */
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+#endif
+
+/* constants definded as in math.h (newer versions) */
+#ifndef M_E
+#define	M_E		2.7182818284590452354
+#endif
+#ifndef M_PI
+#define	M_PI		3.14159265358979323846
 #endif
 
 /* quasi assembler, helps for better readability */
@@ -976,9 +987,9 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 			st = (double) ASTNode_getInteger(AST);
 			ass_MOV_rax
 			addConstant64(c,st);
-			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); // MOV rax rbp
-			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); // MOVSD
-			addByte(c,0x45);addByte(c,0xf8);// rbp xmm0
+			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
+			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
+			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			break;
 		case AST_REAL: /* load double */
 		case AST_REAL_E:
@@ -986,9 +997,9 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 			st = ASTNode_getReal(AST);
 			ass_MOV_rax
 			addConstant64(c,st);
-			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); // MOV rax rbp
-			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); // MOVSD
-			addByte(c,0x45);addByte(c,0xf8);// rbp xmm0
+			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
+			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
+			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			break;
 		case AST_NAME:
 			ass_MOV_rax
@@ -1008,9 +1019,9 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 		case AST_CONSTANT_E:
 			ass_MOV_rax
 			addConstant64(c,M_E);
-			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); // MOV rax rbp
-			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); // MOVSD
-			addByte(c,0x45);addByte(c,0xf8);// rbp xmm0
+			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
+			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
+			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			break;
 		case AST_CONSTANT_FALSE: /* 0.0 */
 			ass_SUBSD(0,0)
@@ -1018,20 +1029,20 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 		case AST_CONSTANT_PI: /* pi */
 			ass_MOV_rax
 			addConstant64(c,M_PI);
+			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
+			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
+			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
+			break;
+		case AST_CONSTANT_TRUE: /* 1.0 */
+/*			addByte(c,0x48);addByte(c,0xb8); // MOV rax
+			addConstant64(c,1.0);
 			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); // MOV rax rbp
 			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); // MOVSD
 			addByte(c,0x45);addByte(c,0xf8);// rbp xmm0
-			break;
-		case AST_CONSTANT_TRUE: /* 1.0 */
-//			addByte(c,0x48);addByte(c,0xb8); // MOV rax
-//			addConstant64(c,1.0);
-//			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); // MOV rax rbp
-//			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); // MOVSD
-//			addByte(c,0x45);addByte(c,0xf8);// rbp xmm0
-//			break; // ALTERNATIVE:
+			break; // ALTERNATIVE: */
 			ass_SUBSD(1,1)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc9); addByte(c,0x00); //CMPEQSD xmm1 xmm1
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xc9); // CVTDQ2PS xmm1 xmm1
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc9); addByte(c,0x00); /* CMPEQSD xmm1 xmm1 */
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xc9); /* CVTDQ2PS xmm1 xmm1 */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,1)
 			break;
@@ -1220,8 +1231,8 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i)); /* compute new value */
 				popStorage64(c); /* load compare value */
 				ass_SUBSD(2,2)
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd1); addByte(c,0x04); //CMPNEQSD xmm2 xmm1
-				addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PD xmm2 xmm2
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd1); addByte(c,0x04); /* CMPNEQSD xmm2 xmm1 */
+				addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PD xmm2 xmm2 */
 				ass_SUBSD(3,3)
 				ass_SUBSD(3,2)
 				popStorage64(c); /* load result */
@@ -1273,8 +1284,8 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5d); addByte(c,0xc1); /* MINSD xmm0 xmm1 */
-//				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x54); addByte(c,0xc1); /* ANDPD xmm0 xmm1 */
-//				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* MULSD xmm0 xmm1 */
+/*				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x54); addByte(c,0xc1); /* ANDPD xmm0 xmm1 */
+/*				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* MULSD xmm0 xmm1 */
 				}
 			break;
 		case AST_LOGICAL_NOT:
@@ -1282,9 +1293,9 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 			ass_MOVSD(1,0)
 			ass_MOV_rax
 			addConstant64(c,1.0);
-			addByte(c,0x48); addByte(c,0x89); addByte(c,0x45); addByte(c,0xf8); // MOV rax rbp
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x10); // MOVSD
-			addByte(c,0x45); addByte(c,0xf8); // rbp xmm0
+			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
+			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
+			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			ass_SUBSD(0,1)
 			break;
 		case AST_LOGICAL_OR:
@@ -1302,7 +1313,7 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				pushStorage64(c); /* save old result */
 				generate64(c,child(AST,i));
 				popStorage64(c);
-// ?? INTEGER INSTRUCTION FASTER ??
+/* ?? INTEGER INSTRUCTION FASTER ?? */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x57); addByte(c,0xc1); /* XORPD xmm0 xmm1 */
 				}
 			break;
@@ -1313,13 +1324,13 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				}
 			ass_SUBSD(2,2)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); //CMPEQSD xmm2 xmm2
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc8); addByte(c,0x00); //CMPEQSD xmm1 xmm0
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc8); addByte(c,0x00); /* CMPEQSD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd1); /* PAND xmm1 xmm2 */
 				}
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PD xmm2 xmm2
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PD xmm2 xmm2 */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,2)
 			break;
@@ -1330,14 +1341,14 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				}
 			ass_SUBSD(2,2)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); //CMPEQSD xmm2 xmm2
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x05); //CMPNLTSD xmm1 xmm0
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x05); /* CMPNLTSD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(0,1)
 				}
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PS
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,2)
 			break;
@@ -1348,14 +1359,14 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				}
 			ass_SUBSD(2,2)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); //CMPEQSD xmm2 xmm2
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x06); //CMPNLESD xmm1 xmm0
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x06); /* CMPNLESD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(0,1)
 				}
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PS
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,2)
 			break;
@@ -1366,14 +1377,14 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				}
 			ass_SUBSD(2,2)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); //CMPEQSD xmm2 xmm2
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x02); //CMPLESD xmm1 xmm0
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x02); /* CMPLESD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(0,1)
 				}
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PS
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,2)
 			break;
@@ -1384,14 +1395,14 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				}
 			ass_SUBSD(2,2)
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); //CMPEQSD xmm2 xmm2
+			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x01); //CMPLTSD xmm0 xmm1
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x01); /* CMPLTSD xmm0 xmm1 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(0,1)
 				}
-			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); // CVTDQ2PS
+			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
 			ass_SUBSD(0,2)
 			break;
@@ -2172,7 +2183,7 @@ void generateFunction(directCode *code, ASTNode_t *AST) {
 		addByte(code, 0x55); /* PUSH EBP */
 		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0xe5); /* MOV EBP, ESP */
 		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0xfb); /* MOV RDI RBX */
-//	addByte(code, 0x9b); addByte(code, 0xdb); addByte(code, 0xe3); /* FINIT */
+/*	addByte(code, 0x9b); addByte(code, 0xdb); addByte(code, 0xe3); /* FINIT */
 		generate64(code, AST);
 		addByte(code, 0xc9); /* LEAVE */
 		addByte(code, 0xc3); /* RETN */
@@ -2191,5 +2202,5 @@ void destructFunction(directCode *code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
-//	free(code->prog);
+/*	free(code->prog); */
 	}
