@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 15:37:26 raim>
-  $Id: sbml.c,v 1.16 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2008-03-13 15:28:38 raim>
+  $Id: sbml.c,v 1.17 2008/05/09 21:09:43 raimc Exp $
 */
 /* 
  *
@@ -82,8 +82,7 @@ parseModel(char *file, int printMessage, int validate)
   errors = SBMLDocument_getNumErrors(d); 
     
   /*!!! redo error handling with libsbml 3 */
-   
-  if ( errors != 0 )
+  if ( errors != 0 && validate )
     errors += SBMLDocument_checkConsistency(d); 
 
   for ( i =0 ; i != errors; i++ )
@@ -108,18 +107,18 @@ parseModel(char *file, int printMessage, int validate)
   {
     d2 = convertModel(d); 
     SBMLDocument_free(d);
-
+ 
     if ( printMessage )
       fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
     d = d2; 
   }
-
+ 
   if ( SolverError_getNum(FATAL_ERROR_TYPE) )
   {
     SBMLDocument_free(d);
     return NULL;
   }
-  
+ 
   return (d);
 }
 
