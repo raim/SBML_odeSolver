@@ -6,14 +6,12 @@
 /* #include "interfaceSimulation.c" */
 
 #ifndef WIN32
+/*!!! __USE_MISC required for MAP_ANONYMOUS: why and what is it good for?*/
 #define __USE_MISC
 #include <sys/mman.h> /* LINUX ONLY! */
-#ifndef MAP_ANONYMOUS /* test, please verify! */
-#define MAP_ANONYMOUS MAP_ANON
-#endif
 #endif
 
-/* constants definded as in math.h (newer versions) */
+/* constants definded as in math.h (not in ANSI C/ISO C90) */
 #ifndef M_E
 #define	M_E		2.7182818284590452354
 #endif

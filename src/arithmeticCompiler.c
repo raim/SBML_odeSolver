@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-05-09 23:20:57 raim>
-  $Id: arithmeticCompiler.c,v 1.7 2008/05/09 21:27:56 raimc Exp $
+  Last changed Time-stamp: <2008-05-09 23:35:07 raim>
+  $Id: arithmeticCompiler.c,v 1.8 2008/05/09 21:38:08 raimc Exp $
 */
 /* 
  *
@@ -45,7 +45,7 @@
 #include <sys/mman.h> /* LINUX ONLY! */
 #endif
 
-/* constants definded as in math.h (newer versions) */
+/* constants definded as in math.h (not in ANSI C/ISO C90) */
 #ifndef M_E
 #define	M_E		2.7182818284590452354
 #endif
