@@ -1904,6 +1904,8 @@ int analyse64 (directCode *c, ASTNode_t *AST) { /* returns the number of places 
 					if(save1 + i > save)
 						save = save1 + i;
 					}
+				if(save < childnum)
+					save = childnum;
 				c->codeSize += 16*childnum;
 				c->codeSize += 51;
 				}
@@ -1953,8 +1955,9 @@ int analyse64 (directCode *c, ASTNode_t *AST) { /* returns the number of places 
 		case AST_FUNCTION_SINH: /* sinus hyperbolic */
 		case AST_FUNCTION_TAN: /* tangens */
 		case AST_FUNCTION_TANH: /* tangens hyperbolic */
+			save = analyse64(c,child(AST,0));
 			c->codeSize += 12;
-			return 0;
+			return save;
 
 /* logical cases depends from 0.0 and 1.0 as initial values */
 		case AST_LOGICAL_XOR:
@@ -2064,6 +2067,8 @@ int analyse64Stack (ASTNode_t *AST) {
 					if(save1 + i > save)
 						save = save1 + i;
 					}
+				if(save < childnum)
+					save = childnum;
 				}
 			return save;
 		case AST_FUNCTION_PIECEWISE: /* USEFUL? NOT CORRECTLY IMPLEMENTED! */
