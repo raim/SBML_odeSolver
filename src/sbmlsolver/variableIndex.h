@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-04-14 10:22:14 raim>
-  $Id: variableIndex.h,v 1.12 2008/04/14 08:23:33 raimc Exp $ 
+  Last changed Time-stamp: <2008-05-09 17:36:09 raim>
+  $Id: variableIndex.h,v 1.13 2008/05/09 15:46:37 raimc Exp $ 
 */
 /* 
  *
@@ -44,6 +44,7 @@ enum variableType
     CONSTANT,
     ALGEBRAIC_VARIABLE
   } ; 	 
+typedef enum variableType variableType_t;
 
 /** The variableIndex is the main interface to model
     variables and constants.
@@ -54,14 +55,14 @@ enum variableType
     via the integratorInstance during any time of an integration run.
     Please see documentation of these modules to learn about the full
     use of variableIndex */
+ 
+
 struct variableIndex
 {
   variableType_t type;
   int type_index;
   int index ;
 } ;
-
-typedef enum variableType variableType_t; 
 typedef struct variableIndex variableIndex_t;
 
 #endif
