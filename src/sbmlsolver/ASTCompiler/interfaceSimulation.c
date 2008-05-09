@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /* defines all types of nodes in the abstract syntax tree, to work stand alone with the code generator */
 typedef enum {AST_INTEGER, AST_REAL, AST_REAL_E, AST_RATIONAL, AST_NAME,
 AST_FUNCTION_DELAY, AST_NAME_TIME, AST_CONSTANT_E, AST_CONSTANT_FALSE, AST_CONSTANT_PI, AST_CONSTANT_TRUE,

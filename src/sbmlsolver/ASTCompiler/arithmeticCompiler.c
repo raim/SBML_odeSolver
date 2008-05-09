@@ -3,9 +3,10 @@
 #include <math.h>
 
 /* IN THIS FILE EMULATES THE ENVIRONMENT FOR THE CODE GENERATOR AND MUST BE CHANGED IN THE FRAMEWORK */
-#include "interfaceSimulation.c"
+/* #include "interfaceSimulation.c" */
 
 #ifndef WIN32
+#define __USE_MISC
 #include <sys/mman.h> /* LINUX ONLY! */
 #ifndef MAP_ANONYMOUS /* test, please verify! */
 #define MAP_ANONYMOUS MAP_ANON
@@ -94,10 +95,10 @@ typedef struct {
 	unsigned char *prog;
 	double *FPUstack, *storage;
 	double (*evaluate)(cvodeData_t*);
-} directCode;
+} directCode_t;
 
 /* initializes the basic parameters and allocated the memory */
-void initCode (directCode *code, ASTNode_t *AST) {
+void initCode (directCode_t *code, ASTNode_t *AST) {
 
 	int length;
 
@@ -121,7 +122,7 @@ void initCode (directCode *code, ASTNode_t *AST) {
 	}
 
 /* initializes the basic parameters and allocated the memory  64 bit*/
-void initCode64 (directCode *code, ASTNode_t *AST) {
+void initCode64 (directCode_t *code, ASTNode_t *AST) {
 
 	int length;
 
@@ -146,7 +147,7 @@ code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 	}
 
 /* adds a byte to the code, extends the memory, if necessary */
-void addByte (directCode *code, unsigned char byte) {
+void addByte (directCode_t *code, unsigned char byte) {
 
 	int i;
 	unsigned char *bigger;
@@ -158,7 +159,7 @@ void addByte (directCode *code, unsigned char byte) {
 	}
 
 /* adds an integer to the code */
-void addInt (directCode *c, int number) {
+void addInt (directCode_t *c, int number) {
 	unsigned int num;
 	num = number;
 	addByte(c,num%256); num /= 256;
@@ -168,7 +169,7 @@ void addInt (directCode *c, int number) {
 	}
 
 /* adds an adress to the code */
-void addAddress (directCode *c, long long addy) {
+void addAddress (directCode_t *c, long long addy) {
 	int i, addressLength = sizeof(void (*)());
 	
 	for(i = 0 ; i < addressLength ; i++) {
@@ -178,7 +179,7 @@ void addAddress (directCode *c, long long addy) {
 	}
 
 /* adds the parameter to the CPU stack, computes the necessary jump parameters for a function call and adds a call to the code */
-void callMathFunction (directCode *c, long long fun) {
+void callMathFunction (directCode_t *c, long long fun) {
 	addByte(c,0x83); addByte(c,0xec); addByte(c,0x08); /* SUB ESP 8 (parameter) */
 	addByte(c,0xdd); addByte(c,0x1c); addByte(c,0x24); /* load parameter 1 */
 	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
@@ -187,20 +188,20 @@ void callMathFunction (directCode *c, long long fun) {
 	}
 
 /* computes the necessary jump parameters for a function call and adds a call to the code */
-void callFunction (directCode *c, long long fun) {
+void callFunction (directCode_t *c, long long fun) {
 	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
 	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
 	}
 
 /* loads the jump destination and does the call */
-void callFunction64 (directCode *c, long long fun) {
+void callFunction64 (directCode_t *c, long long fun) {
 	ass_MOV_rax
 	addAddress(c,fun);
 	ass_CALL
 	}
 
 /* adds an element of the FPU stack to the external stack */
-void pushStorage (directCode *c) {
+void pushStorage (directCode_t *c) {
 	if(c->FPUstackPosition >= c->FPUstackSize)
 		printf("code->FPUstack overflow\n");
 	ass_FSTP_mem
@@ -208,14 +209,14 @@ void pushStorage (directCode *c) {
 	}
 
 /* pops an element from the external stack into the FPU stack */
-void popAddress (directCode *code) {
+void popAddress (directCode_t *code) {
 	if(code->FPUstackPosition <= 0)
 		printf("code->FPUstack underflow\n");
 	addAddress(code, (long long)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
 	}
 
 /* pushs the element in the xmm0 register to the external stack */
-void pushStorage64 (directCode *c) {
+void pushStorage64 (directCode_t *c) {
 	if(c->FPUstackPosition >= c->FPUstackSize)
 		printf("code->FPUstack overflow\n");
 	ass_MOV_rax
@@ -224,7 +225,7 @@ void pushStorage64 (directCode *c) {
 	}
 
 /* pops an element form the external stack to the xmm1 register */
-void popStorage64 (directCode *c) {
+void popStorage64 (directCode_t *c) {
 	if(c->FPUstackPosition <= 0)
 		printf("code->FPUstack underflow\n");
 	ass_MOV_rax
@@ -233,7 +234,7 @@ void popStorage64 (directCode *c) {
 	}
 
 /* saves a constant in the code->storage an adds the address to the code */
-void addConstant (directCode *code, double value) {
+void addConstant (directCode_t *code, double value) {
 	if(code->storagePosition >= code->storageSize)
 		printf("code->storage overflow\n");
 	code->storage[code->storagePosition] = value;
@@ -241,7 +242,7 @@ void addConstant (directCode *code, double value) {
 	}
 
 /* saves a constant in the code->storage an adds the address to the code */
-void addConstant64 (directCode *c, double value) {
+void addConstant64 (directCode_t *c, double value) {
 	int i;
 	long long *test;
 	test = (long long*)&value;
@@ -397,7 +398,7 @@ static double sech(double x) {
 	}
 
 /* generates the code from the abstract syntax tree */
-void generate (directCode *c, ASTNode_t *AST) {
+void generate (directCode_t *c, ASTNode_t *AST) {
 	
 	int i, childnum;
 	long long save;
@@ -973,7 +974,7 @@ void generate (directCode *c, ASTNode_t *AST) {
 	}
 
 /* generates the code from the abstract syntax tree */
-void generate64 (directCode *c, ASTNode_t *AST) {
+void generate64 (directCode_t *c, ASTNode_t *AST) {
 	
 	int i, childnum;
 	long long save;
@@ -1415,7 +1416,7 @@ void generate64 (directCode *c, ASTNode_t *AST) {
 	}
 
 /* analyses the abstract syntax tree according to code and stack size */
-int analyse (directCode *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
+int analyse (directCode_t *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
 	double st;
@@ -1831,7 +1832,7 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 	}
 
 /* analyses the abstract syntax tree according to code and stack size */
-int analyse64 (directCode *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
+int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
 	ASTNodeType_t type;
@@ -2163,7 +2164,7 @@ int analyse64Stack (ASTNode_t *AST) {
 	}
 
 /* generates the basic elements of the function - CALL THIS FUNCTION TO GENERATE THE FUNCTION */
-void generateFunction(directCode *code, ASTNode_t *AST) {
+void generateFunction(directCode_t *code, ASTNode_t *AST) {
 
 	int i;
 	
@@ -2192,7 +2193,7 @@ void generateFunction(directCode *code, ASTNode_t *AST) {
 
 
 /* disallocates the functions arrays */
-void destructFunction(directCode *code) {
+void destructFunction(directCode_t *code) {
 
 	code->codeSize = 0;
 	code->FPUstackSize = 0;

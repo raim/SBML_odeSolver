@@ -1,4 +1,11 @@
+/* IN THIS FILE EMULATES THE ENVIRONMENT FOR THE CODE GENERATOR AND MUST BE CHANGED IN THE FRAMEWORK */
+
+#define ARITHMETIC_TEST
+
+#include "interfaceSimulation.c"
 #include "arithmeticCompiler.c"
+
+
 
 char *string;
 
@@ -705,7 +712,7 @@ int main (int argc, char **argv) {
 	int maxnodes = 20;
 	int functionnum = 60;
 	double x;
-	directCode *code = (directCode *)malloc(sizeof(directCode));
+	directCode_t *code = (directCode_t *)malloc(sizeof(directCode_t));
 	cvodeData_t *data = (cvodeData_t *)malloc(sizeof(cvodeData_t));
 	void (**tests)() = (void (**)())malloc(sizeof(void (*)())*functionnum);
 	nodes = (ASTNode_t *)malloc(sizeof(ASTNode_t)*maxnodes);
