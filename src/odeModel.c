@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-11-30 17:04:46 raim>
-  $Id: odeModel.c,v 1.93 2008/01/28 19:25:26 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2008-05-09 23:26:11 raim>
+  $Id: odeModel.c,v 1.94 2008/05/09 21:27:56 raimc Exp $ 
 */
 /* 
  *
@@ -51,6 +51,7 @@
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/compiler.h"
+#include "sbmlsolver/arithmeticCompiler.h"
 
 #define COMPILED_RHS_FUNCTION_NAME "ode_f"
 #define COMPILED_ADJOINT_RHS_FUNCTION_NAME "adjode_f"
@@ -671,6 +672,11 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
       math = indexAST(Rule_getMath(rl), nvalues, om->names);
       /*AST_dump("assigning om->ode", math);*/
       om->ode[neq] = math;
+#ifdef ARITHMETIC_TEST
+      ASSIGN_NEW_MEMORY(om->odecode[neq], directCode_t, NULL);
+      om->odecode[neq]->eqn = math;
+      generateFunction(om->odecode[neq], math);
+#endif
       om->npiecewise += ASTNode_containsPiecewise(math);
       neq++;      
     }
@@ -725,10 +731,11 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignment, nass, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
-/*   /\* compiled equations *\/ */
-/*   ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL); */
+  /* compiled equations */
+  ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL);
 /*   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL); */
 /*   ASSIGN_NEW_MEMORY_BLOCK(om->algebraiccode, nalg, directCode_t *, NULL); */
+  
 
   om->neq    = neq;
   om->nconst = nconst;
@@ -939,9 +946,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   free(om->ode);
 
   /* free compiled ODEs */
-/*   for ( i=0; i<om->neq; i++ ) */
-/*     destructFunction(om->odecode[i]); */
-/*   free(om->odecode); */
+#ifdef ARITHMETIC_TEST
+  for ( i=0; i<om->neq; i++ )
+    destructFunction(om->odecode[i]);    
+#endif
+  free(om->odecode);
   
   /* free assignments */
   for ( i=0; i<om->nass; i++ )

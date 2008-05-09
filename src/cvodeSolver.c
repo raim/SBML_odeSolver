@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-14 14:59:58 raim>
-  $Id: cvodeSolver.c,v 1.69 2007/12/14 14:00:23 raimc Exp $
+  Last changed Time-stamp: <2008-05-09 23:16:06 raim>
+  $Id: cvodeSolver.c,v 1.70 2008/05/09 21:27:56 raimc Exp $
 */
 /* 
  *
@@ -978,8 +978,12 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 	evaluateAST(data->model->assignment[i],data);
 
   /** evaluate ODEs f(x,p,t) = dx/dt */
-  for ( i=0; i<data->model->neq; i++ ) 
+  for ( i=0; i<data->model->neq; i++ )
+#ifdef ARITHMETIC_TEST
+    dydata[i] = data->model->odecode[i]->evaluate(data);    
+#else
     dydata[i] = evaluateAST(data->ode[i],data);
+#endif
 
   /** reset parameters */
   /*!!! necessary? here AND/OR in Jacobian? */

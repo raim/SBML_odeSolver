@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-02-05 15:43:58 raim>
-  $Id: arithmeticCompiler.h,v 1.3 2008/02/05 14:44:34 raimc Exp $
+  Last changed Time-stamp: <2008-05-09 23:26:31 raim>
+  $Id: arithmeticCompiler.h,v 1.4 2008/05/09 21:27:56 raimc Exp $
 */
 /* 
  *
@@ -37,18 +37,24 @@
 #ifndef _ARITHMETICCOMPILER_H_
 #define _ARITHMETICCOMPILER_H_
 
+/* #define ARITHMETIC_TEST */ /*!!! comment in test arithmeticCompiler.c */
+
 typedef struct directCode directCode_t;
 
+/*!!!! NOTE: includes need to be below typedef definition to avoid
+   circular include problem, but struct declarations needs to
+   be after includes, however some compilers require struct before typedef */
 #include "sbmlsolver/ASTIndexNameNode.h"
 #include "sbmlsolver/cvodeData.h"
 
 struct directCode
 {
-    int codeSize, FPUstackSize, storageSize;
-    int codePosition, FPUstackPosition, storagePosition;
-    unsigned char *prog;
-    double *FPUstack, *storage;
-    double (*evaluate)(cvodeData_t*);
+  int codeSize, FPUstackSize, storageSize;
+  int codePosition, FPUstackPosition, storagePosition;
+  unsigned char *prog;
+  double *FPUstack, *storage;
+  double (*evaluate)(cvodeData_t*);
+  ASTNode_t *eqn;
 } ;
 
 void generateFunction(directCode_t *, ASTNode_t *);
