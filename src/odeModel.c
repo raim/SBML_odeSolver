@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-05-09 23:26:11 raim>
-  $Id: odeModel.c,v 1.94 2008/05/09 21:27:56 raimc Exp $ 
+  Last changed Time-stamp: <10-May-2008 13:19:30 raim>
+  $Id: odeModel.c,v 1.95 2008/05/10 16:04:38 raimc Exp $ 
 */
 /* 
  *
@@ -948,7 +948,10 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   /* free compiled ODEs */
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->neq; i++ )
-    destructFunction(om->odecode[i]);    
+  {
+    destructFunction(om->odecode[i]); 
+    free(om->odecode[i]);
+  } 
 #endif
   free(om->odecode);
   
