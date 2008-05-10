@@ -1887,8 +1887,8 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 				}
 			return save;
 		case AST_DIVIDE: /* divide values */
-			save = analyse64(c,child(AST,0));
-			save1 = analyse64(c, child(AST,1));
+			save = analyse64(c,child(AST,1));
+			save1 = analyse64(c, child(AST,0));
 			if(save < save1+1)
 				save = save1 + 1;
 			c->codeSize += 32;
@@ -2053,8 +2053,8 @@ int analyse64Stack (ASTNode_t *AST) {
 				}
 			return save;
 		case AST_DIVIDE: /* divide values */
-			save = analyse64Stack(child(AST,0));
-			save1 = analyse64Stack(child(AST,1));
+			save = analyse64Stack(child(AST,1));
+			save1 = analyse64Stack(child(AST,0));
 			if(save < save1+1)
 				save = save1 + 1;
 			return save;

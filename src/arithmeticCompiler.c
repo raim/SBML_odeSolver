@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-05-09 23:35:07 raim>
-  $Id: arithmeticCompiler.c,v 1.9 2008/05/10 19:02:30 thegreywanderer Exp $
+  $Id: arithmeticCompiler.c,v 1.10 2008/05/10 21:52:23 thegreywanderer Exp $
 */
 /* 
  *
@@ -1925,16 +1925,16 @@ int analyse64 (directCode_t*c, ASTNode_t *AST) { /* returns the number of places
 				save = analyse64(c,child(AST,0));
 				c->codeSize += 12;
 				} else {
-				save = analyse64(c,child(AST,0));
-				save1 = analyse64(c, child(AST,1));
+				save = analyse64(c,child(AST,1));
+				save1 = analyse64(c, child(AST,0));
 				if(save < save1+1)
 					save = save1 + 1;
 				c->codeSize += 32;
 				}
 			return save;
 		case AST_DIVIDE: /* divide values */
-			save = analyse64(c,child(AST,0));
-			save1 = analyse64(c, child(AST,1));
+			save = analyse64(c,child(AST,1));
+			save1 = analyse64(c, child(AST,0));
 			if(save < save1+1)
 				save = save1 + 1;
 			c->codeSize += 32;
@@ -2107,8 +2107,8 @@ int analyse64Stack (ASTNode_t *AST) {
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
 		case AST_FUNCTION_ROOT:
-			save1 = analyse64Stack(child(AST,0));
-			save = analyse64Stack(child(AST,1));
+			save1 = analyse64Stack(child(AST,1));
+			save = analyse64Stack(child(AST,0));
 			if(save < save1+1)
 				save = save1 + 1;
 			return save;
