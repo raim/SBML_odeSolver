@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-05-09 23:35:07 raim>
-  $Id: arithmeticCompiler.c,v 1.8 2008/05/09 21:38:08 raimc Exp $
+  $Id: arithmeticCompiler.c,v 1.9 2008/05/10 19:02:30 thegreywanderer Exp $
 */
 /* 
  *
@@ -2092,8 +2092,8 @@ int analyse64Stack (ASTNode_t *AST) {
 		    if ( childnum<2 ) {
 				save = analyse64Stack(child(AST,0));
 				} else {
-				save = analyse64Stack(child(AST,0));
-				save1 = analyse64Stack(child(AST,1));
+				save = analyse64Stack(child(AST,1));
+				save1 = analyse64Stack(child(AST,0));
 				if(save < save1+1)
 					save = save1 + 1;
 				}
@@ -2247,5 +2247,6 @@ void destructFunction(directCode_t*code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
-/*	free(code->prog); */
+	if(sizeof(void (*)()) == 4)
+		free(code->prog);
 	}
