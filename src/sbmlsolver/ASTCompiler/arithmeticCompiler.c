@@ -93,6 +93,7 @@ typedef struct {
 	unsigned char *prog;
 	double *FPUstack, *storage;
 	double (*evaluate)(cvodeData_t*);
+	long long *temp;
 } directCode_t;
 
 /* initializes the basic parameters and allocated the memory */
@@ -124,7 +125,7 @@ void initCode64 (directCode_t *code, ASTNode_t *AST) {
 
 	int length;
 
-	code->codeSize = 9;
+	code->codeSize = 99;
 	code->codePosition = 0;
 	code->storageSize = 0;
 	code->storagePosition = 0;
@@ -140,6 +141,7 @@ code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 	
 	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
 	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
+	code->temp = (long long *)malloc(sizeof(long long));
 
 	code->evaluate = (double (*)())code->prog;
 	}
@@ -1004,14 +1006,18 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			ass_MOV_rax
 			addAddress(c,(long long)AST);
 			addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc7); /* MOV RAX RDI */
-			addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xde); /* MOV RBX RSI */
+			ass_MOV_rax
+			addAddress(c,(long long)c->temp);
+			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x30); /* MOV [RAX] RSI */
 			callFunction64(c,(long long)getAST_Name);
 			break;
 		case AST_FUNCTION_DELAY: /* not implemented */
 			ass_SUBSD(0,0)
 			break;
 		case AST_NAME_TIME:
-			addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xdf); /* MOV RBX RDI */
+		    ass_MOV_rax
+			addAddress(c,(long long)c->temp);
+			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x38); /* MOV [RAX] RDI */
 			callFunction64(c,(long long)getAST_Name_Time);
 			break;
 
@@ -1115,8 +1121,10 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				addAddress(c,childnum);
 				addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc6); /* MOV RAX RSI */
 				ass_MOV_rax
+				addAddress(c,(long long)c->temp);
+				addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x38); /* MOV [RAX] RDI */
+				ass_MOV_rax
 				addAddress(c,(long long)(char *)ASTNode_getName(AST));
-				addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xdf); /* MOV RBX RDI */
 				callFunction64(c,(long long)UsrDefFunc);
 				c->FPUstackPosition -= childnum;
 				}
@@ -2181,7 +2189,9 @@ void generateFunction(directCode_t *code, ASTNode_t *AST) {
 		
 		addByte(code, 0x55); /* PUSH EBP */
 		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0xe5); /* MOV EBP, ESP */
-		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0xfb); /* MOV RDI RBX */
+		addByte(code, 0x48); addByte(code, 0xb8); /* MOV const RAX */
+		addAddress(code,(long long)code->temp);
+		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0x38); /* MOV RDI [RAX] */
 /*	addByte(code, 0x9b); addByte(code, 0xdb); addByte(code, 0xe3); /* FINIT */
 		generate64(code, AST);
 		addByte(code, 0xc9); /* LEAVE */

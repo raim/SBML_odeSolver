@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-05-09 23:26:31 raim>
-  $Id: arithmeticCompiler.h,v 1.4 2008/05/09 21:27:56 raimc Exp $
+  $Id: arithmeticCompiler.h,v 1.5 2008/05/14 17:04:46 thegreywanderer Exp $
 */
 /* 
  *
@@ -55,6 +55,7 @@ struct directCode
   double *FPUstack, *storage;
   double (*evaluate)(cvodeData_t*);
   ASTNode_t *eqn;
+  long long *temp;
 } ;
 
 void generateFunction(directCode_t *, ASTNode_t *);

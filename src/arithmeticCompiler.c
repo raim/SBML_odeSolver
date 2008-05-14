@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-05-09 23:35:07 raim>
-  $Id: arithmeticCompiler.c,v 1.10 2008/05/10 21:52:23 thegreywanderer Exp $
+  $Id: arithmeticCompiler.c,v 1.11 2008/05/14 17:04:45 thegreywanderer Exp $
 */
 /* 
  *
@@ -142,7 +142,7 @@ typedef struct {
 } directCode;
 
 /* initializes the basic parameters and allocated the memory */
-void initCode (directCode_t*code, ASTNode_t *AST) {
+void initCode (directCode_t *code, ASTNode_t *AST) {
 
 	int length;
 
@@ -170,7 +170,7 @@ void initCode64 (directCode_t*code, ASTNode_t *AST) {
 
 	int length;
 
-	code->codeSize = 9;
+	code->codeSize = 99;
 	code->codePosition = 0;
 	code->storageSize = 0;
 	code->storagePosition = 0;
@@ -186,6 +186,7 @@ code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 	
 	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
 	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
+	code->temp = (long long *)malloc(sizeof(long long));
 
 	code->evaluate = (double (*)())code->prog;
 	}
