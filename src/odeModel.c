@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <10-May-2008 13:19:30 raim>
-  $Id: odeModel.c,v 1.95 2008/05/10 16:04:38 raimc Exp $ 
+  Last changed Time-stamp: <15-May-2008 13:49:06 raim>
+  $Id: odeModel.c,v 1.96 2008/05/15 12:01:40 raimc Exp $ 
 */
 /* 
  *
@@ -684,6 +684,11 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     {
       math = indexAST(Rule_getMath(rl), nvalues, om->names); 
       om->assignment[nass] = math;
+#ifdef ARITHMETIC_TEST
+      ASSIGN_NEW_MEMORY(om->assignmentcode[nass], directCode_t, NULL);
+      om->assignmentcode[nass]->eqn = math;
+      generateFunction(om->assignmentcode[nass], math);
+#endif
       om->npiecewise += ASTNode_containsPiecewise(math);
       nass++;      
     }
@@ -733,7 +738,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
   /* compiled equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL);
-/*   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL); */
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL);
 /*   ASSIGN_NEW_MEMORY_BLOCK(om->algebraiccode, nalg, directCode_t *, NULL); */
   
 
@@ -959,6 +964,16 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   for ( i=0; i<om->nass; i++ )
     ASTNode_free(om->assignment[i]);
   free(om->assignment);
+
+#ifdef ARITHMETIC_TEST
+  for ( i=0; i<om->nass; i++ )
+  {
+    destructFunction(om->assignmentcode[i]); 
+    free(om->assignmentcode[i]);
+  } 
+#endif
+  free(om->assignmentcode);
+
   
   /* free algebraic rules */
   for ( i=0; i<om->nalg; i++ )
@@ -1186,9 +1201,13 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   nvalues = om->neq + om->nass + om->nconst;
   
   ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0);
+  /* compiled equations */
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode, om->neq, directCode_t **, 0);
   for ( i=0; i<om->neq; i++ )
+  {
     ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0);
-      
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode[i], om->neq, directCode_t *, 0);
+  } 
   for ( i=0; i<om->neq; i++ )
   {
     ode = copyAST(om->ode[i]);
@@ -1209,6 +1228,11 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
       index = indexAST(simple, nvalues, om->names);
       ASTNode_free(simple);
       om->jacob[i][j] = index;
+#ifdef ARITHMETIC_TEST
+      ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, NULL);
+      om->jacobcode[i][j]->eqn = index;
+      generateFunction(om->jacobcode[i][j], index);
+#endif
       /* check if the AST contains a failure notice */
       names = ASTNode_getListOfNodes(index ,
 				     (ASTNodePredicate) ASTNode_isName);
@@ -1217,6 +1241,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 	if ( strcmp(ASTNode_getName(List_get(names,k)),
 		    "differentiation_failed") == 0 ) 
 	  failed++;
+
       List_free(names);
     }
     ASTNode_free(ode);
@@ -1255,10 +1280,18 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
     for ( i=0; i<om->neq; i++ )
     {
       for ( j=0; j<om->neq; j++ )
-	ASTNode_free(om->jacob[i][j]);
+      {	
+         ASTNode_free(om->jacob[i][j]);
+#ifdef ARITHMETIC_TEST
+         destructFunction(om->jacobcode[i][j]);
+         free(om->jacobcode[i][j]);
+#endif
+      }
       free(om->jacob[i]);
+      free(om->jacobcode[i]);
     }
     free(om->jacob);
+    free(om->jacobcode);
     om->jacob = NULL;
   }
   om->jacobian = 0;

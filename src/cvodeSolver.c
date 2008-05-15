@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-05-09 23:16:06 raim>
-  $Id: cvodeSolver.c,v 1.70 2008/05/09 21:27:56 raimc Exp $
+  Last changed Time-stamp: <15-May-2008 13:49:35 raim>
+  $Id: cvodeSolver.c,v 1.71 2008/05/15 12:01:40 raimc Exp $
 */
 /* 
  *
@@ -463,8 +463,12 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       if ( !rhsFunction ) return 0; /* error */
     }
     else
+    {
       rhsFunction = f ;
-      
+#ifdef ARITHMETIC_TEST
+      printf("\nWARNING: USING EXPERIMENTAL ONLINE COMPILER\n\n");
+#endif
+    }      
     if ( engine->UseJacobian )
     {
       if ( opt->compileFunctions )
@@ -974,8 +978,13 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ ) 
     if ( data->model->assignmentsBeforeODEs[i] )
+#ifdef ARITHMETIC_TEST
+      data->value[data->model->neq+i] =
+	data->model->assignmentcode[i]->evaluate(data);    
+#else
       data->value[data->model->neq+i] =
 	evaluateAST(data->model->assignment[i],data);
+#endif
 
   /** evaluate ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<data->model->neq; i++ )
@@ -1033,9 +1042,14 @@ static int JacODE(long int N, DenseMat J, realtype t,
 
   /** evaluate Jacobian J = df/dx */
   for ( i=0; i<data->model->neq; i++ ) 
-    for ( j=0; j<data->model->neq; j++ ) 
+    for ( j=0; j<data->model->neq; j++ )
+    { 
+#ifdef ARITHMETIC_TEST
+      DENSE_ELEM(J,i,j) = data->model->jacobcode[i][j]->evaluate(data);    
+#else
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
-
+#endif
+    }
   /** reset parameters */
   if ( (data->opt->Sensitivity && data->os ) )
     if ( !data->os->sensitivity || !data->model->jacobian )
