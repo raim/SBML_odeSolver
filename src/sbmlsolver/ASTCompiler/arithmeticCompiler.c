@@ -113,7 +113,12 @@ void initCode (directCode_t *code, ASTNode_t *AST) {
 	code->FPUstackSize = length;
 	code->FPUstackPosition = 0;
 	
+#ifndef WIN32 /* LINUX */
+	code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
+#else /* WINDOWS */
 	code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
+#endif
+
 	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
 	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
 
@@ -2211,6 +2216,8 @@ void destructFunction(directCode_t *code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
+#ifdef WIN32
 	if(sizeof(void (*)()) == 4)
-		free(code->prog);
+	  free(code->prog);
+#endif
 	}
