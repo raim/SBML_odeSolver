@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <14-May-2008 21:53:01 raim>
-  $Id: arithmeticCompiler.c,v 1.13 2008/05/15 10:03:45 raimc Exp $
+  $Id: arithmeticCompiler.c,v 1.14 2008/05/19 16:02:41 thegreywanderer Exp $
 */
 /* 
  *
@@ -174,7 +174,7 @@ void initCode64 (directCode_t*code, ASTNode_t *AST) {
 
 	int length;
 
-	code->codeSize = 99;
+	code->codeSize = 19;
 	code->codePosition = 0;
 	code->storageSize = 0;
 	code->storagePosition = 0;
@@ -470,20 +470,53 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 			addConstant(c,st);
 			break;
 		case AST_NAME:
+		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
+					addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
+					addByte(c,0x68); addAddress(c,(long long)AST); /* PUSH AST */
+					callFunction(c,(long long)getAST_Name);
+					addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter)  // delete parameter from the stack */
+					break;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+					addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
+					addByte(c,0x8b); addByte(c,0x40); addByte(c,(long long)&test->value - (long long)test); /* MOX EAX [EAX + offset] */
+					addByte(c,0xdd); addByte(c,0x80); addInt(c,ASTNode_getIndex(AST)*sizeof(double)); /* FLD [EAX+index] */
+					free(test);
+				}
+				break;
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+				addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
+				addByte(c,0xdd); addByte(c,0x40); addByte(c,(long long)&test->currenttime - (long long)test); /* FLD [EAX+offset] */
+				free(test);
+				break;
+				}
+/* OLD VERSION */
 			addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
 			addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
 			addByte(c,0x68); addAddress(c,(long long)AST); /* PUSH AST */
 			callFunction(c,(long long)getAST_Name);
 			addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter)  // delete parameter from the stack */
 			break;
+
 		case AST_FUNCTION_DELAY: /* not implemented */
 			ass_FLDZ
 			break;
 		case AST_NAME_TIME:
+			test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
 			addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
-			addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
-			callFunction(c,(long long)getAST_Name_Time);
-			addByte(c,0x83); addByte(c,0xc4); addByte(c,0x04); /* ADD ESP 4 (parameter)  // delete parameter from the stack */
+			addByte(c,0xdd); addByte(c,0x40); addByte(c,(long long)&test->currenttime - (long long)test); /* FLD [EAX+8] */
+			free(test);
 			break;
 
 		case AST_CONSTANT_E:
@@ -1066,8 +1099,10 @@ void generate64 (directCode_t*c, ASTNode_t *AST) {
 		case AST_NAME_TIME:
 		    ass_MOV_rax
 			addAddress(c,(long long)c->temp);
-			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x38); /* MOV [RAX] RDI */
-			callFunction64(c,(long long)getAST_Name_Time);
+			test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+			addByte(c, 0x48); addByte(c, 0x03);	addInt(c,(long long)&test->currenttime - (long long)test); /* ADD rax imm32 */
+			addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x00); /* MOVSD (rax) xmm0 */
+			free(test);
 			break;
 
 		case AST_CONSTANT_E:
@@ -1488,6 +1523,26 @@ int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places i
 			c->codeSize += 6;
 			return 1;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					c->codeSize += 13 + sizeof(void (*)());
+					return 8;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					c->codeSize += 12;
+					return 1;
+				}
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				c->codeSize += 6;
+				return 1;
+				}
+/* OLD VERSION */
 			c->codeSize += 13 + sizeof(void (*)());
 			return 8;
 		case AST_FUNCTION_DELAY: /* not implemented */
@@ -1495,8 +1550,8 @@ int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places i
 			c->codeSize += 2;
 			return 1;
 		case AST_NAME_TIME:
-			c->codeSize += 8 + sizeof(void (*)());
-			return 8;
+			c->codeSize += 6;
+			return 1;
 
 		case AST_CONSTANT_E:
 			c->codeSize += 18;
@@ -1719,6 +1774,7 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 		case AST_REAL:
 		case AST_REAL_E:
 		case AST_RATIONAL:
+		case AST_NAME_TIME:
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
 		case AST_CONSTANT_FALSE: /* 0.0 */
@@ -1726,7 +1782,20 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 		case AST_CONSTANT_TRUE: /* 1.0 */
 			return 1;
 		case AST_NAME:
-		case AST_NAME_TIME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST))
+					/* function call (old version) */
+					return 8;
+				else
+					/* data->value[ASTNode_getIndex(AST)]; */
+					return 1;
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				return 1;
+				}
+/* OLD VERSION */
 			return 8;
 		case AST_CONSTANT_E:
 			return 2;
@@ -1902,7 +1971,7 @@ int analyse64 (directCode_t*c, ASTNode_t *AST) { /* returns the number of places
 			c->codeSize += 19;
 			return 0;
 		case AST_NAME:
-			c->codeSize += 28;
+			c->codeSize += 38;
 			return 0;
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
@@ -1910,7 +1979,7 @@ int analyse64 (directCode_t*c, ASTNode_t *AST) { /* returns the number of places
 			c->codeSize += 4;
 			return 0;
 		case AST_NAME_TIME:
-			c->codeSize += 15;
+			c->codeSize += 20;
 			return 0;
 
 		case AST_CONSTANT_E:

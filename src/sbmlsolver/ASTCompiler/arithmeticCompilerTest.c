@@ -23,6 +23,12 @@ void testAST_REAL() {
 	nodes[0].value = 5.3;
 	}
 
+void testAST_NAME() {
+	string = "AST_NAME: (4.25)";
+	nodes[0].type = AST_NAME;
+	nodes[0].childnum = 5;
+	}
+
 void testAST_FUNCTION_DELAY() {
 	string = "AST_FUNCTION_DELAY: (0.0)";
 	nodes[0].type = AST_FUNCTION_DELAY;
@@ -716,10 +722,13 @@ int main (int argc, char **argv) {
 	cvodeData_t *data = (cvodeData_t *)malloc(sizeof(cvodeData_t));
 	void (**tests)() = (void (**)())malloc(sizeof(void (*)())*functionnum);
 	nodes = (ASTNode_t *)malloc(sizeof(ASTNode_t)*maxnodes);
+	data->value = (double *)malloc(sizeof(double)*10);
+	data->value[5] = 4.25;
 	data->currenttime = 13.4;
 	
 	tests[num++] = testAST_INTEGER;
 	tests[num++] = testAST_REAL;
+	tests[num++] = testAST_NAME;
 	tests[num++] = testAST_FUNCTION_DELAY;
 	tests[num++] = testAST_NAME_TIME;
 	tests[num++] = testAST_CONSTANT_E;
