@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <14-May-2008 21:53:01 raim>
-  $Id: arithmeticCompiler.c,v 1.14 2008/05/19 16:02:41 thegreywanderer Exp $
+  Last changed Time-stamp: <20-May-2008 12:05:22 raim>
+  $Id: arithmeticCompiler.c,v 1.15 2008/05/20 10:18:00 raimc Exp $
 */
 /* 
  *
@@ -453,6 +453,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 	long long save;
 	double st;
 	ASTNodeType_t type;
+	cvodeData_t *test;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
 	
@@ -469,7 +470,6 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 			ass_FLD_mem
 			addConstant(c,st);
 			break;
-		case AST_NAME:
 		case AST_NAME:
 			if (ASTNode_isSetIndex(AST)) {
 				if (ASTNode_isSetData(AST)) {
@@ -1062,6 +1062,7 @@ void generate64 (directCode_t*c, ASTNode_t *AST) {
 	long long save;
 	double st;
 	ASTNodeType_t type;
+	cvodeData_t * test;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
 	
@@ -1375,8 +1376,9 @@ void generate64 (directCode_t*c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5d); addByte(c,0xc1); /* MINSD xmm0 xmm1 */
-/*				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x54); addByte(c,0xc1); /* ANDPD xmm0 xmm1 */
-/*				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* MULSD xmm0 xmm1 */
+/*				addByte(c,0x66); addByte(c,0x0f);
+				addByte(c,0x54); addByte(c,0xc1); */ /* ANDPD xmm0 xmm1 */
+				/*				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); */ /* MULSD xmm0 xmm1 */
 				}
 			break;
 		case AST_LOGICAL_NOT:
@@ -2310,7 +2312,7 @@ void generateFunction(directCode_t*code, ASTNode_t *AST) {
 		addByte(code, 0x48); addByte(code, 0xb8); /* MOV const RAX */
 		addAddress(code,(long long)code->temp);
 		addByte(code, 0x48); addByte(code, 0x89); addByte(code, 0x38); /* MOV RDI [RAX] */
-/*	addByte(code, 0x9b); addByte(code, 0xdb); addByte(code, 0xe3); /* FINIT */
+		/*	addByte(code, 0x9b); addByte(code, 0xdb); addByte(code, 0xe3); *//* FINIT */
 		generate64(code, AST);
 		addByte(code, 0xc9); /* LEAVE */
 		addByte(code, 0xc3); /* RETN */
