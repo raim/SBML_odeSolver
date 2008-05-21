@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <20-May-2008 12:05:22 raim>
-  $Id: arithmeticCompiler.c,v 1.15 2008/05/20 10:18:00 raimc Exp $
+  $Id: arithmeticCompiler.c,v 1.16 2008/05/21 11:44:05 thegreywanderer Exp $
 */
 /* 
  *
@@ -1086,6 +1086,45 @@ void generate64 (directCode_t*c, ASTNode_t *AST) {
 			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			break;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					ass_MOV_rax
+					addAddress(c,(long long)AST);
+					addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc7); /* MOV RAX RDI */
+					ass_MOV_rax
+					addAddress(c,(long long)c->temp);
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x30); /* MOV [RAX] RSI */
+					callFunction64(c,(long long)getAST_Name);
+					break;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					ass_MOV_rax
+					addAddress(c,(long long)c->temp);
+					test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x80);
+					addInt(c,(long long)&test->value - (long long)test); /* MOX RAX [RAX + offset] */
+					addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+					addInt(c,ASTNode_getIndex(AST)*sizeof(double)); /* MOVSD (rax+imm32) xmm0 */
+					free(test);
+				}
+				break;
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				ass_MOV_rax
+				addAddress(c,(long long)c->temp);
+				test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+				addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+				addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+				addInt(c,(long long)&test->currenttime - (long long)test); /* MOVSD (rax+imm32) xmm0 */
+				free(test);
+				break;
+				}
 			ass_MOV_rax
 			addAddress(c,(long long)AST);
 			addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc7); /* MOV RAX RDI */
@@ -1098,11 +1137,12 @@ void generate64 (directCode_t*c, ASTNode_t *AST) {
 			ass_SUBSD(0,0)
 			break;
 		case AST_NAME_TIME:
-		    ass_MOV_rax
+			ass_MOV_rax
 			addAddress(c,(long long)c->temp);
 			test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
-			addByte(c, 0x48); addByte(c, 0x03);	addInt(c,(long long)&test->currenttime - (long long)test); /* ADD rax imm32 */
-			addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x00); /* MOVSD (rax) xmm0 */
+			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+			addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+			addInt(c,(long long)&test->currenttime - (long long)test); /* MOVSD (rax+imm32) xmm0 */
 			free(test);
 			break;
 
@@ -1973,6 +2013,26 @@ int analyse64 (directCode_t*c, ASTNode_t *AST) { /* returns the number of places
 			c->codeSize += 19;
 			return 0;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					c->codeSize += 38;
+					return 0;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					c->codeSize += 28;
+					return 0;
+				}
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				c->codeSize += 21;
+				return 0;
+				}
+/* OLD VERSION */
 			c->codeSize += 38;
 			return 0;
 		case AST_FUNCTION_DELAY: /* not implemented */
@@ -1981,7 +2041,7 @@ int analyse64 (directCode_t*c, ASTNode_t *AST) { /* returns the number of places
 			c->codeSize += 4;
 			return 0;
 		case AST_NAME_TIME:
-			c->codeSize += 20;
+			c->codeSize += 21;
 			return 0;
 
 		case AST_CONSTANT_E:
