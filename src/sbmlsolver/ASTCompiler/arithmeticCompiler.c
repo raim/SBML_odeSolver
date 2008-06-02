@@ -3,10 +3,10 @@
 #include <math.h>
 
 /* IN THIS FILE EMULATES THE ENVIRONMENT FOR THE CODE GENERATOR AND MUST BE CHANGED IN THE FRAMEWORK */
-/*#include "interfaceSimulation.c" */
+/*#include "interfaceSimulation.c"*/
 
 /* WIN TEST */
-#define WIN32
+/* #define WIN32 */
 
 #ifndef WIN32
 /*!!! __USE_MISC required for MAP_ANONYMOUS: why and what is it good for?*/
@@ -74,10 +74,10 @@
 #define ass_CALL			addByte(c,0xff); addByte(c,0xd0);
 /* moves constant to rax */
 #define ass_MOV_rax			addByte(c,0x48); addByte(c,0xb8);
-/* subtract xmm(j) from xmm(i) and stores result in xmm(i) */
-#define ass_SUBSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5c); addByte(c,0xc0+0x08*i+j);
-/* moves xmm(j) to xmm(i) */
-#define ass_MOVSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x11); addByte(c,0xc0+0x08*j+i);
+/* subtract xmm(i) from xmm(j) and stores result in xmm(j) */
+#define ass_SUBSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5c); addByte(c,0xc0+0x08*j+i);
+/* moves xmm(i) to xmm(j) */
+#define ass_MOVSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x11); addByte(c,0xc0+0x08*i+j);
 
 /* variables for the code generator */
 /*codeSize: maximal code length */
@@ -138,6 +138,10 @@ void initCode64 (directCode_t *code, ASTNode_t *AST) {
 	code->storageSize = 0;
 	code->storagePosition = 0;
 	length = analyse64(code, AST);
+	if(length <= 8)
+		length = 0;
+		else
+		length -= 8;
 	code->FPUstackSize = length;
 	code->FPUstackPosition = 0;
 
@@ -1024,7 +1028,7 @@ void generate (directCode_t *c, ASTNode_t *AST) {
 /* generates the code from the abstract syntax tree */
 void generate64 (directCode_t *c, ASTNode_t *AST) {
 	
-	int i, childnum;
+	int i, childnum, stack;
 	long long save;
 	double st;
 	ASTNodeType_t type;
@@ -1052,6 +1056,45 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
 			break;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					ass_MOV_rax
+					addAddress(c,(long long)AST);
+					addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc7); /* MOV RAX RDI */
+					ass_MOV_rax
+					addAddress(c,(long long)c->temp);
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x30); /* MOV [RAX] RSI */
+					callFunction64(c,(long long)getAST_Name);
+					break;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					ass_MOV_rax
+					addAddress(c,(long long)c->temp);
+					test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x80);
+					addInt(c,(long long)&test->value - (long long)test); /* MOX RAX [RAX + offset] */
+					addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+					addInt(c,ASTNode_getIndex(AST)*sizeof(double)); /* MOVSD (rax+imm32) xmm0 */
+					free(test);
+				}
+				break;
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				ass_MOV_rax
+				addAddress(c,(long long)c->temp);
+				test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
+				addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+				addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+				addInt(c,(long long)&test->currenttime - (long long)test); /* MOVSD (rax+imm32) xmm0 */
+				free(test);
+				break;
+				}
 			ass_MOV_rax
 			addAddress(c,(long long)AST);
 			addByte(c, 0x48); addByte(c, 0x89); addByte(c, 0xc7); /* MOV RAX RDI */
@@ -1064,15 +1107,16 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			ass_SUBSD(0,0)
 			break;
 		case AST_NAME_TIME:
-		    ass_MOV_rax
+			ass_MOV_rax
 			addAddress(c,(long long)c->temp);
 			test = (cvodeData_t *)malloc(sizeof(cvodeData_t));
-			addByte(c, 0x48); addByte(c, 0x03);	addInt(c,(long long)&test->currenttime - (long long)test); /* ADD rax imm32 */
-			addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x00); /* MOVSD (rax) xmm0 */
+			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x00); /* MOV [RAX] RAX */
+			addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x80);
+			addInt(c,(long long)&test->currenttime - (long long)test); /* MOVSD (rax+imm32) xmm0 */
 			free(test);
 			break;
 			/* old version: */
-		    ass_MOV_rax
+			ass_MOV_rax
 			addAddress(c,(long long)c->temp);
 			addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x38); /* MOV [RAX] RDI */
 			callFunction64(c,(long long)getAST_Name_Time);
@@ -1106,54 +1150,91 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc9); addByte(c,0x00); /* CMPEQSD xmm1 xmm1 */
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xc9); /* CVTDQ2PS xmm1 xmm1 */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,1)
+			ass_SUBSD(1,0)
 			break;
 
 		case AST_PLUS: /* add values */
 			generate64(c,child(AST,0));
 			for ( i = 1 ; i < childnum ; i++) {
-				pushStorage64(c); /* save old result */
-				generate64(c,child(AST,i));
-				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x58); addByte(c,0xc1); /* ADDSD xmm0 xmm1 */
+				stack = analyse64Stack(child(AST,i));
+				if(stack < 8) {
+					ass_MOVSD(0,stack)
+					generate64(c,child(AST,i));
+					addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x58); addByte(c,0xc0+stack); /* ADDSD xmm0 xmm[stack] */
+					} else {
+					pushStorage64(c); /* save old result */
+					generate64(c,child(AST,i));
+					popStorage64(c);
+					addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x58); addByte(c,0xc1); /* ADDSD xmm0 xmm1 */
+					}
 				}
 			break;
 		case AST_MINUS: /* sub values */
 		    if ( childnum<2 ) {
 				generate64(c,child(AST,0));
-				ass_MOVSD(1,0)
+				ass_MOVSD(0,1)
 				ass_SUBSD(0,0)
-				ass_SUBSD(0,1)
+				ass_SUBSD(1,0)
 				} else {
 				generate64(c,child(AST,1));
-				pushStorage64(c); /* save old result */
-				generate64(c,child(AST,0));
-				popStorage64(c);
-				ass_SUBSD(0,1)
+				stack = analyse64Stack(child(AST,0));
+				if(stack < 8) {
+					ass_MOVSD(0,stack)
+					generate64(c,child(AST,0));
+					ass_SUBSD(stack,0)
+					} else {
+					pushStorage64(c); /* save old result */
+					generate64(c,child(AST,0));
+					popStorage64(c);
+					ass_SUBSD(1,0)
+					}
 				}
 			break;
 		case AST_TIMES: /* mult values */
 			generate64(c,child(AST,0));
 			for ( i = 1 ; i < childnum ; i++) {
-				pushStorage64(c); /* save old result */
-				generate64(c,child(AST,i));
-				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* MULSD xmm0 xmm1 */
+				stack = analyse64Stack(child(AST,i));
+				if(stack < 8) {
+					ass_MOVSD(0,stack)
+					generate64(c,child(AST,i));
+					addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc0+stack); /* ADDSD xmm0 xmm[stack] */
+					} else {
+					pushStorage64(c); /* save old result */
+					generate64(c,child(AST,i));
+					popStorage64(c);
+					addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* ADDSD xmm0 xmm1 */
+					}
 				}
 			break;
 		case AST_DIVIDE: /* divide values */
 			generate64(c,child(AST,1));
-			pushStorage64(c); /* save old result */
-			generate64(c,child(AST,0));
-			popStorage64(c);
-			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5e); addByte(c,0xc1); /* DIVSD xmm0 xmm1 */
+			stack = analyse64Stack(child(AST,0));
+			if(stack < 8) {
+				ass_MOVSD(0,stack)
+				generate64(c,child(AST,0));
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5e); addByte(c,0xc0+stack); /* DIVSD xmm0 xmm[stack] */
+				} else {
+				pushStorage64(c); /* save old result */
+				generate64(c,child(AST,0));
+				popStorage64(c);
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5e); addByte(c,0xc1); /* DIVSD xmm0 xmm1 */
+				}
 			break;
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
 			generate64(c,child(AST,1));
-			pushStorage64(c);
-			generate64(c,child(AST,0));
-			popStorage64(c);
+			stack = analyse64Stack(child(AST,0));
+			if(stack < 8) {
+				ass_MOVSD(0,stack)
+				generate64(c,child(AST,0));
+				if(stack > 1) {
+					ass_MOVSD(stack,1)
+					}
+				} else {
+				pushStorage64(c); /* save old result */
+				generate64(c,child(AST,0));
+				popStorage64(c);
+				}
 			callFunction64(c,(long long)pow); /* pow */
 			break;
 		case AST_LAMBDA: /* not implemented */
@@ -1298,21 +1379,30 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd1); addByte(c,0x04); /* CMPNEQSD xmm2 xmm1 */
 				addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PD xmm2 xmm2 */
 				ass_SUBSD(3,3)
-				ass_SUBSD(3,2)
+				ass_SUBSD(2,3)
 				popStorage64(c); /* load result */
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc3); /* MULSD xmm0 xmm3 */
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x58); addByte(c,0xc1); /* ADDSD xmm0 xmm1 */
 				pushStorage64(c); /* save result */
 				}
 			popStorage64(c); /* load result */
-			ass_MOVSD(0,1)
+			ass_MOVSD(1,0)
 			break;
 		/* AST_FUNCTION_POWER see AST_POWER */
 		case AST_FUNCTION_ROOT:
 			generate64(c,child(AST,1));
-			pushStorage64(c);
-			generate64(c,child(AST,0));
-			popStorage64(c);
+			stack = analyse64Stack(child(AST,0));
+			if(stack < 8) {
+				ass_MOVSD(0,stack)
+				generate64(c,child(AST,0));
+				if(stack > 1) {
+					ass_MOVSD(stack,1)
+					}
+				} else {
+				pushStorage64(c); /* save old result */
+				generate64(c,child(AST,0));
+				popStorage64(c);
+				}
 			callFunction64(c,(long long)root); /* root */
 			break;
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
@@ -1354,13 +1444,13 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			break;
 		case AST_LOGICAL_NOT:
 			generate64(c,child(AST,0));
-			ass_MOVSD(1,0)
+			ass_MOVSD(0,1)
 			ass_MOV_rax
 			addConstant64(c,1.0);
 			addByte(c,0x48);addByte(c,0x89);addByte(c,0x45);addByte(c,0xf8); /* MOV rax rbp */
 			addByte(c,0xf2);addByte(c,0x0f);addByte(c,0x10); /* MOVSD */
 			addByte(c,0x45);addByte(c,0xf8); /* rbp xmm0 */
-			ass_SUBSD(0,1)
+			ass_SUBSD(1,0)
 			break;
 		case AST_LOGICAL_OR:
 			generate64(c,child(AST,0));
@@ -1396,7 +1486,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				}
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PD xmm2 xmm2 */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,2)
+			ass_SUBSD(2,0)
 			break;
 		case AST_RELATIONAL_GEQ:
 			generate64(c,child(AST,0));
@@ -1410,11 +1500,11 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x05); /* CMPNLTSD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
-				ass_MOVSD(0,1)
+				ass_MOVSD(1,0)
 				}
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,2)
+			ass_SUBSD(2,0)
 			break;
 		case AST_RELATIONAL_GT:
 			generate64(c,child(AST,0));
@@ -1428,11 +1518,11 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x06); /* CMPNLESD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
-				ass_MOVSD(0,1)
+				ass_MOVSD(1,0)
 				}
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,2)
+			ass_SUBSD(2,0)
 			break;
 		case AST_RELATIONAL_LEQ:
 			generate64(c,child(AST,0));
@@ -1446,11 +1536,11 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x02); /* CMPLESD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
-				ass_MOVSD(0,1)
+				ass_MOVSD(1,0)
 				}
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,2)
+			ass_SUBSD(2,0)
 			break;
 		case AST_RELATIONAL_LT:
 			generate64(c,child(AST,0));
@@ -1464,11 +1554,11 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x01); /* CMPLTSD xmm0 xmm1 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
-				ass_MOVSD(0,1)
+				ass_MOVSD(1,0)
 				}
 			addByte(c,0xf3); addByte(c,0x0f); addByte(c,0xe6); addByte(c,0xd2); /* CVTDQ2PS */
 			ass_SUBSD(0,0)
-			ass_SUBSD(0,2)
+			ass_SUBSD(2,0)
 			break;
 
 		default:
@@ -1942,85 +2032,124 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_REAL_E:
 		case AST_RATIONAL:
 			c->codeSize += 19;
-			return 0;
+			return 1;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					c->codeSize += 38;
+					return 8;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					c->codeSize += 28;
+					return 1;
+				}
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				c->codeSize += 21;
+				return 1;
+				}
+/* OLD VERSION */
 			c->codeSize += 38;
-			return 0;
+			return 8;
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
 		case AST_CONSTANT_FALSE: /* 0.0 */
 			c->codeSize += 4;
-			return 0;
+			return 1;
 		case AST_NAME_TIME:
-			c->codeSize += 20;
-			return 0;
+			c->codeSize += 21;
+			return 1;
 
 		case AST_CONSTANT_E:
 		case AST_CONSTANT_PI: /* pi */
 			c->codeSize += 19;
-			return 0;
+			return 1;
 		case AST_CONSTANT_TRUE: /* 1.0 */
 			c->codeSize += 21;
-			return 0;
+			return 2;
 
 		case AST_PLUS: /* add values */
 		case AST_TIMES: /* mult values */
-			c->codeSize += (childnum-1) * 32;
 			save = analyse64(c, child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64(c, child(AST,i));
-				if(save1+1 >= save)
-					save = save1+1;
+				if(save1 >= 8)
+					c->codeSize += 32;
+					else
+					c->codeSize += 8;
+				if(save < save1+1)
+					save = save1 + 1;
 				}
 			return save;
 		case AST_MINUS: /* sub values */
 		    if ( childnum<2 ) {
 				save = analyse64(c,child(AST,0));
 				c->codeSize += 12;
+				if(save < 2)
+					save = 2;
 				} else {
 				save = analyse64(c,child(AST,0));
 				save1 = analyse64(c, child(AST,1));
+				if(save1 >= 8)
+					c->codeSize += 32;
+					else
+					c->codeSize += 8;
 				if(save < save1+1)
 					save = save1 + 1;
-				c->codeSize += 32;
 				}
 			return save;
 		case AST_DIVIDE: /* divide values */
 			save = analyse64(c,child(AST,1));
 			save1 = analyse64(c, child(AST,0));
+			if(save1 >= 8)
+				c->codeSize += 32;
+				else
+				c->codeSize += 8;
 			if(save < save1+1)
 				save = save1 + 1;
-			c->codeSize += 32;
 			return save;
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
 		case AST_FUNCTION_ROOT:
 			save1 = analyse64(c,child(AST,0));
 			save = analyse64(c, child(AST,1));
+			if(save1 >= 8)
+				c->codeSize += 40;
+				else {
+				c->codeSize += 16;
+				if(save1 > 1)
+					c->codeSize += 4;
+				}
 			if(save < save1+1)
 				save = save1 + 1;
-			c->codeSize += 40;
+			if (save < 8)
+				save = 8;
 			return save;
 
 		case AST_FUNCTION: /* user defined function */
 			if (UsrDefFunc == NULL) { /* no function defined */
 				c->codeSize += 4;
-				save = 0;
+				save = 1;
 				} else {
-				save = 0;
+				save = 8;
 				for (i = 0 ; i < childnum ; i++) { /* compute parameters and store them on the external stack */
 					save1 = analyse64(c,child(AST,i));
 					if(save1 + i > save)
 						save = save1 + i;
 					}
-				if(save < childnum)
-					save = childnum;
+				if(save < childnum + 8)
+					save = childnum + 8;
 				c->codeSize += 16*childnum;
 				c->codeSize += 61;
 				}
 			return save;
 		case AST_FUNCTION_PIECEWISE: /* USEFUL? NOT CORRECTLY IMPLEMENTED! */
-			save = 0;
+			save = 10;
 			c->codeSize += 36;
 		    for ( i = 0 ; i < childnum-1 ; i = i + 2) {
 				save1 = analyse64(c,child(AST,i+1));
@@ -2066,6 +2195,8 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_FUNCTION_TANH: /* tangens hyperbolic */
 			save = analyse64(c,child(AST,0));
 			c->codeSize += 12;
+			if (save < 8)
+				save = 8;
 			return save;
 
 /* logical cases depends from 0.0 and 1.0 as initial values */
@@ -2073,6 +2204,8 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_LOGICAL_AND:
 		case AST_LOGICAL_OR:
 			save = analyse64(c,child(AST,0));
+			if(save < 9)
+				save = 9;
 			for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64(c,child(AST,i));
 				if(save < save1+1)
@@ -2091,6 +2224,8 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_RELATIONAL_LEQ:
 		case AST_RELATIONAL_LT:
 			save = analyse64(c,child(AST,0));
+			if(save < 8 + childnum)
+				save = 8 + childnum;
 			for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64(c,child(AST,i));
 				if(save < save1 + i)
@@ -2103,7 +2238,7 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		default:
 			printf("ERROR: Wrong AST_type\n");
 			c->codeSize += 4;
-			return 0;
+			return 1;
 		}
 
 	return 0;
@@ -2122,31 +2257,53 @@ int analyse64Stack (ASTNode_t *AST) {
 		case AST_REAL:
 		case AST_REAL_E:
 		case AST_RATIONAL:
+			return 1;
 		case AST_NAME:
+			if (ASTNode_isSetIndex(AST)) {
+				if (ASTNode_isSetData(AST)) {
+					/* function call (old version) */
+					return 8;
+				}
+				else
+				{
+					/* data->value[ASTNode_getIndex(AST)]; */
+					return 1;
+				}
+			}
+			if (strcmp(ASTNode_getName(AST),"time") == 0 ||
+				strcmp(ASTNode_getName(AST),"Time") == 0 ||
+				strcmp(ASTNode_getName(AST),"TIME") == 0) {
+				return 1;
+				}
+/* OLD VERSION */
+			return 8;
 		case AST_FUNCTION_DELAY: /* not implemented */
 		case AST_LAMBDA: /* not implemented */
 		case AST_CONSTANT_FALSE: /* 0.0 */
 		case AST_NAME_TIME:
 		case AST_CONSTANT_E:
 		case AST_CONSTANT_PI: /* pi */
+			return 1;
 		case AST_CONSTANT_TRUE: /* 1.0 */
-			return 0;
+			return 2;
 
 		case AST_PLUS: /* add values */
 		case AST_TIMES: /* mult values */
 			save = analyse64Stack(child(AST,0));
 		    for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64Stack(child(AST,i));
-				if(save1+1 >= save)
-					save = save1+1;
+				if(save < save1+1)
+					save = save1 + 1;
 				}
 			return save;
 		case AST_MINUS: /* sub values */
 		    if ( childnum<2 ) {
 				save = analyse64Stack(child(AST,0));
+				if(save < 2)
+					save = 2;
 				} else {
-				save = analyse64Stack(child(AST,1));
-				save1 = analyse64Stack(child(AST,0));
+				save = analyse64Stack(child(AST,0));
+				save1 = analyse64Stack(child(AST,1));
 				if(save < save1+1)
 					save = save1 + 1;
 				}
@@ -2164,24 +2321,26 @@ int analyse64Stack (ASTNode_t *AST) {
 			save = analyse64Stack(child(AST,1));
 			if(save < save1+1)
 				save = save1 + 1;
+			if (save < 8)
+				save = 8;
 			return save;
 
 		case AST_FUNCTION: /* user defined function */
 			if (UsrDefFunc == NULL) { /* no function defined */
-				save = 0;
+				save = 1;
 				} else {
-				save = 0;
+				save = 8;
 				for (i = 0 ; i < childnum ; i++) { /* compute parameters and store them on the external stack */
 					save1 = analyse64Stack(child(AST,i));
 					if(save1 + i > save)
 						save = save1 + i;
 					}
-				if(save < childnum)
-					save = childnum;
+				if(save < childnum + 8)
+					save = childnum + 8;
 				}
 			return save;
 		case AST_FUNCTION_PIECEWISE: /* USEFUL? NOT CORRECTLY IMPLEMENTED! */
-			save = 0;
+			save = 10;
 		    for ( i = 0 ; i < childnum-1 ; i = i + 2) {
 				save1 = analyse64Stack(child(AST,i+1));
 				if(save < save1+1)
@@ -2223,13 +2382,18 @@ int analyse64Stack (ASTNode_t *AST) {
 		case AST_FUNCTION_SINH: /* sinus hyperbolic */
 		case AST_FUNCTION_TAN: /* tangens */
 		case AST_FUNCTION_TANH: /* tangens hyperbolic */
-			return analyse64Stack(child(AST,0));
+			save = analyse64Stack(child(AST,0));
+			if (save < 8)
+				save = 8;
+			return save;
 
 /* logical cases depends from 0.0 and 1.0 as initial values */
 		case AST_LOGICAL_XOR:
 		case AST_LOGICAL_AND:
 		case AST_LOGICAL_OR:
 			save = analyse64Stack(child(AST,0));
+			if(save < 9)
+				save = 9;
 			for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64Stack(child(AST,i));
 				if(save < save1+1)
@@ -2238,6 +2402,8 @@ int analyse64Stack (ASTNode_t *AST) {
 			return save;
 		case AST_LOGICAL_NOT:
 			save = analyse64Stack(child(AST,0));
+			if(save < 2)
+				save = 2;
 			return save;
 		case AST_RELATIONAL_EQ:
 		case AST_RELATIONAL_GEQ:
@@ -2245,6 +2411,8 @@ int analyse64Stack (ASTNode_t *AST) {
 		case AST_RELATIONAL_LEQ:
 		case AST_RELATIONAL_LT:
 			save = analyse64Stack(child(AST,0));
+			if(save < 8 + childnum)
+				save = 8 + childnum;
 			for ( i = 1 ; i < childnum ; i++) {
 				save1 = analyse64Stack(child(AST,i));
 				if(save < save1 + i)
@@ -2254,7 +2422,7 @@ int analyse64Stack (ASTNode_t *AST) {
 
 		default:
 			printf("ERROR: Wrong AST_type\n");
-			return 0;
+			return 1;
 		}
 
 	return 0;
