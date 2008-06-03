@@ -1,6 +1,6 @@
-﻿/*
-  Last changed Time-stamp: <20-May-2008 12:05:22 raim>
-  $Id: arithmeticCompiler.c,v 1.17 2008/06/02 22:40:49 thegreywanderer Exp $
+/*
+  Last changed Time-stamp: <2008-06-03 17:49:42 raim>
+  $Id: arithmeticCompiler.c,v 1.18 2008/06/03 15:51:00 raimc Exp $
 */
 /* 
  *
