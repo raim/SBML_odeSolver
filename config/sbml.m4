@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.12 2007/12/14 09:55:12 raimc Exp $
+dnl $Id: sbml.m4,v 1.13 2008/06/03 14:39:09 raimc Exp $
 
 
 dnl
@@ -7,6 +7,7 @@ dnl
 AC_DEFUN([AC_SBML_PATH],
 [ AC_MSG_CHECKING([for SBML Library headers])
   for ac_dir in             \
+    /usr                    \
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \

@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.13 2007/09/08 11:12:55 raimc Exp $
+dnl $Id: sundials.m4,v 1.14 2008/06/03 14:39:09 raimc Exp $
 
 dnl
 dnl look for SUNDIALS Library headers in some standard set of directories
@@ -6,6 +6,7 @@ dnl
 AC_DEFUN([AC_SUNDIALS_PATH],
 [ AC_MSG_CHECKING([for SUNDIALS Library headers])
   for ac_dir in                 \
+    /usr                        \
     /usr/local                  \
     /usr/local/sundials         \
     /usr/local/include/sundials \

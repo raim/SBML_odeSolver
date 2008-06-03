@@ -1,4 +1,4 @@
-dnl $Id: grace.m4,v 1.3 2006/11/24 13:38:54 raimc Exp $
+dnl $Id: grace.m4,v 1.4 2008/06/03 14:39:09 raimc Exp $
 
 dnl
 dnl look for GRACE Library headers in some standard set of directories
@@ -7,6 +7,7 @@ AC_DEFUN([AC_GRACE_PATH],
 [ AC_MSG_CHECKING([for GRACE Library headers])
   for ac_dir in                    \
     /sw/include                    \
+    /usr                           \
     /usr/local/grace/include       \
     /usr/grace/include	           \
     /usr/share/grace/include	   \
