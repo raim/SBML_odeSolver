@@ -2093,8 +2093,8 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 				if(save < 2)
 					save = 2;
 				} else {
-				save = analyse64(c,child(AST,0));
-				save1 = analyse64(c, child(AST,1));
+				save = analyse64(c, child(AST,1));
+				save1 = analyse64(c, child(AST,0));
 				if(save1 >= 8)
 					c->codeSize += 32;
 					else
@@ -2302,8 +2302,8 @@ int analyse64Stack (ASTNode_t *AST) {
 				if(save < 2)
 					save = 2;
 				} else {
-				save = analyse64Stack(child(AST,0));
-				save1 = analyse64Stack(child(AST,1));
+				save = analyse64Stack(child(AST,1));
+				save1 = analyse64Stack(child(AST,0));
 				if(save < save1+1)
 					save = save1 + 1;
 				}
