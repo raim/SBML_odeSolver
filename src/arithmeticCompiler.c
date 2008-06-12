@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-06-03 17:49:42 raim>
-  $Id: arithmeticCompiler.c,v 1.19 2008/06/04 11:58:29 thegreywanderer Exp $
+  $Id: arithmeticCompiler.c,v 1.20 2008/06/12 14:55:44 thegreywanderer Exp $
 */
 /* 
  *
@@ -117,8 +117,8 @@ static int analyseFPU (ASTNode_t *AST);
 #define ass_CALL			addByte(c,0xff); addByte(c,0xd0);
 /* moves constant to rax */
 #define ass_MOV_rax			addByte(c,0x48); addByte(c,0xb8);
-/* subtract xmm(j) from xmm(i) and stores result in xmm(i) */
-#define ass_SUBSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5c); addByte(c,0xc0+0x08*i+j);
+/* subtract xmm(i) from xmm(j) and stores result in xmm(j) */
+#define ass_SUBSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5c); addByte(c,0xc0+0x08*j+i);
 /* moves xmm(i) to xmm(j) */
 #define ass_MOVSD(i,j)		addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x11); addByte(c,0xc0+0x08*i+j);
 
