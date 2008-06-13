@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-06-03 17:49:42 raim>
-  $Id: arithmeticCompiler.c,v 1.20 2008/06/12 14:55:44 thegreywanderer Exp $
+  Last changed Time-stamp: <2008-06-13 15:45:56 raim>
+  $Id: arithmeticCompiler.c,v 1.21 2008/06/13 13:51:56 raimc Exp $
 */
 /* 
  *
@@ -33,10 +33,16 @@
  *     Stefan Müller
  */
 
+
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sbmlsolver/arithmeticCompiler.h"
+#include "sbmlsolver/processAST.h"
+#ifdef ARITHMETIC_TEST
 
 #ifndef WIN32
 
@@ -53,8 +59,6 @@
 #define	M_PI		3.14159265358979323846
 #endif
 
-#include "sbmlsolver/arithmeticCompiler.h"
-#include "sbmlsolver/processAST.h"
 
 /* locally defined in processAST.c */
 static double (*UsrDefFunc)(char*, int, double*) = NULL;
@@ -2509,3 +2513,5 @@ void destructFunction(directCode_t*code) {
 	  free(code->prog);
 #endif
 	}
+
+#endif
