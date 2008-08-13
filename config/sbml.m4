@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.13 2008/06/03 14:39:09 raimc Exp $
+dnl $Id: sbml.m4,v 1.14 2008/08/13 14:20:26 egfernandez Exp $
 
 
 dnl
@@ -32,7 +32,11 @@ AC_DEFUN([AC_SBML_PATH],
       if test $HOST_TYPE = darwin; then
         SBML_RPATH=
       else
-        SBML_RPATH="-Wl,-rpath,$ac_dir"
+        if test $HOST_TYPE = aix; then
+          SBML_RPATH="-Wl,-R,$ac_dir"
+        else
+          SBML_RPATH="-Wl,-rpath,$ac_dir"
+        fi
       fi
       SBML_LIBS="-lsbml"
       AC_MSG_RESULT([yes])
@@ -84,7 +88,11 @@ AC_DEFUN([CONFIG_LIB_SBML],
     if test $HOST_TYPE = darwin; then
       SBML_RPATH=
     else
-      SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
+      if test $HOST_TYPE = aix; then
+        SBML_RPATH="-Wl,-R,$with_libsbml/lib"
+      else
+        SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
+      fi
     fi   
     
     SBML_LIBS="-lsbml"
