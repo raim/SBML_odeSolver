@@ -36,6 +36,11 @@ case $host_os in
     SHAREDLIBEXT="so"
     ;;
 
+  *aix*)
+    HOST_TYPE="aix"
+    SHAREDLIBEXT="a"
+    ;;
+
   *darwin*)
     HOST_TYPE="darwin"
     SHAREDLIBEXT="dylib"
