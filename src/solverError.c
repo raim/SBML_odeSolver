@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-10-02 01:03:12 raim>
-  $Id: solverError.c,v 1.18 2007/10/01 23:05:25 raimc Exp $ 
+  $Id: solverError.c,v 1.19 2008/08/13 14:21:15 egfernandez Exp $ 
 */
 /* 
  *
@@ -195,6 +195,13 @@ SBML_ODESOLVER_API void SolverError_haltOnErrors()
 SBML_ODESOLVER_API char *SolverError_dumpToString()
 {
   char *result;
+
+  /*AIX: deactivate memoryExhaustion, this is a hack required
+    under AIX because 'static int memoryExhaustion=0' does not
+    actually initialize it to 0 */
+#if defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
+  memoryExhaustion = 0;
+#endif
     
   if ( !memoryExhaustion )
   {
@@ -246,6 +253,13 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
   result = calloc(num, size);
 
   memoryExhaustion = memoryExhaustion || !result ;
+
+  /*AIX: deactivate memoryExhaustion, this is a hack required
+    under AIX because 'static int memoryExhaustion=0' does not
+    actually initialize it to 0 */
+#if defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
+  memoryExhaustion = 0;
+#endif
     
   return result ;
 }
