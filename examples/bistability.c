@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-27 16:09:06 raim>
-  $Id: bistability.c,v 1.3 2007/09/27 14:18:16 raimc Exp $
+  Last changed Time-stamp: <2008-06-26 14:34:51 raim>
+  $Id: bistability.c,v 1.4 2008/09/08 12:59:19 raimc Exp $
 */
 /* 
  *
@@ -75,7 +75,7 @@ int doit(int argc, char *argv[])
   {
     fprintf(
             stderr,
-            "usage %s sbml-model variable parameter1 parameter1-start parameter1-end parameter1-step parameter1 parameter2-start parameter2-end parameter2-step [endtime] [error-tolerance] [relative-error-tolerance] [maximum integration steps]\n",
+            "usage %s sbml-model variable parameter1 parameter1-start parameter1-end parameter1-step parameter2 parameter2-start parameter2-end parameter2-step [endtime] [error-tolerance] [relative-error-tolerance] [maximum integration steps]\n",
             argv[0]);
 
     exit(0);
@@ -135,7 +135,7 @@ int doit(int argc, char *argv[])
   {
     CvodeSettings_setHaltOnSteadyState(settings, 0);
     CvodeSettings_setIndefinitely(settings, 0);
-    CvodeSettings_setTime(settings, 100000, 1000);
+    CvodeSettings_setTime(settings, endtime, 1000);
   }
 
   /* absolute tolerance in Cvode integration */
@@ -200,7 +200,8 @@ int doit(int argc, char *argv[])
 	  if (SolverError_getNum(ERROR_ERROR_TYPE) ||
 	      SolverError_getNum(FATAL_ERROR_TYPE))
 	  {
-	    printf("ERROR at parameter 1 = %g, parameter 2 = %g\n", i, j);
+	    fprintf(stderr,
+		    "ERROR at parameter 1 = %g, parameter 2 = %g\n", i, j);
 	    DumpErrors();
 	    error++;	  
 	  }
