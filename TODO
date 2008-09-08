@@ -82,12 +82,27 @@ ___TODO MAY 2007___
   upon IntegratorInstance_(re)set
   DONE, via new structure odeSense_t
 
+
 ____TODO SEPT 2007___
 
 * find better solution to avoid problems with II_setVariableValue (events 
   and external use)
 
-* cvodeSettings: set a flag, whether a change to settings requires reinit of solver
-  (reset, etc) to become active already for the next run
+* cvodeSettings: set a flag, whether a change to settings requires
+  reinit of solver (reset, etc) to become active already for the next run
 
 * doxygen: link structure documentation to respective modules  
+
+
+____TODO JUNE 2008___
+
+* configure process
+** libxml2 default, use libxml2, xerces and expat switches only if installed
+   in other places (not where libsbml is) for include paths
+   -> USE NEW PKGCONFIG FILE!
+** update messages: on failure, name required packages/versions!
+
+* optimize gcc compilation for big models
+** reduce .c file size:
+   leave out 0 entries of jacobian
+   compile adjoint stuff separately
