@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 14:47:57 raim>
-  $Id: odeModel.c,v 1.97 2008/09/09 12:52:29 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-09 15:20:45 raim>
+  $Id: odeModel.c,v 1.98 2008/09/09 13:20:56 raimc Exp $ 
 */
 /* 
  *
@@ -32,7 +32,6 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
-#define _DEBUG 1
 
 /* System specific definitions,
    created by configure script */
