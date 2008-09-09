@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 13:30:12 raim>
-  $Id: arithmeticCompiler.c,v 1.22 2008/09/09 12:52:02 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 18:20:36 raim>
+  $Id: arithmeticCompiler.c,v 1.23 2008/09/09 16:47:43 raimc Exp $
 */
 /* 
  *
@@ -65,6 +65,7 @@ static double (*UsrDefFunc)(char*, int, double*) = NULL;
 
 static int analyse (directCode_t *c, ASTNode_t *AST);
 static int analyse64 (directCode_t *c, ASTNode_t *AST);
+static int analyse64Stack (ASTNode_t *AST);
 static int analyseFPU (ASTNode_t *AST);
 
 /*!!! TODO check if all function evaluations are equivalent to evaluateAST,
@@ -198,7 +199,8 @@ code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 	
 	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
 	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
-	code->temp = (long long *)malloc(sizeof(long long));
+	/*!!! TODO : is code->temp required anywhere ?? */
+	code->temp = (long long *)malloc(sizeof(long long)); 
 
 	code->evaluate = (double (*)())code->prog;
 	}
@@ -206,9 +208,6 @@ code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 /* adds a byte to the code, extends the memory, if necessary */
 void addByte (directCode_t*code, unsigned char byte) {
 
-	int i;
-	unsigned char *bigger;
-	
 	if(code->codePosition >= code->codeSize)
 		printf("programm is too long\n");
 	
@@ -275,7 +274,7 @@ void popAddress (directCode_t*code) {
 /* pushs the element in the xmm0 register to the external stack */
 void pushStorage64 (directCode_t*c) {
 	if(c->FPUstackPosition >= c->FPUstackSize)
-	  printf("code->FPUstack overflow:\n\tpos.: %p  >= size: %p\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, SBML_formulaToString(c->eqn));
+	  printf("code->FPUstack overflow:\n\tpos.: %d  >= size: %d\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, SBML_formulaToString(c->eqn));
 	ass_MOV_rax
 	addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
 	addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x11); addByte(c, 0x00); /* MOVSD xmm0 (rax) */
@@ -302,7 +301,7 @@ void addConstant (directCode_t*code, double value) {
 void addConstant64 (directCode_t*c, double value) {
 	int i;
 	long long *test;
-	test = (long long*)&value;
+	test = (long long*)&value; /*!!! TODO : gcc warning 'dereferencing type-punned pointer will break strict-aliasing rules' */
 	if(value >= 0)
 		for(i = 0 ; i < 8 ; i++) {
 			addByte(c,*test%256);
@@ -316,6 +315,7 @@ void addConstant64 (directCode_t*c, double value) {
 	}
 
 /* extern function for the case AST_NAME */
+/*!!! TODO : init result to 0 and write correct error message !!!*/
 double getAST_Name(ASTNode_t *n, cvodeData_t *data) {
 	int i, j;
 	double found = 0, datafound, findtol=1e-5, result;
@@ -1610,7 +1610,6 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
-	double st;
 	ASTNodeType_t type;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
@@ -1865,7 +1864,6 @@ int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places i
 int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of the FPU stack */
 	
 	int i, childnum, save, save1;
-	double st;
 	ASTNodeType_t type;
 	type = ASTNode_getType(AST);
 	childnum = ASTNode_getNumChildren(AST);
@@ -2283,7 +2281,7 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 	}
 
 /* analyse64 the need of external Stack places */
-int analyse64Stack (ASTNode_t *AST) {
+static int analyse64Stack (ASTNode_t *AST) {
 	
 	int i, childnum, save, save1;
 	ASTNodeType_t type;
@@ -2469,8 +2467,6 @@ int analyse64Stack (ASTNode_t *AST) {
 /* generates the basic elements of the function - CALL THIS FUNCTION TO GENERATE THE FUNCTION */
 void generateFunction(directCode_t*code, ASTNode_t *AST) {
 
-	int i;
-	
 	if(sizeof(void (*)()) == 4) {
 		initCode(code, AST); /* dynamic allocation of necessary memory */
 
@@ -2508,6 +2504,7 @@ void destructFunction(directCode_t*code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
+	free(code->temp);
 #ifdef WIN32
 	if(sizeof(void (*)()) == 4)
 	  free(code->prog);
