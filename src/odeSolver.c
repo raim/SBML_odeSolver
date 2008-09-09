@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-03-10 20:11:04 raim>
-  $Id: odeSolver.c,v 1.46 2008/03/10 19:24:29 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 14:49:33 raim>
+  $Id: odeSolver.c,v 1.47 2008/09/09 12:49:51 raimc Exp $
 */
 /* 
  *
@@ -872,7 +872,7 @@ SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *vs)
 {
   int i, j;
   printf("\n");
-  printf("Design points for batch integration:\n",
+  printf("Design points for batch integration (#params=%i, #points=%i):\n",
 	 vs->nrparams, vs->nrdesignpoints);
 
   printf("Run");
