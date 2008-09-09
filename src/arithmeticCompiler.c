@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-06-13 15:45:56 raim>
-  $Id: arithmeticCompiler.c,v 1.21 2008/06/13 13:51:56 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 13:30:12 raim>
+  $Id: arithmeticCompiler.c,v 1.22 2008/09/09 12:52:02 raimc Exp $
 */
 /* 
  *
@@ -1476,8 +1476,8 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 				generate64(c,child(AST,i));
 				popStorage64(c);
 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x5d); addByte(c,0xc1); /* MINSD xmm0 xmm1 */
-/*				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x54); addByte(c,0xc1); /* ANDPD xmm0 xmm1 */
-/*				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /* MULSD xmm0 xmm1 */
+/* 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0x54); addByte(c,0xc1); /\* ANDPD xmm0 xmm1 *\/ */
+/* 				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0x59); addByte(c,0xc1); /\* MULSD xmm0 xmm1 *\/ */
 				}
 			break;
 		case AST_LOGICAL_NOT:
