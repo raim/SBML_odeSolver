@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 16:09:48 raim>
-  $Id: odeModel.c,v 1.99 2008/09/09 15:17:34 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-09 18:22:12 raim>
+  $Id: odeModel.c,v 1.100 2008/09/09 16:48:30 raimc Exp $ 
 */
 /* 
  *
@@ -1246,6 +1246,9 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 	  failed++;
 
       /* generate list of non-zero Jacobi elements */
+      /*!!! TODO : to save memory generate
+	ONLY list with ASTNodes and i,j indices,
+	also/only(?) for compiled versions */
       /*  check whether jacobian is 0  */
       val = 1;
       if ( ASTNode_isInteger(index) )
