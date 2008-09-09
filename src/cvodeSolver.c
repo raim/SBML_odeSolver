@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <15-May-2008 13:49:35 raim>
-  $Id: cvodeSolver.c,v 1.71 2008/05/15 12:01:40 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 16:55:28 raim>
+  $Id: cvodeSolver.c,v 1.72 2008/09/09 15:17:34 raimc Exp $
 */
 /* 
  *
@@ -126,18 +126,18 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   { 
     if( opt->DoAdjoint )
     {  
-        /* CvodeF is needed in the forward phase if the adjoint soln is
+      /* CvodeF is needed in the forward phase if the adjoint soln is
 	 desired  */  
-        flag = CVodeF(solver->cvadj_mem, solver->tout,
-		      solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck));     
+      flag = CVodeF(solver->cvadj_mem, solver->tout,
+		    solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck));     
     }
     else
     {
-	  /* calling CVODE */
-       flag = CVode(solver->cvode_mem, solver->tout,
-		    solver->y, &(solver->t), CV_MODE);
+      /* calling CVODE */
+      flag = CVode(solver->cvode_mem, solver->tout,
+		   solver->y, &(solver->t), CV_MODE);
     }
-   
+    
 
     /*  if ( flag != CV_SUCCESS ) */
     if ( flag < CV_SUCCESS )
@@ -1041,15 +1041,35 @@ static int JacODE(long int N, DenseMat J, realtype t,
   data->currenttime = t;
 
   /** evaluate Jacobian J = df/dx */
-  for ( i=0; i<data->model->neq; i++ ) 
+#ifndef SPARSE  
+  for ( i=0; i<data->model->neq; i++ )
     for ( j=0; j<data->model->neq; j++ )
-    { 
+    {
 #ifdef ARITHMETIC_TEST
-      DENSE_ELEM(J,i,j) = data->model->jacobcode[i][j]->evaluate(data);    
+      DENSE_ELEM(J,i,j) = data->model->jacobcode[i][j]->evaluate(data);
 #else
       DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
 #endif
     }
+  
+#else
+  
+  for ( i=0; i<List_size(data->model->jacobsparse); i++ )
+  {
+    nonzeroElem_t *nonzero =
+      (nonzeroElem_t *) List_get(data->model->jacobsparse, i);
+    
+#ifdef ARITHMETIC_TEST
+    DENSE_ELEM(J, nonzero->i,nonzero->j) =
+      data->model->jacobcode[nonzero->i][nonzero->j]->evaluate(data);
+#else
+    DENSE_ELEM(J, nonzero->i,nonzero->j) =
+      evaluateAST(data->model->jacob[nonzero->i][nonzero->j], data);
+#endif
+  }
+  
+#endif
+  
   /** reset parameters */
   if ( (data->opt->Sensitivity && data->os ) )
     if ( !data->os->sensitivity || !data->model->jacobian )

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-21 15:47:38 raim>
-  $Id: sensSolver.c,v 1.65 2007/09/21 13:52:10 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 17:09:00 raim>
+  $Id: sensSolver.c,v 1.66 2008/09/09 15:17:35 raimc Exp $
 */
 /* 
  *
@@ -1246,8 +1246,12 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   for(i=0; i<data->model->neq; i++)
   {
     dySdata[i] = 0;
-    for (j=0; j<data->model->neq; j++) 
+    for (j=0; j<data->model->neq; j++)
+#ifdef ARITHMETIC_TEST
+      dySdata[i] += data->model->jacobcode[i][j]->evaluate(data) * ySdata[j]; 
+#else
       dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
+#endif
     if ( data->os->index_sensP[iS] != -1 )
       dySdata[i] +=
 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
@@ -1291,10 +1295,14 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
   for(i=0; i<data->model->neq; i++)
   {
     dyAdata[i] = 0;
+    
+#ifdef ARITHMETIC_TEST
     for (j=0; j<data->model->neq; j++)
-      dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];
-
-        
+      dyAdata[i] -= data->model->jacobcode[j][i]->evaluate(data) * yAdata[j];
+#else
+    for (j=0; j<data->model->neq; j++)
+      dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];    
+#endif
     /*  Vector v contribution, if continuous data is used */
     if(data->model->discrete_observation_data==0)
       dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
@@ -1333,10 +1341,29 @@ static int JacA(long int NB, DenseMat JB, realtype t,
   data->currenttime = t;
 
   /** evaluate Jacobian JB = -[df/dx]^T */
+#ifndef SPARSE  
   for ( i=0; i<data->model->neq; i++ ) 
     for ( j=0; j<data->model->neq; j++ ) 
+#ifdef ARITHMETIC_TEST
+      DENSE_ELEM(JB,i,j) = - data->model->jacobcode[j][i]->evaluate(data);
+#else
       DENSE_ELEM(JB,i,j) = - evaluateAST(data->model->jacob[j][i], data);
-
+#endif
+#else  
+  for ( i=0; i<List_size(data->model->jacobsparse); i++ )
+  {
+    nonzeroElem_t *nonzero =
+      (nonzeroElem_t *) List_get(data->model->jacobsparse, i);
+#ifdef ARITHMETIC_TEST
+    DENSE_ELEM(JB, nonzero->j,nonzero->i) =
+      - data->model->jacobcode[nonzero->i][nonzero->j]->evaluate(data);
+#else
+    DENSE_ELEM(JB,nonzero->j,nonzero->i) =
+      - evaluateAST(data->model->jacob[nonzero->i][nonzero->j], data);
+#endif
+  }
+#endif
+    
   return (0);
 }
 

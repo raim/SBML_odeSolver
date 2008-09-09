@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-25 17:20:17 raim>
-  $Id: odeModel.h,v 1.41 2008/01/28 19:25:27 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2008-09-09 15:38:28 raim>
+  $Id: odeModel.h,v 1.42 2008/09/09 15:17:35 raimc Exp $ 
 */
 /* 
  *
@@ -39,6 +39,7 @@
 typedef struct odeModel odeModel_t;
 typedef struct odeSense odeSense_t;
 typedef struct objFunc objFunc_t;
+typedef struct nonzeroElem nonzeroElem_t;
 typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 					    pointer with void pointer
 					    because of dependency
@@ -101,6 +102,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 	neq x neq */
     ASTNode_t ***jacob;
     directCode_t ***jacobcode;
+    /** List of non-zero elements i,j of the Jacobi matrix */
+    List_t *jacobsparse; 
 
     /** was the jacobian matrix constructed ? */
     int jacobian;
@@ -178,7 +181,7 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 				 objective used in sensitivity solvers */
     ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
 				      objective function */
- };
+  };
 
   struct odeSense
   {
@@ -196,6 +199,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 				sensitivity matrix (or -1 variables) */
     ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
+    /** List of non-zero elements i,j of the sensitivity matrix */
+    List_t *senssparse; 
 
     
     /** compiled code containing compiled sensitivity functions */
@@ -240,6 +245,11 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
     ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
 				      objective function */
  
+  };
+
+  struct nonzeroElem
+  {
+    int i, j;
   };
 
 #ifdef __cplusplus
