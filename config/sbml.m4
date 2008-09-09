@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.14 2008/08/13 14:20:26 egfernandez Exp $
+dnl $Id: sbml.m4,v 1.15 2008/09/09 10:53:12 raimc Exp $
 
 
 dnl
@@ -61,7 +61,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
   AC_HELP_STRING([--with-xerces=PREFIX],
                  [Use Xerces XML Library]),
   [with_xerces=$withval],
-  [with_xerces=yes])
+  [with_xerces=no])
 
   dnl specify prefix for libexpat
   AC_ARG_WITH([expat],
@@ -69,6 +69,14 @@ AC_DEFUN([CONFIG_LIB_SBML],
                  [Use Expat XML Library]),
             [with_expat=$withval],
             [with_expat=no])
+
+  dnl specify prefix for libxml2,
+  dnl libxml2 is default, but path can be added
+  AC_ARG_WITH([libxml2],
+  AC_HELP_STRING([--with-libxml2=PREFIX],
+                 [Use XML2 XML Library]),
+            [with_libxml2=$withval],
+            [with_libxml2=yes])
 
 
 
@@ -99,25 +107,42 @@ AC_DEFUN([CONFIG_LIB_SBML],
   fi
 
  
-  dnl set with_xerces=no if option --with-expat was given		 
+  dnl set default with_libxml2 to no
+  dnl if option --with-expat was given		 
   if test $with_expat != no; then
-     with_xerces=no
+     with_libxml2=no
+  fi
+  if test $with_xerces != no; then
+     with_libxml2=no
   fi
   
-  dnl dispach xerces versus expat
+  dnl add xerces flags
   if test $with_xerces != no; then
      if test $with_xerces == yes; then
        SBML_LIBS="$SBML_LIBS -lxerces-c"
      else
        SBML_LDFLAGS="$SBML_LDFLAGS -L$with_xerces/lib"
        SBML_LIBS="$SBML_LIBS -lxerces-c"
-     fi     
-  else
+     fi
+  fi
+  
+  dnl add expat flags
+  if test $with_expat != no; then
      if test $with_expat == yes; then
       SBML_LIBS="$SBML_LIBS -lexpat"
      else
       SBML_LIBS="$SBML_LIBS -lexpat"
       SBML_LDFLAGS="$SBML_LDFLAGS -L$with_expat/lib"
+     fi
+  fi
+  
+  dnl add libxml2 flags
+  if test $with_libxml2 != no; then
+     if test $with_libxml2 == yes; then
+      SBML_LIBS="$SBML_LIBS -lxml2"
+     else
+      SBML_LIBS="$SBML_LIBS -lxml2"
+      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_xml2/lib"
      fi
   fi
 
