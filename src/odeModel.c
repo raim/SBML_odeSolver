@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <15-May-2008 13:49:06 raim>
-  $Id: odeModel.c,v 1.96 2008/05/15 12:01:40 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-09 14:47:57 raim>
+  $Id: odeModel.c,v 1.97 2008/09/09 12:52:29 raimc Exp $ 
 */
 /* 
  *
@@ -32,7 +32,7 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
-
+#define _DEBUG 1
 
 /* System specific definitions,
    created by configure script */
@@ -2091,7 +2091,9 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 					    charBuffer_t *buffer)
 {
   int i, j ;
-
+  ASTNode_t *tmp;
+  float val;
+ 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
@@ -2131,13 +2133,25 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
   {
     for ( j=0; j<om->neq; j++ ) 
     {
-      CharBuffer_append(buffer, "DENSE_ELEM(J,");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, ",");
-      CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, ") = ");
-      generateAST(buffer, om->jacob[i][j]);
-      CharBuffer_append(buffer, ";\n");
+      tmp = om->jacob[i][j];
+      /*  check whether jacobian is 0  */
+      val = 1;
+      if ( ASTNode_isInteger(tmp) )
+	val = (double) ASTNode_getInteger(tmp) ;
+      if ( ASTNode_isReal(tmp) )
+	val = ASTNode_getReal(tmp) ;
+      
+      /* write Jacobi evaluation only if entry is not 0 */ 
+      if ( val != 0 )
+      {
+	CharBuffer_append(buffer, "DENSE_ELEM(J,");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, ",");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, ") = ");
+	generateAST(buffer, tmp);
+	CharBuffer_append(buffer, ";\n");      
+      }
     }
   }
   /* reset parameters for printout etc. */
@@ -2160,6 +2174,8 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 						   charBuffer_t *buffer)
 {
   int i, j ;
+  ASTNode_t *tmp;
+  float val;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
@@ -2194,13 +2210,25 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
   {
     for ( j=0; j<om->neq; j++ )
     {
-      CharBuffer_append(buffer, "DENSE_ELEM(JB,");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, ",");
-      CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, ") = - (");
-      generateAST(buffer, om->jacob[j][i]);
-      CharBuffer_append(buffer, ");\n");
+      tmp = om->jacob[j][i];
+      /*  check whether jacobian is 0  */
+      val = 1;
+      if ( ASTNode_isInteger(tmp) )
+	val = (double) ASTNode_getInteger(tmp) ;
+      if ( ASTNode_isReal(tmp) )
+	val = ASTNode_getReal(tmp) ;
+
+      /* write Jacobi evaluation only if entry is not 0 */ 
+      if ( val != 0 )
+      {
+	CharBuffer_append(buffer, "DENSE_ELEM(JB,");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, ",");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, ") = - (");
+	generateAST(buffer, tmp);
+	CharBuffer_append(buffer, ");\n");
+      }
     }
   }
   /* CharBuffer_append(buffer, "printf(\"JA\");"); */
