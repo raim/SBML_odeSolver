@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 21:27:25 raim>
-  $Id: cvodeSolver.c,v 1.73 2008/09/12 20:04:58 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 22:46:53 raim>
+  $Id: cvodeSolver.c,v 1.74 2008/09/12 21:26:10 raimc Exp $
 */
 /* 
  *
@@ -466,7 +466,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     {
       rhsFunction = f ;
 #ifdef ARITHMETIC_TEST
-      printf("\nWARNING: USING EXPERIMENTAL ONLINE COMPILER\n\n");
+      fprintf(stderr, "\nWARNING: USING EXPERIMENTAL ONLINE COMPILER\n\n");
 #endif
     }      
     if ( engine->UseJacobian )
