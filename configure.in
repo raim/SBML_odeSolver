@@ -54,8 +54,8 @@ AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
 				    [shared library extrension])
 
 dnl Adding global compilation parameters
-dnl !!! remove -g -O2 for release ???     
-CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
+dnl !!! remove -g -O2 -pg  for release ???     
+CFLAGS="-g -O2 -pg -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 LIBS="-lm -lstdc++"	   
 AC_SUBST(CFLAGS)
 AC_SUBST(LIBS)	
@@ -88,7 +88,11 @@ CONFIG_LIB_SUNDIALS
 dnl CONFIG_LIB_TCC
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
+
+dnl Adding global compilation parameters
+dnl !!! remove -g -O2 -pg  for release ???     
 	
+dnl CFLAGS="-g -O2  -pg -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
 LIBS="-ldl -lm -lstdc++"
 
