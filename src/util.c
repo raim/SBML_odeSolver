@@ -1,6 +1,6 @@
 /**
  * Filename    : util.c
- * Revision    : $Id: util.c,v 1.3 2005/10/26 15:32:12 raimc Exp $
+ * Revision    : $Id: util.c,v 1.4 2008/09/12 20:02:49 raimc Exp $
  * Source      : $Source: /home/raim/programs/SBML_odeSolver/SBML_odeSolver/src/util.c,v $
  */
 /* 
@@ -103,7 +103,9 @@ char *get_line(FILE *fp)
     cp = strchr(s, '\n');
     if (cp != NULL) *cp = '\0';
     if (line==NULL)
-      line = space(strlen(s)+1);
+      line = space(strlen(s)+1); /*!!! TODO: valgrind: "Use of
+                                       uninitialised value of size
+                                       8" in adjsenstest_ContDiscData*/
     else
       line = (char *) xrealloc(line, strlen(s)+strlen(line)+1);
     strcat(line, s);
