@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 21:28:12 raim>
-  $Id: sensSolver.c,v 1.67 2008/09/12 20:04:58 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 23:58:51 raim>
+  $Id: sensSolver.c,v 1.68 2008/09/12 22:04:23 raimc Exp $
 */
 /* 
  *
@@ -1279,8 +1279,13 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
   }
 #else
-  for ( i=0; i<data->model->neq; i++ )
+  for ( i=0; i<data->model->neq; i++ ) 
+  {
     dySdata[i] = 0;
+    if ( data->os->index_sensP[iS] != -1 )
+      dySdata[i] +=
+	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
+  }
   
   for ( i=0; i<data->model->sparsesize; i++ )
   {
@@ -1294,12 +1299,12 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
     
   }
 
-  if ( data->os->index_sensP[iS] != -1 )
-  {
-    for(i=0; i<data->model->neq; i++)
-      dySdata[i] +=
-	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
-  }
+/*   if ( data->os->index_sensP[iS] != -1 ) */
+/*   { */
+/*     for(i=0; i<data->model->neq; i++) */
+/*       dySdata[i] += */
+/* 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data); */
+/*   } */
 #endif
   
   return (0);
@@ -1348,36 +1353,33 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
 #else
       dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];    
 #endif
-    }
-
-    
+    }    
     /*  Vector v contribution, if continuous data is used */
     if(data->model->discrete_observation_data==0)
       dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
-
   }
-
-#else
-  
+#else  
   for(i=0; i<data->model->neq; i++)
-    dyAdata[i] = 0;
-  
-    
-  
+  {
+    dyAdata[i] = 0;  
+    /*  Vector v contribution, if continuous data is used */
+    if(data->model->discrete_observation_data==0)
+      dyAdata[i] += evaluateAST(data->model->vector_v[i], data);
+  }
+     
   for ( i=0; i<data->model->sparsesize; i++ )
   {
-    nonzeroElem_t *nonzero = data->model->jacobSparse[i];
-    
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
 #ifdef ARITHMETIC_TEST
     dyAdata[nonzero->j] -= nonzero->ijcode->evaluate(data) * yAdata[nonzero->i];
 #else
     dyAdata[nonzero->j] -= evaluateAST(nonzero->ij, data)  * yAdata[nonzero->i];
 #endif    
-  }
-  
-  if(data->model->discrete_observation_data==0)
-    for(i=0; i<data->model->neq; i++)
-      dyAdata[i] += evaluateAST(data->model->vector_v[i], data); 
+  }  
+  /*  Vector v contribution, if continuous data is used */
+/*   if(data->model->discrete_observation_data==0) */
+/*     for(i=0; i<data->model->neq; i++) */
+/*       dyAdata[i] += evaluateAST(data->model->vector_v[i], data);  */
 #endif
   
   return (0);

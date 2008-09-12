@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 23:11:32 raim>
-  $Id: odeModel.c,v 1.102 2008/09/12 21:24:39 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-13 00:01:09 raim>
+  $Id: odeModel.c,v 1.103 2008/09/12 22:04:23 raimc Exp $ 
 */
 /* 
  *
@@ -1217,6 +1217,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   om->sparsesize = 0;
   fprintf(stderr, "GENERATING JACOBI: neq = %d\n", om->neq);
 #endif
+  
   for ( i=0; i<om->neq; i++ )
   {
     ode = copyAST(om->ode[i]);
@@ -1331,8 +1332,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
   for ( i=0; i<om->sparsesize; i++ )
     om->jacobSparse[i] = List_get(sparse, i);
-  List_free(sparse);
-  
+  List_free(sparse);  
 #endif
    
   return om->jacobian;
@@ -1349,15 +1349,15 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
   {
    
     /* free compiled function via array of non-zero entries */
+#ifdef ARITHMETIC_TEST
 #ifdef SPARSE
+    /* free compiledCode function */
     for ( i=0; i<om->sparsesize; i++ )
     {      
       nonzeroElem_t *nonzero = om->jacobSparse[i];
-
-#ifdef ARITHMETIC_TEST
-      destructFunction(nonzero->ijcode); /* free compiledCode function */
-#endif
+      destructFunction(nonzero->ijcode); 
     }
+#endif
 #endif
 
     /* free full matrix */
@@ -2341,8 +2341,8 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
     }
   }
   /* CharBuffer_append(buffer, "printf(\"JA\");"); */
-   CharBuffer_append(buffer, "return (0);\n");
-
+  CharBuffer_append(buffer, "return (0);\n");
+  
   CharBuffer_append(buffer, "}\n");
 }
 
