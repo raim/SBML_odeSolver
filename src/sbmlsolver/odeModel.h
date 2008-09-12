@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 15:38:28 raim>
-  $Id: odeModel.h,v 1.42 2008/09/09 15:17:35 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-12 18:51:55 raim>
+  $Id: odeModel.h,v 1.43 2008/09/12 20:04:58 raimc Exp $ 
 */
 /* 
  *
@@ -102,8 +102,13 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 	neq x neq */
     ASTNode_t ***jacob;
     directCode_t ***jacobcode;
-    /** List of non-zero elements i,j of the Jacobi matrix */
-    List_t *jacobsparse; 
+
+    /** List of non-zero elements i,j of the Jacobi matrix. 
+	Contains indices i and j, as well as direct pointers to
+	the ASTNode in the full matrix construct, and (optionally)
+        compiled versions of the ASTNode equations */
+    nonzeroElem_t **jacobSparse;
+    int sparsesize;
 
     /** was the jacobian matrix constructed ? */
     int jacobian;
@@ -166,6 +171,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
        v is given by a symbolic expression involving x and observation data. */
 
 
+    /*!!!: TODO : move objective function and data to separate
+           structure for multi-threaded use */
     int discrete_observation_data;    /**< 0: data observed is of
 					   continuous type (i.e., interpolated)
                                            1: data observed is of
@@ -250,6 +257,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
   struct nonzeroElem
   {
     int i, j;
+    ASTNode_t *ij;
+    directCode_t *ijcode;
   };
 
 #ifdef __cplusplus

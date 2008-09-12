@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 18:22:12 raim>
-  $Id: odeModel.c,v 1.100 2008/09/09 16:48:30 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-12 21:34:36 raim>
+  $Id: odeModel.c,v 1.101 2008/09/12 20:04:58 raimc Exp $ 
 */
 /* 
  *
@@ -953,9 +953,9 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->neq; i++ )
   {
-    destructFunction(om->odecode[i]); 
+    destructFunction(om->odecode[i]);
     free(om->odecode[i]);
-  } 
+  }
 #endif
   free(om->odecode);
   
@@ -967,9 +967,9 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->nass; i++ )
   {
-    destructFunction(om->assignmentcode[i]); 
+    destructFunction(om->assignmentcode[i]);
     free(om->assignmentcode[i]);
-  } 
+  }
 #endif
   free(om->assignmentcode);
 
@@ -983,13 +983,15 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   ODEModel_freeJacobian(om);
 
   /* free objective function AST if it has been constructed */
+  /*!!! TODO: segfault in adjsenstest_ContDiscData.c */
   if ( om->ObjectiveFunction != NULL )
     ASTNode_free(om->ObjectiveFunction);
- 
+  om->ObjectiveFunction = NULL;
+  
   /* free linear objective function AST's if constructed */
   if ( om->vector_v != NULL )
-   for ( i=0; i<om->neq; i++ )
-    ASTNode_free(om->vector_v[i]);
+    for ( i=0; i<om->neq; i++ )
+      ASTNode_free(om->vector_v[i]);
   free(om->vector_v);
 
   /* free time_series, if present */
@@ -1191,7 +1193,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   int i, j, k, failed, nvalues;
   double val;
   ASTNode_t *fprime, *simple, *index, *ode;
-  List_t *names;
+  List_t *names, *sparse;
 
   if ( om == NULL ) return 0;
   
@@ -1209,8 +1211,12 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
     ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode[i], om->neq, directCode_t *, 0);
   }
 
-  om->jacobsparse = List_create();
   
+#ifdef SPARSE
+  sparse = List_create();
+  om->sparsesize = 0;
+  printf("GENERATING JACOBI: neq = %d\n", om->neq);
+#endif
   for ( i=0; i<om->neq; i++ )
   {
     ode = copyAST(om->ode[i]);
@@ -1225,51 +1231,78 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
     
     for ( j=0; j<om->neq; j++ )
     {
+      /* 1: differentiate ODE */
       fprime = differentiateAST(ode, om->names[j]);
-      simple =  simplifyAST(fprime);
+      simple = simplifyAST(fprime);
       ASTNode_free(fprime);
       index = indexAST(simple, nvalues, om->names);
       ASTNode_free(simple);
       om->jacob[i][j] = index;
-#ifdef ARITHMETIC_TEST
-      ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, 0);
-      om->jacobcode[i][j]->eqn = index;
-      generateFunction(om->jacobcode[i][j], index);
-#endif
-      /* check if the AST contains a failure notice */
-      names = ASTNode_getListOfNodes(index ,
-				     (ASTNodePredicate) ASTNode_isName);
 
-      for ( k=0; k<List_size(names); k++ ) 
-	if ( strcmp(ASTNode_getName(List_get(names,k)),
-		    "differentiation_failed") == 0 ) 
-	  failed++;
-
-      /* generate list of non-zero Jacobi elements */
-      /*!!! TODO : to save memory generate
-	ONLY list with ASTNodes and i,j indices,
-	also/only(?) for compiled versions */
-      /*  check whether jacobian is 0  */
+      /* 2: generate list of non-zero Jacobi elements */
+      
+      /* check whether jacobian is 0 */
       val = 1;
       if ( ASTNode_isInteger(index) )
 	val = (double) ASTNode_getInteger(index) ;
       if ( ASTNode_isReal(index) )
 	val = ASTNode_getReal(index) ;
 
-      if ( val != 0 )
+      if ( val != 0.0 )
       {
+	
+	/* 3: generate compiled ODE */
+#ifdef ARITHMETIC_TEST
+	ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, 0);
+	om->jacobcode[i][j]->eqn = index;
+	generateFunction(om->jacobcode[i][j], index);
+#endif
+#ifdef SPARSE
+
+	/* 4: generate sparse list */
 	nonzeroElem_t *nonzero;
 	ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, 0);
-	nonzero->i=i;
-	nonzero->j=j;
+	nonzero->i = i;
+	nonzero->j = j;
+	nonzero->ij = om->jacob[i][j];
+	nonzero->ijcode = om->jacobcode[i][j];
+		
+	List_add(sparse, nonzero);
+	om->sparsesize++;
+#endif
+      }
+      else
+      {
+#ifdef ARITHMETIC_TEST
+#ifdef SPARSE
+	om->jacobcode[i][j] = NULL;
+#else
+	ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, 0);
+	om->jacobcode[i][j]->eqn = index;
+	generateFunction(om->jacobcode[i][j], index);	
+#endif
+#endif
 	
-	List_add(om->jacobsparse, nonzero);
+	/* can be optionally done to save memory for large models */
+/* 	ASTNode_free(om->jacob[i][j]); /\* free 0 elements *\/ */
+/* 	om->jacob[i][j] = NULL; */
       }
 
+      
+      
+      /* 5: check if the AST contains a failure notice */
+      names = ASTNode_getListOfNodes(index ,
+				     (ASTNodePredicate) ASTNode_isName);
+      for ( k=0; k<List_size(names); k++ ) 
+	if ( strcmp(ASTNode_getName(List_get(names,k)),
+		    "differentiation_failed") == 0 ) 
+	  failed++;
       List_free(names);
     }
+    
     ASTNode_free(ode);
   }
+  
   if ( failed != 0 )
   {
     /** if Jacobi matrix construction failed, the equations are still
@@ -1288,7 +1321,20 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   else om->jacobian = 1;
 
   om->jacobianFailed = failed;
-    
+
+   /* 6: generate nonzero element array from list */
+
+#ifdef SPARSE
+  printf("USING SPARSE JACOBI: %d of %d elements are non-zero\n",
+	 List_size(sparse), om->neq*om->neq);
+  
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
+  for ( i=0; i<om->sparsesize; i++ )
+    om->jacobSparse[i] = List_get(sparse, i);
+  List_free(sparse);
+  
+#endif
+   
   return om->jacobian;
 }
 
@@ -1301,15 +1347,31 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
   int i, j;
   if ( om->jacob != NULL )
   {
+   
+    /* free compiled function via array of non-zero entries */
+#ifdef SPARSE
+    for ( i=0; i<om->sparsesize; i++ )
+    {      
+      nonzeroElem_t *nonzero = om->jacobSparse[i];
+
+#ifdef ARITHMETIC_TEST
+      destructFunction(nonzero->ijcode); /* free compiledCode function */
+#endif
+    }
+#endif
+
+    /* free full matrix */
     for ( i=0; i<om->neq; i++ )
     {
       for ( j=0; j<om->neq; j++ )
       {	
-         ASTNode_free(om->jacob[i][j]);
+	ASTNode_free(om->jacob[i][j]);
 #ifdef ARITHMETIC_TEST
-         destructFunction(om->jacobcode[i][j]);
-         free(om->jacobcode[i][j]);
+#ifndef SPARSE
+	destructFunction(om->jacobcode[i][j]);
 #endif
+	free(om->jacobcode[i][j]);	
+#endif	
       }
       free(om->jacob[i]);
       free(om->jacobcode[i]);
@@ -1317,10 +1379,15 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
     free(om->jacob);
     free(om->jacobcode);
     om->jacob = NULL;
-    
-    /* free list of non-zero entries */
-    List_freeItems(om->jacobsparse, free, nonzeroElem_t);
-    List_free(om->jacobsparse);
+
+#ifdef SPARSE
+    /* free  array of non-zero entries */
+    for ( i=0; i<om->sparsesize; i++ )
+    {      
+      free(om->jacobSparse[i]);
+    }
+    free(om->jacobSparse);    
+#endif	
   }
   om->jacobian = 0;
 }
@@ -2119,7 +2186,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 					    charBuffer_t *buffer)
 {
   int i, j ;
-  ASTNode_t *tmp;
+  ASTNode_t *jacob_ij;
   float val;
  
   CharBuffer_append(buffer,"DLL_EXPORT int ");
@@ -2161,13 +2228,13 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
   {
     for ( j=0; j<om->neq; j++ ) 
     {
-      tmp = om->jacob[i][j];
+      jacob_ij = om->jacob[i][j];
       /*  check whether jacobian is 0  */
       val = 1;
-      if ( ASTNode_isInteger(tmp) )
-	val = (double) ASTNode_getInteger(tmp) ;
-      if ( ASTNode_isReal(tmp) )
-	val = ASTNode_getReal(tmp) ;
+      if ( ASTNode_isInteger(jacob_ij) )
+	val = (double) ASTNode_getInteger(jacob_ij) ;
+      if ( ASTNode_isReal(jacob_ij) )
+	val = ASTNode_getReal(jacob_ij) ;
       
       /* write Jacobi evaluation only if entry is not 0 */ 
       if ( val != 0.0 )
@@ -2177,7 +2244,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 	CharBuffer_append(buffer, ",");
 	CharBuffer_appendInt(buffer, j);
 	CharBuffer_append(buffer, ") = ");
-	generateAST(buffer, tmp);
+	generateAST(buffer, jacob_ij);
 	CharBuffer_append(buffer, ";\n");      
       }
     }
@@ -2202,7 +2269,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 						   charBuffer_t *buffer)
 {
   int i, j ;
-  ASTNode_t *tmp;
+  ASTNode_t *jacob_ji;
   float val;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
@@ -2238,13 +2305,13 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
   {
     for ( j=0; j<om->neq; j++ )
     {
-      tmp = om->jacob[j][i];
+      jacob_ji = om->jacob[j][i];
       /*  check whether jacobian is 0  */
       val = 1;
-      if ( ASTNode_isInteger(tmp) )
-	val = (double) ASTNode_getInteger(tmp) ;
-      if ( ASTNode_isReal(tmp) )
-	val = ASTNode_getReal(tmp) ;
+      if ( ASTNode_isInteger(jacob_ji) )
+	val = (double) ASTNode_getInteger(jacob_ji) ;
+      if ( ASTNode_isReal(jacob_ji) )
+	val = ASTNode_getReal(jacob_ji) ;
 
       /* write Jacobi evaluation only if entry is not 0 */ 
       if ( val != 0.0 )
@@ -2254,7 +2321,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 	CharBuffer_append(buffer, ",");
 	CharBuffer_appendInt(buffer, j);
 	CharBuffer_append(buffer, ") = - (");
-	generateAST(buffer, tmp);
+	generateAST(buffer, jacob_ji);
 	CharBuffer_append(buffer, ");\n");
       }
     }
@@ -2273,6 +2340,8 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
   int i, j, k;
+  double val;
+  ASTNode_t *jacob_ij;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_SENSITIVITY_FUNCTION_NAME);
@@ -2310,18 +2379,31 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
     CharBuffer_append(buffer, "] = 0.0;\n");
     for (j=0; j<os->om->neq; j++)
     {
-      CharBuffer_append(buffer, "dySdata[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] += ( ");
-      generateAST(buffer, os->om->jacob[i][j]);
-      CharBuffer_append(buffer, ") * ySdata[");
-      CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, "]; ");
-      CharBuffer_append(buffer, " /* om->jacob[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "][");
-      CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, "]  */ \n");
+      /* only non-zero Jacobi elements */
+      jacob_ij = os->om->jacob[i][j];
+      /*  check whether jacobian is 0  */
+      val = 1;
+      if ( ASTNode_isInteger(jacob_ij) )
+	val = (double) ASTNode_getInteger(jacob_ij) ;
+      if ( ASTNode_isReal(jacob_ij) )
+	val = ASTNode_getReal(jacob_ij) ;
+      
+      /* write Jacobi evaluation only if entry is not 0 */ 
+      if ( val != 0.0 )
+      {
+	CharBuffer_append(buffer, "dySdata[");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, "] += ( ");
+	generateAST(buffer, jacob_ij);
+	CharBuffer_append(buffer, ") * ySdata[");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, "]; ");
+	CharBuffer_append(buffer, " /* om->jacob[");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, "][");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, "]  */ \n");
+      }
     }
  
     for ( k=0; k<os->nsens; k++ )

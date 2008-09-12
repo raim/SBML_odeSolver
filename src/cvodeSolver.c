@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 16:55:28 raim>
-  $Id: cvodeSolver.c,v 1.72 2008/09/09 15:17:34 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 21:27:25 raim>
+  $Id: cvodeSolver.c,v 1.73 2008/09/12 20:04:58 raimc Exp $
 */
 /* 
  *
@@ -138,7 +138,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 		   solver->y, &(solver->t), CV_MODE);
     }
     
-
+    
     /*  if ( flag != CV_SUCCESS ) */
     if ( flag < CV_SUCCESS )
     {
@@ -1053,18 +1053,15 @@ static int JacODE(long int N, DenseMat J, realtype t,
     }
   
 #else
-  
-  for ( i=0; i<List_size(data->model->jacobsparse); i++ )
+
+  for ( i=0; i<data->model->sparsesize; i++ )
   {
-    nonzeroElem_t *nonzero =
-      (nonzeroElem_t *) List_get(data->model->jacobsparse, i);
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
     
 #ifdef ARITHMETIC_TEST
-    DENSE_ELEM(J, nonzero->i,nonzero->j) =
-      data->model->jacobcode[nonzero->i][nonzero->j]->evaluate(data);
+    DENSE_ELEM(J, nonzero->i,nonzero->j) = nonzero->ijcode->evaluate(data);
 #else
-    DENSE_ELEM(J, nonzero->i,nonzero->j) =
-      evaluateAST(data->model->jacob[nonzero->i][nonzero->j], data);
+    DENSE_ELEM(J, nonzero->i,nonzero->j) = evaluateAST(nonzero->ij, data);
 #endif
   }
   

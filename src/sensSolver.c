@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 17:09:00 raim>
-  $Id: sensSolver.c,v 1.66 2008/09/09 15:17:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 21:28:12 raim>
+  $Id: sensSolver.c,v 1.67 2008/09/12 20:04:58 raimc Exp $
 */
 /* 
  *
@@ -695,8 +695,12 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
   ASSIGN_NEW_MEMORY_BLOCK(vector_v, om->neq, ASTNode_t *, 0);
 
   if ( (fp = fopen(v_file, "r")) == NULL )
+  {
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_VECTOR_V_FAILED,
-		      "File %s not found in reading vector_v", v_file);  
+		      "File %s not found in reading vector_v", v_file);
+    return 0;
+  }
+
 
   /* loop over lines */
   for ( i=0; (line = get_line(fp)) != NULL; i++ )
@@ -730,6 +734,9 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
     free(line);
   }
 
+  fclose(fp);
+
+  /*!!! TODO: implement SOSlib error handling!!!*/
   if (i < om->neq)
     fatal(stderr, "read_v_file(): inconsistent number of variables (<)");
 
@@ -751,12 +758,18 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
 
   /* If objective function exists, free it */
   if ( om->ObjectiveFunction != NULL  )
+  {
     ASTNode_free(om->ObjectiveFunction);
+    om->ObjectiveFunction = NULL;
+  }
 
   if ( (fp = fopen(ObjFunc_file, "r")) == NULL )
+  {
     SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_OBJECTIVE_FUNCTION_FAILED,
 		      "File %s not found in reading objective function",
-		      ObjFunc_file); 
+		      ObjFunc_file);
+    return 0;
+  }
 
   /* a very obfuscated way to skip comment lines and read exactly one
      line of objective function */
@@ -778,6 +791,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstanc
         free(line); 
     }
   }
+  
+  fclose(fp);
 
 
   if( i > 1)
@@ -814,8 +829,12 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunctionFromString(integra
   odeModel_t *om = engine->om;
   
   if ( om->ObjectiveFunction != NULL  )
+  {
     ASTNode_free(om->ObjectiveFunction);
-  
+    om->ObjectiveFunction = NULL;
+  }
+
+ 
   temp_ast = SBML_parseFormula(str);
   ast = indexAST(temp_ast, om->neq, om->names);
   om->ObjectiveFunction = ast;
@@ -842,10 +861,9 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
   if ( om->vector_v != NULL )
   {
     for (  i=0; i<om->neq; i++  )
-       if ( om->vector_v[i] != NULL )
-       ASTNode_free(om->vector_v[i]);  
-
-   free(om->vector_v);   
+      if ( om->vector_v[i] != NULL )
+	ASTNode_free(om->vector_v[i]);      
+    free(om->vector_v);   
   }
 
   /******************** Calculate dJ/dx ************************/
@@ -863,12 +881,12 @@ static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
     names = ASTNode_getListOfNodes(fprime,
 				   (ASTNodePredicate) ASTNode_isName);
 
-      for ( j=0; j<List_size(names); j++ ) 
-	if ( strcmp(ASTNode_getName(List_get(names,j)),
-		    "differentiation_failed") == 0 ) 
-	  failed++;
+    for ( j=0; j<List_size(names); j++ ) 
+      if ( strcmp(ASTNode_getName(List_get(names,j)),
+		  "differentiation_failed") == 0 ) 
+	failed++;
 
-      List_free(names); 
+    List_free(names); 
   }
 
   ASTNode_free(ObjFun);
@@ -1243,21 +1261,47 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   data->currenttime = t;
 
   /** evaluate sensitivity RHS: df/dx * s + df/dp for one p */
+#ifndef SPARSE  
   for(i=0; i<data->model->neq; i++)
   {
     dySdata[i] = 0;
     for (j=0; j<data->model->neq; j++)
+    {
 #ifdef ARITHMETIC_TEST
       dySdata[i] += data->model->jacobcode[i][j]->evaluate(data) * ySdata[j]; 
 #else
       dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
 #endif
+    }
+    
     if ( data->os->index_sensP[iS] != -1 )
       dySdata[i] +=
 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
   }
-  /* printf("s"); */
+#else
+  for ( i=0; i<data->model->neq; i++ )
+    dySdata[i] = 0;
+  
+  for ( i=0; i<data->model->sparsesize; i++ )
+  {
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];
+    
+#ifdef ARITHMETIC_TEST
+    dySdata[nonzero->i] += nonzero->ijcode->evaluate(data) * ySdata[nonzero->j];
+#else
+    dySdata[nonzero->i] += evaluateAST(nonzero->ij, data)  * ySdata[nonzero->j];
+#endif
+    
+  }
 
+  if ( data->os->index_sensP[iS] != -1 )
+  {
+    for(i=0; i<data->model->neq; i++)
+      dySdata[i] +=
+	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
+  }
+#endif
+  
   return (0);
 }
 
@@ -1292,22 +1336,49 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
   data->currenttime = t;
 
   /* evaluate adjoint sensitivity RHS: -[df/dx]^T * yA + v */
+#ifndef SPARSE  
   for(i=0; i<data->model->neq; i++)
   {
     dyAdata[i] = 0;
     
-#ifdef ARITHMETIC_TEST
     for (j=0; j<data->model->neq; j++)
+    {
+#ifdef ARITHMETIC_TEST
       dyAdata[i] -= data->model->jacobcode[j][i]->evaluate(data) * yAdata[j];
 #else
-    for (j=0; j<data->model->neq; j++)
       dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];    
 #endif
+    }
+
+    
     /*  Vector v contribution, if continuous data is used */
     if(data->model->discrete_observation_data==0)
       dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
 
   }
+
+#else
+  
+  for(i=0; i<data->model->neq; i++)
+    dyAdata[i] = 0;
+  
+    
+  
+  for ( i=0; i<data->model->sparsesize; i++ )
+  {
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];
+    
+#ifdef ARITHMETIC_TEST
+    dyAdata[nonzero->j] -= nonzero->ijcode->evaluate(data) * yAdata[nonzero->i];
+#else
+    dyAdata[nonzero->j] -= evaluateAST(nonzero->ij, data)  * yAdata[nonzero->i];
+#endif    
+  }
+  
+  if(data->model->discrete_observation_data==0)
+    for(i=0; i<data->model->neq; i++)
+      dyAdata[i] += evaluateAST(data->model->vector_v[i], data); 
+#endif
   
   return (0);
 }
@@ -1343,24 +1414,23 @@ static int JacA(long int NB, DenseMat JB, realtype t,
   /** evaluate Jacobian JB = -[df/dx]^T */
 #ifndef SPARSE  
   for ( i=0; i<data->model->neq; i++ ) 
-    for ( j=0; j<data->model->neq; j++ ) 
+    for ( j=0; j<data->model->neq; j++ )
+    {
 #ifdef ARITHMETIC_TEST
       DENSE_ELEM(JB,i,j) = - data->model->jacobcode[j][i]->evaluate(data);
 #else
       DENSE_ELEM(JB,i,j) = - evaluateAST(data->model->jacob[j][i], data);
 #endif
+    }
 #else  
-  for ( i=0; i<List_size(data->model->jacobsparse); i++ )
+  for ( i=0; i<data->model->sparsesize; i++ )
   {
-    nonzeroElem_t *nonzero =
-      (nonzeroElem_t *) List_get(data->model->jacobsparse, i);
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
 #ifdef ARITHMETIC_TEST
-    DENSE_ELEM(JB, nonzero->j,nonzero->i) =
-      - data->model->jacobcode[nonzero->i][nonzero->j]->evaluate(data);
+    DENSE_ELEM(JB, nonzero->j,nonzero->i) = - nonzero->ijcode->evaluate(data);
 #else
-    DENSE_ELEM(JB,nonzero->j,nonzero->i) =
-      - evaluateAST(data->model->jacob[nonzero->i][nonzero->j], data);
-#endif
+    DENSE_ELEM(JB, nonzero->j,nonzero->i) = - evaluateAST(nonzero->ij, data);
+#endif 
   }
 #endif
     
