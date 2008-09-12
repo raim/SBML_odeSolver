@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 18:20:36 raim>
-  $Id: arithmeticCompiler.c,v 1.23 2008/09/09 16:47:43 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 20:22:22 raim>
+  $Id: arithmeticCompiler.c,v 1.24 2008/09/12 20:01:04 raimc Exp $
 */
 /* 
  *
@@ -2504,7 +2504,8 @@ void destructFunction(directCode_t*code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
-	free(code->temp);
+	free(code->temp); /*!!! TODO : what is code->temp and should
+		it be free'd or not ?*/
 #ifdef WIN32
 	if(sizeof(void (*)()) == 4)
 	  free(code->prog);
