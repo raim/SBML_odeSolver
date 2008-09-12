@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 21:34:36 raim>
-  $Id: odeModel.c,v 1.101 2008/09/12 20:04:58 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-12 23:11:32 raim>
+  $Id: odeModel.c,v 1.102 2008/09/12 21:24:39 raimc Exp $ 
 */
 /* 
  *
@@ -1215,7 +1215,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 #ifdef SPARSE
   sparse = List_create();
   om->sparsesize = 0;
-  printf("GENERATING JACOBI: neq = %d\n", om->neq);
+  fprintf(stderr, "GENERATING JACOBI: neq = %d\n", om->neq);
 #endif
   for ( i=0; i<om->neq; i++ )
   {
@@ -1325,7 +1325,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
    /* 6: generate nonzero element array from list */
 
 #ifdef SPARSE
-  printf("USING SPARSE JACOBI: %d of %d elements are non-zero\n",
+  fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero\n",
 	 List_size(sparse), om->neq*om->neq);
   
   ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
@@ -2114,7 +2114,8 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i,j ;
-
+  ASTNode_t *jacob_ji;
+  double val;
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_RHS_FUNCTION_NAME);
   CharBuffer_append(buffer,
@@ -2152,15 +2153,28 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
     CharBuffer_append(buffer, "dyAdata[");
     CharBuffer_appendInt(buffer, i);
     CharBuffer_append(buffer, "] = 0.0;\n");
-    for ( j=0; j<om->neq; j++ ){
-      CharBuffer_append(buffer, "dyAdata[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "]");
-      CharBuffer_append(buffer, "-= ( ");
-      generateAST(buffer, om->jacob[j][i]);
-      CharBuffer_append(buffer, " ) * yAdata[");
-      CharBuffer_appendInt(buffer, j);
-      CharBuffer_append(buffer, "];\n");
+    for ( j=0; j<om->neq; j++ )
+    {
+      jacob_ji = om->jacob[j][i];
+      /*  check whether jacobian is 0  */
+      val = 1;
+      if ( ASTNode_isInteger(jacob_ji) )
+	val = (double) ASTNode_getInteger(jacob_ji) ;
+      if ( ASTNode_isReal(jacob_ji) )
+	val = ASTNode_getReal(jacob_ji) ;
+      
+      /* write Jacobi evaluation only if entry is not 0 */ 
+      if ( val != 0.0 )
+      {      
+	CharBuffer_append(buffer, "dyAdata[");
+	CharBuffer_appendInt(buffer, i);
+	CharBuffer_append(buffer, "]");
+	CharBuffer_append(buffer, "-= ( ");      
+	generateAST(buffer, jacob_ji);
+	CharBuffer_append(buffer, " ) * yAdata[");
+	CharBuffer_appendInt(buffer, j);
+	CharBuffer_append(buffer, "];\n");
+      }
     }
   
     CharBuffer_append(buffer,
