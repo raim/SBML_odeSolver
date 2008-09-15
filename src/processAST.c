@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-01-30 14:47:45 raim>
-  $Id: processAST.c,v 1.55 2008/01/30 13:48:27 raimc Exp $
+  Last changed Time-stamp: <2008-09-15 13:26:53 raim>
+  $Id: processAST.c,v 1.56 2008/09/15 11:29:13 raimc Exp $
 */
 /* 
  *
@@ -181,7 +181,9 @@ ASTNode_t *copyAST(const ASTNode_t *f)
       ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
     }
     ASTNode_setName(copy, ASTNode_getName(f));
-
+    /* time and delay nodes */
+    ASTNode_setType(copy, ASTNode_getType(f)); 
+    
     if ( ASTNode_isSetData((ASTNode_t *)f) )
       ASTNode_setData(copy);
   }
@@ -327,6 +329,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
     if ( found == 0 )
     {
+      /* this isn't the correct behaviour for SBML strickly speaking - AMF */
       if ( strcmp(ASTNode_getName(n),"time") == 0 ||
 	   strcmp(ASTNode_getName(n),"Time") == 0 ||
 	   strcmp(ASTNode_getName(n),"TIME") == 0 )
@@ -1847,6 +1850,9 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
     /* free mem */
     if ( short_str != NULL )
       free(short_str);
+    
+    /* time and delay nodes */
+    ASTNode_setType(index, ASTNode_getType(f)); 
   }
   /* constants */
   /* functions, operators */
@@ -2533,7 +2539,6 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
 		      SOLVER_ERROR_AST_COMPILATION_FAILED_MISSING_VALUE,
 		      "No value found for AST_NAME %s . Defaults to Zero "
 		      "to avoid program crash", ASTNode_getName(n));
-
     CharBuffer_append(expressionStream, "0.0");
   }
 }
