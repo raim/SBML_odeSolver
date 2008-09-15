@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 18:38:56 raim>
-  $Id: sensSolver.c,v 1.69 2008/09/15 16:50:19 raimc Exp $
+  Last changed Time-stamp: <2008-09-15 20:33:51 raim>
+  $Id: sensSolver.c,v 1.70 2008/09/15 18:41:38 raimc Exp $
 */
 /* 
  *
@@ -1101,7 +1101,10 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
     }
     
     for ( j=0; j<os->nsens; j++ )
-      fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qA, j));   
+      {
+	value = NV_Ith_S(engine->solver->qA, j);
+	fprintf(f, "dJ/dp_%d=%0.15g ", j, value);
+      }
     fprintf(f, "\n");
   }
   else
@@ -1129,9 +1132,15 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 	free(formula);
         ASTNode_free(tempAST);
       }      
-      
+
+      /*!!! TODO : clarify why valgrind reports
+	"==16330== Conditional jump or move depends on
+	           uninitialised value(s)" for the following print command!!!*/
       for ( j=0; j<os->nsens; j++ )
-	fprintf(f, "dJ/dp_%d=%0.15g ", j, NV_Ith_S(engine->solver->qS, j));
+      {
+	value = NV_Ith_S(engine->solver->qS, j);
+	fprintf(f, "dJ/dp_%d=%0.15g ", j, value);
+      }
       fprintf(f, "\n");
     }
     else fprintf(f, "\nNo quadrature was performed \n");
@@ -1316,13 +1325,6 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 #endif
     
   }
-
-/*   if ( data->os->index_sensP[iS] != -1 ) */
-/*   { */
-/*     for(i=0; i<data->model->neq; i++) */
-/*       dySdata[i] += */
-/* 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data); */
-/*   } */
 #endif
   
   return (0);
