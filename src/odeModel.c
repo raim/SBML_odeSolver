@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-13 00:01:09 raim>
-  $Id: odeModel.c,v 1.103 2008/09/12 22:04:23 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-15 17:01:36 raim>
+  $Id: odeModel.c,v 1.104 2008/09/15 16:50:19 raimc Exp $ 
 */
 /* 
  *
@@ -1326,13 +1326,14 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
    /* 6: generate nonzero element array from list */
 
 #ifdef SPARSE
-  fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero\n",
+  fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero ...",
 	 List_size(sparse), om->neq*om->neq);
   
   ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
   for ( i=0; i<om->sparsesize; i++ )
     om->jacobSparse[i] = List_get(sparse, i);
   List_free(sparse);  
+  fprintf(stderr,"... finished\n");
 #endif
    
   return om->jacobian;
@@ -1442,15 +1443,35 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 {
   int i, j, l, k, nvalues, failed;
+  double val;
   ASTNode_t *ode, *fprime, *simple, *index; 
-  List_t *names;
+  List_t *names, *sparse;
   
   ASSIGN_NEW_MEMORY_BLOCK(os->sens, om->neq, ASTNode_t **, 0);
+  /* compiled equations */
+  ASSIGN_NEW_MEMORY_BLOCK(os->senscode, om->neq, directCode_t **, 0);
   
-  /* if only init.cond. sensitivities, nsensP will be NULL
-     and the matrix will essentially be empty */
+  /* if only init.cond. sensitivities, nsensP will be 0
+     and the matrix will essentially be empty (NULL) */
+
   for ( i=0; i<om->neq; i++ )
+  {
     ASSIGN_NEW_MEMORY_BLOCK(os->sens[i], os->nsensP, ASTNode_t *, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(os->senscode[i], os->nsensP, directCode_t *, 0);
+  }
+
+  
+#ifdef SPARSE
+  ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic, om->neq, int *, 0);
+  for ( i=0; i<om->neq; i++ )
+  {
+    ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic[i], os->nsensP, int, 0);    
+  }
+  sparse = List_create();
+  os->sparsesize = 0;
+  fprintf(stderr, "GENERATING PARAMETER MATRIX: neq=%d * nsens=%d\n",
+	  om->neq, os->nsensP);
+#endif
 
   nvalues = om->neq + om->nass + om->nalg + om->nconst;
   failed = 0;
@@ -1466,7 +1487,8 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
     l = 0;
     for ( j=0; j<os->nsens; j++ )
     {
-      if ( !(os->index_sens[j] < om->neq) )
+      /* skip species sens. */
+      if ( !(os->index_sens[j] < om->neq) ) 
       {
 	/* differentiate d(dYi/dt) / dPj */
 	fprime = differentiateAST(ode, om->names[os->index_sens[j]]);
@@ -1475,6 +1497,57 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 	index = indexAST(simple, nvalues, om->names);
 	ASTNode_free(simple);
 	os->sens[i][l] = index;
+	
+	/* check whether matrix element is 0 */
+	val = 1;
+	if ( ASTNode_isInteger(index) )
+	  val = (double) ASTNode_getInteger(index) ;
+	if ( ASTNode_isReal(index) )
+	  val = ASTNode_getReal(index) ;
+	
+	if ( val != 0.0 )
+	{
+#ifdef ARITHMETIC_TEST
+	  ASSIGN_NEW_MEMORY(os->senscode[i][l], directCode_t, 0);
+	  os->senscode[i][l]->eqn = index;
+	  generateFunction(os->senscode[i][l], index);	  
+#endif
+#ifdef SPARSE
+	  /* generate sparse list */
+	  nonzeroElem_t *nonzero;
+	  ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, 0);
+	  nonzero->i = i;
+	  nonzero->j = j;
+	  nonzero->ij = os->sens[i][l];
+	  nonzero->ijcode = os->senscode[i][l];
+	  
+	  List_add(sparse, nonzero);
+	  os->sparsesize++;
+
+	  /* fill sparse logic */
+	  os->sensLogic[i][l] = 1;
+#endif
+	}
+	else
+	{
+#ifdef SPARSE
+	  os->sensLogic[i][l] = 0;
+#endif
+#ifdef ARITHMETIC_TEST
+#ifdef SPARSE
+	  os->senscode[i][l] = NULL;
+#else
+	  ASSIGN_NEW_MEMORY(os->senscode[i][l], directCode_t, 0);
+	  os->senscode[i][l]->eqn = index;
+	  generateFunction(os->senscode[i][l], index);
+#endif
+#endif
+	}
+	/* increase sparse matrix counter */
+	l++;
+	  
+
+	
 	/* check if the AST contains a failure notice */
 	names = ASTNode_getListOfNodes(index,
 				       (ASTNodePredicate) ASTNode_isName);
@@ -1484,7 +1557,7 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 		      "differentiation_failed") == 0 ) 
 	    failed++;
 	List_free(names);
-	l++;
+
       }
     }
     ASTNode_free(ode);
@@ -1504,6 +1577,18 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
     return 0;
   }
 
+#ifdef SPARSE
+  fprintf(stderr,"USING SPARSE PARAM: %d of %d elements are non-zero ...",
+	 os->sparsesize, om->neq*os->nsensP);
+  
+  ASSIGN_NEW_MEMORY_BLOCK(os->sensSparse, os->sparsesize, nonzeroElem_t *, 0);
+  for ( i=0; i<os->sparsesize; i++ )
+    os->sensSparse[i] = List_get(sparse, i);
+  List_free(sparse);  
+  fprintf(stderr,"... finished\n");
+#endif
+
+
   return 1;
 
 }
@@ -1518,16 +1603,52 @@ void ODESense_freeMatrix(odeSense_t *os)
   /* free parametric matrix, if it has been constructed */
   if ( os->sens != NULL )
   {
-    for ( i=0; i<os->om->neq; i++ )
+    /* free compiled function via array of non-zero entries */
+#ifdef ARITHMETIC_TEST
+#ifdef SPARSE
+    /* free compiledCode function */
+    for ( i=0; i<os->sparsesize; i++ )
+    {      
+      nonzeroElem_t *nonzero = os->sensSparse[i];
+      destructFunction(nonzero->ijcode); 
+    }
+#endif
+#endif
+    
+   for ( i=0; i<os->om->neq; i++ )
     {
       for ( j=0; j<os->nsensP; j++ )
+      {
 	ASTNode_free(os->sens[i][j]);
+#ifdef ARITHMETIC_TEST
+#ifndef SPARSE
+	destructFunction(os->senscode[i][j]);
+#endif
+	free(os->senscode[i][j]);	
+#endif	
+       }
       free(os->sens[i]);
+      free(os->senscode[i]);
+#ifdef SPARSE
+      free(os->sensLogic[i]);
+#endif	
     }
     free(os->sens);
+    free(os->senscode);
     os->sens = NULL;
+
+#ifdef SPARSE
+    free(os->sensLogic);
+    /* free  array of non-zero entries */
+    for ( i=0; i<os->sparsesize; i++ )
+    {
+      free(os->sensSparse[i]);
+    }
+    free(os->sensSparse);
+#endif	    
   }
 }
+
 void ODESense_freeStructures(odeSense_t *os)
 {  
   if ( os->index_sens != NULL )
@@ -1788,7 +1909,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *o
   {
     ASSIGN_NEW_MEMORY(vi, variableIndex_t, NULL);
     vi->index = i;
-
+   
     if ( i<om->neq )
     {
       vi->type = ODE_VARIABLE;
@@ -1810,6 +1931,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *o
       vi->type_index = i - om->neq - om->nass - om->nconst;
     }
   }
+  
   return vi;
 }
 

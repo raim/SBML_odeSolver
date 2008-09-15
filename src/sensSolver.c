@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 23:58:51 raim>
-  $Id: sensSolver.c,v 1.68 2008/09/12 22:04:23 raimc Exp $
+  Last changed Time-stamp: <2008-09-15 18:38:56 raim>
+  $Id: sensSolver.c,v 1.69 2008/09/15 16:50:19 raimc Exp $
 */
 /* 
  *
@@ -1275,18 +1275,36 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
     }
     
     if ( data->os->index_sensP[iS] != -1 )
+    {
+#ifdef ARITHMETIC_TEST
+      dySdata[i] += 
+	data->os->senscode[i][data->os->index_sensP[iS]]->evaluate(data);
+#else
       dySdata[i] +=
 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
+#endif
+    }
   }
 #else
   for ( i=0; i<data->model->neq; i++ ) 
   {
     dySdata[i] = 0;
-    if ( data->os->index_sensP[iS] != -1 )
+    /* add parameter sensitivity */
+    /* evaluation of nonzero-elements in the parameter matrix dY/dP */
+    if ( data->os->index_sensP[iS] != -1 &&
+	 data->os->sensLogic[i][data->os->index_sensP[iS]] )
+    {
+#ifdef ARITHMETIC_TEST
+      dySdata[i] +=
+	data->os->senscode[i][data->os->index_sensP[iS]]->evaluate(data);
+#else
       dySdata[i] +=
 	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
+#endif
+    }
   }
-  
+
+  /* add variable sensitivities */
   for ( i=0; i<data->model->sparsesize; i++ )
   {
     nonzeroElem_t *nonzero = data->model->jacobSparse[i];
@@ -1345,18 +1363,19 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
   for(i=0; i<data->model->neq; i++)
   {
     dyAdata[i] = 0;
+    /*  Vector v contribution, if continuous data is used */
+    if(data->model->discrete_observation_data==0)
+      dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
     
     for (j=0; j<data->model->neq; j++)
     {
+    
 #ifdef ARITHMETIC_TEST
       dyAdata[i] -= data->model->jacobcode[j][i]->evaluate(data) * yAdata[j];
 #else
       dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];    
 #endif
     }    
-    /*  Vector v contribution, if continuous data is used */
-    if(data->model->discrete_observation_data==0)
-      dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
   }
 #else  
   for(i=0; i<data->model->neq; i++)
@@ -1369,17 +1388,14 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
      
   for ( i=0; i<data->model->sparsesize; i++ )
   {
-    nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
+    nonzeroElem_t *nonzero = data->model->jacobSparse[i];
+
 #ifdef ARITHMETIC_TEST
     dyAdata[nonzero->j] -= nonzero->ijcode->evaluate(data) * yAdata[nonzero->i];
 #else
     dyAdata[nonzero->j] -= evaluateAST(nonzero->ij, data)  * yAdata[nonzero->i];
 #endif    
   }  
-  /*  Vector v contribution, if continuous data is used */
-/*   if(data->model->discrete_observation_data==0) */
-/*     for(i=0; i<data->model->neq; i++) */
-/*       dyAdata[i] += evaluateAST(data->model->vector_v[i], data);  */
 #endif
   
   return (0);
@@ -1460,15 +1476,39 @@ static int fQA(realtype t, N_Vector y, N_Vector yA,
   data->currenttime = t;
 
   /* evaluate quadrature integrand: yA^T * df/dp */
-  for ( i=0; i<data->os->nsens; i++ )
+#ifndef SPARSE
+  for ( j=0; j<data->os->nsens; j++ )
   {
-    dqAdata[i] = 0.0;
+    dqAdata[j] = 0.0;
 
-    if ( data->os->index_sensP[i] != -1 )
-      for ( j=0; j<data->model->neq; j++ )
-	dqAdata[i] += yAdata[j] *
-	  evaluateAST(data->os->sens[j][data->os->index_sensP[i]], data);
+    if ( data->os->index_sensP[j] != -1 )
+    {
+      for ( i=0; i<data->model->neq; i++ )
+      {
+#ifdef ARITHMETIC_TEST
+	  dqAdata[j] += yAdata[i] *
+	    data->os->senscode[i][data->os->index_sensP[j]]->evaluate(data);
+#else
+	  dqAdata[j] += yAdata[i] *
+	    evaluateAST(data->os->sens[i][data->os->index_sensP[j]], data);
+#endif
+      }
+    }
   }
+#else /* ifdef SPARSE */
+  for ( j=0; j<data->os->nsens; j++ )
+    dqAdata[j] = 0.0;
+  
+  for ( i=0; i<data->os->sparsesize; i++ )
+  {
+    nonzeroElem_t *nonzero = data->os->sensSparse[i];        
+#ifdef ARITHMETIC_TEST
+    dqAdata[nonzero->j] += yAdata[nonzero->i] * nonzero->ijcode->evaluate(data);
+#else
+    dqAdata[nonzero->j] += yAdata[nonzero->i] * evaluateAST(nonzero->ij, data);
+#endif 
+  }
+#endif
 
   return (0);
 }

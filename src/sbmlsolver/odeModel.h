@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 18:51:55 raim>
-  $Id: odeModel.h,v 1.43 2008/09/12 20:04:58 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-15 14:22:58 raim>
+  $Id: odeModel.h,v 1.44 2008/09/15 16:50:20 raimc Exp $ 
 */
 /* 
  *
@@ -107,8 +107,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 	Contains indices i and j, as well as direct pointers to
 	the ASTNode in the full matrix construct, and (optionally)
         compiled versions of the ASTNode equations */
-    nonzeroElem_t **jacobSparse;
-    int sparsesize;
+    nonzeroElem_t **jacobSparse; /**< array of non-zero elements */
+    int sparsesize; /**< number of non-zero elements */
 
     /** was the jacobian matrix constructed ? */
     int jacobian;
@@ -205,9 +205,12 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
     int *index_sensP;        /**< indices of sensitivity parameters in the
 				sensitivity matrix (or -1 variables) */
     ASTNode_t ***sens;       /**< sensitivity matrix: df(x)/dp, neq x nsensP */
+    directCode_t ***senscode;/**< compiled sensitivity matrix */
     int sensitivity;         /**< was the sensitivity matrix constructed ? */
-    /** List of non-zero elements i,j of the sensitivity matrix */
-    List_t *senssparse; 
+    /** Non-zero elements i,j of the sensitivity matrix */
+    int **sensLogic;         /**< logic matrix, indicating non-zero elements */
+    nonzeroElem_t **sensSparse; /**< array of non-zero elements */
+    int sparsesize;          /**< number of non-zero elements */
 
     
     /** compiled code containing compiled sensitivity functions */
