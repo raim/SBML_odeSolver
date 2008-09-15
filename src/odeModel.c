@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 17:01:36 raim>
-  $Id: odeModel.c,v 1.104 2008/09/15 16:50:19 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-15 19:54:27 raim>
+  $Id: odeModel.c,v 1.105 2008/09/15 18:04:56 raimc Exp $ 
 */
 /* 
  *
@@ -2477,7 +2477,7 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 {
   int i, j, k;
   double val;
-  ASTNode_t *jacob_ij;
+  ASTNode_t *jacob_ij, *sens_ik;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_SENSITIVITY_FUNCTION_NAME);
@@ -2543,25 +2543,35 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
     }
  
     for ( k=0; k<os->nsens; k++ )
-    {
-      CharBuffer_append(buffer, "if ( ");
-      CharBuffer_appendInt(buffer, k);
-      CharBuffer_append(buffer, " == iS ) ");
-      CharBuffer_append(buffer, "dySdata[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] += ");
-
-      if ( os->index_sensP[k] == -1 )
-	CharBuffer_appendInt(buffer, 0);
-      else
-	generateAST(buffer, os->sens[i][os->index_sensP[k]]);
-
-      CharBuffer_append(buffer, "; ");
-      CharBuffer_append(buffer, " /* om->sens[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "][");
-      CharBuffer_appendInt(buffer,os->index_sensP[k]);
-      CharBuffer_append(buffer, "]  */ \n");
+    {    
+      if ( os->index_sensP[k] != -1 )
+      {
+	/* only non-zero Jacobi elements */
+	sens_ik = os->sens[i][os->index_sensP[k]];
+	/*  check whether jacobian is 0  */
+	val = 1;
+	if ( ASTNode_isInteger(sens_ik) )
+	  val = (double) ASTNode_getInteger(sens_ik) ;
+	if ( ASTNode_isReal(sens_ik) )
+	  val = ASTNode_getReal(sens_ik) ;
+	
+       if ( val != 0.0 )
+       {
+	 CharBuffer_append(buffer, "if ( ");
+	 CharBuffer_appendInt(buffer, k);
+	 CharBuffer_append(buffer, " == iS ) ");
+	 CharBuffer_append(buffer, "dySdata[");
+	 CharBuffer_appendInt(buffer, i);
+	 CharBuffer_append(buffer, "] += ");
+	 generateAST(buffer, sens_ik);
+	 CharBuffer_append(buffer, "; ");      
+	 CharBuffer_append(buffer, " /* om->sens[");
+	 CharBuffer_appendInt(buffer, i);
+	 CharBuffer_append(buffer, "][");
+	 CharBuffer_appendInt(buffer,os->index_sensP[k]);
+	 CharBuffer_append(buffer, "]  */ \n");
+       }
+      }
     }
   }
   /* CharBuffer_append(buffer, "printf(\"S\");"); */
@@ -2576,7 +2586,9 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
-  int i, j;
+  int i, k;
+  double val;
+  ASTNode_t *sens_ik;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
@@ -2606,28 +2618,41 @@ void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
   }
   
   /** evaluate quadrature integrand: yA^T * df/dp */
-  for ( i=0; i<os->nsens; i++ )
+  for ( k=0; k<os->nsens; k++ )
   {
     CharBuffer_append(buffer, "dqAdata[");
-    CharBuffer_appendInt(buffer, i);
+    CharBuffer_appendInt(buffer, k);
     CharBuffer_append(buffer, "] = 0.0;\n");
 
-    for ( j=0; j<os->om->neq; j++ )
+    for ( i=0; i<os->om->neq; i++ )
     {
-      if ( os->index_sensP[i] != -1 )
+     if ( os->index_sensP[k] != -1 )
       {
-	CharBuffer_append(buffer, "dqAdata[");
-	CharBuffer_appendInt(buffer, i);
-	CharBuffer_append(buffer, "] += ");
-	CharBuffer_append(buffer, "yAdata[");
-	CharBuffer_appendInt(buffer, j);
-	CharBuffer_append(buffer, "] * ( ");
-	generateAST(buffer, os->sens[j][os->index_sensP[i]]);
-	CharBuffer_append(buffer, " ); /* om->sens[");
-	CharBuffer_appendInt(buffer, j);
-	CharBuffer_append(buffer, "][");
-	CharBuffer_appendInt(buffer,os->index_sensP[i]);
-	CharBuffer_append(buffer, "]  */ \n");
+	/* only non-zero param matrix elements */
+	sens_ik = os->sens[i][os->index_sensP[k]];
+	
+	/*  check whether element is 0  */
+	val = 1;
+	if ( ASTNode_isInteger(sens_ik) )
+	  val = (double) ASTNode_getInteger(sens_ik) ;
+	if ( ASTNode_isReal(sens_ik) )
+	  val = ASTNode_getReal(sens_ik) ;
+	
+        if ( val != 0.0 )
+	{
+	  CharBuffer_append(buffer, "dqAdata[");
+	  CharBuffer_appendInt(buffer, k);
+	  CharBuffer_append(buffer, "] += ");
+	  CharBuffer_append(buffer, "yAdata[");
+	  CharBuffer_appendInt(buffer, i);
+	  CharBuffer_append(buffer, "] * ( ");
+	  generateAST(buffer, sens_ik);
+	  CharBuffer_append(buffer, " ); /* om->sens[");
+	  CharBuffer_appendInt(buffer, i);
+	  CharBuffer_append(buffer, "][");
+	  CharBuffer_appendInt(buffer, os->index_sensP[k]);
+	  CharBuffer_append(buffer, "]  */ \n");
+	}
       }
     }
   }
