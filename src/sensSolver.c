@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 20:33:51 raim>
-  $Id: sensSolver.c,v 1.70 2008/09/15 18:41:38 raimc Exp $
+  Last changed Time-stamp: <2008-09-15 20:42:16 raim>
+  $Id: sensSolver.c,v 1.71 2008/09/15 18:42:35 raimc Exp $
 */
 /* 
  *
@@ -1135,7 +1135,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
 
       /*!!! TODO : clarify why valgrind reports
 	"==16330== Conditional jump or move depends on
-	           uninitialised value(s)" for the following print command!!!*/
+	           uninitialised value(s)" for the following print command!
+		   see file sundials-2.3.0/include/nvector/nvector_serial.h */
       for ( j=0; j<os->nsens; j++ )
       {
 	value = NV_Ith_S(engine->solver->qS, j);
