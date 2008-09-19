@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 13:26:53 raim>
-  $Id: processAST.c,v 1.56 2008/09/15 11:29:13 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 14:08:11 raim>
+  $Id: processAST.c,v 1.57 2008/09/19 12:10:32 raimc Exp $
 */
 /* 
  *
@@ -318,7 +318,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	}
       }
       else
-      { 
+      {
+	/* majority case: just return the
+	   according value from data->values
+	   from the index stored by SOSlib
+	   ASTIndexNameNode sub-class of libSBML's ASTNode */
 	result = data->value[ASTNode_getIndex(n)];
   
       }
@@ -326,18 +330,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
        found++;
     }
 
-
-    if ( found == 0 )
-    {
-      /* this isn't the correct behaviour for SBML strickly speaking - AMF */
-      if ( strcmp(ASTNode_getName(n),"time") == 0 ||
-	   strcmp(ASTNode_getName(n),"Time") == 0 ||
-	   strcmp(ASTNode_getName(n),"TIME") == 0 )
-      {
-	result = (double) data->currenttime;
-	found++;
-      }
-    }
     if ( found == 0 )
     {
       for ( j=0; j<data->nvalues; j++ )
@@ -350,6 +342,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	}
       }
     }
+
     if ( found == 0 )
     {
       SolverError_error(FATAL_ERROR_TYPE,
@@ -2504,18 +2497,6 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
     }
 
     found++;
-  }
-
-  /* this isn't the correct behaviour for SBML strickly speaking - AMF */
-  if ( found == 0 )
-  {
-    if ( strcmp(ASTNode_getName(n),"time") == 0 ||
-	 strcmp(ASTNode_getName(n),"Time") == 0 ||
-	 strcmp(ASTNode_getName(n),"TIME") == 0 )
-    {
-      CharBuffer_append(expressionStream, "data->currenttime");
-      found++;
-    }
   }
 
   /* this is what we'd do if the index isn't always set -
