@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 18:31:07 raim>
-  $Id: cvodeData.c,v 1.27 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:11:41 raim>
+  $Id: cvodeData.c,v 1.28 2008/09/19 13:13:27 raimc Exp $
 */
 /* 
  *
@@ -86,12 +86,15 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
 
   data->neq = neq;
   data->opt = NULL;
-  
+
+  /* Sensitivity-specific - done later */
   data->sensitivity = NULL;
   data->p = NULL;
   data->p_orig  = NULL;
-
-  /* Adjoint specific */
+  /* default: don't use data->p */
+  data->use_p = 0;
+  
+  /* Adjoint-specific */
   /*!!! should this be moved to adjoint specific initiation? */
   ASSIGN_NEW_MEMORY_BLOCK(data->adjvalue, nvalues, double, NULL);
 

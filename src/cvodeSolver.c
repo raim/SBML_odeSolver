@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 12:50:28 raim>
-  $Id: cvodeSolver.c,v 1.75 2008/09/19 12:03:50 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:06:52 raim>
+  $Id: cvodeSolver.c,v 1.76 2008/09/19 13:13:27 raimc Exp $
 */
 /* 
  *
@@ -958,11 +958,9 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 
   /** update parameters: p is modified by CVODES,
       if jacobi or sensitivity could not be generated  */
-  /*!!? would it be enough to ask for existence of data->p? */
-  if ( (data->opt->Sensitivity && data->os ) )
-    if ( !data->os->sensitivity || !data->model->jacobian )
-      for ( i=0; i<data->nsens; i++ )
-	data->value[data->os->index_sens[i]] = data->p[i];
+  if ( data->use_p )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->os->index_sens[i]] = data->p[i];
 
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
@@ -996,10 +994,9 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 
   /** reset parameters */
   /*!!! necessary? here AND/OR in Jacobian? */
-  if ( (data->opt->Sensitivity && data->os ) )
-    if ( !data->os->sensitivity || !data->model->jacobian )
-      for ( i=0; i<data->nsens; i++ )
-	data->value[data->os->index_sens[i]] = data->p_orig[i];
+  if ( data->use_p )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->os->index_sens[i]] = data->p_orig[i];
   
   return (0);
 }
@@ -1028,11 +1025,9 @@ static int JacODE(long int N, DenseMat J, realtype t,
   
   /** update parameters: p is modified by CVODES,
       if fS could not be generated  */
-  /* if ( data->p != NULL && data->opt->Sensitivity ) */
-  if ( (data->opt->Sensitivity && data->os ) )
-    if ( !data->os->sensitivity || !data->model->jacobian )
-      for ( i=0; i<data->nsens; i++ )
-	data->value[data->os->index_sens[i]] = data->p[i];
+  if ( data->use_p )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->os->index_sens[i]] = data->p[i];
 
   /** update ODE variables from CVODE */
   for ( i=0; i<data->model->neq; i++ ) data->value[i] = ydata[i];
@@ -1054,10 +1049,9 @@ static int JacODE(long int N, DenseMat J, realtype t,
   
   
   /** reset parameters */
-  if ( (data->opt->Sensitivity && data->os ) )
-    if ( !data->os->sensitivity || !data->model->jacobian )
-      for ( i=0; i<data->nsens; i++ )
-	data->value[data->os->index_sens[i]] = data->p_orig[i];
+  if ( data->use_p )
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->os->index_sens[i]] = data->p_orig[i];
   
   return (0);
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 15:00:30 raim>
-  $Id: cvodeData.h,v 1.9 2008/01/28 19:25:27 stefan_tbi Exp $
+  Last changed Time-stamp: <2008-09-19 15:12:50 raim>
+  $Id: cvodeData.h,v 1.10 2008/09/19 13:13:28 raimc Exp $
 */
 /* 
  *
@@ -96,8 +96,10 @@ struct cvodeData {
   int nsens;
   /** current values of sensitivities dx(t)/dp */
   double **sensitivity; 
-  /** current and original values of parameters in sensitivity analysis,
-      required and filled only if no r.h.s function fS is available */
+  /** current and original values of parameters in sensitivity
+      analysis, required only if no r.h.s function fS is available
+      (missing Jacobi or missing parametrix matrix) */
+  unsigned int use_p;
   realtype *p;
   realtype *p_orig;
   

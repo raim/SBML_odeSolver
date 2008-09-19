@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 13:07:18 raim>
-  $Id: sensSolver.c,v 1.72 2008/09/19 12:03:50 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:00:03 raim>
+  $Id: sensSolver.c,v 1.73 2008/09/19 13:13:27 raimc Exp $
 */
 /* 
  *
@@ -308,12 +308,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction, data);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn Matrix", 1);
-
+      data->use_p = 0; /* don't use data->p */
     }
     else
     {
       flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL, NULL);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn NULL", 1);
+      data->use_p = 1; /* use data->p, as fS is not available */
 
       /* difference quotient method: CV_FORWARD or CV_CENTERED
        see, cvs_guide.pdf CVODES doc */
