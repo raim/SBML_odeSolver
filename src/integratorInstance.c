@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-06 20:17:36 raim>
-  $Id: integratorInstance.c,v 1.98 2007/12/06 19:22:05 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:33:53 raim>
+  $Id: integratorInstance.c,v 1.99 2008/09/19 13:38:35 raimc Exp $
 */
 /* 
  *
@@ -447,10 +447,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
     /*!!! this could use only dependent assignments ? */
     for ( i=0; i<om->nass; i++ )
       targetData->value[om->neq+i] =
-	evaluateAST(om->assignment[i], targetData);
-    
-    /* optimize ODEs for evaluation again */
-    IntegratorInstance_optimizeOdes(target);    
+	evaluateAST(om->assignment[i], targetData);    
   }
 }
 
@@ -1304,9 +1301,6 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
      the value of an ODE variable */
   if ( vi->index < om->neq )
     engine->isValid = 0; 
-  /* optimize ODEs for evaluation again, if a constant has been reset */
-  else if (!engine->opt->compileFunctions &&  vi->index >= om->neq+om->nass ) 
-    IntegratorInstance_optimizeOdes(engine);
 
   /* and finally assignment rules, potentially depending on that variable
      but otherwise rarely executed need to be evaluated */
@@ -1316,52 +1310,7 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
 
 }
 
-/* internal function used for optimization of ODEs; will handle the
-   case of sensitivity analysis, where ODEs can not be optimized; */
-/*!!! get rid of this, not required anymore as ODEs consist of assigned
-  flux rates and otherwise only compartment (not even that when accounting
-  for variable compartments) , and as compilation is
-  used for fast integration anyways. */
-void IntegratorInstance_optimizeOdes(integratorInstance_t *engine)
-{
-  int i, j;
-  ASTNode_t *tmp;
-  cvodeData_t *data;
-  cvodeSettings_t *opt;
-  odeModel_t *om;
-  odeSense_t *os;
 
-  os = engine->os;
-  om = engine->om;
-  opt = engine->opt;
-  data = engine->data;
-  
-  for ( i=0; i<om->neq; i++ )
-  {
-    /* optimize ODE only if no sensitivity was requested OR no
-       sensitivity matrix was constructed */
-    if ( !opt->Sensitivity  || os->sensitivity )
-    {
-      /* optimize each ODE: replace nconst and simplifyAST */
-      tmp = copyAST(om->ode[i]);
-      for ( j=0; j<om->nconst; j++ ) 
-	AST_replaceNameByValue(tmp,
-			       om->names[om->neq+om->nass+j],
-			       data->value[om->neq+om->nass+j]);
-      
-      if ( data->ode[i] != NULL )
-	ASTNode_free(data->ode[i]);	
-      data->ode[i] = simplifyAST(tmp);
-      ASTNode_free(tmp);
-    }
-    else
-    {
-      if ( data->ode[i] != NULL )
-	ASTNode_free(data->ode[i]);
-      data->ode[i] = copyAST(om->ode[i]);
-    }
-  }
-}
 
 /** Moves the current integration one step forward and switches
     between different solvers.

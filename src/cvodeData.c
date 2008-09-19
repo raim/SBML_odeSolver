@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:11:41 raim>
-  $Id: cvodeData.c,v 1.28 2008/09/19 13:13:27 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:36:19 raim>
+  $Id: cvodeData.c,v 1.29 2008/09/19 13:38:35 raimc Exp $
 */
 /* 
  *
@@ -381,19 +381,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   else
     om->discrete_observation_data=0;
 
-  /* free and re-create/initialize memory for optimized ODEs,
-     only if compilation is off */
-  if ( data->ode )
-  {
-    /* free ODEs */
-    for ( i=0; i<data->neq; i++ )
-      if ( data->ode[i] )
-	ASTNode_free(data->ode[i]);
-    free(data->ode);
-    data->ode = NULL;
-  }
-  if ( !data->opt->compileFunctions )
-    ASSIGN_NEW_MEMORY_BLOCK(data->ode, data->neq, ASTNode_t *, 0);
   
   /* initialize values */
   CvodeData_initializeValues(data);
@@ -472,7 +459,7 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
   /* 3: write initial values */
   /* (re)set to initial values 0.0 or 1.0 for parameter and
      variable sensitivities, respectively */
-  for ( i=0; i<data->neq; i++ )
+  for ( i=0; i<om->neq; i++ )
     for ( j=0; j<data->nsens; j++ )
       if ( os->index_sensP[j] == -1 && os->index_sens[j] == i )
 	data->sensitivity[i][j] = 1.0; /* variable A: dA(0)/dA(0) */
@@ -554,14 +541,6 @@ static void CvodeData_freeStructures(cvodeData_t * data)
   /* free event trigger flags */
   free(data->trigger);
 
-  if ( data->ode != NULL )
-  {
-      for ( i=0; i<data->neq; i++ )
-	if ( data->ode[i] != NULL )
-	  ASTNode_free(data->ode[i]);
-      free(data->ode);
-      data->ode = NULL;
-  }
 }
 
 /********* cvodeResults will be created by integration runs *********/

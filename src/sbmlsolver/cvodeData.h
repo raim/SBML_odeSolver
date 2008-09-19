@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:12:50 raim>
-  $Id: cvodeData.h,v 1.10 2008/09/19 13:13:28 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:16:19 raim>
+  $Id: cvodeData.h,v 1.11 2008/09/19 13:38:35 raimc Exp $
 */
 /* 
  *
@@ -73,14 +73,11 @@ struct cvodeData {
   /** objective function and experimental data for adjoint solver */
   objFunc_t *of;
   
-  /* ODEs f(x,p,t) = dx/dt and values x. The ODEs are usually
-     optimized versions of the same array in odeModel */
 
   /** number of ODEs */
   int neq;
-  /** optimized ODEs, used for integration */
-  ASTNode_t **ode; 
 
+  /* current values: variables x(t), assigned and constant parameters */
   /** total number of values (variables x(t) + parameters p) */
   int nvalues; 
   /** value array is used to write and read the current values of

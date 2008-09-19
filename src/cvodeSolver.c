@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:06:52 raim>
-  $Id: cvodeSolver.c,v 1.76 2008/09/19 13:13:27 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:34:52 raim>
+  $Id: cvodeSolver.c,v 1.77 2008/09/19 13:38:35 raimc Exp $
 */
 /* 
  *
@@ -680,12 +680,6 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	  CVODE_HANDLE_ERROR((void *)solver->cvadj_mem, "CVadjMalloc", 0);
       }
     }
-
-    /* optimize ODEs for evaluation, only required if no compilation
-       was requested */
-    if ( !opt->compileFunctions )
-      IntegratorInstance_optimizeOdes(engine);   
-
   } 
 
   /* ERROR HANDLING CODE if SensSolver construction failed */
@@ -989,7 +983,7 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 #ifdef ARITHMETIC_TEST
     dydata[i] = data->model->odecode[i]->evaluate(data);    
 #else
-    dydata[i] = evaluateAST(data->ode[i],data);
+    dydata[i] = evaluateAST(data->model->ode[i],data);
 #endif
 
   /** reset parameters */
@@ -1016,7 +1010,7 @@ static int JacODE(long int N, DenseMat J, realtype t,
 		  N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
 {
   
-  int i, j;
+  int i;
   realtype *ydata;
   cvodeData_t *data;
 
