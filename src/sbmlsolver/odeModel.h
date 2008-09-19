@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 14:22:58 raim>
-  $Id: odeModel.h,v 1.44 2008/09/15 16:50:20 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-19 17:12:33 raim>
+  $Id: odeModel.h,v 1.45 2008/09/19 16:56:35 raimc Exp $ 
 */
 /* 
  *
@@ -98,7 +98,7 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
     ASTNode_t **ode; 
     directCode_t **odecode;
 
-    /** The jacobian matrix df(x)/dx of the ODE system 
+    /** THE JACOBI MATRIX df(x)/dx of the ODE system 
 	neq x neq */
     ASTNode_t ***jacob;
     directCode_t ***jacobcode;
@@ -165,11 +165,10 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 				    evaluated after evaluating
 				    events */
 
-    /* adjoint */
+    /* ADJOINT */
     /* Adjoint: Given a parameter to observation map F(p),
        computes the adjoint operator applied to the vector v, F'*(p)v.
        v is given by a symbolic expression involving x and observation data. */
-
 
     /*!!!: TODO : move objective function and data to separate
            structure for multi-threaded use */

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 16:58:07 raim>
-  $Id: odeConstruct.c,v 1.38 2008/09/19 15:00:26 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 17:03:00 raim>
+  $Id: odeConstruct.c,v 1.39 2008/09/19 16:56:35 raimc Exp $
 */
 /* 
  *
@@ -89,8 +89,7 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
   /** C.1: Initialize a new model */  
   ode = Model_copyInits(m);
 
-  /** C.2: Copy predefined ODES (RateRules) and
-      create rate rules from reactions */
+  /** C.2: Copy predefined ODES (RateRules) */
   Model_copyOdes(m, ode);
 
   /**!!! TODO : SBML L2V2 - check ordering of combined set of assignments:

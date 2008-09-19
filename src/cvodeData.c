@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 16:29:34 raim>
-  $Id: cvodeData.c,v 1.30 2008/09/19 15:00:26 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 17:26:17 raim>
+  $Id: cvodeData.c,v 1.31 2008/09/19 16:56:35 raimc Exp $
 */
 /* 
  *
@@ -226,12 +226,13 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
     }
   }
  
+  /* set current time to 0 */
+  data->currenttime = 0.0;
+
+  /*!!! TODO : rule ordering: assignments and init. assignments */
   /* initialize assigned parameters */
   for ( i=0; i<om->nass; i++ ) 
     data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
-
-  /* set current time to 0 */
-  data->currenttime = 0.0;
 
   /* execute initial assignment rules ! */
   if ( ode != NULL )

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 13:12:38 raim>
-  $Id: odeModel.c,v 1.106 2008/09/19 12:03:50 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-19 18:05:09 raim>
+  $Id: odeModel.c,v 1.107 2008/09/19 16:56:35 raimc Exp $ 
 */
 /* 
  *
@@ -158,6 +158,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   ode = Model_reduceToOdes(m);
   RETURN_ON_ERRORS_WITH(NULL);
 
+  /* CREATE odeModel equations */
   om = ODEModel_fillStructures(ode);
   /* Errors will cause the program to stop, e.g. when some
      mathematical expressions are missing.  */
@@ -217,6 +218,9 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   }
 
   ODEModel_computeAssignmentRuleSets(om);
+
+  /*!!! TODO : generate array of nonzeroElem_t in correct ordering
+    of assignments and initial assignments */
     
   return om;
 }
@@ -492,7 +496,12 @@ static void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
   List_prepend(changes, secondAssignmentStage);
   om->assignmentsAfterEvents =
     ODEModel_computeAssignmentRuleSet(om, om->observables, changes);
-    
+
+  /*!!! TODO : assignment ordering instead of boolean int arrays
+    generate arrays containing indices of assignments in correct ordering
+    - HOWTO account for initialAssignments ? */
+  
+  
   free(firstAssignmentStage);
   free(secondAssignmentStage);
   List_free(changes);
@@ -926,6 +935,8 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
 
   ODEModel_computeAssignmentRuleSets(om);
 
+  /*!!! TODO : implement correct ordering ! */
+  
   return om;
   
 }
