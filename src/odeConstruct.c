@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 19:35:35 raim>
-  $Id: odeConstruct.c,v 1.37 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 16:58:07 raim>
+  $Id: odeConstruct.c,v 1.38 2008/09/19 15:00:26 raimc Exp $
 */
 /* 
  *
@@ -68,6 +68,7 @@ static void Model_copyOdes(Model_t *m, Model_t*ode);
 static void Model_copyEvents(Model_t *m, Model_t*ode);
 static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode);
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode);
+static void Model_copyInitialAssignmentRules(Model_t *m, Model_t*ode);
 
 
 /** C: Construct an ODE system from a Reaction Network
@@ -92,13 +93,20 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
       create rate rules from reactions */
   Model_copyOdes(m, ode);
 
-  /** C.4.c: Copy Assignment Rules to new model */
+  /**!!! TODO : SBML L2V2 - check ordering of combined set of assignments:
+         initialAssignmentRules, AssignmentRules, and kineticLaws */
+  /**!!! TODO : SBML L2V2 - constraints */
+  /**!!! TODO : supress ODE construction for algebraic rule
+         defined variables !!! */
+  
+  
+  /** C.3: Copy Assignment Rules to new model */
   Model_copyAssignmentRules(m, ode);
     
-  /** !!! supress ODE construction for algebraic rule
-      defined variables !!! */
-  
-  /** C.3: Create ODEs from reactions */
+  /** C.4: Copy InitialAssignmentRules to new model */
+  Model_copyInitialAssignmentRules(m, ode);
+
+  /** C.5: Create ODEs from reactions */
   errors = Model_createOdes(m, ode);
 
   if ( errors>0 ) 
@@ -107,7 +115,7 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
 		      "ODE model could not be constructed");
   
   
-  /** C.4: Copy incompatible SBML structures     
+  /** Copy incompatible SBML structures     
       The next steps will copy remaining definitions that can't be
       simplified, i.e. expressed in a system of ODEs, to the new model.
       They will also store warning and error messages, if these
@@ -116,13 +124,13 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
       copied, only for printing out results.
   */
   
-  /** C.4a: Copy events to new model and create warning */
+  /** C.6a: Copy events to new model and create warning */
   Model_copyEvents(m, ode);
 
-  /** C.4.b: Copy AlgebraicRules to new model and create error */
+  /** C.6b: Copy AlgebraicRules to new model and create error */
   Model_copyAlgebraicRules(m, ode);
 
-  /** C.5: replace function definitions in all formulas */
+  /** C.8: replace function definitions in all formulas */
   ODE_replaceFunctionDefinitions(ode);
     
   return ode;
@@ -345,7 +353,7 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
 }
 
 
-/** Creates and ODE for a species from its reactions
+/** Creates an ODE for a species from its reactions
     
 This function takes a species and a model, constructs and ODE for
 that species from all the reaction it appears in as either reactant
@@ -614,7 +622,18 @@ static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
   return errors;
 }
 
-/* Step C.4.c: Copy Assignment Rules  */
+/* Copy InitialAssignment Rules  */
+
+static void Model_copyInitialAssignmentRules(Model_t *m, Model_t*ode)
+{
+  int i;
+  for ( i=0; i<Model_getNumInitialAssignments(m); i++ )
+  {  
+    Model_addInitialAssignment(ode, Model_getInitialAssignment(m, i));
+  }
+}
+
+/* Copy Assignment Rules  */
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 {
   int i;
@@ -643,9 +662,8 @@ static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
   }
 }  
   
-/** C.5.a: Function Definition Replacement
-    replaces all occurences of a user defined function by
-    their function definition  
+/** Function Definition Replacement: replaces all occurences of a user
+    defined function by their function definition
 */
 static void ODE_replaceFunctionDefinitions(Model_t *m)
 {

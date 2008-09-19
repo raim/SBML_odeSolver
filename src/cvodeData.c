@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:36:19 raim>
-  $Id: cvodeData.c,v 1.29 2008/09/19 13:38:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 16:29:34 raim>
+  $Id: cvodeData.c,v 1.30 2008/09/19 15:00:26 raimc Exp $
 */
 /* 
  *
@@ -157,15 +157,18 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 }
 
 
-/** Writes values from the input SBML model into
-    the data structure */
+/** Writes values (initial conditions and parameters)
+    from the input SBML model into the data structure */
 
 SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 {
-  int i;
+  int i, j;
   Parameter_t *p;
   Species_t *s;
   Compartment_t *c;
+  InitialAssignment_t *init;
+  const char *id;
+  const ASTNode_t *math;
   odeModel_t *om = data->model;
   Model_t *ode = om->simple;
 
@@ -215,10 +218,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 			    om->names[i]);      	
       }
     }
+    /* 1b direct odeModel creation from ODEs */
     else if ( om->values != NULL )
     {
-      /* 1b direct odeModel creation from ODEs */
-      for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
+       for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
 	data->value[i] = om->values[i];
     }
   }
@@ -230,6 +233,20 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   /* set current time to 0 */
   data->currenttime = 0.0;
 
+  /* execute initial assignment rules ! */
+  if ( ode != NULL )
+  {
+    for ( i=0; i<Model_getNumInitialAssignments(ode); i++ )
+    {
+      init = Model_getInitialAssignment(ode, i);
+      id = InitialAssignment_getSymbol(init);
+      math = InitialAssignment_getMath(init);
+      for ( j=0; j<data->nvalues; j++ )
+	if ( strcmp(om->names[j], id) == 0 )	  
+	  data->value[j] = evaluateAST(math, data);
+    }
+  }
+      
   /* Zeroing initial adjoint values */
   if ( data->adjvalue != NULL )
     for ( i=0; i<data->neq; i++ )
@@ -468,7 +485,7 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
 
   /* map initial sensitivities to optional result structure */
   if  ( data->results != NULL )
- {
+  {
     /* results from former runs have already been freed before
       result structure was re-allocated */
     CvodeResults_allocateSens(data->results, om->neq, data->nsens,
@@ -522,10 +539,9 @@ static void CvodeData_freeSensitivities(cvodeData_t * data)
 /* frees all internal stuff of cvodeData */
 static void CvodeData_freeStructures(cvodeData_t * data)
 {
-  int i;
-
+  
   if ( data == NULL ) return;
-
+  
   /* free sensitivity structure */  
   CvodeData_freeSensitivities(data);
 
