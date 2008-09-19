@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 20:42:16 raim>
-  $Id: sensSolver.c,v 1.71 2008/09/15 18:42:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 13:07:18 raim>
+  $Id: sensSolver.c,v 1.72 2008/09/19 12:03:50 raimc Exp $
 */
 /* 
  *
@@ -1271,31 +1271,6 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   data->currenttime = t;
 
   /** evaluate sensitivity RHS: df/dx * s + df/dp for one p */
-#ifndef SPARSE  
-  for(i=0; i<data->model->neq; i++)
-  {
-    dySdata[i] = 0;
-    for (j=0; j<data->model->neq; j++)
-    {
-#ifdef ARITHMETIC_TEST
-      dySdata[i] += data->model->jacobcode[i][j]->evaluate(data) * ySdata[j]; 
-#else
-      dySdata[i] += evaluateAST(data->model->jacob[i][j], data) * ySdata[j];
-#endif
-    }
-    
-    if ( data->os->index_sensP[iS] != -1 )
-    {
-#ifdef ARITHMETIC_TEST
-      dySdata[i] += 
-	data->os->senscode[i][data->os->index_sensP[iS]]->evaluate(data);
-#else
-      dySdata[i] +=
-	evaluateAST(data->os->sens[i][data->os->index_sensP[iS]], data);
-#endif
-    }
-  }
-#else
   for ( i=0; i<data->model->neq; i++ ) 
   {
     dySdata[i] = 0;
@@ -1326,8 +1301,6 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 #endif
     
   }
-#endif
-  
   return (0);
 }
 
@@ -1362,25 +1335,6 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
   data->currenttime = t;
 
   /* evaluate adjoint sensitivity RHS: -[df/dx]^T * yA + v */
-#ifndef SPARSE  
-  for(i=0; i<data->model->neq; i++)
-  {
-    dyAdata[i] = 0;
-    /*  Vector v contribution, if continuous data is used */
-    if(data->model->discrete_observation_data==0)
-      dyAdata[i] +=   evaluateAST( data->model->vector_v[i], data);
-    
-    for (j=0; j<data->model->neq; j++)
-    {
-    
-#ifdef ARITHMETIC_TEST
-      dyAdata[i] -= data->model->jacobcode[j][i]->evaluate(data) * yAdata[j];
-#else
-      dyAdata[i] -= evaluateAST(data->model->jacob[j][i], data) * yAdata[j];    
-#endif
-    }    
-  }
-#else  
   for(i=0; i<data->model->neq; i++)
   {
     dyAdata[i] = 0;  
@@ -1399,8 +1353,6 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
     dyAdata[nonzero->j] -= evaluateAST(nonzero->ij, data)  * yAdata[nonzero->i];
 #endif    
   }  
-#endif
-  
   return (0);
 }
 
@@ -1433,17 +1385,6 @@ static int JacA(long int NB, DenseMat JB, realtype t,
   data->currenttime = t;
 
   /** evaluate Jacobian JB = -[df/dx]^T */
-#ifndef SPARSE  
-  for ( i=0; i<data->model->neq; i++ ) 
-    for ( j=0; j<data->model->neq; j++ )
-    {
-#ifdef ARITHMETIC_TEST
-      DENSE_ELEM(JB,i,j) = - data->model->jacobcode[j][i]->evaluate(data);
-#else
-      DENSE_ELEM(JB,i,j) = - evaluateAST(data->model->jacob[j][i], data);
-#endif
-    }
-#else  
   for ( i=0; i<data->model->sparsesize; i++ )
   {
     nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
@@ -1453,8 +1394,6 @@ static int JacA(long int NB, DenseMat JB, realtype t,
     DENSE_ELEM(JB, nonzero->j,nonzero->i) = - evaluateAST(nonzero->ij, data);
 #endif 
   }
-#endif
-    
   return (0);
 }
 
@@ -1479,26 +1418,6 @@ static int fQA(realtype t, N_Vector y, N_Vector yA,
   data->currenttime = t;
 
   /* evaluate quadrature integrand: yA^T * df/dp */
-#ifndef SPARSE
-  for ( j=0; j<data->os->nsens; j++ )
-  {
-    dqAdata[j] = 0.0;
-
-    if ( data->os->index_sensP[j] != -1 )
-    {
-      for ( i=0; i<data->model->neq; i++ )
-      {
-#ifdef ARITHMETIC_TEST
-	  dqAdata[j] += yAdata[i] *
-	    data->os->senscode[i][data->os->index_sensP[j]]->evaluate(data);
-#else
-	  dqAdata[j] += yAdata[i] *
-	    evaluateAST(data->os->sens[i][data->os->index_sensP[j]], data);
-#endif
-      }
-    }
-  }
-#else /* ifdef SPARSE */
   for ( j=0; j<data->os->nsens; j++ )
     dqAdata[j] = 0.0;
   
@@ -1511,8 +1430,6 @@ static int fQA(realtype t, N_Vector y, N_Vector yA,
     dqAdata[nonzero->j] += yAdata[nonzero->i] * evaluateAST(nonzero->ij, data);
 #endif 
   }
-#endif
-
   return (0);
 }
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 19:54:27 raim>
-  $Id: odeModel.c,v 1.105 2008/09/15 18:04:56 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-19 13:12:38 raim>
+  $Id: odeModel.c,v 1.106 2008/09/19 12:03:50 raimc Exp $ 
 */
 /* 
  *
@@ -1211,13 +1211,11 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
     ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode[i], om->neq, directCode_t *, 0);
   }
 
-  
-#ifdef SPARSE
+  /* create list to remember non-zero elements of the Jacobi matrix */
   sparse = List_create();
   om->sparsesize = 0;
-  fprintf(stderr, "GENERATING JACOBI: neq = %d\n", om->neq);
-#endif
-  
+/*   fprintf(stderr, "GENERATING JACOBI: neq = %d\n", om->neq); */
+
   for ( i=0; i<om->neq; i++ )
   {
     ode = copyAST(om->ode[i]);
@@ -1258,7 +1256,6 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 	om->jacobcode[i][j]->eqn = index;
 	generateFunction(om->jacobcode[i][j], index);
 #endif
-#ifdef SPARSE
 
 	/* 4: generate sparse list */
 	nonzeroElem_t *nonzero;
@@ -1270,18 +1267,11 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 		
 	List_add(sparse, nonzero);
 	om->sparsesize++;
-#endif
       }
       else
       {
 #ifdef ARITHMETIC_TEST
-#ifdef SPARSE
 	om->jacobcode[i][j] = NULL;
-#else
-	ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, 0);
-	om->jacobcode[i][j]->eqn = index;
-	generateFunction(om->jacobcode[i][j], index);	
-#endif
 #endif
 	
 	/* can be optionally done to save memory for large models */
@@ -1323,18 +1313,16 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 
   om->jacobianFailed = failed;
 
-   /* 6: generate nonzero element array from list */
-
-#ifdef SPARSE
-  fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero ...",
-	 List_size(sparse), om->neq*om->neq);
+  
+  /* 6: generate non-zero element array from list */
+/*   fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero ...", */
+/* 	 List_size(sparse), om->neq*om->neq); */
   
   ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
   for ( i=0; i<om->sparsesize; i++ )
     om->jacobSparse[i] = List_get(sparse, i);
   List_free(sparse);  
-  fprintf(stderr,"... finished\n");
-#endif
+/*   fprintf(stderr,"... finished\n"); */
    
   return om->jacobian;
 }
@@ -1351,14 +1339,12 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
    
     /* free compiled function via array of non-zero entries */
 #ifdef ARITHMETIC_TEST
-#ifdef SPARSE
     /* free compiledCode function */
     for ( i=0; i<om->sparsesize; i++ )
     {      
       nonzeroElem_t *nonzero = om->jacobSparse[i];
       destructFunction(nonzero->ijcode); 
     }
-#endif
 #endif
 
     /* free full matrix */
@@ -1368,9 +1354,6 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
       {	
 	ASTNode_free(om->jacob[i][j]);
 #ifdef ARITHMETIC_TEST
-#ifndef SPARSE
-	destructFunction(om->jacobcode[i][j]);
-#endif
 	free(om->jacobcode[i][j]);	
 #endif	
       }
@@ -1381,14 +1364,12 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
     free(om->jacobcode);
     om->jacob = NULL;
 
-#ifdef SPARSE
     /* free  array of non-zero entries */
     for ( i=0; i<om->sparsesize; i++ )
     {      
       free(om->jacobSparse[i]);
     }
     free(om->jacobSparse);    
-#endif	
   }
   om->jacobian = 0;
 }
@@ -1450,28 +1431,23 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
   ASSIGN_NEW_MEMORY_BLOCK(os->sens, om->neq, ASTNode_t **, 0);
   /* compiled equations */
   ASSIGN_NEW_MEMORY_BLOCK(os->senscode, om->neq, directCode_t **, 0);
+  /* simple logic vector of non-zero elements */
+  ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic, om->neq, int *, 0);
   
   /* if only init.cond. sensitivities, nsensP will be 0
      and the matrix will essentially be empty (NULL) */
-
   for ( i=0; i<om->neq; i++ )
   {
     ASSIGN_NEW_MEMORY_BLOCK(os->sens[i], os->nsensP, ASTNode_t *, 0);
     ASSIGN_NEW_MEMORY_BLOCK(os->senscode[i], os->nsensP, directCode_t *, 0);
-  }
-
-  
-#ifdef SPARSE
-  ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic, om->neq, int *, 0);
-  for ( i=0; i<om->neq; i++ )
-  {
     ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic[i], os->nsensP, int, 0);    
   }
+
+  /* create list to remember non-zero elements of the Jacobi matrix */
   sparse = List_create();
   os->sparsesize = 0;
-  fprintf(stderr, "GENERATING PARAMETER MATRIX: neq=%d * nsens=%d\n",
-	  om->neq, os->nsensP);
-#endif
+/*   fprintf(stderr, "GENERATING PARAMETER MATRIX: neq=%d * nsens=%d\n", */
+/* 	  om->neq, os->nsensP); */
 
   nvalues = om->neq + om->nass + om->nalg + om->nconst;
   failed = 0;
@@ -1512,7 +1488,6 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 	  os->senscode[i][l]->eqn = index;
 	  generateFunction(os->senscode[i][l], index);	  
 #endif
-#ifdef SPARSE
 	  /* generate sparse list */
 	  nonzeroElem_t *nonzero;
 	  ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, 0);
@@ -1526,21 +1501,12 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 
 	  /* fill sparse logic */
 	  os->sensLogic[i][l] = 1;
-#endif
 	}
 	else
 	{
-#ifdef SPARSE
 	  os->sensLogic[i][l] = 0;
-#endif
 #ifdef ARITHMETIC_TEST
-#ifdef SPARSE
 	  os->senscode[i][l] = NULL;
-#else
-	  ASSIGN_NEW_MEMORY(os->senscode[i][l], directCode_t, 0);
-	  os->senscode[i][l]->eqn = index;
-	  generateFunction(os->senscode[i][l], index);
-#endif
 #endif
 	}
 	/* increase sparse matrix counter */
@@ -1577,16 +1543,15 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
     return 0;
   }
 
-#ifdef SPARSE
-  fprintf(stderr,"USING SPARSE PARAM: %d of %d elements are non-zero ...",
-	 os->sparsesize, om->neq*os->nsensP);
+  /*  generate non-zero element array from list */
+/*   fprintf(stderr,"USING SPARSE PARAM: %d of %d elements are non-zero ...", */
+/* 	 os->sparsesize, om->neq*os->nsensP); */
   
   ASSIGN_NEW_MEMORY_BLOCK(os->sensSparse, os->sparsesize, nonzeroElem_t *, 0);
   for ( i=0; i<os->sparsesize; i++ )
     os->sensSparse[i] = List_get(sparse, i);
   List_free(sparse);  
-  fprintf(stderr,"... finished\n");
-#endif
+/*   fprintf(stderr,"... finished\n"); */
 
 
   return 1;
@@ -1605,14 +1570,12 @@ void ODESense_freeMatrix(odeSense_t *os)
   {
     /* free compiled function via array of non-zero entries */
 #ifdef ARITHMETIC_TEST
-#ifdef SPARSE
     /* free compiledCode function */
     for ( i=0; i<os->sparsesize; i++ )
     {      
       nonzeroElem_t *nonzero = os->sensSparse[i];
       destructFunction(nonzero->ijcode); 
     }
-#endif
 #endif
     
    for ( i=0; i<os->om->neq; i++ )
@@ -1621,23 +1584,17 @@ void ODESense_freeMatrix(odeSense_t *os)
       {
 	ASTNode_free(os->sens[i][j]);
 #ifdef ARITHMETIC_TEST
-#ifndef SPARSE
-	destructFunction(os->senscode[i][j]);
-#endif
 	free(os->senscode[i][j]);	
 #endif	
        }
       free(os->sens[i]);
       free(os->senscode[i]);
-#ifdef SPARSE
       free(os->sensLogic[i]);
-#endif	
     }
     free(os->sens);
     free(os->senscode);
     os->sens = NULL;
 
-#ifdef SPARSE
     free(os->sensLogic);
     /* free  array of non-zero entries */
     for ( i=0; i<os->sparsesize; i++ )
@@ -1645,7 +1602,6 @@ void ODESense_freeMatrix(odeSense_t *os)
       free(os->sensSparse[i]);
     }
     free(os->sensSparse);
-#endif	    
   }
 }
 
@@ -2555,22 +2511,22 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 	if ( ASTNode_isReal(sens_ik) )
 	  val = ASTNode_getReal(sens_ik) ;
 	
-       if ( val != 0.0 )
-       {
-	 CharBuffer_append(buffer, "if ( ");
-	 CharBuffer_appendInt(buffer, k);
-	 CharBuffer_append(buffer, " == iS ) ");
-	 CharBuffer_append(buffer, "dySdata[");
-	 CharBuffer_appendInt(buffer, i);
-	 CharBuffer_append(buffer, "] += ");
-	 generateAST(buffer, sens_ik);
-	 CharBuffer_append(buffer, "; ");      
-	 CharBuffer_append(buffer, " /* om->sens[");
-	 CharBuffer_appendInt(buffer, i);
-	 CharBuffer_append(buffer, "][");
-	 CharBuffer_appendInt(buffer,os->index_sensP[k]);
-	 CharBuffer_append(buffer, "]  */ \n");
-       }
+	if ( val != 0.0 )
+	{
+	  CharBuffer_append(buffer, "if ( ");
+	  CharBuffer_appendInt(buffer, k);
+	  CharBuffer_append(buffer, " == iS ) ");
+	  CharBuffer_append(buffer, "dySdata[");
+	  CharBuffer_appendInt(buffer, i);
+	  CharBuffer_append(buffer, "] += ");
+	  generateAST(buffer, sens_ik);
+	  CharBuffer_append(buffer, "; ");      
+	  CharBuffer_append(buffer, " /* om->sens[");
+	  CharBuffer_appendInt(buffer, i);
+	  CharBuffer_append(buffer, "][");
+	  CharBuffer_appendInt(buffer,os->index_sensP[k]);
+	  CharBuffer_append(buffer, "]  */ \n");
+	}
       }
     }
   }

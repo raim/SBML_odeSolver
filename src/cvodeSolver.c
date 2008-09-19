@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 22:46:53 raim>
-  $Id: cvodeSolver.c,v 1.74 2008/09/12 21:26:10 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 12:50:28 raim>
+  $Id: cvodeSolver.c,v 1.75 2008/09/19 12:03:50 raimc Exp $
 */
 /* 
  *
@@ -1041,19 +1041,6 @@ static int JacODE(long int N, DenseMat J, realtype t,
   data->currenttime = t;
 
   /** evaluate Jacobian J = df/dx */
-#ifndef SPARSE  
-  for ( i=0; i<data->model->neq; i++ )
-    for ( j=0; j<data->model->neq; j++ )
-    {
-#ifdef ARITHMETIC_TEST
-      DENSE_ELEM(J,i,j) = data->model->jacobcode[i][j]->evaluate(data);
-#else
-      DENSE_ELEM(J,i,j) = evaluateAST(data->model->jacob[i][j], data);
-#endif
-    }
-  
-#else
-
   for ( i=0; i<data->model->sparsesize; i++ )
   {
     nonzeroElem_t *nonzero = data->model->jacobSparse[i];    
@@ -1065,7 +1052,6 @@ static int JacODE(long int N, DenseMat J, realtype t,
 #endif
   }
   
-#endif
   
   /** reset parameters */
   if ( (data->opt->Sensitivity && data->os ) )
