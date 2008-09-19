@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:00:03 raim>
-  $Id: sensSolver.c,v 1.73 2008/09/19 13:13:27 raimc Exp $
+  Last changed Time-stamp: <2008-09-19 15:34:23 raim>
+  $Id: sensSolver.c,v 1.74 2008/09/19 13:37:42 raimc Exp $
 */
 /* 
  *
@@ -1256,7 +1256,7 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 	      int iS, N_Vector yS, N_Vector ySdot, 
 	      void *fS_data, N_Vector tmp1, N_Vector tmp2)
 {
-  int i, j;
+  int i;
   realtype *ydata, *ySdata, *dySdata;
   cvodeData_t *data;
   data  = (cvodeData_t *) fS_data;
@@ -1320,7 +1320,7 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
 static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
 	      void *fA_data)
 {
-  int i, j;
+  int i;
   realtype *ydata, *yAdata, *dyAdata;
   cvodeData_t *data;
   data  = (cvodeData_t *) fA_data;
@@ -1373,7 +1373,7 @@ static int JacA(long int NB, DenseMat JB, realtype t,
 		N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
 
-  int i, j;
+  int i;
   realtype *ydata;
   cvodeData_t *data;
   data  = (cvodeData_t *) jac_dataB;
