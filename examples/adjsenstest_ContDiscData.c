@@ -59,6 +59,8 @@ main (int argc, char *argv[]){
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
 
+  CvodeSettings_setCompileFunctions(set, 1);
+
   /* use time series data as discrete observations and set corresponding print steps */ 
   CvodeSettings_setDiscreteObservation(set);
   

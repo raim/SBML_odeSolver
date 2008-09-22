@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 15:23:29 raim>
-  $Id: adj_sensitivity.c,v 1.12 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2008-09-15 20:12:00 raim>
+  $Id: adj_sensitivity.c,v 1.13 2008/09/22 10:30:25 raimc Exp $
 */
 /* 
  *
@@ -81,8 +81,9 @@ main (int argc, char *argv[]){
 
   /* Setting SBML ODE Solver integration parameters  */
   set = CvodeSettings_create();
+  CvodeSettings_setCompileFunctions(set, 1);
   CvodeSettings_setTime(set, tout, 5);
-  CvodeSettings_setErrors(set, 1e-5, 1e-5, 1e7);
+  CvodeSettings_setErrors(set, 1e-9, 1e-9, 1e7);
 
   /* ACTIVATE SENSITIVITY ANALYSIS */
   CvodeSettings_setSensitivity(set, 1);
@@ -200,8 +201,8 @@ main (int argc, char *argv[]){
   fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
   flag = IntegratorInstance_printQuad(ii, stderr);
     if (flag!=1)
-	return(EXIT_FAILURE); 
-
+	return(EXIT_FAILURE);
+    
   /* now we have the results and can free the inputs */
   VariableIndex_free(p);
   IntegratorInstance_free(ii);

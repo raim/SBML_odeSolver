@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-03-07 16:57:25 raim>
-  $Id: integrate.c,v 1.13 2006/03/07 15:58:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 13:15:58 raim>
+  $Id: integrate.c,v 1.14 2008/09/22 10:30:26 raimc Exp $
 */
 /* 
  *
@@ -71,6 +71,7 @@ main (int argc, char *argv[])
   set = CvodeSettings_create();
   CvodeSettings_setTime(set, time, printstep);
   CvodeSettings_setErrors(set, 1e-9, 1e-4, 1000);
+  CvodeSettings_setCompileFunctions(set, 1);
 
   /* calling the SBML ODE Solver which returns SBMLResults */  
   results = SBML_odeSolver(d, set);

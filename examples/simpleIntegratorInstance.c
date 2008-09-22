@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-06 19:48:05 raim>
-  $Id: simpleIntegratorInstance.c,v 1.17 2008/03/10 19:24:47 raimc Exp $
+  Last changed Time-stamp: <2008-09-12 22:28:43 raim>
+  $Id: simpleIntegratorInstance.c,v 1.18 2008/09/22 10:30:26 raimc Exp $
 */
 /* 
  *
@@ -113,8 +113,9 @@ int doIt(void)
     CvodeSettings_dump(set2);
     
     IntegratorInstance_set(integratorInstance, set2);
-    IntegratorInstance_setInitialTime(integratorInstance, .5);
-
+/*     IntegratorInstance_setInitialTime(integratorInstance, .5); */
+/*!!! TODO : should setInitialTime work here??*/
+    
     IntegratorInstance_dumpData(integratorInstance);  
 
     while( !IntegratorInstance_timeCourseCompleted(integratorInstance) ) {

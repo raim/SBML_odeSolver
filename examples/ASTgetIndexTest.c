@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 12:25:37 raim>
-  $Id: ASTgetIndexTest.c,v 1.1 2008/09/22 10:28:49 raimc Exp $
+  Last changed Time-stamp: <2008-09-22 12:29:46 raim>
+  $Id: ASTgetIndexTest.c,v 1.2 2008/09/22 10:30:25 raimc Exp $
 */
 /* 
  *
@@ -76,7 +76,7 @@ int main(void)
     printf("old : %s\n", formula);
     free(formula);
     formula = SBML_formulaToString(new);
-    printf("new : %s\n", formula);fflush(stdout);
+    printf("new : %s\n", formula);
     
     free(formula);
 
@@ -91,6 +91,7 @@ int main(void)
 
     ASTNode_free(old);
     ASTNode_free(new);
+    List_free(index);
 
     return(EXIT_SUCCESS);
 }

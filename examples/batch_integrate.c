@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-03-10 20:13:28 raim>
-  $Id: batch_integrate.c,v 1.22 2008/03/10 19:24:29 raimc Exp $
+  Last changed Time-stamp: <2008-09-09 13:26:31 raim>
+  $Id: batch_integrate.c,v 1.23 2008/09/22 10:30:25 raimc Exp $
 */
 /* 
  *
@@ -82,20 +82,24 @@ main (int argc, char *argv[]){
   printf("### Varying parameter %s from %f to %f in %f steps\n",
 	 parameter1, start1, end1, steps1);
 
-  start2 = atof(argv[8]);
-  end2 = atof(argv[9]);
-  steps2 = atoi(argv[10]);
-  parameter2 = argv[11];
+  if ( argc > 8 )
+  {
+    start2 = atof(argv[8]);
+    end2 = atof(argv[9]);
+    steps2 = atoi(argv[10]);
+    parameter2 = argv[11];
+    if ( argc > 12 ) 
+      reaction2 = argv[12];
+    else
+      reaction2 = NULL;
+  }
   
-  if ( argc > 12 ) 
-    reaction2 = argv[12];
-  else
-    reaction2 = NULL;
-  
-  printf("### Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
+ printf("### Varying parameter %s (reaction %s) from %f to %f in %f steps\n",
 	 parameter2, reaction2, start2, end2, steps2);
   
-  /* parsing the SBML model with libSBML */
+
+
+/* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
   d = SBMLReader_readSBML(sr, model);
   SBMLReader_free(sr);  
@@ -110,10 +114,12 @@ main (int argc, char *argv[]){
 
   /* Setting SBML Ode Solver batch integration parameters */
   vs = VarySettings_allocate(2, steps1*steps2);
-  
+
   VarySettings_addParameter(vs, parameter1, NULL);
   VarySettings_addParameter(vs, parameter2, reaction2);
-
+  
+  
+  
   for ( i=0; i<steps1; i++ )
   {
     values[0] = start1 + i*(end1-start1)/steps1;
@@ -123,6 +129,7 @@ main (int argc, char *argv[]){
       VarySettings_addDesignPoint(vs, values);    
     }
   }
+
   VarySettings_dump(vs);
 
 
