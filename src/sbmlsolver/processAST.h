@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 12:25:00 raim>
-  $Id: processAST.h,v 1.21 2008/09/22 10:29:05 raimc Exp $
+  Last changed Time-stamp: <2008-09-22 13:08:39 raim>
+  $Id: processAST.h,v 1.22 2008/09/22 11:23:31 raimc Exp $
 */
 /* 
  *
@@ -74,6 +74,7 @@ extern "C" {
   int ASTNode_containsTime(ASTNode_t *node);
   int ASTNode_containsPiecewise(ASTNode_t *node);
   void ASTNode_getIndices(ASTNode_t *node, List_t *indices);
+  int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues);
 
 
 #ifdef __cplusplus

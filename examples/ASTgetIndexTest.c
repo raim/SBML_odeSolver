@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 12:29:46 raim>
-  $Id: ASTgetIndexTest.c,v 1.2 2008/09/22 10:30:25 raimc Exp $
+  Last changed Time-stamp: <2008-09-22 13:21:21 raim>
+  $Id: ASTgetIndexTest.c,v 1.3 2008/09/22 11:23:31 raimc Exp $
 */
 /* 
  *
@@ -62,13 +62,18 @@ int main(void)
     char *formula;
     ASTNode_t *old = SBML_parseFormula("(A * B )+ 1/(C+D)^2");
     ASTNode_t *new;
-    char *names[4];
+    int nvalues = 6;
+    char *names[nvalues];
     names[0] = "A";
-    names[1] = "B";
-    names[2] = "C";
-    names[3] = "D";
+    names[1] = "x";
+    names[2] = "B";
+    names[3] = "y";
+    names[4] = "C";
+    names[5] = "D";
 
-    new = indexAST(old, 4, names);
+    /* index the original AST */
+    new = indexAST(old, nvalues, names);
+    /* print by looping through AST */
     printIndex(new);
 
 
@@ -80,18 +85,29 @@ int main(void)
     
     free(formula);
 
+    /* retrieve List of indices */
     List_t *index = List_create();
     ASTNode_getIndices(new, index);
 
     for ( i=0; i<List_size(index); i++ )
     {
-      int k = List_get(index,i);
+      int k = (int) List_get(index,i);
       printf("index of %s is %d\n", names[k], k);
     }
 
+    /* retrieve boolean array of indices */
+
+    int *indexBool = ASTNode_getIndexArray(new, nvalues);
+
+    for ( i=0; i<nvalues; i++ )
+    {
+      printf("symbol %s occurs in equation? %s\n",names[i], indexBool[i] ? "yes" : "no"); 
+    }
+    
     ASTNode_free(old);
     ASTNode_free(new);
     List_free(index);
+    free(indexBool);
 
     return(EXIT_SUCCESS);
 }
