@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 14:08:11 raim>
-  $Id: processAST.c,v 1.57 2008/09/19 12:10:32 raimc Exp $
+  Last changed Time-stamp: <2008-09-22 11:43:34 raim>
+  $Id: processAST.c,v 1.58 2008/09/22 10:29:05 raimc Exp $
 */
 /* 
  *
@@ -2312,6 +2312,17 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
+}
+/* appends the indices in the given indexed AST to the given list. */
+void ASTNode_getIndices(ASTNode_t *node, List_t *indices)
+{
+  int i ;
+
+  if ( ASTNode_isSetIndex(node) )
+    List_add(indices, (int) ASTNode_getIndex(node));
+
+  for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
+    ASTNode_getIndices(ASTNode_getChild(node, i), indices);
 }
 
 /* returns boolean result: whether the given AST contains a time symbol. */

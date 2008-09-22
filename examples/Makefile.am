@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.27 2007/09/20 01:16:12 raimc Exp $
+# $Id: Makefile.am,v 1.28 2008/09/22 10:28:49 raimc Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -32,7 +32,7 @@ INCLUDES = -I. -I../src -I@prefix@/include @SBML_CFLAGS@ @SUNDIALS_CFLAGS@
 AM_CFLAGS  = @CFLAGS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
-               simpleIntInst changeIntInst ASTIndexTest \
+               simpleIntInst changeIntInst ASTIndexTest ASTgetIndexTest\
                ParameterScanner Sense \
                printODEs analyzeJacobian analyzeSens \
 	       root senstest adjsenstest integrateODEs compilerTest \
@@ -105,6 +105,9 @@ changeIntInst_LDADD    = -L../src -L@prefix@/lib -lODES \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 ASTIndexTest_SOURCES = ASTIndexTest.c
 ASTIndexTest_LDADD   = -L../src -L@prefix@/lib -lODES \
+                       @SBML_LDFLAGS@ @SBML_LIBS@
+ASTgetIndexTest_SOURCES = ASTgetIndexTest.c
+ASTgetIndexTest_LDADD   = -L../src -L@prefix@/lib -lODES \
                        @SBML_LDFLAGS@ @SBML_LIBS@
 analyzeJacobian_SOURCES = analyzeJacobian.c
 analyzeJacobian_LDADD   = -L../src -L@prefix@/lib -lODES \
