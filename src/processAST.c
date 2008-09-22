@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 13:19:51 raim>
-  $Id: processAST.c,v 1.59 2008/09/22 11:23:32 raimc Exp $
+  Last changed Time-stamp: <2008-09-22 14:55:28 raim>
+  $Id: processAST.c,v 1.60 2008/09/22 15:23:36 raimc Exp $
 */
 /* 
  *
@@ -2336,12 +2336,16 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
   /* init. with 0 */
   for ( i=0; i<nvalues; i++ ) result[i] = 0;
 
-  /* get indices from equation */
-  ASTNode_getIndices(node, index);
-  
-  /* set indices to 1 */
-  for ( i = 0; i<List_size(index); i++ )
-    result[(int) List_get(index,i)] = 1;
+  if ( node != NULL )
+  {
+    /* get indices from equation */
+    ASTNode_getIndices(node, index);
+    
+    /* set indices to 1 */
+    for ( i = 0; i<List_size(index); i++ )
+      result[(int) List_get(index,i)] = 1;
+  }
+  List_free(index);
 
   return result;
 }

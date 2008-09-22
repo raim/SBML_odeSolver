@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 17:12:33 raim>
-  $Id: odeModel.h,v 1.45 2008/09/19 16:56:35 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-19 20:55:42 raim>
+  $Id: odeModel.h,v 1.46 2008/09/22 15:23:37 raimc Exp $ 
 */
 /* 
  *
@@ -144,6 +144,7 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 
     /* EVALUATION ORDERING */
     /** timing of assignment rule evaluation */
+    nonzeroElem_t **ruleOrder; /**< ordering of rule evaluation */
 
     List_t *observables ; /**< set of symbols that the user wishes to
 			     have computed for output (list contains

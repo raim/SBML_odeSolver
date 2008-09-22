@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 18:05:09 raim>
-  $Id: odeModel.c,v 1.107 2008/09/19 16:56:35 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-22 17:19:39 raim>
+  $Id: odeModel.c,v 1.108 2008/09/22 15:23:36 raimc Exp $ 
 */
 /* 
  *
@@ -76,6 +76,7 @@ static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *, char *,
 static int *ODEModel_computeAssignmentRuleSet(odeModel_t *, List_t *, List_t *);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *);
 
+static int ODEModel_topologicalRuleSort(odeModel_t *);
 
 
 
@@ -221,8 +222,64 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
 
   /*!!! TODO : generate array of nonzeroElem_t in correct ordering
     of assignments and initial assignments */
-    
+   
+  /* ODEModel_topologicalRuleSort(om); */
+
   return om;
+}
+
+static List_t *topoSort(odeModel_t *om)
+{
+  List_t *sorted;   /* L : Empty list where we put the sorted elements */
+  List_t *noincome; /* Q : Set of all nodes with no incoming edges */
+
+  /* http://en.wikipedia.org/wiki/Topological_sorting */
+  /* L : Empty list where we put the sorted elements */
+  /* Q : Set of all nodes with no incoming edges */
+  /* while Q is non-empty do */
+  /*     remove a node n from Q */
+  /*     insert n into L */
+  /*     for each node m with an edge e from n to m do */
+  /*         remove edge e from the graph */
+  /*         if m has no other incoming edges then */
+  /*             insert m into Q */
+             /* ELSE ? not required handled at nodes with incoming edge !! */
+  /* if graph has edges then */
+  /*     output error message (graph has a cycle) */
+  /* else  */
+  /*     output message (proposed topologically sorted order: L) */
+
+  /*OR INSTEAD: generate DAG and use directly for evaluation 
+   * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */ 
+  return sorted;
+
+}
+
+static int ODEModel_topologicalRuleSort(odeModel_t *om)
+{
+  int i, j, nvalues, **matrix;
+
+  nvalues = om->neq + om->nass + om->nconst + om->nalg;
+  
+  ASSIGN_NEW_MEMORY_BLOCK(matrix, om->nass, int *, 0);
+
+  for ( i=0; i<om->nass; i++ )
+  {
+    int *indexBool = ASTNode_getIndexArray(om->assignment[om->neq+i], nvalues);
+    ASSIGN_NEW_MEMORY_BLOCK(matrix[i], om->nass, int, 0);
+    for  ( j=0; j<om->nass; j++ )
+    {
+      matrix[i][j] = indexBool[om->neq+j];
+    }
+  }
+
+  for ( i=0; i<om->nass; i++ )
+  {
+    free(matrix[i]);
+  }
+  free(matrix);
+  
+  return 1;
 }
 
 /* creates an assignment stage structure given a set of symbols
