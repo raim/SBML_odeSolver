@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 17:19:39 raim>
-  $Id: odeModel.c,v 1.108 2008/09/22 15:23:36 raimc Exp $ 
+  Last changed Time-stamp: <23-Sep-2008 10:23:46 raim>
+  $Id: odeModel.c,v 1.109 2008/09/23 08:24:10 raimc Exp $ 
 */
 /* 
  *
@@ -271,6 +271,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
     {
       matrix[i][j] = indexBool[om->neq+j];
     }
+    free(indexBool);
   }
 
   for ( i=0; i<om->nass; i++ )
