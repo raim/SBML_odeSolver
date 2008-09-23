@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <23-Sep-2008 10:23:46 raim>
-  $Id: odeModel.c,v 1.109 2008/09/23 08:24:10 raimc Exp $ 
+  Last changed Time-stamp: <23-Sep-2008 10:30:33 raim>
+  $Id: odeModel.c,v 1.110 2008/09/23 08:30:57 raimc Exp $ 
 */
 /* 
  *
@@ -265,7 +265,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   for ( i=0; i<om->nass; i++ )
   {
-    int *indexBool = ASTNode_getIndexArray(om->assignment[om->neq+i], nvalues);
+    int *indexBool = ASTNode_getIndexArray(om->assignment[i], nvalues);
     ASSIGN_NEW_MEMORY_BLOCK(matrix[i], om->nass, int, 0);
     for  ( j=0; j<om->nass; j++ )
     {
