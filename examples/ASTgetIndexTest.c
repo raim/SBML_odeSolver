@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-23 16:46:29 raim>
-  $Id: ASTgetIndexTest.c,v 1.4 2008/09/23 16:40:24 raimc Exp $
+  Last changed Time-stamp: <2008-09-23 19:07:18 raim>
+  $Id: ASTgetIndexTest.c,v 1.5 2008/09/23 17:08:40 raimc Exp $
 */
 /* 
  *

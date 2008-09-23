@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-23 18:34:34 raim>
-  $Id: odeModel.c,v 1.111 2008/09/23 16:40:25 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-23 19:04:15 raim>
+  $Id: odeModel.c,v 1.112 2008/09/23 17:08:39 raimc Exp $ 
 */
 /* 
  *
@@ -299,16 +299,20 @@ static List_t *topoSort(int **matrix, int n)
     }
   }
   printf("MATRIX:\n");
+  ins = 0;
   for ( i=0; i<n; i++ )
   {
     printf("%d:", i);
     for  ( j=0; j<n; j++ )
     {
       printf("\t%d", matrix[i][j]);
+      ins += matrix[i][j];
     }
     printf("\n");
   }
   printf("\n");
+
+  if ( ins ) printf("ERROR: rules contain a cycle\n");
  
   printf("LIST:\n");
   for ( i=0; i<List_size(sorted); i++ )
@@ -352,7 +356,7 @@ int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<om->nass; i++ )
   {
     char *f = SBML_formulaToString(om->assignment[i]);
-    printf("EQU %s = %s\n", om->names[om->neq+i], f);
+    printf("EQU %d %s = %s\n", i, om->names[om->neq+i], f);
     free(f);
   }
   printf("\n");
