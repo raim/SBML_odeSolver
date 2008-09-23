@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 13:21:21 raim>
-  $Id: ASTgetIndexTest.c,v 1.3 2008/09/22 11:23:31 raimc Exp $
+  Last changed Time-stamp: <2008-09-23 16:46:29 raim>
+  $Id: ASTgetIndexTest.c,v 1.4 2008/09/23 16:40:24 raimc Exp $
 */
 /* 
  *
@@ -101,13 +101,18 @@ int main(void)
 
     for ( i=0; i<nvalues; i++ )
     {
-      printf("symbol %s occurs in equation? %s\n",names[i], indexBool[i] ? "yes" : "no"); 
+      printf("symbol %s occurs in equation? %s\n",
+	     names[i], indexBool[i] ? "yes" : "no"); 
     }
     
     ASTNode_free(old);
     ASTNode_free(new);
     List_free(index);
     free(indexBool);
+
+    odeModel_t *om = ODEModel_createFromFile("../ruleorder/rules.xml");
+    ODEModel_topologicalRuleSort(om);
+    ODEModel_free(om);
 
     return(EXIT_SUCCESS);
 }

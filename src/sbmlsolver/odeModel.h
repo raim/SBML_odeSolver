@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 20:55:42 raim>
-  $Id: odeModel.h,v 1.46 2008/09/22 15:23:37 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-23 15:30:25 raim>
+  $Id: odeModel.h,v 1.47 2008/09/23 16:40:25 raimc Exp $ 
 */
 /* 
  *
@@ -326,6 +326,8 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(ode
 int ODEModel_getVariableIndexFields(odeModel_t *, const char *SBML_ID);
 int ODESense_constructMatrix(odeSense_t *, odeModel_t *);
 void ODESense_freeMatrix(odeSense_t *);
-void ODESense_freeStructures(odeSense_t *os);
+void ODESense_freeStructures(odeSense_t *);
+
+int ODEModel_topologicalRuleSort(odeModel_t *);
 
 #endif

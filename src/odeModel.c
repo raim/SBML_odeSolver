@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <23-Sep-2008 10:30:33 raim>
-  $Id: odeModel.c,v 1.110 2008/09/23 08:30:57 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-23 18:34:34 raim>
+  $Id: odeModel.c,v 1.111 2008/09/23 16:40:25 raimc Exp $ 
 */
 /* 
  *
@@ -76,7 +76,6 @@ static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *, char *,
 static int *ODEModel_computeAssignmentRuleSet(odeModel_t *, List_t *, List_t *);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *);
 
-static int ODEModel_topologicalRuleSort(odeModel_t *);
 
 
 
@@ -228,11 +227,15 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   return om;
 }
 
-static List_t *topoSort(odeModel_t *om)
+static List_t *topoSort(int **matrix, int n)
 {
+  int i, j, k, ins;
   List_t *sorted;   /* L : Empty list where we put the sorted elements */
   List_t *noincome; /* Q : Set of all nodes with no incoming edges */
 
+  noincome = List_create();
+  sorted = List_create();
+  
   /* http://en.wikipedia.org/wiki/Topological_sorting */
   /* L : Empty list where we put the sorted elements */
   /* Q : Set of all nodes with no incoming edges */
@@ -250,15 +253,83 @@ static List_t *topoSort(odeModel_t *om)
   /*     output message (proposed topologically sorted order: L) */
 
   /*OR INSTEAD: generate DAG and use directly for evaluation 
-   * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */ 
+   * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */
+  
+  /* Q : Set of all nodes with no incoming edges */
+  for ( i=0; i<n; i++ )
+  {
+    printf("%d:", i);
+    ins = 0;
+    for  ( j=0; j<n; j++ )
+    {
+      printf("\t%d", matrix[i][j]);
+      ins += matrix[i][j];
+    }
+    if ( !ins )
+    {
+      printf("\tNO INS %d\n", i);
+      List_add(noincome, (int) i);
+    }
+    else        printf("\n");
+  }
+  printf("\n");
+
+  while( List_size(noincome) )
+  {
+    int cur = (int) List_remove(noincome, 0);
+    i--;
+    List_add(sorted, (int) cur);
+    for ( j=0; j<n; j++ )
+    {
+      if ( matrix[j][cur] )
+      {
+	printf("removing edge %d %d\n", j, cur);
+	matrix[j][cur] = 0;
+	ins = 0;
+	for ( k=0; k<n; k++ )
+	{
+	  ins += matrix[j][k];
+	}
+	if ( !ins )
+	{
+	  printf("\tNO INS %d\n", j);
+	  List_add(noincome, (int) j);	    
+	}
+      }
+    }
+  }
+  printf("MATRIX:\n");
+  for ( i=0; i<n; i++ )
+  {
+    printf("%d:", i);
+    for  ( j=0; j<n; j++ )
+    {
+      printf("\t%d", matrix[i][j]);
+    }
+    printf("\n");
+  }
+  printf("\n");
+ 
+  printf("LIST:\n");
+  for ( i=0; i<List_size(sorted); i++ )
+  {
+    printf(" %d,", (int) List_get(sorted, i));
+  }
+  printf("\n");
+
+  
+  printf("FINISHED %d\n", List_size(sorted));
+  List_free(noincome);
+
   return sorted;
 
 }
 
-static int ODEModel_topologicalRuleSort(odeModel_t *om)
+int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
   int i, j, nvalues, **matrix;
-
+  List_t *dependencyList;
+  
   nvalues = om->neq + om->nass + om->nconst + om->nalg;
   
   ASSIGN_NEW_MEMORY_BLOCK(matrix, om->nass, int *, 0);
@@ -273,12 +344,38 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
     }
     free(indexBool);
   }
+  for ( i=0; i<nvalues; i++ )
+  {
+    printf("%s v:%d a:%d c:%d \n", om->names[i], om->neq, om->nass, om->nconst);
+  }
+  printf("\n");
+  for ( i=0; i<om->nass; i++ )
+  {
+    char *f = SBML_formulaToString(om->assignment[i]);
+    printf("EQU %s = %s\n", om->names[om->neq+i], f);
+    free(f);
+  }
+  printf("\n");
+  
+  for ( i=0; i<om->nass; i++ )
+  {
+    printf("%s:", om->names[om->neq+i]);
+    for  ( j=0; j<om->nass; j++ )
+    {
+      printf("\t%d", matrix[i][j]);
+    }
+    printf("\n");
+  }
+  printf("\n");
 
+  dependencyList = topoSort(matrix, om->nass);
+  
   for ( i=0; i<om->nass; i++ )
   {
     free(matrix[i]);
   }
   free(matrix);
+  List_free(dependencyList);
   
   return 1;
 }
