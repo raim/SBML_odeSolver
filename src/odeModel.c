@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 16:00:53 raim>
-  $Id: odeModel.c,v 1.114 2008/09/24 14:10:10 raimc Exp $ 
+  Last changed Time-stamp: <24-Sep-2008 17:55:16 raim>
+  $Id: odeModel.c,v 1.115 2008/09/24 15:56:51 raimc Exp $ 
 */
 /* 
  *
@@ -284,24 +284,27 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
   while( List_size(noincome) )
   {
     int *idx;
-    idx = List_remove(noincome, 0);
+    idx = List_remove(noincome, 0); /* remove node n from Q */
     int cur = *idx;
-    List_add(sorted, idx);
-    for ( i=0; i<n; i++ )
+    List_add(sorted, idx);   /* insert n into L */
+
+    for ( i=0; i<n; i++ )   
+
     {
-      if ( matrix[i][cur] )
+      if ( matrix[i][cur] ) /* for each node m with an edge e from n to m do */ 
       {
-	matrix[i][cur] = 0;
+	matrix[i][cur] = 0; /* remove edge e from the graph */
+
 	ins = 0;
 	for ( j=0; j<n; j++ )
 	  ins += matrix[i][j];
 	
-	if ( !ins )
+	if ( !ins ) /* if m has no other incoming edges then */
 	{
 	  int *idx;
 	  ASSIGN_NEW_MEMORY(idx, int, NULL);
 	  *idx = i;
-	  List_add(noincome, idx);	    
+	  List_add(noincome, idx);     /* insert m into Q */
 	}
       }
     }
@@ -310,24 +313,28 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
   List_freeItems(noincome, free, int); /* only in case of cyclic graphs ?*/
   List_free(noincome); /* free Q */
 
+  
+  
   /* check whether any edges remain ... */
   ins = 0;  
   for ( i=0; i<n; i++ )
     for  ( j=0; j<n; j++ )
       ins += matrix[i][j];
   
-  /* ... and issue error message if so */
-  if ( ins )
+  /* if graph has edges then */
+  if ( ins ) 
   {
+    /*     output error message (graph has a cycle) */
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_CYCLIC_DEPENDENCY_IN_RULES,
 		      "Cyclic dependency found in topological sorting.");
     List_freeItems(sorted, free, int);
     List_free(sorted);
     return NULL;
-  }  
-  return sorted;
+  }
+  return sorted;   /* else: proposed topologically sorted order: L */
 
+  
 }
 
 /* generates dependency graph (matrix) from the odeModel's assignment
