@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 17:26:17 raim>
-  $Id: cvodeData.c,v 1.31 2008/09/19 16:56:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 13:15:46 raim>
+  $Id: cvodeData.c,v 1.32 2008/09/24 11:25:50 raimc Exp $
 */
 /* 
  *
@@ -243,8 +243,8 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
       id = InitialAssignment_getSymbol(init);
       math = InitialAssignment_getMath(init);
       for ( j=0; j<data->nvalues; j++ )
-	if ( strcmp(om->names[j], id) == 0 )	  
-	  data->value[j] = evaluateAST(math, data);
+	if ( strcmp(om->names[j], id) == 0 )
+	  data->value[j] = evaluateAST((ASTNode_t *)math, data);
     }
   }
       
