@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 14:27:29 raim>
-  $Id: cvodeData.c,v 1.33 2008/09/24 14:10:09 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 16:23:14 raim>
+  $Id: cvodeData.c,v 1.34 2008/09/24 14:35:03 raimc Exp $
 */
 /* 
  *
@@ -385,6 +385,9 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
 /* initialize cvodeData from cvodeSettings and odeModel (could be
    separated into two functions to further support modularity and
    independence of data structures */
+/*!!! TODO : clarify if this function can be called when the solver time
+  is other then 0, and how it relates to CvodeData_initializeValues
+  -> handling of initialAssignments !!!*/
 int
 CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 {
@@ -404,13 +407,15 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
     om->discrete_observation_data=0;
 
   
-  /* initialize values */
+  /* initialize values from odeModel */
   CvodeData_initializeValues(data);
      
   /* set current time */
   data->currenttime = opt->TimePoints[0];
 
   /* update assigned parameters, in case they depend on new time */
+  /*!!! TODO : when is this called with time other then 0 ???
+        -> handling of initialAssignments !!!*/
   for ( i=0; i<om->nass; i++ )
   {
     nonzeroElem_t *ordered = om->assignmentOrder[i];
