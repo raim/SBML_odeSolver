@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-02 01:03:12 raim>
-  $Id: solverError.c,v 1.19 2008/08/13 14:21:15 egfernandez Exp $ 
+  Last changed Time-stamp: <2008-09-24 11:35:21 xtof>
+  $Id: solverError.c,v 1.20 2008/09/24 10:19:48 chfl Exp $ 
 */
 /* 
  *
@@ -134,6 +134,7 @@ SBML_ODESOLVER_API void SolverError_clear()
 	free(m);
 	List_remove(l, 0);
       }
+      List_free(l);
     }
   }
 
