@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-23 19:07:18 raim>
-  $Id: ASTgetIndexTest.c,v 1.5 2008/09/23 17:08:40 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 13:20:14 raim>
+  $Id: ASTgetIndexTest.c,v 1.6 2008/09/24 11:26:52 raimc Exp $
 */
 /* 
  *
@@ -91,10 +91,13 @@ int main(void)
 
     for ( i=0; i<List_size(index); i++ )
     {
-      int k = (int) List_get(index,i);
-      printf("index of %s is %d\n", names[k], k);
+      int *k;
+      k = List_get(index,i);
+      printf("IDX of %s is %d\n", names[*k], *k);
+      free(k);
     }
-
+    List_free(index);
+ 
     /* retrieve boolean array of indices */
 
     int *indexBool = ASTNode_getIndexArray(new, nvalues);
@@ -106,8 +109,7 @@ int main(void)
     }
     
     ASTNode_free(old);
-    ASTNode_free(new);
-    List_free(index);
+    ASTNode_free(new);    
     free(indexBool);
 
     odeModel_t *om = ODEModel_createFromFile("../ruleorder/rules.xml");

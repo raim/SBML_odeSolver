@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-23 19:04:15 raim>
-  $Id: odeModel.c,v 1.112 2008/09/23 17:08:39 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-24 13:24:01 raim>
+  $Id: odeModel.c,v 1.113 2008/09/24 11:26:52 raimc Exp $ 
 */
 /* 
  *
@@ -229,7 +229,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
 
 static List_t *topoSort(int **matrix, int n)
 {
-  int i, j, k, ins;
+  int i, j, ins;
   List_t *sorted;   /* L : Empty list where we put the sorted elements */
   List_t *noincome; /* Q : Set of all nodes with no incoming edges */
 
@@ -256,6 +256,12 @@ static List_t *topoSort(int **matrix, int n)
    * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */
   
   /* Q : Set of all nodes with no incoming edges */
+  printf("MATRIX:\n  ");
+  for ( i=0; i<n; i++ )
+  {
+    printf("\t%d:", i);
+  }
+  printf("\n");
   for ( i=0; i<n; i++ )
   {
     printf("%d:", i);
@@ -268,7 +274,10 @@ static List_t *topoSort(int **matrix, int n)
     if ( !ins )
     {
       printf("\tNO INS %d\n", i);
-      List_add(noincome, (int) i);
+      int *idx;
+      ASSIGN_NEW_MEMORY(idx, int, 0);
+      *idx = i;
+      List_add(noincome, idx);
     }
     else        printf("\n");
   }
@@ -276,30 +285,39 @@ static List_t *topoSort(int **matrix, int n)
 
   while( List_size(noincome) )
   {
-    int cur = (int) List_remove(noincome, 0);
-    i--;
-    List_add(sorted, (int) cur);
-    for ( j=0; j<n; j++ )
+    int *idx;
+    idx = List_remove(noincome, 0);
+    int cur = *idx;
+    List_add(sorted, idx);
+    for ( i=0; i<n; i++ )
     {
-      if ( matrix[j][cur] )
+      if ( matrix[i][cur] )
       {
-	printf("removing edge %d %d\n", j, cur);
-	matrix[j][cur] = 0;
+	printf("removing edge %d %d\n", i, cur);
+	matrix[i][cur] = 0;
 	ins = 0;
-	for ( k=0; k<n; k++ )
+	for ( j=0; j<n; j++ )
 	{
-	  ins += matrix[j][k];
+	  ins += matrix[i][j];
 	}
 	if ( !ins )
 	{
-	  printf("\tNO INS %d\n", j);
-	  List_add(noincome, (int) j);	    
+	  printf("\tNO INS %d\n", i);
+	  int *idx;
+	  ASSIGN_NEW_MEMORY(idx, int, 0);
+	  *idx = i;
+	  List_add(noincome, idx);	    
 	}
       }
     }
   }
-  printf("MATRIX:\n");
-  ins = 0;
+  printf("MATRIX:\n  ");
+  ins = 0;  
+  for ( i=0; i<n; i++ )
+  {
+    printf("\t%d:", i);
+  }
+    printf("\n");
   for ( i=0; i<n; i++ )
   {
     printf("%d:", i);
@@ -317,12 +335,15 @@ static List_t *topoSort(int **matrix, int n)
   printf("LIST:\n");
   for ( i=0; i<List_size(sorted); i++ )
   {
-    printf(" %d,", (int) List_get(sorted, i));
+    int *idx;
+    idx = List_get(sorted, i);  
+    printf(" %d,", *idx);
   }
   printf("\n");
 
   
   printf("FINISHED %d\n", List_size(sorted));
+  List_freeItems(noincome, free, int);
   List_free(noincome);
 
   return sorted;
@@ -350,7 +371,7 @@ int ODEModel_topologicalRuleSort(odeModel_t *om)
   }
   for ( i=0; i<nvalues; i++ )
   {
-    printf("%s v:%d a:%d c:%d \n", om->names[i], om->neq, om->nass, om->nconst);
+    printf("%s v:%d a:%d c:%d\n", om->names[i], om->neq, om->nass, om->nconst);
   }
   printf("\n");
   for ( i=0; i<om->nass; i++ )
@@ -379,6 +400,7 @@ int ODEModel_topologicalRuleSort(odeModel_t *om)
     free(matrix[i]);
   }
   free(matrix);
+  List_freeItems(dependencyList, free, int);
   List_free(dependencyList);
   
   return 1;

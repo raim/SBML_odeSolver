@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-22 14:55:28 raim>
-  $Id: processAST.c,v 1.60 2008/09/22 15:23:36 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 13:07:54 raim>
+  $Id: processAST.c,v 1.61 2008/09/24 11:26:52 raimc Exp $
 */
 /* 
  *
@@ -2314,15 +2314,22 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
 }
 /* appends the indices in the given indexed AST to the given list. */
-void ASTNode_getIndices(ASTNode_t *node, List_t *indices)
+int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
 {
-  int i ;
+  int i; 
 
   if ( ASTNode_isSetIndex(node) )
-    List_add(indices, (int) ASTNode_getIndex(node));
+  {
+    int *idx;
+    ASSIGN_NEW_MEMORY(idx, int, 0);
+    *idx = ASTNode_getIndex(node);
+    List_add(indices, idx);
+  }
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
     ASTNode_getIndices(ASTNode_getChild(node, i), indices);
+
+  return 1;
 }
 /* generates a boolean vector of size nvalues, indicating whether
    an index occurs in the given indexed AST */
@@ -2330,7 +2337,7 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
 {
   int i;
   int *result;
-  List_t *index = List_create();
+  List_t *indices = List_create();
 
   ASSIGN_NEW_MEMORY_BLOCK(result, nvalues, int, NULL);
   /* init. with 0 */
@@ -2339,13 +2346,18 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
   if ( node != NULL )
   {
     /* get indices from equation */
-    ASTNode_getIndices(node, index);
+    ASTNode_getIndices(node, indices);
     
     /* set indices to 1 */
-    for ( i = 0; i<List_size(index); i++ )
-      result[(int) List_get(index,i)] = 1;
-  }
-  List_free(index);
+    for ( i=0; i<List_size(indices); i++ )
+    {
+      int *k;
+      k = (int *) List_get(indices,i);
+      result[*k] = 1;
+      free(k);
+    }
+  }  
+  List_free(indices);
 
   return result;
 }
