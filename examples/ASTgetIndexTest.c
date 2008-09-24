@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 13:20:14 raim>
-  $Id: ASTgetIndexTest.c,v 1.6 2008/09/24 11:26:52 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 14:40:15 raim>
+  $Id: ASTgetIndexTest.c,v 1.7 2008/09/24 14:10:36 raimc Exp $
 */
 /* 
  *
@@ -113,7 +113,7 @@ int main(void)
     free(indexBool);
 
     odeModel_t *om = ODEModel_createFromFile("../ruleorder/rules.xml");
-    ODEModel_topologicalRuleSort(om);
+/*     ODEModel_topologicalRuleSort(om); */
     ODEModel_free(om);
 
     return(EXIT_SUCCESS);

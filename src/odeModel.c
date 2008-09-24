@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 13:24:01 raim>
-  $Id: odeModel.c,v 1.113 2008/09/24 11:26:52 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-24 16:00:53 raim>
+  $Id: odeModel.c,v 1.114 2008/09/24 14:10:10 raimc Exp $ 
 */
 /* 
  *
@@ -75,7 +75,7 @@ static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *, char *,
                                                        int);
 static int *ODEModel_computeAssignmentRuleSet(odeModel_t *, List_t *, List_t *);
 static void ODEModel_computeAssignmentRuleSets(odeModel_t *);
-
+static int ODEModel_topologicalRuleSort(odeModel_t *);
 
 
 
@@ -217,17 +217,27 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
 
   }
 
+  /* generate boolean arrays of rules required before ODEs and around events */
   ODEModel_computeAssignmentRuleSets(om);
-
-  /*!!! TODO : generate array of nonzeroElem_t in correct ordering
-    of assignments and initial assignments */
-   
-  /* ODEModel_topologicalRuleSort(om); */
+  /* generate ordered list of assignment rules for evaluation order */
+  ODEModel_topologicalRuleSort(om); /*!!! TODO : use return value for error
+				     handling? */
 
   return om;
 }
 
-static List_t *topoSort(int **matrix, int n)
+/** Topological sort:
+
+    The input matrix of size n x n is a boolean matrix, representing the
+    dependency graph of a set of simple assignment rules. Rows are equations
+    and columns are parameters appearing in each equation. The
+    function returns an ordered list of size n, representing the
+    (non-unique) ordering of evaluation. The function returns NULL and issues
+    a correpsonding SolverError_error if cycles are detected in the
+    dependency matrix. Ordering algorithm has been taken from
+    http://en.wikipedia.org/wiki/Topological_sorting */
+
+SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
 {
   int i, j, ins;
   List_t *sorted;   /* L : Empty list where we put the sorted elements */
@@ -246,7 +256,6 @@ static List_t *topoSort(int **matrix, int n)
   /*         remove edge e from the graph */
   /*         if m has no other incoming edges then */
   /*             insert m into Q */
-             /* ELSE ? not required handled at nodes with incoming edge !! */
   /* if graph has edges then */
   /*     output error message (graph has a cycle) */
   /* else  */
@@ -255,34 +264,23 @@ static List_t *topoSort(int **matrix, int n)
   /*OR INSTEAD: generate DAG and use directly for evaluation 
    * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */
   
-  /* Q : Set of all nodes with no incoming edges */
-  printf("MATRIX:\n  ");
+  /* generate Q : Set of all nodes with no incoming edges */
   for ( i=0; i<n; i++ )
   {
-    printf("\t%d:", i);
-  }
-  printf("\n");
-  for ( i=0; i<n; i++ )
-  {
-    printf("%d:", i);
     ins = 0;
     for  ( j=0; j<n; j++ )
-    {
-      printf("\t%d", matrix[i][j]);
       ins += matrix[i][j];
-    }
+    
     if ( !ins )
     {
-      printf("\tNO INS %d\n", i);
       int *idx;
-      ASSIGN_NEW_MEMORY(idx, int, 0);
+      ASSIGN_NEW_MEMORY(idx, int, NULL);
       *idx = i;
       List_add(noincome, idx);
     }
-    else        printf("\n");
   }
-  printf("\n");
 
+  /* generate L (sorted elements) until Q is empty */
   while( List_size(noincome) )
   {
     int *idx;
@@ -293,72 +291,57 @@ static List_t *topoSort(int **matrix, int n)
     {
       if ( matrix[i][cur] )
       {
-	printf("removing edge %d %d\n", i, cur);
 	matrix[i][cur] = 0;
 	ins = 0;
 	for ( j=0; j<n; j++ )
-	{
 	  ins += matrix[i][j];
-	}
+	
 	if ( !ins )
 	{
-	  printf("\tNO INS %d\n", i);
 	  int *idx;
-	  ASSIGN_NEW_MEMORY(idx, int, 0);
+	  ASSIGN_NEW_MEMORY(idx, int, NULL);
 	  *idx = i;
 	  List_add(noincome, idx);	    
 	}
       }
     }
   }
-  printf("MATRIX:\n  ");
+
+  List_freeItems(noincome, free, int); /* only in case of cyclic graphs ?*/
+  List_free(noincome); /* free Q */
+
+  /* check whether any edges remain ... */
   ins = 0;  
   for ( i=0; i<n; i++ )
-  {
-    printf("\t%d:", i);
-  }
-    printf("\n");
-  for ( i=0; i<n; i++ )
-  {
-    printf("%d:", i);
     for  ( j=0; j<n; j++ )
-    {
-      printf("\t%d", matrix[i][j]);
       ins += matrix[i][j];
-    }
-    printf("\n");
-  }
-  printf("\n");
-
-  if ( ins ) printf("ERROR: rules contain a cycle\n");
- 
-  printf("LIST:\n");
-  for ( i=0; i<List_size(sorted); i++ )
-  {
-    int *idx;
-    idx = List_get(sorted, i);  
-    printf(" %d,", *idx);
-  }
-  printf("\n");
-
   
-  printf("FINISHED %d\n", List_size(sorted));
-  List_freeItems(noincome, free, int);
-  List_free(noincome);
-
+  /* ... and issue error message if so */
+  if ( ins )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_CYCLIC_DEPENDENCY_IN_RULES,
+		      "Cyclic dependency found in topological sorting.");
+    List_freeItems(sorted, free, int);
+    List_free(sorted);
+    return NULL;
+  }  
   return sorted;
 
 }
 
-int ODEModel_topologicalRuleSort(odeModel_t *om)
+/* generates dependency graph (matrix) from the odeModel's assignment
+ rules, calls topological sorting and generates the ordering of
+ assignment rule evaluation, used during solving */
+static int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
   int i, j, nvalues, **matrix;
   List_t *dependencyList;
   
   nvalues = om->neq + om->nass + om->nconst + om->nalg;
-  
-  ASSIGN_NEW_MEMORY_BLOCK(matrix, om->nass, int *, 0);
 
+  /* generate dependency matrix for set of assignment rules */
+  ASSIGN_NEW_MEMORY_BLOCK(matrix, om->nass, int *, 0);
   for ( i=0; i<om->nass; i++ )
   {
     int *indexBool = ASTNode_getIndexArray(om->assignment[i], nvalues);
@@ -369,40 +352,56 @@ int ODEModel_topologicalRuleSort(odeModel_t *om)
     }
     free(indexBool);
   }
-  for ( i=0; i<nvalues; i++ )
-  {
-    printf("%s v:%d a:%d c:%d\n", om->names[i], om->neq, om->nass, om->nconst);
-  }
-  printf("\n");
-  for ( i=0; i<om->nass; i++ )
-  {
-    char *f = SBML_formulaToString(om->assignment[i]);
-    printf("EQU %d %s = %s\n", i, om->names[om->neq+i], f);
-    free(f);
-  }
-  printf("\n");
-  
-  for ( i=0; i<om->nass; i++ )
-  {
-    printf("%s:", om->names[om->neq+i]);
-    for  ( j=0; j<om->nass; j++ )
-    {
-      printf("\t%d", matrix[i][j]);
-    }
-    printf("\n");
-  }
-  printf("\n");
-
+ 
+  /* calculate topological sorting of dependency matrix */
   dependencyList = topoSort(matrix, om->nass);
   
+  /* free dependency matrix */
+  for ( i=0; i<om->nass; i++ )
+    free(matrix[i]);
+  free(matrix);
+
+  /* issue solver error and return if topo. sort was unsuccessful */
+  if ( dependencyList == NULL )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+		      "Topological sorting of rules failed, ",
+		      "possibly due to a cyclic dependency in rules.",
+		      "Please see previous errors.");
+    om->assignmentOrder = NULL;
+    return 0;
+  }
+  
+  /* fill evaluation ordering array */
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, 0);
   for ( i=0; i<om->nass; i++ )
   {
-    free(matrix[i]);
+    int *idx;
+    idx = List_get(dependencyList, i);
+    nonzeroElem_t *ordered;
+    ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);    
+    ordered->i = *idx;
+    ordered->j = -1; /* not used */
+    ordered->ij = om->assignment[*idx];
+    ordered->ijcode = om->assignmentcode[*idx];
+    om->assignmentOrder[i] = ordered;
   }
-  free(matrix);
+
+  /* free ordered list */
   List_freeItems(dependencyList, free, int);
   List_free(dependencyList);
   
+#ifdef _DEBUG
+  fprintf(stderr, "ORDERED LIST OF RULES:\n");
+  for ( i=0; i<om->nass; i++ )
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    fprintf(stderr, " %d:%d,", i, ordered->i);
+  }
+  fprintf(stderr, "\n");
+#endif
+
   return 1;
 }
 
@@ -891,11 +890,15 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   }  
   
   om->simple = ode;
-  /* set jacobian to NULL */
+  /* set assignment order to NULL: done later */
+  om->assignmentOrder = NULL;
+  /* set Jacobi to NULL: done later */
   om->jacob = NULL;
-  /* set construction flag to zero */
+  om->jacobcode = NULL;
+  om->jacobSparse = NULL;
+  /* set construction flag to zero: done later */
   om->jacobian = 0;
-  /* set failed flag to zero */
+  /* set failed flag to zero: done later */
   om->jacobianFailed = 0;
   
   return om;
@@ -1153,8 +1156,14 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   
   /* free assignments */
   for ( i=0; i<om->nass; i++ )
+  {
     ASTNode_free(om->assignment[i]);
+    if ( om->assignmentOrder != NULL )
+      free(om->assignmentOrder[i]);
+  }
   free(om->assignment);
+  if ( om->assignmentOrder != NULL )
+    free(om->assignmentOrder);
 
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->nass; i++ )
@@ -1175,7 +1184,6 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   ODEModel_freeJacobian(om);
 
   /* free objective function AST if it has been constructed */
-  /*!!! TODO: segfault in adjsenstest_ContDiscData.c */
   if ( om->ObjectiveFunction != NULL )
     ASTNode_free(om->ObjectiveFunction);
   om->ObjectiveFunction = NULL;
@@ -1200,11 +1208,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   if ( om->values != NULL ) free(om->values);
   
   /* free compiled code */
-   if ( om->compiledCVODEFunctionCode != NULL )
-   {
-     CompiledCode_free(om->compiledCVODEFunctionCode);
-     om->compiledCVODEFunctionCode = NULL;
-   }
+  if ( om->compiledCVODEFunctionCode != NULL )
+  {
+    CompiledCode_free(om->compiledCVODEFunctionCode);
+    om->compiledCVODEFunctionCode = NULL;
+  }
 
   /* free assignment evaulation rules */
   free(om->assignmentsAfterEvents);
@@ -2227,9 +2235,12 @@ void ODEModel_generateAssignmentRuleCode(odeModel_t *om,
   int i ;
 
   for ( i=0; i<om->nass; i++ )
-    if ( !requiredAssignments || requiredAssignments[i] )
-      ODEModel_generateAssignmentCode(om,
-				      om->neq+i, om->assignment[i], buffer);
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    if ( !requiredAssignments || requiredAssignments[ordered->i] )
+      ODEModel_generateAssignmentCode(om,  om->neq + ordered->i,
+				      om->assignment[ordered->i], buffer);
+  }
 }
 
 /** appends compiled code to the given buffer for the function called by

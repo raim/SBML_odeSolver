@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 13:07:54 raim>
-  $Id: processAST.c,v 1.61 2008/09/24 11:26:52 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 14:10:13 raim>
+  $Id: processAST.c,v 1.62 2008/09/24 14:10:10 raimc Exp $
 */
 /* 
  *
@@ -2310,7 +2310,7 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
   if ( ASTNode_getType(node) == AST_NAME )
     List_add(symbols, (char*) ASTNode_getName(node));
 
-  for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
+  for ( i=0; i<ASTNode_getNumChildren(node); i++ )
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
 }
 /* appends the indices in the given indexed AST to the given list. */
@@ -2326,7 +2326,7 @@ int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
     List_add(indices, idx);
   }
 
-  for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
+  for ( i=0; i<ASTNode_getNumChildren(node); i++ )
     ASTNode_getIndices(ASTNode_getChild(node, i), indices);
 
   return 1;
@@ -2348,11 +2348,11 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
     /* get indices from equation */
     ASTNode_getIndices(node, indices);
     
-    /* set indices to 1 */
-    for ( i=0; i<List_size(indices); i++ )
+    /* set indices to 1 and free list items */
+    while ( List_size(indices) )
     {
       int *k;
-      k = (int *) List_get(indices,i);
+      k = (int *) List_remove(indices, 0);
       result[*k] = 1;
       free(k);
     }
@@ -2367,11 +2367,11 @@ int ASTNode_containsTime(ASTNode_t *node)
 {
   int i ;
 
-  if ( ASTNode_getType(node) == AST_NAME_TIME ||
-       (ASTNode_getType(node) == AST_NAME &&
-	(strcmp(ASTNode_getName(node),"time") == 0 ||
-	 strcmp(ASTNode_getName(node),"Time") == 0 ||
-	 strcmp(ASTNode_getName(node),"TIME") == 0)) )
+  if ( ASTNode_getType(node) == AST_NAME_TIME /* || */
+/*        (ASTNode_getType(node) == AST_NAME && */
+/* 	(strcmp(ASTNode_getName(node),"time") == 0 || */
+/* 	 strcmp(ASTNode_getName(node),"Time") == 0 || */
+/* 	 strcmp(ASTNode_getName(node),"TIME") == 0)) */ )
     return 1;
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )

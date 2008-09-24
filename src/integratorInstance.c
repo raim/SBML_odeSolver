@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:33:53 raim>
-  $Id: integratorInstance.c,v 1.99 2008/09/19 13:38:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 14:35:22 raim>
+  $Id: integratorInstance.c,v 1.100 2008/09/24 14:10:10 raimc Exp $
 */
 /* 
  *
@@ -446,8 +446,11 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
        but otherwise rarely executed need to be evaluated */
     /*!!! this could use only dependent assignments ? */
     for ( i=0; i<om->nass; i++ )
-      targetData->value[om->neq+i] =
-	evaluateAST(om->assignment[i], targetData);    
+    {
+      nonzeroElem_t *ordered = om->assignmentOrder[i];
+      targetData->value[om->neq + ordered->i] =
+	evaluateAST(om->assignment[ordered->i], targetData);
+    }
   }
 }
 
@@ -861,8 +864,12 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 
   /** evaluate assignments required befor trigger evaluation; \n */
   for ( i=0; i<om->nass; i++ )
-    if ( om->assignmentsBeforeEvents[i] )
-      data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    if ( om->assignmentsBeforeEvents[ordered->i] )
+      data->value[om->neq + ordered->i] =
+	evaluateAST(om->assignment[ordered->i], data);
+  }
 
   fired = 0;
 
@@ -900,8 +907,12 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 
   /** finally, evaluate assignments required after event execution; \n */
   for ( i=0; i<om->nass; i++ )
-    if (om->assignmentsAfterEvents[i])
-      data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    if (om->assignmentsAfterEvents[ordered->i])
+      data->value[om->neq + ordered->i] =
+	evaluateAST(om->assignment[ordered->i], data);
+  }
 
   /** and return the number of fired events. */
   return fired;
@@ -1306,8 +1317,11 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
      but otherwise rarely executed need to be evaluated */
   /*!!! this could use only dependent assignments ? */
   for ( i=0; i<om->nass; i++ )
-    data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
-
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    data->value[om->neq + ordered->i] =
+      evaluateAST(om->assignment[ordered->i], data);
+  }
 }
 
 

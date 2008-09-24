@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:34:52 raim>
-  $Id: cvodeSolver.c,v 1.77 2008/09/19 13:38:35 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 14:37:50 raim>
+  $Id: cvodeSolver.c,v 1.78 2008/09/24 14:10:10 raimc Exp $
 */
 /* 
  *
@@ -968,16 +968,21 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
 	       return (1);
 
   /** update assignment rules */
-  for ( i=0; i<data->model->nass; i++ ) 
+  for ( i=0; i<data->model->nass; i++ )
+  {
+    nonzeroElem_t *ordered = data->model->assignmentOrder[i];
     if ( data->model->assignmentsBeforeODEs[i] )
+    {
 #ifdef ARITHMETIC_TEST
-      data->value[data->model->neq+i] =
-	data->model->assignmentcode[i]->evaluate(data);    
+      data->value[data->model->neq + ordered->i] =
+	data->model->assignmentcode[ordered->i]->evaluate(data);    
 #else
-      data->value[data->model->neq+i] =
-	evaluateAST(data->model->assignment[i],data);
+      data->value[data->model->neq + ordered->i] =
+	evaluateAST(data->model->assignment[ordered->i], data);
 #endif
-
+    }
+  }
+  
   /** evaluate ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<data->model->neq; i++ )
 #ifdef ARITHMETIC_TEST

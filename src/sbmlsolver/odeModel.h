@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-23 15:30:25 raim>
-  $Id: odeModel.h,v 1.47 2008/09/23 16:40:25 raimc Exp $ 
+  Last changed Time-stamp: <2008-09-24 15:33:33 raim>
+  $Id: odeModel.h,v 1.48 2008/09/24 14:10:10 raimc Exp $ 
 */
 /* 
  *
@@ -89,6 +89,8 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 	that are set by an assignment rule */
     ASTNode_t **assignment;
     directCode_t **assignmentcode;
+    /** topological order of assignment rules */
+    nonzeroElem_t **assignmentOrder; 
 
     /** Algebraic Rules (constraints) as used for DAE systems */
     ASTNode_t **algebraic;
@@ -318,6 +320,8 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(ode
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void ODESense_compileCVODESenseFunctions(odeSense_t *);
+  /* diverse other useful functions */
+  SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n);
 #ifdef __cplusplus
 }
 #endif
@@ -327,7 +331,4 @@ int ODEModel_getVariableIndexFields(odeModel_t *, const char *SBML_ID);
 int ODESense_constructMatrix(odeSense_t *, odeModel_t *);
 void ODESense_freeMatrix(odeSense_t *);
 void ODESense_freeStructures(odeSense_t *);
-
-int ODEModel_topologicalRuleSort(odeModel_t *);
-
 #endif

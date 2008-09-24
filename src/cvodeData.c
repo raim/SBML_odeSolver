@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 13:15:46 raim>
-  $Id: cvodeData.c,v 1.32 2008/09/24 11:25:50 raimc Exp $
+  Last changed Time-stamp: <2008-09-24 14:27:29 raim>
+  $Id: cvodeData.c,v 1.33 2008/09/24 14:10:09 raimc Exp $
 */
 /* 
  *
@@ -232,7 +232,11 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   /*!!! TODO : rule ordering: assignments and init. assignments */
   /* initialize assigned parameters */
   for ( i=0; i<om->nass; i++ ) 
-    data->value[om->neq+i] = evaluateAST(om->assignment[i],data);
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    data->value[om->neq+ordered->i] =
+      evaluateAST(om->assignment[ordered->i], data);
+  }
 
   /* execute initial assignment rules ! */
   if ( ode != NULL )
@@ -379,7 +383,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
 /*! @} */
 
 /* initialize cvodeData from cvodeSettings and odeModel (could be
-   separated in to functions to further support modularity and
+   separated into two functions to further support modularity and
    independence of data structures */
 int
 CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
@@ -407,8 +411,12 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   data->currenttime = opt->TimePoints[0];
 
   /* update assigned parameters, in case they depend on new time */
-  for ( i=0; i<om->nass; i++ ) 
-    data->value[om->neq+i] = evaluateAST(om->assignment[i], data);
+  for ( i=0; i<om->nass; i++ )
+  {
+    nonzeroElem_t *ordered = om->assignmentOrder[i];
+    data->value[om->neq+ordered->i] =
+      evaluateAST(om->assignment[ordered->i], data);
+  }
 
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
