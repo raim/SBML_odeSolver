@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-24 11:30:21 raim>
-  $Id: printModel.c,v 1.22 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2008-09-25 14:55:45 raim>
+  $Id: printModel.c,v 1.23 2008/09/25 12:57:27 raimc Exp $
 */
 /* 
  *
@@ -124,10 +124,11 @@ void printSpecies(Model_t *m, FILE *f)
     
     fprintf(f, "# Species concentrations in `compartment' %s\n",
 	   Compartment_getId(c));
-    for(j=0;j<Model_getNumSpecies(m);j++){
+    for(j=0;j<Model_getNumSpecies(m);j++)
+    {
       s = Model_getSpecies(m,j);      
-      if(strcmp(Species_getCompartment(s), Compartment_getId(c))==0){  
-
+      if(strcmp(Species_getCompartment(s), Compartment_getId(c))==0)
+      {
 	fprintf(f, "%s ", Species_getId(s));
 	if(Species_isSetName(s))
 	  fprintf(f, "(%s) ", Species_getName(s));
@@ -166,6 +167,7 @@ void printReactions(Model_t *m, FILE *f)
   SpeciesReference_t *sref;
   KineticLaw_t *kl;
   Rule_t *rl;
+  InitialAssignment_t *ia;
   Event_t *e;
   EventAssignment_t *ea;
   Parameter_t *p;
@@ -176,7 +178,8 @@ void printReactions(Model_t *m, FILE *f)
   math = NULL;
   
   fprintf(f, "\n");
-  for(i=0;i<Model_getNumParameters(m);i++){
+  for(i=0;i<Model_getNumParameters(m);i++)
+  {
     if(i==0)
       fprintf(f, "# Global parameters:\n");
     p = Model_getParameter(m,i);
@@ -197,18 +200,23 @@ void printReactions(Model_t *m, FILE *f)
   }
 
   fprintf(f, "# Reactions:\n");
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {    
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {    
     r = Model_getReaction(m,i);
   
     fprintf(f, "%s: %s",
 	   Reaction_isSetName(r) ? Reaction_getName(r) : Reaction_getId(r),
 	   Reaction_getFast(r) ? "(fast)" : "");
-    for ( k=0; k<Reaction_getNumReactants(r); k++ ) {
+    for ( k=0; k<Reaction_getNumReactants(r); k++ )
+    {
       sref = Reaction_getReactant(r,k);
 
-      if ( SpeciesReference_isSetStoichiometryMath(sref) )	
-	fprintf(f, "%s ",
-		SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));
+      if ( SpeciesReference_isSetStoichiometryMath(sref) )
+      {
+	char *eq = SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref)));
+	fprintf(f, "%s ", eq);
+	free(eq);
+      }
       else 
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
 	  fprintf(f, "%g ",  SpeciesReference_getStoichiometry(sref));
@@ -219,11 +227,15 @@ void printReactions(Model_t *m, FILE *f)
     }
     
     fprintf(f, "%s", Reaction_getReversible(r) ? " <-> " : " -> ");
-    for ( k=0; k<Reaction_getNumProducts(r); k++ ) {
+    for ( k=0; k<Reaction_getNumProducts(r); k++ )
+    {
       sref = Reaction_getProduct(r,k);
       if ( SpeciesReference_isSetStoichiometryMath(sref) )
-	fprintf(f, "%s ",
-	       SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref))));
+      {
+	char *eq = SBML_formulaToString(StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref)));
+	fprintf(f, "%s ", eq);
+	free(eq);
+      }
       else
 	if ( SpeciesReference_getStoichiometry(sref) != 1. )
 	  fprintf(f, "%g ", SpeciesReference_getStoichiometry(sref));
@@ -233,12 +245,15 @@ void printReactions(Model_t *m, FILE *f)
 	fprintf(f, "%s", " + ");
     }
     fprintf(f, ";  ");
-    if(Reaction_isSetKineticLaw(r)){
+    if ( Reaction_isSetKineticLaw(r) )
+    {
       kl = Reaction_getKineticLaw(r);
       math = KineticLaw_getMath(kl);
-      fprintf(f, "%s;", SBML_formulaToString(math));
-      for(k=0;k<KineticLaw_getNumParameters(kl);k++){
-	
+      char *eq = SBML_formulaToString(math);
+      fprintf(f, "%s;", eq);
+      free(eq);
+      for(k=0;k<KineticLaw_getNumParameters(kl);k++)
+      {	
 	p = KineticLaw_getParameter(kl,k);
 	fprintf(f, " %s",  Parameter_getId(p));
 	if(Parameter_isSetName(p))
@@ -256,12 +271,13 @@ void printReactions(Model_t *m, FILE *f)
       fprintf(f, "#   no rate law is set for this reaction.");
     fprintf(f, "\n");
   }
-    
+
+  /* SBML Rules: rate, algebraic and assignment */
   for ( i=0; i<Model_getNumRules(m); i++ )
   {
     rl = Model_getRule(m,i);
     if ( i == 0 )
-      fprintf(f, "# Rules:\n");
+      fprintf(f, "# Rules: %d\n", Model_getNumRules(m));
     type = SBase_getTypeCode((SBase_t *)rl);
      
     if ( type == SBML_RATE_RULE ) 
@@ -272,11 +288,36 @@ void printReactions(Model_t *m, FILE *f)
       fprintf(f, " assignmentRule: %s = ", Rule_getVariable(rl));
 
     if ( Rule_isSetMath(rl) )
-      fprintf(f, "%s\n", SBML_formulaToString(Rule_getMath(rl)));
+    {
+      char *eq = SBML_formulaToString(Rule_getMath(rl));      
+      fprintf(f, "%s\n", eq);
+      free(eq);
+    }
 	     
   }
   fprintf(f, "\n");
 
+  /* initial assignment rules */
+  for ( i=0; i<Model_getNumInitialAssignments(m); i++ )
+  {
+    ia = Model_getInitialAssignment(m,i);
+    if ( i == 0 )
+      fprintf(f, "# Initial Assignment Rules: %d\n",
+	      Model_getNumInitialAssignments(m));
+      fprintf(f, " init. assignmentRule: %s = ",
+	      InitialAssignment_getSymbol(ia));
+
+    if ( InitialAssignment_isSetMath(ia) )
+    {
+      char *eq = SBML_formulaToString(InitialAssignment_getMath(ia));
+      fprintf(f, "%s\n", eq);
+      free(eq);
+    }
+	     
+  }
+  fprintf(f, "\n");
+
+  /* Events */
   for ( i=0; i<Model_getNumEvents(m); i++ )
   {
     if ( i==0 )
@@ -290,22 +331,27 @@ void printReactions(Model_t *m, FILE *f)
     if ( Event_isSetTrigger(e) )
     {
       math = Trigger_getMath(Event_getTrigger(e));
-      fprintf(f, "trigger: %s\n", SBML_formulaToString(math));
+      char *eq = SBML_formulaToString(math);
+      fprintf(f, "trigger: %s\n", eq);
+      free(eq);
     }
     if ( Event_isSetDelay(e) )
-      fprintf(f, "delay: %s;\n",
-	      SBML_formulaToString(Delay_getMath(Event_getDelay(e))));
+    {
+      char *eq = SBML_formulaToString(Delay_getMath(Event_getDelay(e)));
+      fprintf(f, "delay: %s;\n", eq);
+      free(eq);
+    }
     if ( Event_isSetTimeUnits(e) )
       fprintf(f, "time Units: %s;\n", Event_getTimeUnits(e));
     for ( k=0; k<Event_getNumEventAssignments(e); k++ )
     {      
       ea = Event_getEventAssignment(e,k);
-      if(EventAssignment_isSetVariable(ea))
-	fprintf(f, "  event:  %s = %s;\n",
-	       EventAssignment_getVariable(ea),
-	       EventAssignment_isSetMath(ea) ?
-	       SBML_formulaToString(EventAssignment_getMath(ea)) :
-	       "# no math set;\n");
+      if ( EventAssignment_isSetVariable(ea) && EventAssignment_isSetMath(ea) )
+      {
+	char *eq = SBML_formulaToString(EventAssignment_getMath(ea));
+	fprintf(f, "  event:  %s = %s;\n", EventAssignment_getVariable(ea),eq);
+	free(eq);
+      }
     }
 
     if ( i == Model_getNumEvents(m)-1 )
@@ -313,24 +359,30 @@ void printReactions(Model_t *m, FILE *f)
   }  
 
 
-  for ( i=0; i<Model_getNumFunctionDefinitions(m); i++ ) {
-
+  for ( i=0; i<Model_getNumFunctionDefinitions(m); i++ )
+  {
     if ( i==0 ) fprintf(f, "# Functions:\n");
 
     fd = Model_getFunctionDefinition(m,i);
     if ( FunctionDefinition_isSetName(fd) )
       fprintf(f, "%s: ", FunctionDefinition_getName(fd));
-    if(FunctionDefinition_isSetId(fd) && FunctionDefinition_isSetMath(fd)){
+    if(FunctionDefinition_isSetId(fd) && FunctionDefinition_isSetMath(fd))
+    {
       fprintf(f, "%s( ", FunctionDefinition_getId(fd));
       math = FunctionDefinition_getMath(fd);
-	for(j=0;j<ASTNode_getNumChildren(math)-1;j++){
-	  fprintf(f, "%s", SBML_formulaToString(ASTNode_getChild(math, j)));
-	  if(j<ASTNode_getNumChildren(math)-2)
-	    fprintf(f, ", ");
-	  if(j==ASTNode_getNumChildren(math)-2)
-	    fprintf(f, ") = ");
-	}
-      fprintf(f, "%s;", SBML_formulaToString(ASTNode_getRightChild(math)));
+      for(j=0;j<ASTNode_getNumChildren(math)-1;j++)
+      {
+	char *eq =  SBML_formulaToString(ASTNode_getChild(math, j));
+	fprintf(f, "%s", eq);
+	free(eq);
+	if(j<ASTNode_getNumChildren(math)-2)
+	  fprintf(f, ", ");
+	if(j==ASTNode_getNumChildren(math)-2)
+	  fprintf(f, ") = ");
+      }
+      char *eq =  SBML_formulaToString(ASTNode_getRightChild(math));
+      fprintf(f, "%s;", eq);
+      free(eq);
     }
     fprintf(f, "\n");
   } 
@@ -350,32 +402,54 @@ void printODEsToSBML(Model_t *ode, FILE *f)
 }
 
 
-void printODEs(odeModel_t *model, FILE *f)
+void printODEs(odeModel_t *om, FILE *f)
 {  
-  int i, nvalues;
-  char *formel;
+  int i, nvalues;  
 
-  nvalues = model->neq+model->nass + model->nconst;
+  nvalues = om->neq +om->nass + om->nconst + om->nalg;
   fprintf(f, "\n");
   fprintf(f, "# Derived system of Ordinary Differential Equations (ODEs):\n");
   
   fprintf(f, "# Parameters:\n");
-  for ( i=model->neq+model->nass; i<nvalues; i++ ) 
-    fprintf(f, "%s, ", model->names[i]);
-  printf("\n");
-  fprintf(f, "# Assigned Parameters:\n");
-  for ( i=0; i<model->nass; i++ ) {
-    formel = SBML_formulaToString(model->assignment[i]);
-    fprintf(f, "%d: %s =  %s;\n", i+1, model->names[model->neq+i], formel);
-    free(formel);
-  }  
-  for ( i=0; i<model->neq; i++ ) {
-    if ( i == 0 ) {
+  for ( i=om->neq+om->nass; i<nvalues; i++ ) 
+    fprintf(f, "%s, ", om->names[i]);
+  fprintf(f, "\n");
+  fprintf(f, "# Assigned Parameters (ordered):\n");
+  for ( i=0; i<om->nass; i++ )
+  {
+    int idx = om->assignmentOrder[i]->i;
+    char *eq = SBML_formulaToString(om->assignment[idx]);
+    fprintf(f, "%d: %s =  %s;\n", i+1, om->names[om->neq+idx], eq);
+    free(eq);
+  }
+  fprintf(f, "## evaluate before ODEs:");
+  for ( i=0; i<om->nass; i++ )
+  {
+    if ( om->assignmentsBeforeODEs[om->assignmentOrder[i]->i] )
+      fprintf(f, " %d,", i+1);
+  }
+  fprintf(f, "\n");
+  fprintf(f, "## evaluate before Events:");
+  for ( i=0; i<om->nass; i++ )
+  {
+    if ( om->assignmentsBeforeEvents[om->assignmentOrder[i]->i] )
+      fprintf(f, " %d,", i+1);
+  }
+  fprintf(f, "\n");
+  fprintf(f, "## evaluate after Events:");
+  for ( i=0; i<om->nass; i++ )
+  {
+    if ( om->assignmentsAfterEvents[om->assignmentOrder[i]->i] )
+      fprintf(f, " %d,", i+1);
+  }
+  fprintf(f, "\n");
+  for ( i=0; i<om->neq; i++ )
+  {
+    if ( i == 0 )
       fprintf(f, "# ODEs:\n");
-    }
-    formel = SBML_formulaToString(model->ode[i]);
-    fprintf(f, "%d: d%s/dt =  %s;\n", i+1, model->names[i], formel);
-    free(formel);
+    char *eq = SBML_formulaToString(om->ode[i]);
+    fprintf(f, "%d: d%s/dt =  %s;\n", i+1, om->names[i], eq);
+    free(eq);
   }
   fprintf(f, "\n");
 
@@ -391,24 +465,28 @@ void printODEs(odeModel_t *model, FILE *f)
 void printJacobian(odeModel_t *om, FILE *f)
 {    
   int i, j;
-  if ( om == NULL ) {
+  if ( om == NULL )
+  {
     fprintf(stderr, "No odeModel available.\n");
     return;
   }
 
-  if ( om->jacob == NULL ) {
+  if ( om->jacob == NULL )
+  {
     fprintf(stderr, "Jacobian Matrix has not been constructed.\n");
     return;
   }
 
   fprintf(f, "\n");
   fprintf(f, "# Jacobian Matrix:\n");
-  for ( i=0; i<om->neq; i++ ) {
+  for ( i=0; i<om->neq; i++ )
+  {
     fprintf(f, "# %s: \n", om->names[i]);
-    for ( j=0; j<om->neq; j++ ) {
-      fprintf(f, "  (d[%s]/dt)/d[%s] = %s;\n", 
-	     om->names[i], om->names[j], 
-	     SBML_formulaToString(om->jacob[i][j]));
+    for ( j=0; j<om->neq; j++ )
+    {
+      char *eq = SBML_formulaToString(om->jacob[i][j]);
+      fprintf(f, "  (d[%s]/dt)/d[%s] = %s;\n", om->names[i], om->names[j], eq);
+      free(eq);
     }
   }
   fprintf(f, "\n");
@@ -424,7 +502,8 @@ void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f)
   int i,j;
   cvodeResults_t *results;
 
-  if ( data == NULL || data->results == NULL ) {
+  if ( data == NULL || data->results == NULL )
+  {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
@@ -435,10 +514,12 @@ void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f)
   results = data->results;
   fprintf(f, "#t det(j)\n");
   fprintf(f, "##DETERMINANT OF THE JACOBIAN MATRIX\n");
-  for ( i = 0; i<=results->nout; i++ ) {
+  for ( i = 0; i<=results->nout; i++ )
+  {
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ )
+    {
       data->value[j] = results->value[j][i];
     }
     fprintf(f, "%g\n", evaluateAST(det, data));
@@ -455,14 +536,16 @@ void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
   cvodeResults_t *results;
 
 
-  if ( data == NULL || data->results == NULL ) {
+  if ( data == NULL || data->results == NULL )
+  {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
 
 
 #if USE_GRACE
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     printXMGJacobianTimeCourse(data);
     return;
   }
@@ -473,39 +556,38 @@ void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
     fprintf(stderr, "Printing time course of the jacobian matrix.\n\n");
   
   fprintf(f, "#t ");
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
+  for ( i=0; i<data->model->neq; i++ )
+    for ( j=0; j<data->model->neq; j++ )
       fprintf(f, "%s ", data->model->names[j]);
-    }
-  }
+
   fprintf(f, "\n");
   fprintf(f, "##JACOBIAN MATRIX VALUES\n");
-  for ( k = 0; k<=results->nout; k++ ) {
+  for ( k = 0; k<=results->nout; k++ )
+  {
     fprintf(f, "%g ", results->time[k]);
     data->currenttime = results->time[k];
-    for ( i=0; i<data->model->neq; i++ ) {
+    for ( i=0; i<data->model->neq; i++ ) 
       data->value[i] = results->value[i][k];
-    }
-    for ( i=0; i<data->model->neq; i++ ) {
-      for ( j=0; j<data->model->neq; j++ ) {	    	   
-	fprintf(f, "%g ", evaluateAST(data->model->jacob[i][j], data));
-      }
-    }
+    
+    for ( i=0; i<data->model->neq; i++ ) 
+      for ( j=0; j<data->model->neq; j++ ) 	    	   
+	fprintf(f, "%g ", evaluateAST(data->model->jacob[i][j], data));      
+    
     fprintf(f, "\n");
   }
   fprintf(f, "##JACOBIAN MATRIX VALUES\n");
   fprintf(f, "#t ");				      
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
+  for ( i=0; i<data->model->neq; i++ ) 
+    for ( j=0; j<data->model->neq; j++ ) 
       fprintf(f, "%s ", data->model->names[j]);
-    }
-  }
+
   fprintf(f, "\n");
   fflush(f);
 
 #if !USE_GRACE
 
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     fprintf(stderr,
 	    "odeSolver has been compiled without XMGRACE functionality.\n");
     fprintf(stderr,
@@ -521,13 +603,15 @@ void printOdeTimeCourse(cvodeData_t *data, FILE *f)
   int i,j;
   cvodeResults_t *results;
 
-  if ( data == NULL || data->results == NULL ) {
+  if ( data == NULL || data->results == NULL )
+  {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
   
 #if USE_GRACE
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     printXMGOdeTimeCourse(data);
     return;
   }
@@ -538,15 +622,17 @@ void printOdeTimeCourse(cvodeData_t *data, FILE *f)
     fprintf(stderr, "\nPrinting time course of the ODEs.\n\n");
     
   fprintf(f, "#t ");
-  for (i=0; i<data->model->neq; i++ ) {
+  for (i=0; i<data->model->neq; i++ )
     fprintf(f, "%s ", data->model->names[i]);
-  }
+
   fprintf(f, "\n");
   fprintf(f, "##ODE VALUES\n");
-  for ( i=0; i<=results->nout; ++i ) { 
+  for ( i=0; i<=results->nout; ++i )
+  { 
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ )
+    {
       data->value[j] = results->value[j][i];
       fprintf(f, "%g ", evaluateAST(data->model->ode[j],data));
     }
@@ -554,16 +640,17 @@ void printOdeTimeCourse(cvodeData_t *data, FILE *f)
   }
   fprintf(f, "##ODE VALUES\n");
   fprintf(f, "#t ");
-  for ( i=0; i<data->model->neq; i++ ) {
+  for ( i=0; i<data->model->neq; i++ )
     fprintf(f, "%s ", data->model->names[i]);
-  }
+
   fprintf(f, "\n");
   fflush(f);
 
   
 #if !USE_GRACE
 
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     fprintf(stderr,
 	    "odeSolver has been compiled without XMGRACE functionality.\n");
     fprintf(stderr,
@@ -582,13 +669,15 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
   KineticLaw_t *kl;
   ASTNode_t **kls;
 
-  if ( data == NULL || data->results == NULL ) {
+  if ( data == NULL || data->results == NULL )
+  {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
 
 #if USE_GRACE
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     printXMGReactionTimeCourse(data);
     return;
   }
@@ -601,12 +690,12 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
 
   if(!(kls =
        (ASTNode_t **)calloc(Model_getNumReactions(m),
-			    sizeof(ASTNode_t *)))) {
+			    sizeof(ASTNode_t *))))
     fprintf(stderr, "failed!\n");
-  }
 
   fprintf(f, "#t ");
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     kl = Reaction_getKineticLaw(r);
     kls[i] = copyAST(KineticLaw_getMath(kl));
@@ -616,21 +705,21 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
   }
   fprintf(f, "\n");
   fprintf(f, "##REACTION RATES\n"); 
-  for ( i=0; i<=results->nout; ++i ) {
+  for ( i=0; i<=results->nout; ++i )
+  {
     fprintf(f, "%g ", results->time[i]);
     data->currenttime = results->time[i];
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ )
       data->value[j] = results->value[j][i];
-    }
-    for ( j=0; j<Model_getNumReactions(m); j++ ) {      
-      
+    for ( j=0; j<Model_getNumReactions(m); j++ )      
       fprintf(f, "%g ", evaluateAST(kls[j], data));
-    }
+
     fprintf(f, "\n");
   }
   fprintf(f, "##REACTION RATES\n"); 
   fprintf(f, "#t ");
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     fprintf(f, "%s ", Reaction_getId(r));
     ASTNode_free(kls[i]);
@@ -640,7 +729,8 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
   fflush(f);
   
 #if !USE_GRACE
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     fprintf(stderr,
 	    "odeSolver has been compiled without XMGRACE functionality.\n");
     fprintf(stderr,
@@ -657,13 +747,15 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   odeModel_t *om;
   odeSense_t *os;
 
-  if ( data == NULL || data->results == NULL ) {
+  if ( data == NULL || data->results == NULL )
+  {
     Warn(stderr, "No results, please integrate first.\n");
     return;
   }
 
 #if USE_GRACE
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     printXMGConcentrationTimeCourse(data);
     return;
   }
@@ -673,7 +765,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   om = data->model;
   os = data->os;
 
-  if ( Opt.PrintMessage ) {
+  if ( Opt.PrintMessage )
+  {
     fprintf(stderr,
 	    "\nPrinting time course of all variable values");
     if ( Opt.Sensitivity  && results->sensitivity != NULL )
@@ -683,7 +776,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   }
   
   /* print sensitivities of calculated */
-  if ( Opt.Sensitivity  && results->sensitivity != NULL ) {
+  if ( Opt.Sensitivity  && results->sensitivity != NULL )
+  {
     fprintf(f, "#t ");
     for( j=0; j<om->neq; j++ )
       for ( k=0; k<os->nsens; k++ )
@@ -692,7 +786,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
     fprintf(f, "\n");
     fprintf(f, "##SENSITIVITIES\n");
     
-    for ( i=0; i<=results->nout; ++i ) {
+    for ( i=0; i<=results->nout; ++i )
+    {
       fprintf(f, "%g ", results->time[i]);      
       for ( j=0; j<om->neq; j++ ) 
         for ( k=0; k<os->nsens; k++ ) 
@@ -710,7 +805,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
     
   }
   /* print concentrations */
-  else {
+  else
+  {
     fprintf(f, "#t ");
     for( i=0; i<data->nvalues; i++)
         if (om->observablesArray[i])
@@ -718,7 +814,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
     
     fprintf(f, "\n");    
     fprintf(f, "##CONCENTRATIONS\n");
-    for ( i=0; i<=results->nout; ++i ) {
+    for ( i=0; i<=results->nout; ++i )
+    {
       fprintf(f, "%g ", results->time[i]);
       
       for ( j=0; j<om->neq; j++ ) 
@@ -750,7 +847,8 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
 
 #if !USE_GRACE
 
-  if ( Opt.Xmgrace == 1 ) {
+  if ( Opt.Xmgrace == 1 )
+  {
     fprintf(stderr,
 	    "odeSolver has been compiled without XMGRACE functionality.\n");
     fprintf(stderr,
@@ -799,7 +897,8 @@ void printPhase(cvodeData_t *data)
   maxX = 1.0;
   minY = 0.0;
   
-  if ( data==NULL || data->results==NULL ) {
+  if ( data==NULL || data->results==NULL )
+  {
     Warn(stderr,
 	 "No data available to print! Please integrate model first!\n");
     return;
@@ -807,7 +906,8 @@ void printPhase(cvodeData_t *data)
 
   results = data->results;
 
-  if ( openXMGrace(data) > 0 ) {
+  if ( openXMGrace(data) > 0 )
+  {
     fprintf(stderr,
 	    "Error: Couldn't open XMGrace\n");
     return;
@@ -849,17 +949,21 @@ void printPhase(cvodeData_t *data)
   /* check if species exist */
   xvalue = 1;
   yvalue = 1;
-  for ( j=0; j<data->model->neq; j++ ) {
-    if ( !strcmp(x, data->model->names[j]) ) {
+  for ( j=0; j<data->model->neq; j++ )
+  {
+    if ( !strcmp(x, data->model->names[j]) )
+    {
       xvalue = 0;
       GracePrintf("xaxis label \"%s\"", data->model->names[j]);
     }
-    if ( !strcmp(y, data->model->names[j]) ) {
+    if ( !strcmp(y, data->model->names[j]) )
+    {
       yvalue = 0;
       GracePrintf("yaxis label \"%s\"", data->model->names[j]);
     }
   }
-  if ( xvalue || yvalue ) {
+  if ( xvalue || yvalue )
+  {
     fprintf(stderr, "One of the entered species does not exist.\n");
     GraceClose();
     fprintf(stderr, "XMGrace subprocess closed. Please try again");
@@ -870,23 +974,25 @@ void printPhase(cvodeData_t *data)
 
   fprintf(stderr, "Printing phase diagram to XMGrace!\n");
 
-  for ( i=0; i<=results->nout; ++i ) {     
-    for ( j=0; j<data->model->neq; j++ ){
-      if ( !strcmp(x, data->model->names[j]) ) {
+  for ( i=0; i<=results->nout; ++i )
+  {     
+    for ( j=0; j<data->model->neq; j++ )
+    {
+      if ( !strcmp(x, data->model->names[j]) ) 
 	xvalue = results->value[j][i];
-      }
-      if ( !strcmp(y, data->model->names[j]) ) {
+      if ( !strcmp(y, data->model->names[j]) )
 	yvalue = results->value[j][i];
-      }
     }
     GracePrintf("g0.s1 point %g, %g", xvalue, yvalue);
 
-    if ( yvalue > maxY ) {
+    if ( yvalue > maxY )
+    {
       maxY = 1.25*yvalue;
       GracePrintf("world ymax %g", maxY);
       GracePrintf("yaxis tick major %g", maxY/10);      
     }
-    if ( xvalue > maxX ) {
+    if ( xvalue > maxX )
+    {
       maxX = 1.25*xvalue;
       GracePrintf("world xmax %g", maxX);
       GracePrintf("xaxis tick major %g", maxX/10);
@@ -897,9 +1003,8 @@ void printPhase(cvodeData_t *data)
       how fast the two values change within the phase
       diagram.
     */
-    if ( i%10 == 0 ) {
+    if ( i%10 == 0 )
       GracePrintf("redraw");
-    }
   }
 
   GracePrintf("redraw");
@@ -942,13 +1047,15 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
 	  "Printing time development of reaction fluxes to XMGrace!\n");
 
 
-  if ( om->m == NULL ) {
+  if ( om->m == NULL )
+  {
     fprintf(stderr, "Error: No reaction model availabe\n");
     return 1;
   }
   else m = om->m;
 
-  if ( openXMGrace(data) > 0 ) {
+  if ( openXMGrace(data) > 0 )
+  {
     fprintf(stderr,  "Error: Couldn't open XMGrace\n");
     return 1;
   }
@@ -966,7 +1073,8 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
 
 
   /* print legend */  
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     if ( Reaction_isSetName(r) )
       GracePrintf("g0.s%d legend  \"%s: %s \"\n", i+1,
@@ -982,7 +1090,8 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
 				  sizeof(ASTNode_t *)))) 
     fprintf(stderr, "failed!\n");
   
-  for ( i=0; i<Model_getNumReactions(m); i++ ) {
+  for ( i=0; i<Model_getNumReactions(m); i++ )
+  {
     r = Model_getReaction(m, i);
     kl = Reaction_getKineticLaw(r);
     kls[i] = copyAST(KineticLaw_getMath(kl));
@@ -992,7 +1101,8 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
   
   /* evaluate flux for each time point and print to XMGrace */
   
-  for ( i=0; i<=results->nout; i++ ) {  
+  for ( i=0; i<=results->nout; i++ )
+  {  
     n = 1;
     /* set time and variable values to values at time[k] */
     data->currenttime = results->time[i];
@@ -1000,13 +1110,16 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
       data->value[j] = results->value[j][i];
 
     /* evaluate kinetic law expressions */
-    for ( j=0; j<Model_getNumReactions(m); j++ ) {
+    for ( j=0; j<Model_getNumReactions(m); j++ )
+    {
       result = evaluateAST(kls[j], data);
-      if ( result > maxY ) {
+      if ( result > maxY )
+      {
 	maxY = result;
 	GracePrintf("world ymax %g", 1.25*maxY);
       }
-      if ( result < minY ) {
+      if ( result < minY )
+      {
 	minY = result;
 	GracePrintf("world ymin %g", 1.25*minY);
       }
@@ -1053,7 +1166,8 @@ static int printXMGJacobianTimeCourse ( cvodeData_t *data )
 
   results = data->results;
 
-  if ( openXMGrace(data) > 0 ) {
+  if ( openXMGrace(data) > 0 )
+  {
     fprintf(stderr,
 	    "Error: Couldn't open XMGrace\n");
     return 1;
@@ -1073,8 +1187,10 @@ static int printXMGJacobianTimeCourse ( cvodeData_t *data )
 
   /* print legend */  
   n = 1;  
-  for ( i=0; i<data->model->neq; i++ ) {
-    for ( j=0; j<data->model->neq; j++ ) {
+  for ( i=0; i<data->model->neq; i++ )
+  {
+    for ( j=0; j<data->model->neq; j++ )
+    {
       GracePrintf("g0.s%d legend  \"%s / %s\"\n",
 		  n, data->model->names[i], data->model->names[j]);
       n++;
@@ -1086,23 +1202,26 @@ static int printXMGJacobianTimeCourse ( cvodeData_t *data )
 
   /* evaluate jacobian matrix for each time point and print to XMGrace */
   
-  for ( k = 0; k<=results->nout; k++ ) {  
+  for ( k = 0; k<=results->nout; k++ )
+  {  
     n = 1;
     data->currenttime = results->time[i];
-    for ( i=0; i<data->model->neq; i++ ) {
-      
+    for ( i=0; i<data->model->neq; i++ )
+    {      
       /* set specie values to values at time[k] */
       data->value[i] = results->value[i][k];
       
-      for ( j=0; j<data->model->neq; j++ ) {
-	
+      for ( j=0; j<data->model->neq; j++ )
+      {	
 	result =  evaluateAST(data->model->jacob[i][j], data);
 	
-	if ( result > maxY ) {	  
+	if ( result > maxY )
+	{	  
 	  maxY = result;
 	  GracePrintf("world ymax %g", 1.25*maxY);
 	}
-	if ( result < minY ) {
+	if ( result < minY )
+	{
 	  minY = result;
 	  GracePrintf("world ymin %g", 1.25*minY);
 	}
@@ -1114,7 +1233,8 @@ static int printXMGJacobianTimeCourse ( cvodeData_t *data )
       }
     }
     /*
-    if ( k%10 == 0 ) {
+    if ( k%10 == 0 )
+    {
       GracePrintf("yaxis tick major %g", 1.25*(fabs(maxY)+fabs(minY))/10);
       GracePrintf("redraw");
     }
@@ -1151,7 +1271,8 @@ static int printXMGOdeTimeCourse(cvodeData_t *data)
 
   results = data->results;
 
-  if ( openXMGrace(data) > 0 ) {
+  if ( openXMGrace(data) > 0 )
+  {
     fprintf(stderr,
 	    "Error: Couldn't open XMGrace\n");
     return 1;     
@@ -1169,7 +1290,8 @@ static int printXMGOdeTimeCourse(cvodeData_t *data)
 		  "ODEs time course");
 
   /* print legend */  
-  if ( printXMGLegend(data, data->model->neq) > 0 ){
+  if ( printXMGLegend(data, data->model->neq) > 0 )
+  {
     fprintf(stderr,
 	    "Warning: Couldn't print legend\n");
     return 1;
@@ -1178,19 +1300,22 @@ static int printXMGOdeTimeCourse(cvodeData_t *data)
 
   /* evaluate ODE at each time point and print to XMGrace */
 
-  for ( i=0; i<=results->nout; ++i ) {
+  for ( i=0; i<=results->nout; ++i )
+  {
     n = 1;
     data->currenttime = results->time[i];
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ )
       data->value[j] = results->value[j][i];
-    }
-    for ( j=0; j<data->model->neq; j++ ) {
+    for ( j=0; j<data->model->neq; j++ )
+    {
       result = evaluateAST(data->model->ode[j],data);
-      if ( result > maxY ) {
+      if ( result > maxY )
+      {
 	maxY = result;
 	GracePrintf("world ymax %g", 1.25*maxY);
       }
-      if ( result < minY ) {
+      if ( result < minY )
+      {
 	minY = result;
 	GracePrintf("world ymin %g", 1.25*minY);
       }
@@ -1201,7 +1326,8 @@ static int printXMGOdeTimeCourse(cvodeData_t *data)
     }
 
     /*
-    if ( i%10 == 0 ) {
+    if ( i%10 == 0 )
+    {
       GracePrintf("yaxis tick major %g", 1.25*(fabs(maxY)+fabs(minY))/10);
       GracePrintf("redraw");
     }
@@ -1236,25 +1362,31 @@ static int printXMGConcentrationTimeCourse(cvodeData_t *data)
   if ( Opt.Sensitivity  && results->sensitivity != NULL )
     fprintf(stderr, "SORRY: sensitivities can not be printed to XMGrace\n");
   
-  if ( openXMGrace(data) > 0 ){
+  if ( openXMGrace(data) > 0 )
+  {
     fprintf(stderr,
 	    "Error: Couldn't open XMGrace\n");
     return 1;     
   }
-  if ( printXMGLegend(data, data->nvalues-data->model->nconst) > 0 ){
+  if ( printXMGLegend(data, data->nvalues-data->model->nconst) > 0 )
+  {
     fprintf(stderr,
 	    "Warning: Couldn't print legend\n");
     return 1;
   }
   
-  for ( i=0; i<=results->nout; ++i ) {
+  for ( i=0; i<=results->nout; ++i )
+  {
     n=1; 
-    for ( j=0; j<data->nvalues-data->model->nconst; j++ ) {
-      if ( results->value[j][i] > maxY ) {
+    for ( j=0; j<data->nvalues-data->model->nconst; j++ )
+    {
+      if ( results->value[j][i] > maxY )
+      {
 	maxY = results->value[j][i];
 	GracePrintf("world ymax %g", 1.25*maxY);	
       }
-      if ( results->value[j][i] < minY ) {
+      if ( results->value[j][i] < minY )
+      {
 	minY = results->value[j][i];
 	GracePrintf("world ymin %g", 1.25*minY);
       }
@@ -1263,7 +1395,8 @@ static int printXMGConcentrationTimeCourse(cvodeData_t *data)
       n++;
     }
   
-    /*  if ( i%10 == 0 ) {
+    /*  if ( i%10 == 0 )
+	{
       GracePrintf("yaxis tick major %g", 1.25*(fabs(maxY)+fabs(minY))/10);
       GracePrintf("redraw");
       }
@@ -1287,24 +1420,31 @@ static int printXMGLegend(cvodeData_t *data, int nvalues)
   Compartment_t *c;
 
   
-  for ( i=0; i<nvalues; i++ ) {
+  for ( i=0; i<nvalues; i++ )
+  {
     found = 0;
-    if ( (s = Model_getSpeciesById(m, om->names[i])) != NULL ) {
-      if ( Species_isSetName(s) ) {
+    if ( (s = Model_getSpeciesById(m, om->names[i])) != NULL )
+    {
+      if ( Species_isSetName(s) )
+      {
 	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
 		    om->names[i], Species_getName(s));
 	found++;
       }
     }
-    else if ( (c = Model_getCompartmentById(m, om->names[i])) ) {
-      if ( Compartment_isSetName(c) ) {
+    else if ( (c = Model_getCompartmentById(m, om->names[i])) )
+    {
+      if ( Compartment_isSetName(c) )
+      {
 	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
 		    om->names[i], Compartment_getName(c));
 	found++;
       }
     }
-    else if ( (p = Model_getParameterById(m, om->names[i])) ) {
-      if ( Parameter_isSetName(p) ) {
+    else if ( (p = Model_getParameterById(m, om->names[i])) )
+    {
+      if ( Parameter_isSetName(p) )
+      {
 	GracePrintf("g0.s%d legend  \"%s: %s\"\n", i+1,
 		    om->names[i], Parameter_getName(p));
 	found++;
@@ -1330,14 +1470,17 @@ static int openXMGrace(cvodeData_t *data)
   double maxY;
 
   /* Open XMGrace */
-  if ( !GraceIsOpen() ) {     
+  if ( !GraceIsOpen() )
+  {     
     GraceRegisterErrorFunction(grace_error); 
     /* Start Grace with a buffer size of 2048 and open the pipe */
-    if ( GraceOpen(2048) == -1 ) {
+    if ( GraceOpen(2048) == -1 )
+    {
       fprintf(stderr, "Can't run Grace. \n");
       return 1;
     }
-    else if ( GraceIsOpen() ) {
+    else if ( GraceIsOpen() )
+    {
       maxY = 1.0;
       /*
 	"with g%d" might become useful, when printing multiple
@@ -1366,7 +1509,8 @@ static int openXMGrace(cvodeData_t *data)
       GracePrintf("subtitle font 8");   
     }
   }
-  else {
+  else
+  {
     fprintf(stderr, "Please close XMGrace first.\n");
     return 1;
   }
@@ -1379,7 +1523,8 @@ static int openXMGrace(cvodeData_t *data)
 
 static int closeXMGrace(cvodeData_t *data, char *safename)
 {
-  if ( Opt.Write ) {
+  if ( Opt.Write )
+  {
     fprintf(stderr, "Saving XMGrace file as \"%s_%s_t%g.agr\"\n",
 	    Opt.ModelFile,
 	    safename,
