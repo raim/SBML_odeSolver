@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 14:37:50 raim>
-  $Id: cvodeSolver.c,v 1.78 2008/09/24 14:10:10 raimc Exp $
+  Last changed Time-stamp: <2008-09-26 18:43:34 raim>
+  $Id: cvodeSolver.c,v 1.79 2008/09/26 16:50:24 raimc Exp $
 */
 /* 
  *
@@ -107,7 +107,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   /*!!! this is probably required for all RHS expressions which
    can lead to discontinuities, AND !!! maybe this is only required
    for those discontinuities which depend explicitly on time ??? 
-   and alternative to using the TSTOP mode might be to just update the
+   an alternative to using the TSTOP mode might be to just update the
    respective equations within this function!!! */
   if ( opt->SetTStop || om->npiecewise )
   {
@@ -362,7 +362,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     /* update rest of adjoint data with internal default function */
     flag = IntegratorInstance_updateAdjData(engine);
-    if ( flag != 1 ){
+    if ( flag != 1 )
+    {
       fprintf(stderr, "update AdjData error!!\n");
       return 0;
     }
@@ -965,14 +966,15 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   if ( data->opt->DetectNegState  )  
     for ( i=0; i<data->model->neq; i++ )
       if (data->value[i] < 0)
-	       return (1);
+	return (1);
 
   /** update assignment rules */
   for ( i=0; i<data->model->nass; i++ )
   {
     nonzeroElem_t *ordered = data->model->assignmentOrder[i];
-    if ( data->model->assignmentsBeforeODEs[i] )
-    {
+    
+    if ( data->model->assignmentsBeforeODEs[ordered->i] )
+    {      
 #ifdef ARITHMETIC_TEST
       data->value[data->model->neq + ordered->i] =
 	data->model->assignmentcode[ordered->i]->evaluate(data);    
