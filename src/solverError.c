@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 11:35:21 xtof>
-  $Id: solverError.c,v 1.20 2008/09/24 10:19:48 chfl Exp $ 
+  Last changed Time-stamp: <2008-09-26 10:13:12 raim>
+  $Id: solverError.c,v 1.21 2008/09/26 08:13:34 raimc Exp $ 
 */
 /* 
  *
@@ -134,7 +134,7 @@ SBML_ODESOLVER_API void SolverError_clear()
 	free(m);
 	List_remove(l, 0);
       }
-      List_free(l);
+      /* List_free(l); */ /* RM: removed again, causes seg.fault should be done elsewwhere ?*/
     }
   }
 
