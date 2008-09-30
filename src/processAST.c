@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 14:10:13 raim>
-  $Id: processAST.c,v 1.62 2008/09/24 14:10:10 raimc Exp $
+  Last changed Time-stamp: <2008-09-30 14:08:26 raim>
+  $Id: processAST.c,v 1.63 2008/09/30 12:10:54 raimc Exp $
 */
 /* 
  *
@@ -1921,7 +1921,7 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
 	 ASTNode_setData(simple);
     } 
     ASTNode_setName(simple, ASTNode_getName(f));
-
+    ASTNode_setType(simple, ASTNode_getType(f));
   }
   /* --------------- operators with possible simplifications -------------- */
   /* special operator: unary minus */
