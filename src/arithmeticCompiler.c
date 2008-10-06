@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-09-12 20:22:22 raim>
-  $Id: arithmeticCompiler.c,v 1.24 2008/09/12 20:01:04 raimc Exp $
+  $Id: arithmeticCompiler.c,v 1.25 2008/10/06 07:10:09 thegreywanderer Exp $
 */
 /* 
  *
@@ -378,6 +378,38 @@ double getAST_Name(ASTNode_t *n, cvodeData_t *data) {
 	return result;
 	}
 
+/* extern function for the case AST_NAME */
+/*!!! TODO : init result to 0 and write correct error message !!!*/
+double getAST_Name_setData(ASTNode_t *n, cvodeData_t *data) {
+	int i, j;
+	double found = 0, datafound, findtol=1e-5, result;
+	time_series_t *ts = data->model->time_series;
+	
+	/* if continuous data is observed, obtain interpolated result */  
+	if ((data->model->discrete_observation_data != 1) || (data->model->compute_vector_v != 1)) {
+		result = call(ASTNode_getIndex(n), data->currenttime, ts);
+		}
+		else  /* if discrete data is observed, simply obtain value from time_series */
+		{
+		datafound = 0;
+		i = data->TimeSeriesIndex;
+		if (fabs(data->currenttime - ts->time[i]) < findtol) {
+			result = ts->data[ASTNode_getIndex(n)][i];
+			datafound++;
+			}
+		if (datafound != 1) {
+/*			SolverError_error(FATAL_ERROR_TYPE,
+			SOLVER_ERROR_AST_EVALUATION_FAILED_DISCRETE_DATA,
+				"use of discrete time series data failed; none or several time points matching current time"); */
+			result = 0; /*  break;  */
+			}
+			else
+			found = 1;
+		}
+
+	return result;
+	}
+
 double getAST_Name_Time(cvodeData_t *data) {
 	return data->currenttime;
 	}
@@ -454,6 +486,10 @@ static double sech(double x) {
 	return 1.0/cosh(x);
 	}
 
+static double loga(double x, double y) {
+	return log(y)/log(x);
+	}
+
 /* generates the code from the abstract syntax tree */
 void generate (directCode_t*c, ASTNode_t *AST) {
 	
@@ -485,7 +521,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 					addByte(c,0x8b); addByte(c,0x45); addByte(c,0x08); /* MOV EAX ESP+8 */
 					addByte(c,0x50); /* PUSH data - in real: PUSH EAX */
 					addByte(c,0x68); addAddress(c,(long long)AST); /* PUSH AST */
-					callFunction(c,(long long)getAST_Name);
+					callFunction(c,(long long)getAST_Name_setData);
 					addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter)  // delete parameter from the stack */
 					break;
 				}
@@ -819,11 +855,25 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 			ass_FXCH_st(1)
 			ass_FYL2X
 			break;
-		case AST_FUNCTION_LOG: /* log_10 */
-			generate(c,child(AST,0));
+		case AST_FUNCTION_LOG: /* log_a(b) */
+			generate(c,child(AST,1));
 			ass_FLDLG2
 			ass_FXCH_st(1)
 			ass_FYL2X
+			if(analyseFPU(child(AST,0)) >= 7) {
+				pushStorage(c); /* save old result */
+				generate(c,child(AST,0));
+				ass_FLDLG2
+				ass_FXCH_st(1)
+				ass_FYL2X
+				ass_FDIVR_mem popAddress(c); /* reload old result and divide */
+				} else {
+				generate(c,child(AST,0));
+				ass_FLDLG2
+				ass_FXCH_st(1)
+				ass_FYL2X
+				ass_FDIVP_st(1)
+				}
 			break;
 		case AST_FUNCTION_PIECEWISE: /* USEFUL? NOT CORRECTLY IMPLEMENTED! */
 			ass_FLDZ
@@ -978,7 +1028,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 				ass_FXCH_st(1)
 				ass_FCOMIP_st(1)
 				ass_FXCH_st(2)
-				ass_FCMOVB_st(1)
+				ass_FCMOVNBE_st(1)
 				ass_FXCH_st(2)
 				}
 			ass_FFREE_st(0)
@@ -1001,7 +1051,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 				ass_FXCH_st(1)
 				ass_FCOMIP_st(1)
 				ass_FXCH_st(2)
-				ass_FCMOVBE_st(1)
+				ass_FCMOVNB_st(1)
 				ass_FXCH_st(2)
 				}
 			ass_FFREE_st(0)
@@ -1024,7 +1074,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 				ass_FXCH_st(1)
 				ass_FCOMIP_st(1)
 				ass_FXCH_st(2)
-				ass_FCMOVNBE_st(1)
+				ass_FCMOVB_st(1)
 				ass_FXCH_st(2)
 				}
 			ass_FFREE_st(0)
@@ -1047,7 +1097,7 @@ void generate (directCode_t*c, ASTNode_t *AST) {
 				ass_FXCH_st(1)
 				ass_FCOMIP_st(1)
 				ass_FXCH_st(2)
-				ass_FCMOVNB_st(1)
+				ass_FCMOVBE_st(1)
 				ass_FXCH_st(2)
 				}
 			ass_FFREE_st(0)
@@ -1103,7 +1153,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 					ass_MOV_rax
 					addAddress(c,(long long)c->temp);
 					addByte(c, 0x48); addByte(c, 0x8b); addByte(c, 0x30); /* MOV [RAX] RSI */
-					callFunction64(c,(long long)getAST_Name);
+					callFunction64(c,(long long)getAST_Name_setData);
 					break;
 				}
 				else
@@ -1401,9 +1451,21 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			generate64(c,child(AST,0));
 			callFunction64(c,(long long)log); /* log */
 			break;
-		case AST_FUNCTION_LOG: /* log_10 */
-			generate64(c,child(AST,0));
-			callFunction64(c,(long long)log10); /* log10 */
+		case AST_FUNCTION_LOG: /* log_a(b) */
+			generate64(c,child(AST,1));
+			stack = analyse64Stack(child(AST,0));
+			if(stack < 8) {
+				ass_MOVSD(0,stack)
+				generate64(c,child(AST,0));
+				if(stack > 1) {
+					ass_MOVSD(stack,1)
+					}
+				} else {
+				pushStorage64(c); /* save old result */
+				generate64(c,child(AST,0));
+				popStorage64(c);
+				}
+			callFunction64(c,(long long)loga); /* pow */
 			break;
 		case AST_FUNCTION_PIECEWISE: /* USEFUL? NOT CORRECTLY IMPLEMENTED! */
 			ass_SUBSD(0,0)
@@ -1536,7 +1598,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x05); /* CMPNLTSD xmm1 xmm0 */
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x02); /* CMPLESD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(1,0)
 				}
@@ -1554,7 +1616,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x06); /* CMPNLESD xmm1 xmm0 */
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x01); /* CMPLTSD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(1,0)
 				}
@@ -1572,7 +1634,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x02); /* CMPLESD xmm1 xmm0 */
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x05); /* CMPNLTSD xmm1 xmm0 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(1,0)
 				}
@@ -1590,7 +1652,7 @@ void generate64 (directCode_t *c, ASTNode_t *AST) {
 			addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xd2); addByte(c,0x00); /* CMPEQSD xmm2 xmm2 */
 			for ( i = 1 ; i < childnum ; i++) { /* reverse order of values */
 				popStorage64(c);
-				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x01); /* CMPLTSD xmm0 xmm1 */
+				addByte(c,0xf2); addByte(c,0x0f); addByte(c,0xc2); addByte(c,0xc1); addByte(c,0x06); /* CMPNLESD xmm0 xmm1 */
 				addByte(c,0x66); addByte(c,0x0f); addByte(c,0xdb); addByte(c,0xd0); /* PAND xmm0 xmm2 */
 				ass_MOVSD(1,0)
 				}
@@ -1710,6 +1772,15 @@ int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places i
 			if(save < 3)
 				save = 3;
 			return save;
+		case AST_FUNCTION_LOG: /* log_a(b) */
+			save = analyse(c,child(AST,1));
+			save1 = analyse(c, child(AST,0));
+			if(save1 >= 7)
+				c->codeSize += 24;
+				else c->codeSize += 14;
+			if(save < save1+2)
+				save = save1 + 2;
+			return save;
 
 		case AST_FUNCTION: /* user defined function */
 			if (UsrDefFunc == NULL) { /* no function defined */
@@ -1778,7 +1849,6 @@ int analyse (directCode_t*c, ASTNode_t *AST) { /* returns the number of places i
 			c->codeSize += 8;
 		case AST_FUNCTION_CSC: /* cosec = 1/sinus */
 		case AST_FUNCTION_LN: /* log_e */
-		case AST_FUNCTION_LOG: /* log_10 */
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
 		case AST_FUNCTION_TAN: /* tangens */
 			c->codeSize += 2;
@@ -1933,6 +2003,12 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 			if(save < 3)
 				save = 3;
 			return save;
+		case AST_FUNCTION_LOG: /* log_a(b) */
+			save = analyseFPU(child(AST,1));
+			save1 = analyseFPU(child(AST,0));
+			if(save < save1+2)
+				save = save1 + 2;
+			return save;
 
 		case AST_FUNCTION: /* user defined function */
 			if (UsrDefFunc == NULL) { /* no function defined */
@@ -1982,7 +2058,6 @@ int analyseFPU (ASTNode_t *AST) { /* returns the number of places it occupies of
 		case AST_FUNCTION_ARCCSC: /* arccsc = arcsin(1.0/value) = arctan(1.0 / sqrt(value^2 - 1.0)) */
 		case AST_FUNCTION_CSC: /* cosec = 1/sinus */
 		case AST_FUNCTION_LN: /* log_e */
-		case AST_FUNCTION_LOG: /* log_10 */
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
 		case AST_FUNCTION_ARCTAN: /* arctan */
 		case AST_FUNCTION_CEILING: /* rounds value to next integer */
@@ -2152,6 +2227,7 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
 		case AST_FUNCTION_ROOT:
+		case AST_FUNCTION_LOG: /* log_a(b) */
 			save1 = analyse64(c,child(AST,0));
 			save = analyse64(c, child(AST,1));
 			if(save1 >= 8)
@@ -2222,7 +2298,6 @@ int analyse64 (directCode_t *c, ASTNode_t *AST) { /* returns the number of place
 		case AST_FUNCTION_FACTORIAL:
 		case AST_FUNCTION_FLOOR: /* rounds value to next integer */
 		case AST_FUNCTION_LN: /* log_e */
-		case AST_FUNCTION_LOG: /* log_10 */
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
 		case AST_FUNCTION_SECH: /* sech = 1/cosh */
 		case AST_FUNCTION_SIN: /* sinus */
@@ -2353,6 +2428,7 @@ static int analyse64Stack (ASTNode_t *AST) {
 		case AST_POWER: /* calculates value 1 to the power of value 2 */
 		case AST_FUNCTION_POWER:
 		case AST_FUNCTION_ROOT:
+		case AST_FUNCTION_LOG: /* log_a(b) */
 			save1 = analyse64Stack(child(AST,0));
 			save = analyse64Stack(child(AST,1));
 			if(save < save1+1)
@@ -2411,7 +2487,6 @@ static int analyse64Stack (ASTNode_t *AST) {
 		case AST_FUNCTION_FACTORIAL:
 		case AST_FUNCTION_FLOOR: /* rounds value to next integer */
 		case AST_FUNCTION_LN: /* log_e */
-		case AST_FUNCTION_LOG: /* log_10 */
 		case AST_FUNCTION_SEC: /* sec = 1/cosinus */
 		case AST_FUNCTION_SECH: /* sech = 1/cosh */
 		case AST_FUNCTION_SIN: /* sinus */
