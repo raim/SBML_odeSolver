@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-21 15:30:39 raim>
-  $Id: adjsenstest.c,v 1.10 2007/09/24 09:41:54 raimc Exp $
+  Last changed Time-stamp: <2008-10-06 14:40:47 raim>
+  $Id: adjsenstest.c,v 1.11 2008/10/06 12:46:51 raimc Exp $
 */
 /* 
  *
@@ -86,8 +86,8 @@ main (int argc, char *argv[]){
   sensIDTest[3] = "Ki";
   CvodeSettings_setSensParams(set, sensIDTest, 4);
 
-  fprintf(stderr, "\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
-  fprintf(stderr, "Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
+  fprintf(stdout, "\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
+  fprintf(stdout, "Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
 
   /* Initially, only linear objective is present */
   flag = IntegratorInstance_setLinearObjectiveFunction(ii, "MAPK.linobjfun");
@@ -107,7 +107,7 @@ main (int argc, char *argv[]){
     /* Set nonlinear objective function after 2 loops  */
     if ( i == 2)
     {
-      fprintf(stderr, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
+      fprintf(stdout, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
       flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK.objfun");
       if (flag!=1)
 	return(EXIT_FAILURE);
@@ -131,12 +131,12 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE);
 
     if ( i < 2)
-      fprintf(stderr, "\n### Printing Forward Sensitivities\n");
+      fprintf(stdout, "\n### Printing Forward Sensitivities\n");
     else
-      fprintf(stderr, "\n### Printing Objective Function (since nonlinear objective is present)\n");  
+      fprintf(stdout, "\n### Printing Objective Function (since nonlinear objective is present)\n");  
 
      
-    flag = IntegratorInstance_printQuad(ii, stderr);
+    flag = IntegratorInstance_printQuad(ii, stdout);
 
 
     if (flag!=1)
@@ -159,13 +159,13 @@ main (int argc, char *argv[]){
      if (flag!=1) 
       return(EXIT_FAILURE);
 
-    fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt\n");
-    flag = IntegratorInstance_printQuad(ii, stderr);
+    fprintf(stdout, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt\n");
+    flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE); 
 
 
-    fprintf(stderr, "\n############# DONE RUN NUMBER %d  #############\n", i); 
+    fprintf(stdout, "\n############# DONE RUN NUMBER %d  #############\n", i); 
     i++;
   }
   

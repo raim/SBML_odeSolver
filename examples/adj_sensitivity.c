@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-15 20:12:00 raim>
-  $Id: adj_sensitivity.c,v 1.13 2008/09/22 10:30:25 raimc Exp $
+  Last changed Time-stamp: <2008-10-06 14:42:42 raim>
+  $Id: adj_sensitivity.c,v 1.14 2008/10/06 12:46:51 raimc Exp $
 */
 /* 
  *
@@ -70,8 +70,8 @@ main (int argc, char *argv[]){
     data_file      = argv[3];
   }
   
-  fprintf(stderr, "\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
-  fprintf(stderr, "J(x) = int_0^T | x - x_data |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
+  fprintf(stdout, "\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
+  fprintf(stdout, "J(x) = int_0^T | x - x_data |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
 
   /* creating the odeModel */
   om = ODEModel_createFromFile(sbml_file);
@@ -141,8 +141,8 @@ main (int argc, char *argv[]){
   if (flag!=1)
     return(EXIT_FAILURE);
 
-  fprintf(stderr, "\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
-  flag = IntegratorInstance_printQuad(ii, stderr);
+  fprintf(stdout, "\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
+  flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE); 
 
@@ -152,20 +152,20 @@ main (int argc, char *argv[]){
     dp[i] = 0.0;
   dp[ii->results->nsens-1] = 1.0; /* the last parameter */
 
-  fprintf(stderr, "### Now computing and printing out directional sensitivities \nwith ");
+  fprintf(stdout, "### Now computing and printing out directional sensitivities \nwith ");
   for(i=0; i<ii->results->nsens; i++)
-    fprintf(stderr," dp[%d] = %.2g ", i, dp[i]);
-   fprintf(stderr, "\n");
+    fprintf(stdout," dp[%d] = %.2g ", i, dp[i]);
+   fprintf(stdout, "\n");
 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
 
   CvodeResults_computeDirectional(ii->results, dp);
   for(j=0; j<ii->results->nout+1; j++){ 
-    fprintf(stderr, "%g  ",ii->results->time[j] );
+    fprintf(stdout, "%g  ",ii->results->time[j] );
     for(i=0; i<ii->results->neq; i++)
-      fprintf(stderr, " %.8g ", ii->results->directional[i][j]);
-    fprintf(stderr, "\n");
+      fprintf(stdout, " %.8g ", ii->results->directional[i][j]);
+    fprintf(stdout, "\n");
   }
 
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
@@ -177,7 +177,7 @@ main (int argc, char *argv[]){
 
   
   /* Adjoint Integration */
-  fprintf(stderr, "\n### Commencing adjoint integration:\n");
+  fprintf(stdout, "\n### Commencing adjoint integration:\n");
  
   IntegratorInstance_resetAdjPhase(ii);
 
@@ -198,8 +198,8 @@ main (int argc, char *argv[]){
   flag = IntegratorInstance_CVODEQuad(ii);
   if (flag!=1) return(EXIT_FAILURE);
   
-  fprintf(stderr, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
-  flag = IntegratorInstance_printQuad(ii, stderr);
+  fprintf(stdout, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
+  flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE);
     
