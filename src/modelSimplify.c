@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 17:52:43 raim>
-  $Id: modelSimplify.c,v 1.17 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <2008-10-07 19:14:09 raim>
+  $Id: modelSimplify.c,v 1.18 2008/10/07 17:18:02 raimc Exp $
 */
 /* 
  *
@@ -175,12 +175,13 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
   ASTNode_t *old, *new;
   List_t *names;
  
-  names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isFunction);
+  names = ASTNode_getListOfNodes(math, (ASTNodePredicate) ASTNode_isFunction);
 
   for ( i=0; i<List_size(names); i++ )
   {
-    new     = copyAST(ASTNode_getRightChild(function));
+    new = copyAST(ASTNode_getRightChild(function)); /* holds function r.h.s */
     old = List_get(names,i);
+    
     /* if `old' is the searched function defintion ... */
     if ( strcmp(ASTNode_getName(old), name) == 0 )
     {
@@ -195,6 +196,8 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
       /* copy the `new' function defintion with replaced parameters
 	 into the `old' function call */
       
+      /* set new type */
+      ASTNode_setType(old, ASTNode_getType(new));
       /* first set possible names or numbers */
       if ( ASTNode_isName(new) ) 
 	ASTNode_setName(old, ASTNode_getName(new));
@@ -202,24 +205,21 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
 	ASTNode_setInteger(old, ASTNode_getInteger(new));
       else if ( ASTNode_isReal(new) ) 
 	ASTNode_setReal(old, ASTNode_getReal(new));
-
-      /* ... if none of the above, just set the AST Type ... */
+      /* ... if none of the above ... */
       else
       {
-	ASTNode_setType(old, ASTNode_getType(new));
-	/* (a user defined function has a name that must be set) */
+	/* set function name for functions of functions */
 	if ( ASTNode_getType(new) == AST_FUNCTION ) 
-	  ASTNode_setName(old, ASTNode_getName(new));
+	  ASTNode_setName(old, ASTNode_getName(new));	
 	/* ... and exchange the children. That should be it! */
 	ASTNode_swapChildren(old, new);
       }
-        
     }
     ASTNode_free(new);
   }
   List_free(names);
 
-  /*AST_dump("with ", math);*/
+  /* AST_dump("WITH ", math); */
 }
 
 /** Replace all constants of a model in an AST math */
