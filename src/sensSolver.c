@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 18:34:21 raim>
-  $Id: sensSolver.c,v 1.75 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 19:49:21 raim>
+  $Id: sensSolver.c,v 1.76 2008/10/08 19:06:52 raimc Exp $
 */
 /* 
  *
@@ -739,10 +739,13 @@ SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorI
 
   fclose(fp);
 
-  /*!!! TODO: implement SOSlib error handling!!!*/
-  if (i < om->neq)
-    fatal(stderr, "read_v_file(): inconsistent number of variables (<)");
-
+  if ( i < om->neq )
+  {
+    SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_VECTOR_V_FAILED,
+		      "read_v_file(): inconsistent number of variables "
+		      "required NEQ: %d, provided from file: %d "
+		      "in file %s", om->neq, i, v_file); 
+  }
   om->vector_v = vector_v;
   
   return 1;
@@ -1497,13 +1500,4 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
 
 /** @} */
 /* End of file */
-
-
-
-
-
-
-
-
-
 
