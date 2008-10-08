@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 21:02:11 raim>
-  $Id: integratorInstance.c,v 1.102 2008/10/08 19:05:57 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 21:20:52 raim>
+  $Id: integratorInstance.c,v 1.103 2008/10/08 19:21:29 raimc Exp $
 */
 /* 
  *
@@ -881,9 +881,9 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
   {
     nonzeroElem_t *ordered = om->assignmentsBeforeEvents[i];
 #ifdef ARITHMETIC_TEST
-    data->value[ordered->i] = evaluateAST(ordered->ij, data);
-#else
     data->value[ordered->i] = ordered->ijcode->evaluate(data);
+#else
+    data->value[ordered->i] = evaluateAST(ordered->ij, data);
 #endif
   }
 
