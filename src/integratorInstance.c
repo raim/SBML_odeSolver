@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 15:34:37 raim>
-  $Id: integratorInstance.c,v 1.101 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 21:02:11 raim>
+  $Id: integratorInstance.c,v 1.102 2008/10/08 19:05:57 raimc Exp $
 */
 /* 
  *
@@ -948,9 +948,6 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     else
       fired = IntegratorInstance_processEventsAndAssignments(engine);
 
-    if ( fired && opt->ResetCvodeOnEvent )
-      engine->isValid = 0;
-
     if ( fired && opt->HaltOnEvent )
     {
       for ( i=0; i!= data->nevents; i++ )
@@ -1322,10 +1319,12 @@ void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
   int i;
   odeModel_t *om;
   cvodeData_t *data;
+  cvodeSettings_t *opt;
   
   om = engine->om;
   data = engine->data;
-
+  opt = engine->opt;
+  
   if ( idx >= om->neq && idx < (om->neq+om->nass) )
   {
     SolverError_error(WARNING_ERROR_TYPE,
@@ -1349,7 +1348,7 @@ void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
      ODE variables as before) */
   /*!!! TODO : could be optimized: don't set invalid if ODEModel r.h.s
      does not depend on it */  
-  /* if ( idx < om->neq ) */
+  if ( idx < om->neq || opt->ResetCvodeOnEvent ) 
     engine->isValid = 0; 
 
   /* and finally assignment rules, potentially depending on that variable

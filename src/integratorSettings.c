@@ -1,5 +1,5 @@
-/*   Last changed Time-stamp: <2007-09-19 21:40:57 raim> */
-/*   $Id: integratorSettings.c,v 1.48 2007/09/20 13:54:34 jamescclu Exp $ */
+/*   Last changed Time-stamp: <2008-10-08 21:00:36 raim> */
+/*   $Id: integratorSettings.c,v 1.49 2008/10/08 19:05:57 raimc Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -145,7 +145,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
   else
     set->MaxOrder = 12;
   set->compileFunctions = 0;
-  set->ResetCvodeOnEvent = 0;
+  set->ResetCvodeOnEvent = 1;
   CvodeSettings_setSwitches(set, UseJacobian, Indefinitely,
 			    HaltOnEvent, HaltOnSteadyState, StoreResults,
 			    Sensitivity, SensMethod);
@@ -369,13 +369,6 @@ SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *set, 
 
 }
 
-/** Sets whether the integrator will be freed and restarted when
-    an event triggers
-*/
-SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set, int ResetCvodeOnEvent)
-{
-  set->ResetCvodeOnEvent = ResetCvodeOnEvent;  
-}
 
 /** Activates the TSTOP mode of CVODES. This is highly recommended when
     IntegratorInstance_setVariableValue affects ODE right hand side
@@ -755,6 +748,20 @@ SBML_ODESOLVER_API void CvodeSettings_setHaltOnEvent(cvodeSettings_t *set, int i
   set->HaltOnEvent = i;
 }
 
+/** Sets discontinuity handling internals, if set to 1 (default!)
+    the CVODES solver will be re-initialized whenever the r.h.s.
+    of the ODE system is changed (by an event assignment or the user).
+
+    If the user is certain that the discontinuous changes applied
+    won't affect the results, this option can be set to 0 and the
+    solver will only be initialized for changes of the
+    l.h.s. (i.e. y(t)) of the model, where this is absolutely necessary.    
+*/
+
+SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *set, int i)
+{
+  set->ResetCvodeOnEvent = i;
+}
 
 /** Sets steady state handling (replacing
     CvodeSettings_setSteadyState): if set to 1, the integration will
