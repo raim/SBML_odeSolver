@@ -93,12 +93,23 @@ ____TODO SEPT 2008___
 FOR RELEASE:
 
 todo:
-* initialAssignmentRules
 * clean-up configure process
 * swig-bindings
 * Windows, MSCV projects?
 * optimize gcc compilation for big models
 **  compile adjoint stuff separately
+* arithmeticCompiler:
+** failed tests:
+   mathml-log, mathml-logbase,
+   discontinuityTimeAndDelay-xor,
+   discontinuityTimeAndDelay-or, discontinuityTimeAndDelay-not,
+   discontinuityTimeAndDelay-lt, discontinuityTimeAndDelay-leq,
+   discontinuityTimeAndDelay-geq, discontinuityTimeAndDelay-discontinuity,
+   discontinuityTimeAndDelay-and 
+
+* FUNCTIONALITY AND OPTIMIZATION
+** write matrix of SBML functionalities
+** write INFO for optimal use/efficiency (storeResults, compilers, etc.)
 
 wishlist:
 * ida solver, see CellML API
