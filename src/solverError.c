@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-26 10:13:12 raim>
-  $Id: solverError.c,v 1.21 2008/09/26 08:13:34 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-03 14:26:24 raim>
+  $Id: solverError.c,v 1.22 2008/10/08 17:07:16 raimc Exp $ 
 */
 /* 
  *
@@ -62,7 +62,7 @@ typedef struct solverErrorMessage
 } solverErrorMessage_t ;
 
 static int SolverError_dumpHelper(char *);
-static List_t *solverErrors[NUMBER_OF_ERROR_TYPES] = { NULL, NULL, NULL };
+static List_t *solverErrors[NUMBER_OF_ERROR_TYPES] = { NULL, NULL, NULL, NULL };
 
 static int memoryExhaustion = 0;
 static solverErrorMessage_t memoryExhaustionFixedMessage =
@@ -133,9 +133,9 @@ SBML_ODESOLVER_API void SolverError_clear()
 	free(m->message);
 	free(m);
 	List_remove(l, 0);
-      }
-      /* List_free(l); */ /* RM: removed again, causes seg.fault should be done elsewwhere ?*/
+      }      
     }
+    /* List_free(l); */ /* RM: removed again, causes seg.fault should be done elsewwhere ?*/
   }
 
   memoryExhaustion = 0;
@@ -341,7 +341,8 @@ static int SolverError_dumpHelper(char *s)
   static char *solverErrorTypeString[] =
     { "Fatal Error",
       "      Error",
-      "    Warning" } ;
+      "    Warning",
+      "    Message" } ;
 
   int i, j;
 

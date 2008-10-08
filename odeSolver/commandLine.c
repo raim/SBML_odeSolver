@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-11-30 16:37:08 raim>
-  $Id: commandLine.c,v 1.26 2007/11/30 16:06:09 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 15:36:42 raim>
+  $Id: commandLine.c,v 1.27 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -231,8 +231,8 @@ odeSolver (int argc, char *argv[])
       SolverError_dump(); /* write out all everything including warnings */
       SolverError_haltOnErrors(); 
       printODEs(om, outfile);
-      if (Opt.Jacobian)
-          ODEModel_constructJacobian(om);
+      if ( Opt.Jacobian )
+	ODEModel_constructJacobian(om);
       SolverError_dump(); /* write out all everything including warnings */
       SolverError_haltOnErrors(); 
       printJacobian(om, outfile);
@@ -287,6 +287,9 @@ odeSolver (int argc, char *argv[])
 	Then the initial values and ODEs of the remaining species
 	will be written to the structure cvodeData_t *data.
     */
+    if ( Opt.PrintMessage ) 
+      fprintf(stderr, "\nGenerating odeModel ...\n");
+  
     om = ODEModel_create(m);
    
     SolverError_dump();
@@ -481,7 +484,7 @@ int integrator(integratorInstance_t *engine,
   cvodeSolver_t *solver = engine->solver;
   
  /** Command-line option -f/--onthefly:
-      print initial values, if on-the-fly printint is set
+      print initial values, if on-the-fly printing is set
  */
   if ( PrintOnTheFly && engine->run == 1 )
   {
@@ -506,21 +509,19 @@ int integrator(integratorInstance_t *engine,
 	  fprintf(outfile, "%g ", data->sensitivity[i][j]);
       fprintf(outfile, "\n");
     }
-    /* print concentrations */
+    /* print concentrations */ 
     else
     {      
       fprintf(outfile, "##CONCENTRATIONS\n");
       fprintf(outfile, "#t ");      
       for ( i=0; i<data->nvalues; i++ )
-          if (om->observablesArray[i])
-	          fprintf(outfile, "%s ", om->names[i]);
+	fprintf(outfile, "%s ", om->names[i]);
 
       fprintf(outfile, "\n");
 
       fprintf(outfile, "%g ", solver->t0);
       for ( i=0; i<data->nvalues; i++ )
-          if (om->observablesArray[i])
-	          fprintf(outfile, "%g ", data->value[i]);
+	fprintf(outfile, "%g ", data->value[i]);
 
       fprintf(outfile, "\n");
     }
@@ -565,11 +566,24 @@ int integrator(integratorInstance_t *engine,
       }
       /* print concentrations */
       else
-      {	
+      {
+	/* first, update assignment rules */
+	if ( !data->allRulesUpdated )
+	{
+	  for ( i=0; i<om->nass; i++ )
+	  {
+	    nonzeroElem_t *ordered = om->assignmentOrder[i];
+#ifdef ARITHMETIC_TEST
+	    data->value[ordered->i] = ordered->ijcode->evaluate(data);
+#else
+	    data->value[ordered->i] = evaluateAST(ordered->ij, data);
+#endif
+	  }
+	  data->allRulesUpdated = 1;
+	}	
 	fprintf(outfile, "%g ", solver->t);
-	for ( i=0; i<engine->data->nvalues; i++ )
-          if (om->observablesArray[i])
-	            fprintf(outfile, "%g ", engine->data->value[i]);
+	for ( i=0; i<data->nvalues; i++ )
+	  fprintf(outfile, "%g ", data->value[i]);
 	fprintf(outfile, "\n");
 	
       }
@@ -601,8 +615,7 @@ int integrator(integratorInstance_t *engine,
     else
     {
       for ( i=0; i<data->nvalues; i++ )
-          if ( om->observablesArray[i] )
-              fprintf(outfile, "%s ", om->names[i]);
+	fprintf(outfile, "%s ", om->names[i]);
 
       fprintf(outfile, "\n");
       fprintf(outfile, "##CONCENTRATIONS\n");

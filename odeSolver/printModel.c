@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-25 14:55:45 raim>
-  $Id: printModel.c,v 1.23 2008/09/25 12:57:27 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 14:38:51 raim>
+  $Id: printModel.c,v 1.24 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -414,33 +414,31 @@ void printODEs(odeModel_t *om, FILE *f)
   for ( i=om->neq+om->nass; i<nvalues; i++ ) 
     fprintf(f, "%s, ", om->names[i]);
   fprintf(f, "\n");
-  fprintf(f, "# Assigned Parameters (ordered):\n");
-  for ( i=0; i<om->nass; i++ )
+  fprintf(f, "# Assigned Parameters (ordered, including init. assignments):\n");
+  for ( i=0; i<(om->nass + om->ninitAss); i++ )
   {
-    int idx = om->assignmentOrder[i]->i;
-    char *eq = SBML_formulaToString(om->assignment[idx]);
-    fprintf(f, "%d: %s =  %s;\n", i+1, om->names[om->neq+idx], eq);
+    nonzeroElem_t *ordered = om->initAssignmentOrder[i];
+    char *eq = SBML_formulaToString(ordered->ij);
+    const char *id;
+    if ( ordered->i != -1 ) id = om->names[ordered->i];
+    else id = om->names[ordered->j];     
+    fprintf(f, "%d: %s =  %s;", i, id, eq);
+    if ( ordered->i == -1 ) fprintf(f, " (AT TIME=0 ONLY)");
+    fprintf(f, "\n");
     free(eq);
   }
   fprintf(f, "## evaluate before ODEs:");
-  for ( i=0; i<om->nass; i++ )
+  for ( i=0; i<om->nassbeforeodes; i++ )
   {
-    if ( om->assignmentsBeforeODEs[om->assignmentOrder[i]->i] )
-      fprintf(f, " %d,", i+1);
+    nonzeroElem_t *ordered = om->assignmentsBeforeODEs[i];
+    fprintf(f, " %s,", om->names[ordered->i]);
   }
   fprintf(f, "\n");
   fprintf(f, "## evaluate before Events:");
-  for ( i=0; i<om->nass; i++ )
+  for ( i=0; i<om->nassbeforeevents; i++ )
   {
-    if ( om->assignmentsBeforeEvents[om->assignmentOrder[i]->i] )
-      fprintf(f, " %d,", i+1);
-  }
-  fprintf(f, "\n");
-  fprintf(f, "## evaluate after Events:");
-  for ( i=0; i<om->nass; i++ )
-  {
-    if ( om->assignmentsAfterEvents[om->assignmentOrder[i]->i] )
-      fprintf(f, " %d,", i+1);
+    nonzeroElem_t *ordered = om->assignmentsBeforeEvents[i];
+    fprintf(f, " %s,", om->names[ordered->i]);
   }
   fprintf(f, "\n");
   for ( i=0; i<om->neq; i++ )
@@ -453,12 +451,6 @@ void printODEs(odeModel_t *om, FILE *f)
   }
   fprintf(f, "\n");
 
-  /* change in behaviour AMF 27th June 05 
-  if ( data->errors>0 ) {
-    fprintf(f, "# %d ODEs could not be constructed."
-	   " Try to add or correct kinetic laws!\n",
-	   data->errors); 
-  }*/
   return;
 }
 
@@ -809,8 +801,7 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
   {
     fprintf(f, "#t ");
     for( i=0; i<data->nvalues; i++)
-        if (om->observablesArray[i])
-            fprintf(f, "%s ", om->names[i]);
+      fprintf(f, "%s ", om->names[i]);
     
     fprintf(f, "\n");    
     fprintf(f, "##CONCENTRATIONS\n");
@@ -819,24 +810,20 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
       fprintf(f, "%g ", results->time[i]);
       
       for ( j=0; j<om->neq; j++ ) 
-        if (om->observablesArray[j])
-	        fprintf(f, "%g ", results->value[j][i]);
+	fprintf(f, "%g ", results->value[j][i]);
 
       for ( j=0; j<om->nass; j++ ) 
-        if (om->observablesArray[om->neq+j])
-	        fprintf(f, "%g ", results->value[om->neq+j][i]);
+	fprintf(f, "%g ", results->value[om->neq+j][i]);
       
       for ( j=0; j<om->nconst; j++ )
-        if (om->observablesArray[om->neq+om->nass+j])
-	        fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
+	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
 
       fprintf(f, "\n");
     }
     fprintf(f, "##CONCENTRATIONS\n");
     fprintf(f, "#t ");
     for( i=0; i<data->nvalues; i++ )
-      if (om->observablesArray[i])
-        fprintf(f, "%s ", om->names[i]);
+      fprintf(f, "%s ", om->names[i]);
 
     fprintf(f, "\n");
   }

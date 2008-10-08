@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-26 18:43:34 raim>
-  $Id: cvodeSolver.c,v 1.79 2008/09/26 16:50:24 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 18:49:17 raim>
+  $Id: cvodeSolver.c,v 1.80 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -153,7 +153,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	  /*   "CVode succeeded and returned at tstop" */
 	  /**/
 	  /* -1 CV_MEM_NULL -1 (old CVODE_NO_MEM) */
-	  "The cvode_mem argument was NULL",
+	  "The cvode_mem argument was NULL at time %g",
 	  /* -2 CV_ILL_INPUT */
 	  "One of the inputs to CVode is illegal. This "
 	  "includes the situation when a component of the "
@@ -169,8 +169,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	  /* -3 CV_NO_MALLOC */
 	  "cvode_mem was not allocated",
 	  /* -4 CV_TOO_MUCH_WORK */
-	  "The solver took %d internal steps but could not "
-	  "compute variable values for time %g",
+	  "At time %g: The solver took %d internal steps but could not "
+	  "compute variable values.",
 	  /* -5 CV_TOO_MUCH_ACC */
 	  "The solver could not satisfy the accuracy " 
 	  "requested for some internal step.",
@@ -211,7 +211,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	    
 
       SolverError_error(ERROR_ERROR_TYPE,
-			flag, message[flag * -1], opt->Mxstep, solver->tout);
+			flag, message[flag * -1], solver->tout, opt->Mxstep);
       SolverError_error(WARNING_ERROR_TYPE,
 			SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
 			"Integration not successful. Results are not "
@@ -273,8 +273,8 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	  /* -3 CV_NO_MALLOC */
 	  "cvode_mem was not allocated",
 	  /* -4 CV_TOO_MUCH_WORK */
-	  "The solver took %d internal steps but could not "
-	  "compute variable values for time %g",
+	  "At time %g: The solver took %d internal steps but could not "
+	  "compute variable values.",
 	  /* -5 CV_TOO_MUCH_ACC */
 	  "The solver could not satisfy the accuracy " 
 	  "requested for some internal step.",
@@ -336,19 +336,19 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	SolverError_error(ERROR_ERROR_TYPE,
 			  flag, message[flag * -1], opt->Mxstep, solver->tout);
         SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
-			"Adjoint integration not successful. Results are not "
-			"complete.");
+			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
+			  "Adjoint integration not successful. Results are not "
+			  "complete.");
       }
       else
       {
 	flag = flag + 100;
         SolverError_error(ERROR_ERROR_TYPE,
-			  flag, message2[flag* -1], opt->Mxstep, solver->tout);
+			  flag, message2[flag* -1], solver->tout, opt->Mxstep);
         SolverError_error(WARNING_ERROR_TYPE,
-			SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
-			"Adjoint integration not successful. Results are not "
-			"complete.");
+			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
+			  "Adjoint integration not successful. Results are not "
+			  "complete.");
       }
 
       return 0 ; /* Error - stop integration*/
@@ -473,7 +473,8 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     if ( engine->UseJacobian )
     {
       if ( opt->compileFunctions )
-      {
+      { 
+
 	jacODE = ODEModel_getCompiledCVODEJacobianFunction(om); 
 	if ( !jacODE ) return 0; /* error */
       }
@@ -951,13 +952,7 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /* update time  */
   data->currenttime = t;
 
-  /** update parameters: p is modified by CVODES,
-      if jacobi or sensitivity could not be generated  */
-  if ( data->use_p )
-    for ( i=0; i<data->nsens; i++ )
-      data->value[data->os->index_sens[i]] = data->p[i];
-
-  /** update ODE variables from CVODE */
+  /** UPDATE ODE VARIABLES from CVODE */
   for ( i=0; i<data->model->neq; i++ ) 
     data->value[i] = ydata[i];
 
@@ -968,20 +963,35 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
       if (data->value[i] < 0)
 	return (1);
 
-  /** update assignment rules */
-  for ( i=0; i<data->model->nass; i++ )
+  
+  /** UPDATE ASSIGNMENT RULES */ /* DONT USE ORDERING FOR SENS W/O MATRIX */
+  /** update parameters: p is modified by CVODES,
+      if jacobi or sensitivity could not be generated  */
+  if ( data->use_p )
   {
-    nonzeroElem_t *ordered = data->model->assignmentOrder[i];
-    
-    if ( data->model->assignmentsBeforeODEs[ordered->i] )
-    {      
+    for ( i=0; i<data->nsens; i++ )
+      data->value[data->os->index_sens[i]] = data->p[i];
+
+    for ( i=0; i<data->model->nass; i++ )
+    {
+      nonzeroElem_t *ordered = data->model->assignmentOrder[i];
 #ifdef ARITHMETIC_TEST
-      data->value[data->model->neq + ordered->i] =
-	data->model->assignmentcode[ordered->i]->evaluate(data);    
+      data->value[ordered->i] = ordered->ijcode->evaluate(data);    
 #else
-      data->value[data->model->neq + ordered->i] =
-	evaluateAST(data->model->assignment[ordered->i], data);
-#endif
+      data->value[ordered->i] = evaluateAST(ordered->ij, data);
+#endif    
+    }
+  }
+  else
+  {
+    for ( i=0; i<data->model->nassbeforeodes; i++ )
+    {
+      nonzeroElem_t *ordered = data->model->assignmentsBeforeODEs[i];
+#ifdef ARITHMETIC_TEST
+      data->value[ordered->i] =	ordered->ijcode->evaluate(data);    
+#else
+      data->value[ordered->i] =	evaluateAST(ordered->ij, data);
+#endif    
     }
   }
   
@@ -996,9 +1006,20 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
   /** reset parameters */
   /*!!! necessary? here AND/OR in Jacobian? */
   if ( data->use_p )
+  {
     for ( i=0; i<data->nsens; i++ )
       data->value[data->os->index_sens[i]] = data->p_orig[i];
-  
+    
+    for ( i=0; i<data->model->nass; i++ )
+    {
+      nonzeroElem_t *ordered = data->model->assignmentOrder[i];
+#ifdef ARITHMETIC_TEST
+      data->value[ordered->i] =	ordered->ijcode->evaluate(data);    
+#else
+      data->value[ordered->i] =	evaluateAST(ordered->ij, data);
+#endif    
+    }
+  }
   return (0);
 }
 
@@ -1020,7 +1041,6 @@ static int JacODE(long int N, DenseMat J, realtype t,
   int i;
   realtype *ydata;
   cvodeData_t *data;
-
   data  = (cvodeData_t *) jac_data;
   ydata = NV_DATA_S(y);
   

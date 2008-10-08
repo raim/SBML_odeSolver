@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:34:23 raim>
-  $Id: sensSolver.c,v 1.74 2008/09/19 13:37:42 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 18:34:21 raim>
+  $Id: sensSolver.c,v 1.75 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -489,7 +489,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     for ( i=0; i<om->neq; i++ )
     {
       /* Set initial value vector components of yA */
-          NV_Ith_S(solver->yA,i) = data->adjvalue[i]; 
+          NV_Ith_S(solver->yA, i) = data->adjvalue[i]; 
 
       /* Set absolute tolerance vector components,
 	 currently the same absolute error is used for all y */ 
@@ -517,7 +517,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     else iteration = CV_NEWTON;
 
     /* Error if neither ObjectiveFunction nor vector_v has been set  */
-    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL)   )
+    if( (om->ObjectiveFunction == NULL) && (om->vector_v == NULL) )
       return 0;
    
      if ( engine->adjrun == 1 )
@@ -626,7 +626,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
   cvodeSolver_t *solver = engine->solver;
   void *cvode_memB;
 
-  if (engine->opt->Sensitivity){ 
+  if ( engine->opt->Sensitivity )
+  { 
      /* print additional CVODES forward sensitivity statistics */
     fprintf(f, "##\n## CVodes Forward Sensitivity Statistics:\n");
 
@@ -648,7 +649,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
     fprintf(f, "## nniS    = %5ld    ncfnS    = %5ld\n", nniS, ncfnS);
   }
   
-  if ((engine->opt->DoAdjoint) && (solver->cvadj_mem != NULL)){ 
+  if ( (engine->opt->DoAdjoint) && (solver->cvadj_mem != NULL) )
+  { 
       /* print additional CVODES adjoint sensitivity statistics */
      fprintf(f, "##\n## CVode Adjoint Sensitivity Statistics:\n");
      cvode_memB = CVadjGetCVodeBmem(solver->cvadj_mem);
@@ -665,9 +667,9 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
      flag = CVodeGetNumErrTestFails(cvode_memB, &netfA);
      CVODE_HANDLE_ERROR(&flag, "CVodeGetNumErrTestFails", 1);
      fprintf(f, "## nstA = %-6ld nfeA  = %-6ld nsetupsA = %-6ld njeA = %ld\n",
-	  nstA, nfeA, nsetupsA, njeA); 
+	     nstA, nfeA, nsetupsA, njeA); 
      fprintf(f, "## nniA = %-6ld ncfnA = %-6ld netfA = %ld\n",
-	  nniA, ncfnA, netfA);
+	     nniA, ncfnA, netfA);
      fprintf(f, "## ncheck = %-6d\n", engine->opt->ncheck);
   }
 
@@ -1276,7 +1278,7 @@ static int fS(int Ns, realtype t, N_Vector y, N_Vector ydot,
   {
     dySdata[i] = 0;
     /* add parameter sensitivity */
-    /* evaluation of nonzero-elements in the parameter matrix dY/dP */
+    /*!!! TODO: evaluation of nonzero-elements in the parameter matrix dY/dP */
     if ( data->os->index_sensP[iS] != -1 &&
 	 data->os->sensLogic[i][data->os->index_sensP[iS]] )
     {

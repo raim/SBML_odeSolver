@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 16:23:14 raim>
-  $Id: cvodeData.c,v 1.34 2008/09/24 14:35:03 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 14:27:44 raim>
+  $Id: cvodeData.c,v 1.35 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -129,135 +129,62 @@ static int CvodeData_allocateSens(cvodeData_t *data, int neq, int nsens)
 */
 SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 {
-  int neq, nconst, nass, nvalues, nevents;
+  int nvalues;
   cvodeData_t *data;
 
-  neq    = om->neq;
-  nconst = om->nconst;
-  nass   = om->nass;
-  if ( om->simple != NULL ) nevents = Model_getNumEvents(om->simple);
-  else nevents = 0;
-  nvalues = neq + nconst + nass;
+  nvalues = om->neq + om->nconst + om->nass;
 
   /* allocate memory for current integration data storage */
-  data = CvodeData_allocate(nvalues, nevents, neq);
+  data = CvodeData_allocate(nvalues, om->nevents, om->neq);
   RETURN_ON_FATALS_WITH(NULL);
 
   data->nvalues = nvalues;
-  data->nevents = nevents;
-
+  data->nevents = om->nevents;
+  data->allRulesUpdated = 0;
+  
   /* set pointer to input model */
   data->model = om ;
 
-  /* initialize values, this function call is only required for
-     separate creation of data for analytic purposes */
-  CvodeData_initializeValues(data);
-  
   return data;
 }
 
 
 /** Writes values (initial conditions and parameters)
-    from the input SBML model into the data structure */
+    from the input ODE model into the data structure */
 
 SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
 {
-  int i, j;
-  Parameter_t *p;
-  Species_t *s;
-  Compartment_t *c;
-  InitialAssignment_t *init;
-  const char *id;
-  const ASTNode_t *math;
+  int i;
   odeModel_t *om = data->model;
-  Model_t *ode = om->simple;
 
   /* First, fill cvodeData_t  structure with data from
      the derived SBML model  */
 
+  /* get initial values (these come directly from SBML model) */
   for ( i=0; i<data->nvalues; i++ )
-  {
-    /* 1: distinguish between SBML-based or direct odeModel */
-    /* 1a SBML based initialization */
-    /*!!! it might be better to write original SBML values also into this values array!!!*/
-    if ( om->values == NULL )
-    {
-      if ( (s = Model_getSpeciesById(ode, om->names[i])) )
-      {
-	if ( Species_isSetInitialConcentration(s) )
-	  data->value[i] = Species_getInitialConcentration(s);
-	else if ( Species_isSetInitialAmount(s) )
-	  data->value[i] = Species_getInitialAmount(s);
-	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(WARNING_ERROR_TYPE,
-			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for species %s, value " \
-			    "remains uninitialized!",
-			    om->names[i]);
-      }
-      else if ( (c = Model_getCompartmentById(ode, om->names[i])) )
-      {
-	if ( Compartment_isSetSize(c) )
-	  data->value[i] = Compartment_getSize(c);
-	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(WARNING_ERROR_TYPE,
-			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for compartment %s, value " \
-			    "remains uninitialized!",
-			    om->names[i]);      
-      }
-      else if ( (p = Model_getParameterById(ode, om->names[i])) )
-      {
-	if ( Parameter_isSetValue(p) )
-	  data->value[i] = Parameter_getValue(p);
-	else if ( i < om->neq || i >= (om->neq+om->nass) ) 
-	  SolverError_error(WARNING_ERROR_TYPE,
-			    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
-			    "No value found for parameter %s, value " \
-			    "remains uninitialized!",
-			    om->names[i]);      	
-      }
-    }
-    /* 1b direct odeModel creation from ODEs */
-    else if ( om->values != NULL )
-    {
-       for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
-	data->value[i] = om->values[i];
-    }
-  }
+    data->value[i] = om->values[i];  
  
   /* set current time to 0 */
   data->currenttime = 0.0;
 
-  /*!!! TODO : rule ordering: assignments and init. assignments */
-  /* initialize assigned parameters */
-  for ( i=0; i<om->nass; i++ ) 
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    data->value[om->neq+ordered->i] =
-      evaluateAST(om->assignment[ordered->i], data);
-  }
 
-  /* execute initial assignment rules ! */
-  if ( ode != NULL )
+  /* Then execute complete rule set:
+     initial and normal assignment rules ! */
+  for ( i=0; i<(om->nass + om->ninitAss); i++ ) 
   {
-    for ( i=0; i<Model_getNumInitialAssignments(ode); i++ )
-    {
-      init = Model_getInitialAssignment(ode, i);
-      id = InitialAssignment_getSymbol(init);
-      math = InitialAssignment_getMath(init);
-      for ( j=0; j<data->nvalues; j++ )
-	if ( strcmp(om->names[j], id) == 0 )
-	  data->value[j] = evaluateAST((ASTNode_t *)math, data);
-    }
+    nonzeroElem_t *ordered = om->initAssignmentOrder[i];
+    data->value[ordered->i] = evaluateAST(ordered->ij, data);
   }
-      
+  data->allRulesUpdated = 1;   
+
+  /* ADJOINT */      
   /* Zeroing initial adjoint values */
   if ( data->adjvalue != NULL )
     for ( i=0; i<data->neq; i++ )
       data->adjvalue[i] = 0.0;
 
 }
+
 
 /** Frees cvodeData
  */
@@ -393,9 +320,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 {
 
   int i;
-  Event_t *e;
-  ASTNode_t *trigger;
-
 
   /* data now also depends on cvodeSettings */
   data->opt = opt;
@@ -410,18 +334,18 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* initialize values from odeModel */
   CvodeData_initializeValues(data);
      
-  /* set current time */
+  /* set current time : WHEN NOT 0 ?? */
   data->currenttime = opt->TimePoints[0];
 
   /* update assigned parameters, in case they depend on new time */
-  /*!!! TODO : when is this called with time other then 0 ???
-        -> handling of initialAssignments !!!*/
-  for ( i=0; i<om->nass; i++ )
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    data->value[om->neq+ordered->i] =
-      evaluateAST(om->assignment[ordered->i], data);
-  }
+  if ( data->currenttime != 0.0 )
+    for ( i=0; i< (om->nass); i++ )
+    {
+      nonzeroElem_t *ordered = om->assignmentOrder[i];
+      data->value[ordered->i] = evaluateAST(ordered->ij, data);
+    }
+  
+  data->allRulesUpdated = 1;
 
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
@@ -433,11 +357,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
   /* evaluate event triggers and set flags with their initial state */
   for ( i=0; i<data->nevents; i++ )
-  {
-    e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
-    data->trigger[i] = evaluateAST(trigger, data);
-  }
+    data->trigger[i] = evaluateAST(om->event[i], data);
     
   /* RESULTS: Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */

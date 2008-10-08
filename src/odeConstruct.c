@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 17:03:00 raim>
-  $Id: odeConstruct.c,v 1.39 2008/09/19 16:56:35 raimc Exp $
+  Last changed Time-stamp: <2008-10-07 19:08:58 raim>
+  $Id: odeConstruct.c,v 1.40 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -686,9 +686,8 @@ static void ODE_replaceFunctionDefinitions(Model_t *m)
   {
     f = Model_getFunctionDefinition(m, i);
     /*
-      replacing functions in
-      ODEs (rate rules) and algebraic rules
-      of the ode model
+      replacing functions in ODEs (rate rules), assignment rules and
+      algebraic rules of the ode model
     */
     for ( j=0; j<Model_getNumRules(m); j++ )
     {
@@ -767,8 +766,14 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
 	return Species_getInitialAmount(s);
     }
   }
-  fprintf(stderr, "Value for %s not found!", id); 
-  fprintf(stderr, "Defaults to 0. Please check model!"); 
+
+  SolverError_error(ERROR_ERROR_TYPE,
+		    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
+		    "SBML Model doesn't provide a value " \
+		    "for SBML ID %s, value defaults to 0!", id);
+
+/*   fprintf(stderr, "Value for %s not found!", id);  */
+/*   fprintf(stderr, "Defaults to 0. Please check model!");  */
   return (0.0);
 }
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 15:33:33 raim>
-  $Id: odeModel.h,v 1.48 2008/09/24 14:10:10 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-08 14:39:41 raim>
+  $Id: odeModel.h,v 1.49 2008/10/08 17:07:16 raimc Exp $ 
 */
 /* 
  *
@@ -69,38 +69,36 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
     double *values;    /**< input initial conditions and parameter values
 			  (alternative to SBML!) */
 
+    /** ODE SYSTEM */
     /** All names, i.e. ODE variables, assigned parameters, and constant
 	parameters */
-    char **names; 
+    char **names;
+    /** matrix of the DAG of all variable/parameter
+	of assignment and initial assignment rules */
+    int **dependencyMatrix;  
 
-    int neq;    /**< number of ODEs */
-    int nalg;   /**< number of algebraic rules */ 
-    int nass;   /**< number of assigned variables (nass) */
     int nconst; /**< number of constant parameters */
-
-    /** piecewise expressions as well as events can lead to problems
-        and will result in CVODES running in CV_NORMAL_TSTOP mode
-        which avoids that the solver internally integrates beyond the
-        next requested timestep */
-    int nevents;     /**< number of model events */
-    int npiecewise;  /**< number of piecewise expression in equations */
 
     /** Assigned variables: stores species, compartments and parameters,
 	that are set by an assignment rule */
+    int nass;   /**< number of assigned variables (nass) */
     ASTNode_t **assignment;
     directCode_t **assignmentcode;
-    /** topological order of assignment rules */
-    nonzeroElem_t **assignmentOrder; 
-
-    /** Algebraic Rules (constraints) as used for DAE systems */
-    ASTNode_t **algebraic;
-    directCode_t **algebraiccode;
-  
+    
+    /** topological order of assignments */
+    nonzeroElem_t **assignmentOrder;     /* size nass */
+    /** subset of rules required before ODE evaluation, see
+        'discontinuities' for temporal subsets of rules before event
+	evaluation */
+    int nassbeforeodes;    
+    nonzeroElem_t **assignmentsBeforeODEs; 
+    
     /** The Ordinary Differential Equation System (ODE)s: f(x,p,t) = dx/dt */
+    int neq;    /**< number of ODEs */
     ASTNode_t **ode; 
     directCode_t **odecode;
 
-    /** THE JACOBI MATRIX df(x)/dx of the ODE system 
+    /** JACOBI MATRIX df(x)/dx of the ODE system 
 	neq x neq */
     ASTNode_t ***jacob;
     directCode_t ***jacobcode;
@@ -117,6 +115,49 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
     /** flag indicating that jacobian matrix construction had failed for
      this model already and does not need to be tried again */
     int jacobianFailed;
+
+    
+    /** DISCONTINUITIES : piecewise, events, initial assignments */
+    /** PIECEWISE: piecewise expressions as well as events can lead to
+        problems and will result in CVODES running in CV_NORMAL_TSTOP
+        mode which avoids that the solver internally integrates beyond
+        the next requested timestep */
+    
+    int npiecewise;  /**< number of piecewise expression in equations */
+
+    /** INITIAL ASSIGNMENTS: only evaluated at time <= 0, only
+     ODE variables and constants can be affected */
+    int *indexInit;  /**< index map from om->names to initial assignments */
+    int ninitAss;    /**< number of initial assignments */
+    int *initIndex;  /**< index map from initial assignments to om->names */
+    ASTNode_t **initAssignment;
+    directCode_t **initAssignmentcode;
+    
+    
+    /** EVENTS */
+    int nevents;     /**< number of model events */
+    ASTNode_t **event;
+    directCode_t **eventcode;
+    int *neventAss;     /**< number of event assignments per event */
+    int **eventIndex;  /**< index map from event assignments to om->names */
+    ASTNode_t ***eventAssignment;
+    directCode_t ***eventAssignmentcode;
+        /** topological order of event assignments incl. other assignments */
+    nonzeroElem_t **eventAssignmentOrder; /* size : nIass + nass */
+ 
+
+    /** topological order of assignments and initial assignments,
+        and assignments required before event evaluation */
+    nonzeroElem_t **initAssignmentOrder; /* size : nass + ninitAss */
+    int nassbeforeevents;
+    nonzeroElem_t **assignmentsBeforeEvents;
+    
+    /** DAE SYSTEMS : NOT USED */
+    /** Algebraic Rules (constraints) as used for DAE systems */
+    int nalg;   /**< number of algebraic rules */ 
+    ASTNode_t **algebraic;
+    directCode_t **algebraiccode;
+    
 
     /* COMPILED CODE OBJECTS */
     /** compiled code containing compiled ODE and Jacobian functions */
@@ -142,33 +183,10 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 	generated from model */
     CVDenseJacFnB compiledCVODEAdjointJacobianFunction;
     /* remember which function is used (compiled or hard-coded) */
-    CVDenseJacFnB current_AdjJAC; 
+    CVDenseJacFnB current_AdjJAC;
+    
 
-    /* EVALUATION ORDERING */
-    /** timing of assignment rule evaluation */
-    nonzeroElem_t **ruleOrder; /**< ordering of rule evaluation */
-
-    List_t *observables ; /**< set of symbols that the user wishes to
-			     have computed for output (list contains
-			     char *) by default contains all
-			     species */  
-    int *observablesArray ; /**< set of symbols that the user wishes
-			       to have computed for output; indexing
-			       corresponds to 'names' */  
-
-    int *assignmentsBeforeODEs; /**< set of assignments that must be
-				   evaluated before evaluating ODEs,
-				   boolean array indexed as for
-				   'assignment' array */
-    int *assignmentsBeforeEvents; /**< set of assignments that must be
-				     evaluated before evaluating
-				     events, boolean array indexed as
-				     for 'assignment' array */ 
-    int *assignmentsAfterEvents; /**< set of assignments that must be
-				    evaluated after evaluating
-				    events */
-
-    /* ADJOINT */
+   /* ADJOINT */
     /* Adjoint: Given a parameter to observation map F(p),
        computes the adjoint operator applied to the vector v, F'*(p)v.
        v is given by a symbolic expression involving x and observation data. */
@@ -321,7 +339,7 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(ode
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
   SBML_ODESOLVER_API void ODESense_compileCVODESenseFunctions(odeSense_t *);
   /* diverse other useful functions */
-  SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n);
+  SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n, int *changed, int*required);
 #ifdef __cplusplus
 }
 #endif

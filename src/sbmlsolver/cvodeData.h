@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:16:19 raim>
-  $Id: cvodeData.h,v 1.11 2008/09/19 13:38:35 raimc Exp $
+  Last changed Time-stamp: <2008-10-06 12:39:48 raim>
+  $Id: cvodeData.h,v 1.12 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -84,6 +84,8 @@ struct cvodeData {
       all variables x(t) and parameters p of the system (of which
       there are `nvalues') */  
   double *value; 
+  int allRulesUpdated; /* flag if all rules are up-to-date with current
+			  variables and event assignments */
 
   /** the current time of the integration */
   float currenttime;

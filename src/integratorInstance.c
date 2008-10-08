@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-24 14:35:22 raim>
-  $Id: integratorInstance.c,v 1.100 2008/09/24 14:10:10 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 15:34:37 raim>
+  $Id: integratorInstance.c,v 1.101 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -84,6 +84,10 @@ IntegratorInstance_allocate(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
 static int
 IntegratorInstance_processEventsAndAssignments(integratorInstance_t *);
 
+/* sets new values during integration and handles solver reinit. */
+static void
+IntegratorInstance_setVariableValueByIndex(integratorInstance_t *, int, double);
+
 
 /***************** functions common to all solvers ************************/
 
@@ -153,7 +157,7 @@ SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *en
   /* activate backward integration for adjoint solver */
   engine->AdjointPhase = 1;
   return IntegratorInstance_initializeSolver(engine, engine->data,
-					      engine->opt, engine->om);
+					     engine->opt, engine->om);
 }
 
 
@@ -442,15 +446,13 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
     /* set engine to invalid to cause reinitialization of solver */
     target->isValid = 0;
 
-    /* and finally assignment rules, potentially depending on that variable
-       but otherwise rarely executed need to be evaluated */
-    /*!!! this could use only dependent assignments ? */
+    /* update assignments */
     for ( i=0; i<om->nass; i++ )
     {
       nonzeroElem_t *ordered = om->assignmentOrder[i];
-      targetData->value[om->neq + ordered->i] =
-	evaluateAST(om->assignment[ordered->i], targetData);
+      targetData->value[ordered->i] = evaluateAST(ordered->ij, targetData);
     }
+    targetData->allRulesUpdated = 1;
   }
 }
 
@@ -471,8 +473,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engin
 /*!!! needs testing and consideration of possible pitfalls */
 SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *engine, double initialtime)
 {
-  if ( (engine->isValid == 0 &&	
-	engine->solver->t == engine->solver->t0) &&
+  if ( (engine->isValid == 0 &&	engine->solver->t == engine->solver->t0) &&
        engine->solver->tout > initialtime )
   {
     engine->solver->t0 = initialtime;
@@ -481,12 +482,12 @@ SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *e
     return 1;
   }
   else
-    SolverError_error(ERROR_ERROR_TYPE,
+    SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME,
 		      "Requested intial time (%f) is not possible! "\
 		      "Reset integrator first, and make sure that the first "\
 		      "output time (%f) is smaller then the requested "\
-		      "initial time!", initialtime,
+		      "initial time! New setting ignored!", initialtime,
 		      engine->solver->tout);
   return 0;
 }
@@ -522,7 +523,24 @@ SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *
 
 SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *engine, variableIndex_t *vi)
 {
-  return engine->data->value[vi->index];
+  int i;
+  odeModel_t *om = engine->om;
+  cvodeData_t *data = engine->data;
+
+  /* for assigned variables, update assignment rules */
+  /*!!! TODO : could be optimized, using dependency DAG ? and info
+        on already updated values? or only correct value for observables? */
+  if ( !data->allRulesUpdated &&
+       (vi->index >= om->neq && vi->index < om->neq+om->nass) )
+  {
+    for ( i=0; i<om->nass; i++ )
+    {
+      nonzeroElem_t *ordered = om->assignmentOrder[i];
+      data->value[ordered->i] = evaluateAST(ordered->ij, data);
+    }
+    data->allRulesUpdated = 1;
+  }
+  return data->value[vi->index];
 }
 
 
@@ -854,21 +872,19 @@ static int
 IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 {
   int i, j, fired;
-  ASTNode_t *trigger, *assignment;
-  Event_t *e;
-  EventAssignment_t *ea;
-  variableIndex_t *vi;
 
   cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
 
   /** evaluate assignments required befor trigger evaluation; \n */
-  for ( i=0; i<om->nass; i++ )
+  for ( i=0; i<om->nassbeforeevents; i++ )
   {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    if ( om->assignmentsBeforeEvents[ordered->i] )
-      data->value[om->neq + ordered->i] =
-	evaluateAST(om->assignment[ordered->i], data);
+    nonzeroElem_t *ordered = om->assignmentsBeforeEvents[i];
+#ifdef ARITHMETIC_TEST
+    data->value[ordered->i] = evaluateAST(ordered->ij, data);
+#else
+    data->value[ordered->i] = ordered->ijcode->evaluate(data);
+#endif
   }
 
   fired = 0;
@@ -876,42 +892,26 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
   /** now go through all events: \n */
   for ( i=0; i<data->nevents; i++ )
   {
-    e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
-    /** if a trigger has not been fired in the last time step \n */
     if ( data->trigger[i] == 0 )
     {
       /** check if it is fired now \n */
-      if ( evaluateAST(trigger, data) )
+      if ( evaluateAST(om->event[i], data) )
       {
 	fired++;
 	data->trigger[i] = 1;
 	/** and if yes, execute the events assignments; \n*/
-	for ( j=0; j<Event_getNumEventAssignments(e); j++ )
-	{
-	  ea = Event_getEventAssignment(e, j);
-	  assignment = (ASTNode_t *) EventAssignment_getMath(ea);
-	  vi = ODEModel_getVariableIndex(om,
-					 EventAssignment_getVariable(ea));
-	  IntegratorInstance_setVariableValue(engine, vi,
-					      evaluateAST(assignment, data));
-	  VariableIndex_free(vi);
+	for ( j=0; j<om->neventAss[i]; j++ )
+	{	  
+	  double result = evaluateAST(om->eventAssignment[i][j], data);
+	  int idx = om->eventIndex[i][j]; 
+	  IntegratorInstance_setVariableValueByIndex(engine, idx, result);
 	}
       }
     }
     /** if the trigger has already been fired in the past,
         check if it still in fired state and reset flag if not; \n */
-    else if ( !evaluateAST(trigger, data) )      
+    else if ( !evaluateAST(om->event[i], data) )      
       data->trigger[i] = 0;
-  }
-
-  /** finally, evaluate assignments required after event execution; \n */
-  for ( i=0; i<om->nass; i++ )
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    if (om->assignmentsAfterEvents[ordered->i])
-      data->value[om->neq + ordered->i] =
-	evaluateAST(om->assignment[ordered->i], data);
   }
 
   /** and return the number of fired events. */
@@ -937,9 +937,10 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   odeModel_t *om = engine->om;
   div_t d;   
 
-  /* update rest of cvodeData_t **/
+  /* HANDLE TIME */
   data->currenttime = solver->t;
 
+  /* HANDLE EVENTS */
   if ( engine->processEvents )
   {
     if ( opt->compileFunctions ) 
@@ -956,10 +957,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       {
 	if ( data->trigger[i] )
 	{
-	  buffer =
-	    SBML_formulaToString((ASTNode_t *)
-				 Trigger_getMath(Event_getTrigger( \
-				 Model_getEvent(om->simple, i))));
+	  buffer = SBML_formulaToString(om->event[i]);
 	  SolverError_error(
 			    ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
@@ -972,6 +970,12 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       flag = 0;
     }
   }
+  
+  /* NOT ALL RULES ARE UP-TO-DATE ! */
+  /* this avoids unnecessary update of all rules, if the values
+     are not required. IntegratorInstance_getVariableValue
+     and storage in results will update rules when a value is requested */ 
+  data->allRulesUpdated = 0;
 
   /* store results */
   if ( opt->StoreResults )
@@ -979,10 +983,27 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     results->nout = solver->iout;
     results->time[solver->iout] = solver->t;
 
+    /* update all assignment rules : might be optimizable - only those
+       that have not been handled by events - observables? !! */
+    if ( !data->allRulesUpdated )
+    {
+      for ( i=0; i<om->nass; i++ )
+      {
+	nonzeroElem_t *ordered = om->assignmentOrder[i];
+#ifdef ARITHMETIC_TEST
+	data->value[ordered->i] = ordered->ijcode->evaluate(data);
+#else
+	data->value[ordered->i] = evaluateAST(ordered->ij, data);
+#endif
+      }
+      data->allRulesUpdated = 1;
+    }
+
     for ( i=0; i<data->nvalues; i++ )
       results->value[i][solver->iout] = data->value[i]; 
   }
           
+  /* HANDLE STEADY STATE */
   /* check for steady state if requested by cvodeSettings
      and stop integration if an approximate steady state is
      found   */
@@ -991,11 +1012,12 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       flag = 0;  /* stop integration */
 
 
+  /* HANDLE OBJECTIVE FUNCTION */
   /* if discrete data is observed, compute step contribution to
      the objective as well as the forward sensitivity */
- if ( (opt->observation_data_type == 1)  &&
-      ((solver->iout==opt->OffSet) ||
-       ((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
+  if ( (opt->observation_data_type == 1)  &&
+       ((solver->iout==opt->OffSet) ||
+	((solver->iout+opt->OffSet) % (1+opt->InterStep)) == 0) )
   {
     /* set current time and state values for evaluating vector_v  */
     data->currenttime = solver->t;
@@ -1015,6 +1037,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   } /* if (opt->observation_data_type == 1) */
 
 
+  /* SET NEXT INTEGRATION STEP */
   /* increase integration step counter */
   solver->iout++;
     
@@ -1153,34 +1176,38 @@ return 1;
 SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *engine)
 {  
   int i, j, fired;
-  ASTNode_t *trigger, *assignment;
-  Event_t *e;
-  EventAssignment_t *ea;
-  variableIndex_t *vi;
 
   cvodeSettings_t *opt = engine->opt;
   cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
 
+  /** evaluate assignments required befor trigger evaluation; \n */
+  for ( i=0; i<om->nassbeforeevents; i++ )
+  {
+    nonzeroElem_t *ordered = om->assignmentsBeforeEvents[i];
+    data->value[ordered->i] = evaluateAST(ordered->ij, data);
+  }
+  
   fired = 0;
 
   for ( i=0; i<data->nevents; i++ )
   {
-    e = Model_getEvent(om->simple, i);
-    trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
     /* check each trigger flag */
     if ( data->trigger[i] == 0 )
     {
       /* if flag was zero, check if the trigger is fired now */
-      if ( evaluateAST(trigger, data) )
+      if ( evaluateAST(om->event[i], data) )
       {
-	if (opt->HaltOnEvent)
+	if ( opt->HaltOnEvent )
+	{
+	  char *eq = SBML_formulaToString(om->event[i]);
 	  SolverError_error(ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
 			    "Event Trigger %d (%s) fired at time %g. "
 			    "Aborting simulation.",
-			    i, SBML_formulaToString(trigger),
-			    data->currenttime);
+			    i, eq, data->currenttime);
+	  free(eq);
+	}
 	/* removed AMF 08/11/05
 	   else 
 	   SolverError_error(WARNING_ERROR_TYPE,
@@ -1190,25 +1217,20 @@ SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *eng
 	   data->currenttime); */
 	fired++;
 	data->trigger[i] = 1;      
-	for ( j=0; j<Event_getNumEventAssignments(e); j++ )
+	for ( j=0; j<om->neventAss[i]; j++ )
 	{
-	  ea = Event_getEventAssignment(e, j);
-	  assignment = (ASTNode_t *) EventAssignment_getMath(ea);
-	  vi = ODEModel_getVariableIndex(om,
-					 EventAssignment_getVariable(ea));
-	  IntegratorInstance_setVariableValue(engine, vi,
-					      evaluateAST(assignment, data));
-	  VariableIndex_free(vi);
+	  double result = evaluateAST(om->eventAssignment[i][j], data);
+	  int idx = om->eventIndex[i][j]; 
+	  IntegratorInstance_setVariableValueByIndex(engine, idx, result);
 	}
       }
     }
     else
       /* set trigger flag to zero */
-      if ( !evaluateAST(trigger, data) ) data->trigger[i] = 0;
+      if ( !evaluateAST(om->event[i], data) ) data->trigger[i] = 0;
   }
 
   return fired;
-
 }
 
 /** Approximate identification of a steady state, returns 1 upon
@@ -1290,6 +1312,13 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
+  IntegratorInstance_setVariableValueByIndex(engine, vi->index, value);
+}
+
+static
+void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
+						int idx, double value)
+{
   int i;
   odeModel_t *om;
   cvodeData_t *data;
@@ -1297,31 +1326,43 @@ SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t
   om = engine->om;
   data = engine->data;
 
-  data->value[vi->index] = value;
+  if ( idx >= om->neq && idx < (om->neq+om->nass) )
+  {
+    SolverError_error(WARNING_ERROR_TYPE,
+		      SOLVER_ERROR_ATTEMPT_TO_SET_ASSIGNED_VALUE,
+		      "Attempted to set a new value for an assigned ",
+		      "variable: %s. This is not possible. New value ignored!",
+		      om->names[idx] );
+    return;
+  }
 
-  /*!!! variable compartments:  here setVariableValue for species X
-    should be interpreted as concetration, unless species in amounts,
-    and thus for ODE variable species X_amount the input value needs
-    to be divided by current compartment size !!!*/
+  
+  data->value[idx] = value; /* update value */
+
   /* initial values need to be set in results,
      because they had already been initialized */
   if ( engine->solver->t == 0.0 && data->results != NULL )
-    data->results->value[vi->index][0] = value;
+    data->results->value[idx][0] = value;
 
-  /* 'solver' is no longer consistant with 'data' if the event changed
-     the value of an ODE variable */
-  if ( vi->index < om->neq )
+  /* 'solver' is no longer consistant with 'data' */
+  /* to be strictly correct ALWAYS SET engine invalid (not only for
+     ODE variables as before) */
+  /*!!! TODO : could be optimized: don't set invalid if ODEModel r.h.s
+     does not depend on it */  
+  /* if ( idx < om->neq ) */
     engine->isValid = 0; 
 
   /* and finally assignment rules, potentially depending on that variable
-     but otherwise rarely executed need to be evaluated */
-  /*!!! this could use only dependent assignments ? */
+     need to be evaluated */
+  /*!!! TODO : could could be optimized using the dependencyMatrix
+        or a DAG structure of dependencies to be yet created ? */
   for ( i=0; i<om->nass; i++ )
   {
     nonzeroElem_t *ordered = om->assignmentOrder[i];
-    data->value[om->neq + ordered->i] =
-      evaluateAST(om->assignment[ordered->i], data);
+    data->value[ordered->i] = evaluateAST(ordered->ij, data);
   }
+  data->allRulesUpdated = 1;
+
 }
 
 
@@ -1380,8 +1421,6 @@ SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing
   else 
     return IntegratorInstance_cvodeOneStep(engine);
 
-  /* upcoming solvers */
-  /* if (om->algebraic) IntegratorInstance_idaOneStep(engine); */
 }
 
 /**  Prints the current state of the solver
@@ -1468,7 +1507,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
     {      
       SolverError_error(MESSAGE_ERROR_TYPE,
 			SOLVER_MESSAGE_RERUN_WITH_OR_WO_JACOBIAN,
-			"Try to rerun with %s Jacobian matrix.",
+			"Try to rerun with %s Jacobi matrix.",
 			opt->UseJacobian ?
 			"CVODE's internal approximation of the" :
 			"analytic version of the");

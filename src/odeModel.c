@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <24-Sep-2008 17:55:16 raim>
-  $Id: odeModel.c,v 1.115 2008/09/24 15:56:51 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-08 16:37:29 raim>
+  $Id: odeModel.c,v 1.116 2008/10/08 17:07:16 raimc Exp $ 
 */
 /* 
  *
@@ -60,35 +60,24 @@
 #define COMPILED_SENSITIVITY_FUNCTION_NAME "sense_f"
 #define COMPILED_ADJOINT_QUAD_FUNCTION_NAME "adj_quad"
 
+
+/* model allocation */
+static odeModel_t *ODEModel_fillStructures(Model_t *);
+static odeModel_t *ODEModel_allocate(int neq, int nconst, int nass, int nalg);
+static int ODEModel_allocateDiscontinuities(odeModel_t *om, int nvalues,
+					    int nevents,int neventAss,
+					    int ninitAss);
+static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode);
+static int ODEModel_freeDiscontinuities(odeModel_t *);
+static void ODEModel_initializeValuesFromSBML(odeModel_t *, Model_t *);
+
+/* rule sorting */
 typedef struct assignmentStage assignmentStage_t ;
-
-static odeModel_t *ODEModel_fillStructures(Model_t *ode);
-static odeModel_t *ODEModel_allocate(int neq, int nconst,
-				     int nass, int nalg, int nevents);
-static void ODEModel_computeAssignmentRuleSets(odeModel_t *om);
-static assignmentStage_t *AssignmentStage_create(List_t *, int *, int);
-static void List_append(List_t *, List_t *);
-static int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *, ASTNode_t *,
-						    List_t *, int);
-static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *, char *,
-                                                       List_t *, int *, int *,
-                                                       int);
-static int *ODEModel_computeAssignmentRuleSet(odeModel_t *, List_t *, List_t *);
-static void ODEModel_computeAssignmentRuleSets(odeModel_t *);
+static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *);
 static int ODEModel_topologicalRuleSort(odeModel_t *);
+static void List_append(List_t *, List_t *);
 
 
-
-/** represents a step in a function which contains assignments */
-struct assignmentStage
-{
-  List_t *changedSymbols ; /**< set of symbols changed by operation */
-  int *assignmentsBeforeChange ; /**< assignments made before
-				    operation, this is a boolean array
-				    corresponding to the odeMode_t
-				    assignment field */
-  int timeChanged ; /**< the operation has changed the value of time symbol */
-}  ;
 
 /*! \defgroup odeModel ODE Model: f(x,p,t) = dx/dt
   \ingroup symbolic
@@ -120,38 +109,6 @@ struct assignmentStage
 */
 SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 {
-  return ODEModel_createWithObservables(m, NULL);
-}
-
-/** \brief Create internal model odeModel from a reaction network,
-    represented as libSBML's Model_t structure.
-
-    'observables' is the set of symbols that the user wishes to see
-    valid at all times.  A reduced set of observables may result in
-    more optimal excution.
-
-    The input model must be of SBML level2!
-    The function at first, attempts to construct a simplified SBML
-    model, that contains all compartments, species, parameters, events
-    and rules of the input model, and constructs new ODEs as SBML
-    RateRules from the reaction network of the input model.  The
-    function then creates the structure odeModel which contains
-    variable, parameter and constant names and all formulas (ODEs and
-    assignments) as indexed AST (iAST). This structure can be used to
-    initialize and run several integration runs, each associated with
-    initial conditions in cvodeData_t. Alternatively I.1a - I.1c
-    allow to construct odeModel from higher-level data (a file, an
-    SBML document or a reaction network model, respectively).
-
-    observables is a null terminated set of null strings.  This set 
-    contains the identiers of all variables that the user wishes to
-    observe on the output of the simulator.  If observables is NULL
-    the set of species is used instead.
-*/
-
-SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char **observables)
-{
-  int i, j;
   Model_t *ode;
   odeModel_t *om;
   
@@ -165,65 +122,29 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
   RETURN_ON_ERRORS_WITH(NULL);
   
   om->m = m;
-  /*!!! the values array is only used to store initial conditions in
-    SBML independent use */
-  free(om->values); 
-  om->values = NULL;
-  om->d = NULL;      /* will be set if created from file */
+  om->d = NULL;  /* will be set and free'd if created from file */
 
-  om->observables = List_create();
 
-  if ( observables )
-  {
-    /* make copy */
-        
-    for ( i = 0; observables[i] != NULL; i++ )
-    {
-      char *newObservable;
-
-      ASSIGN_NEW_MEMORY_BLOCK(newObservable,
-			      strlen(observables[i]) + 1, char, NULL);
-      strcpy(newObservable, observables[i]);
-      List_add(om->observables, newObservable);
-    }
-  }
-  else
-  {
-    /* create default list of observables from species */
-    /* AMF => if you want to expand the default observables set please
-       let me know.  If you include the reaction symbols performance will
-       be degraded in models with events */
-
-    for ( i = 0; i != Model_getNumSpecies(m); i++ )
-    {
-      char *newObservable ;
-      Species_t *species = Model_getSpecies(m, i);
-
-      ASSIGN_NEW_MEMORY_BLOCK(newObservable,
-			      strlen(Species_getId(species)) + 1,
-			      char, NULL);
-      strcpy(newObservable, Species_getId(species));
-      List_add(om->observables, newObservable);
-    }
-  }
-
-  for ( i = 0; i != om->neq + om->nass + om->nconst + om->nalg; i++ )
-  {        
-    om->observablesArray[i] = 0;
-
-    for ( j = 0; j != List_size(om->observables); j++ )
-      if ( !strcmp(om->names[i], List_get(om->observables, j)) )
-	om->observablesArray[i] = 1;
-
-  }
-
-  /* generate boolean arrays of rules required before ODEs and around events */
-  ODEModel_computeAssignmentRuleSets(om);
   /* generate ordered list of assignment rules for evaluation order */
   ODEModel_topologicalRuleSort(om); /*!!! TODO : use return value for error
 				     handling? */
 
   return om;
+}
+
+/* given the DAG of equation dependencies,
+   labels all equations required for equation with index 'start' */
+static void searchPath(int n, int **matrix, int start, int *required)
+{
+  int i;
+  
+  for ( i=0; i<n; i++ )
+    if ( matrix[start][i] ) /* if r.h.s. 'start' depends on l.h.s 'i' */
+      if ( !required[i] )/* if 'i' is not tagged already */
+      {
+	searchPath(n, matrix, i, required); /* ... PROCEED SEARCH */
+	required[i] = 1; /* tag 'i' as required (upstream have been tagged) */
+      }
 }
 
 /** Topological sort:
@@ -234,26 +155,58 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createWithObservables(Model_t *m, char *
     function returns an ordered list of size n, representing the
     (non-unique) ordering of evaluation. The function returns NULL and issues
     a correpsonding SolverError_error if cycles are detected in the
-    dependency matrix. Ordering algorithm has been taken from
+    dependency matrix. The sorting algorithm has been taken from
     http://en.wikipedia.org/wiki/Topological_sorting */
 
-SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
+SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*required)
 {
-  int i, j, ins;
+  int i, j, ins, **matrix, allchanged, allrequired;
   List_t *sorted;   /* L : Empty list where we put the sorted elements */
   List_t *noincome; /* Q : Set of all nodes with no incoming edges */
 
   noincome = List_create();
   sorted = List_create();
+
+  /* copy matrix */
+  ASSIGN_NEW_MEMORY_BLOCK(matrix, n, int *, 0);
+  for ( i=0; i<n; i++ )
+  {
+    ASSIGN_NEW_MEMORY_BLOCK(matrix[i], n, int, 0);
+    for ( j=0; j<n; j++ )
+      matrix[i][j] = inMatrix[i][j];
+  }
+
+  /* default: all changed, all required */
+  allchanged = 0;
+  if ( changed == NULL )
+  {
+    allchanged = 1;
+    ASSIGN_NEW_MEMORY_BLOCK(changed, n, int, NULL);
+    for ( i=0; i<n; i++ ) changed[i] = 1;
+  }
+  allrequired = 0;
+  if ( required == NULL )
+  {
+    allrequired = 1;
+    ASSIGN_NEW_MEMORY_BLOCK(required, n, int, NULL);
+    for ( i=0; i<n; i++ ) required[i] = 1;
+  }
+  
+#ifdef _DEBUG
+/*   for ( i=0; i<n; i++ )  */
+/*     printf("value %i is required? %s\n", i, required[i] ? "yes" : "no");    */
+#endif
+  /* REQUIRED : label all edges upstream by DFS */
+  /* remove all edges in rows of non-requested nodes */ 
   
   /* http://en.wikipedia.org/wiki/Topological_sorting */
   /* L : Empty list where we put the sorted elements */
   /* Q : Set of all nodes with no incoming edges */
   /* while Q is non-empty do */
   /*     remove a node n from Q */
-  /*     insert n into L */
+  /*     insert n into L */ /* IFF N IS CHANGED AND REQUIRED ! */
   /*     for each node m with an edge e from n to m do */
-  /*         remove edge e from the graph */
+  /*         remove edge e from the graph */ /* AND INHERIT CHANGE STATUS */
   /*         if m has no other incoming edges then */
   /*             insert m into Q */
   /* if graph has edges then */
@@ -265,6 +218,7 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
    * (e.g. AST derived tree) for recursive evaluation `evaluateDAG' */
   
   /* generate Q : Set of all nodes with no incoming edges */
+
   for ( i=0; i<n; i++ )
   {
     ins = 0;
@@ -279,6 +233,8 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
       List_add(noincome, idx);
     }
   }
+  
+  /* setup changed array */ 
 
   /* generate L (sorted elements) until Q is empty */
   while( List_size(noincome) )
@@ -286,14 +242,18 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
     int *idx;
     idx = List_remove(noincome, 0); /* remove node n from Q */
     int cur = *idx;
-    List_add(sorted, idx);   /* insert n into L */
+    if ( required[cur] && changed[cur] ) /* iff n is changed and required ... */
+      List_add(sorted, idx);   /* ... insert n into L */
+    else /* free not required */
+      free(idx);
 
     for ( i=0; i<n; i++ )   
-
     {
       if ( matrix[i][cur] ) /* for each node m with an edge e from n to m do */ 
       {
 	matrix[i][cur] = 0; /* remove edge e from the graph */
+	if ( changed[cur] )
+	  changed[i] = 1; /* ... and inherit change status */
 
 	ins = 0;
 	for ( j=0; j<n; j++ )
@@ -310,6 +270,7 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
     }
   }
 
+  /* free sorting list */
   List_freeItems(noincome, free, int); /* only in case of cyclic graphs ?*/
   List_free(noincome); /* free Q */
 
@@ -318,23 +279,60 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
   /* check whether any edges remain ... */
   ins = 0;  
   for ( i=0; i<n; i++ )
-    for  ( j=0; j<n; j++ )
+    for ( j=0; j<n; j++ )
       ins += matrix[i][j];
+
+#ifdef _DEBUG
+/*   fprintf(stderr, "MATRIX:\n"); */
+/*   for ( i=0; i<n; i++ ) */
+/*   { */
+/*     for ( j=0; j<n; j++ ) */
+/*       fprintf(stderr, "\t%d", matrix[i][j]); */
+/*     fprintf(stderr, "\n"); */
+/*   } */
+#endif
+      
   
   /* if graph has edges then */
   if ( ins ) 
   {
-    /*     output error message (graph has a cycle) */
+    /* output error message (graph has a cycle) */
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_CYCLIC_DEPENDENCY_IN_RULES,
 		      "Cyclic dependency found in topological sorting.");
     List_freeItems(sorted, free, int);
     List_free(sorted);
+#ifdef _DEBUG
+    fprintf(stderr, "ERROR: Cyclic dependency found in topological sorting.\n");
+#endif
     return NULL;
   }
-  return sorted;   /* else: proposed topologically sorted order: L */
-
   
+  /* free dependency matrix */
+  for ( i=0; i<n; i++ )
+    free(matrix[i]);
+  free(matrix);
+
+  /* free helper arrays for default use */
+  if ( allchanged ) free(changed);
+  if ( allrequired ) free(required);
+  
+  return sorted;   /* else: proposed topologically sorted order: L */
+}
+
+static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *source)
+{
+  nonzeroElem_t *target;
+  
+  if ( source == NULL )
+    return NULL;
+  
+  ASSIGN_NEW_MEMORY(target, nonzeroElem_t, NULL);
+  target->i = source->i;
+  target->j = source->j;
+  target->ij = source->ij;
+  target->ijcode = source->ijcode;
+  return target;
 }
 
 /* generates dependency graph (matrix) from the odeModel's assignment
@@ -342,95 +340,367 @@ SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n)
  assignment rule evaluation, used during solving */
 static int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
-  int i, j, nvalues, **matrix;
+  int i, j, k, l, nvalues, **matrix, *tmpIndex,
+    *changedBySolver, *changedByEvents, *requiredForODEs, *requiredForEvents;
   List_t *dependencyList;
+  ASTNode_t *math;
   
-  nvalues = om->neq + om->nass + om->nconst + om->nalg;
+  nvalues = om->neq + om->nass + om->nconst;
 
-  /* generate dependency matrix for set of assignment rules */
-  ASSIGN_NEW_MEMORY_BLOCK(matrix, om->nass, int *, 0);
-  for ( i=0; i<om->nass; i++ )
-  {
-    int *indexBool = ASTNode_getIndexArray(om->assignment[i], nvalues);
-    ASSIGN_NEW_MEMORY_BLOCK(matrix[i], om->nass, int, 0);
-    for  ( j=0; j<om->nass; j++ )
-    {
-      matrix[i][j] = indexBool[om->neq+j];
-    }
-    free(indexBool);
-  }
- 
-  /* calculate topological sorting of dependency matrix */
-  dependencyList = topoSort(matrix, om->nass);
+  /* 1: GENERATE DEPENDENCY MATRIX for complete asssignment set */
   
-  /* free dependency matrix */
+  ASSIGN_NEW_MEMORY_BLOCK(matrix, nvalues, int *, 0);
+  for ( i=0; i<nvalues; i++ )
+  {
+    /* assignment rules */
+    if ( i >= om->neq && i < om->neq + om->nass ) 
+    {
+      matrix[i] = ASTNode_getIndexArray(om->assignment[i - om->neq], nvalues);
+    }
+    /*  init. and event assignments for ODE variables and constants */
+    else 
+    {      
+      math = NULL;
+      if ( om->indexInit[i] != -1 ) /* check whether initial assignment exist */
+	math = om->initAssignment[om->indexInit[i]];
+      matrix[i] = ASTNode_getIndexArray(math, nvalues);
+      
+      /*!!! TODO  ALSO ADD EVENTS HERE ?? */
+      
+    }    
+  }
+
+  /* attach dependency matrix to odeModel */
+  om->dependencyMatrix = matrix;
+  
+
+  /* 2: ORDERING OF COMPLETE ASSIGNMENT SET, all changed, all required */
+  dependencyList = topoSort(matrix, nvalues, NULL, NULL);
+  
+  
+  /* issue solver error and return if topo. sort was unsuccessful */
+  if ( dependencyList == NULL )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+		      "Topological sorting failed for complete rule set ",
+		      "(initial assignments, assignments and kinetic laws) ",
+		      "possibly due to a cyclic dependency in rules.",
+		      "Please see previous errors.");
+    om->initAssignmentOrder = NULL;
+    return 0;
+  }
+
+  /* generate ordered array of complete rule set and assignment subset */
+
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentOrder, om->nass+om->ninitAss,
+			  nonzeroElem_t *, 0);
+  k = 0;
+  l = 0;
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    {
+      nonzeroElem_t *ordered;
+      ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);
+      ordered->i = *idx;
+      ordered->j = -1;   /* used for initial assignments, see below */
+      ordered->ij = om->assignment[ *idx - om->neq ];
+      ordered->ijcode = om->assignmentcode[ *idx - om->neq ];
+      om->initAssignmentOrder[k] = ordered;      
+      k++;
+      om->assignmentOrder[l] = copyNonzeroElem(ordered); /*!!! TODO : to save memory, dont copy but just point into main ordering list om->assignmentOrder */
+      l++;
+    }
+    else if ( om->indexInit[*idx] != -1 ) /* initial assignments */
+    {
+      nonzeroElem_t *ordered;
+      ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);
+      ordered->i = -1;   /* used for assignments, see above */
+      ordered->j = *idx; 
+      ordered->ij = om->initAssignment[ om->indexInit[*idx] ];
+      ordered->ijcode = om->initAssignmentcode[ om->indexInit[*idx] ];
+      om->initAssignmentOrder[k] = ordered;      
+      k++;
+    }    
+  }
+
+#ifdef _DEBUG
+  printf("COMPLETE RULE SET:\n");
+  for ( i=0; i<om->nass+om->ninitAss; i++ )
+  {
+    nonzeroElem_t *ordered = om->initAssignmentOrder[i];
+    int idxI = ordered->i;
+    int idxJ = ordered->j;
+    printf("rule %d: ", i);
+    if ( idxI == -1 )
+      printf("init.ass: %s = ", om->names[ idxJ ]);
+    else 
+      printf("norm.ass: %s = ", om->names[ idxI ]);
+
+    char *eq = SBML_formulaToString(ordered->ij);
+    printf("%s\n", eq);
+    free(eq);
+  }
+  printf("\n");
+#endif  
+
+  /* free dependency list */
+  List_freeItems(dependencyList, free, int);
+  List_free(dependencyList);
+
+  /* 3: ORDERING OF ASSIGNMENT SETS, for evaluation stages */
+
+  /* set changed variables : same for ODEs and Events */
+  ASSIGN_NEW_MEMORY_BLOCK(changedBySolver, nvalues, int , 0);
+  for ( i=0; i<om->neq; i++ ) /* all variables have changed */
+    changedBySolver[i] = 1;
+  for ( i=om->neq; i<nvalues; i++ )
+    changedBySolver[i] = 0;
+
+  /* add time dependencies */
   for ( i=0; i<om->nass; i++ )
-    free(matrix[i]);
-  free(matrix);
+    if ( ASTNode_containsTime(om->assignment[i]) )
+      changedBySolver[ om->neq + i ] = 1;
+
+
+  /* RULES TO BE EVALUATED BEFORE ODEs: ODE variables and TIME have changed */
+
+  /* get required rules */
+  ASSIGN_NEW_MEMORY_BLOCK(requiredForODEs, nvalues, int , 0);
+  for ( j=0; j<nvalues; j++ ) requiredForODEs[j] = 0;
+
+  /* required for ODE evaluation  */
+  for ( i=0; i<om->neq; i++ )
+  {
+    tmpIndex = ASTNode_getIndexArray(om->ode[i], nvalues);
+    for ( j=0; j<nvalues; j++ )
+      if ( !requiredForODEs[j] && tmpIndex[j] )
+      {
+	searchPath(nvalues, matrix, j, requiredForODEs);
+	requiredForODEs[j] = 1;
+      }
+    free(tmpIndex);
+  }
+
+  
+  /* calculate TOPOLOGICAL SORTING of dependency matrix */
+  dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForODEs);
+  
+  /* issue solver error and return if topo. sort was unsuccessful */
+  if ( dependencyList == NULL )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+		      "Topological sorting failed for ODE rule set ",
+		      "(assignments and kinetic laws required before ODE ",
+		      "evaluation) possibly due to a cyclic dependency in",
+		      " rules. Please see previous errors.");
+    om->assignmentsBeforeODEs = NULL;
+    return 0;
+  }
+
+  /* generate ordered array of rule set before ODEs */
+  k = 0;
+  /* count assignment rules */
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+      k++;
+  }
+  om->nassbeforeodes = k;
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentsBeforeODEs, k, nonzeroElem_t *, 0);
+
+  /*!!! TODO : instead of creating new nonzeroElem's the array could point
+        into the global ordering */
+  k = 0;
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    {
+      nonzeroElem_t *ordered;
+      ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);
+      ordered->i = *idx;
+      ordered->j = -1; /* not used */
+      ordered->ij = om->assignment[ *idx - om->neq ];
+      ordered->ijcode = om->assignmentcode[ *idx - om->neq ];
+      om->assignmentsBeforeODEs[k] = ordered;
+      k++;
+    }   
+  }
+  
+  
+#ifdef _DEBUG
+  printf("DEPENDENCY LIST: %d\n", List_size(dependencyList));
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    printf(" %d %s\n", *idx, om->names[*idx]);
+  }
+#endif
+#ifdef _DEBUG
+  printf("BEFORE ODEs RULE SET:\n");
+  for ( i=0; i<om->nassbeforeodes; i++ )
+  {
+    nonzeroElem_t *ordered = om->assignmentsBeforeODEs[i];
+    int idxI = ordered->i;
+    int idxJ = ordered->j;
+    printf("rule %d: ", i);
+    if ( idxI == -1 )
+      printf("INIT.ass: %s = ", om->names[ idxJ ]);
+    else 
+      printf("norm.ass: %s = ", om->names[ idxI ]);
+
+    char *eq = SBML_formulaToString(ordered->ij);
+    printf("%s\n", eq);
+    free(eq);
+  }
+  printf("\n");
+#endif  
+  
+  /* free dependency list */
+  List_freeItems(dependencyList, free, int);
+  List_free(dependencyList);
+
+  /* RULES TO BE EVALUATED BEFORE EVENTs: ODE variables and TIME have changed */
+  /* get required rules */
+  ASSIGN_NEW_MEMORY_BLOCK(requiredForEvents, nvalues, int , 0);
+  /* get changed variables : assigned by event assignment */
+  ASSIGN_NEW_MEMORY_BLOCK(changedByEvents, nvalues, int , 0);
+  
+  for ( j=0; j<nvalues; j++ )
+  {
+    requiredForEvents[j] = 0;
+    changedByEvents[j] = 0;
+  }
+
+  /* required for ODEs  */
+  for ( i=0; i<om->nevents; i++ )
+  {
+    tmpIndex = ASTNode_getIndexArray(om->event[i], nvalues);
+    for ( j=0; j<nvalues; j++ )
+      if ( !requiredForEvents[j] && tmpIndex[j] )
+      {
+	searchPath(nvalues, matrix, j, requiredForEvents);
+	requiredForEvents[j] = 1;
+      }
+    free(tmpIndex);
+
+    /* event assignments */
+    for ( j=0; j<om->neventAss[i]; j++ )
+    {
+      tmpIndex = ASTNode_getIndexArray(om->eventAssignment[i][j], nvalues);
+      for ( k=0; k<nvalues; k++ )	
+	if ( !requiredForEvents[k] && tmpIndex[k] )
+	{
+	  searchPath(nvalues, matrix, k, requiredForEvents);
+	  requiredForEvents[k] = 1;
+	}
+      free(tmpIndex);
+
+      /* set changed variable */
+      changedByEvents[om->eventIndex[i][j]] = 1;
+    }
+  }
+  
+  /* calculate TOPOLOGICAL SORTING of dependency matrix */
+  dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForEvents);
 
   /* issue solver error and return if topo. sort was unsuccessful */
   if ( dependencyList == NULL )
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting of rules failed, ",
-		      "possibly due to a cyclic dependency in rules.",
-		      "Please see previous errors.");
-    om->assignmentOrder = NULL;
+		      "Topological sorting failed for Event rule set ",
+		      "(assignments and kinetic laws required BEFORE event ",
+		      "evaluation) possibly due to a cyclic dependency in",
+		      " rules. Please see previous errors.");
+    om->assignmentsBeforeEvents = NULL;
     return 0;
   }
   
-  /* fill evaluation ordering array */
-  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, 0);
-  for ( i=0; i<om->nass; i++ )
+  /* generate ordered array of rule set before ODEs */
+  k = 0;
+  /* count assignment rules */
+  for ( i=0; i<List_size(dependencyList); i++ )
   {
     int *idx;
     idx = List_get(dependencyList, i);
-    nonzeroElem_t *ordered;
-    ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);    
-    ordered->i = *idx;
-    ordered->j = -1; /* not used */
-    ordered->ij = om->assignment[*idx];
-    ordered->ijcode = om->assignmentcode[*idx];
-    om->assignmentOrder[i] = ordered;
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+      k++;
+  }
+  
+  om->nassbeforeevents = k;
+  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentsBeforeEvents, k, nonzeroElem_t *, 0);
+  
+  k = 0;
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    {
+      nonzeroElem_t *ordered;
+      ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, 0);
+      ordered->i = *idx;
+      ordered->j = -1; /* not used */
+      ordered->ij = om->assignment[ *idx - om->neq ];
+      ordered->ijcode = om->assignmentcode[ *idx - om->neq ];
+      om->assignmentsBeforeEvents[k] = ordered;
+      k++;
+    }   
   }
 
-  /* free ordered list */
+#ifdef _DEBUG
+  printf("DEPENDENCY LIST: %d\n", List_size(dependencyList));
+  for ( i=0; i<List_size(dependencyList); i++ )
+  {
+    int *idx;
+    idx = List_get(dependencyList, i);
+    printf(" %d %s\n", *idx, om->names[*idx]);
+  }
+#endif
+#ifdef _DEBUG
+  printf("BEFORE EVENTs RULE SET:\n");
+  for ( i=0; i<om->nassbeforeevents; i++ )
+  {
+    nonzeroElem_t *ordered = om->assignmentsBeforeEvents[i];
+    int idxI = ordered->i;
+    int idxJ = ordered->j;
+    printf("rule %d: ", i);
+    if ( idxI == -1 )
+      printf("INIT.ass: %s = ", om->names[ idxJ ]);
+    else 
+      printf("norm.ass: %s = ", om->names[ idxI ]);
+    
+    char *eq = SBML_formulaToString(ordered->ij);
+    printf("%s\n", eq);
+    free(eq);
+  }
+  printf("\n");
+#endif
+  
+  /* free dependency list */
   List_freeItems(dependencyList, free, int);
   List_free(dependencyList);
-  
-#ifdef _DEBUG
-  fprintf(stderr, "ORDERED LIST OF RULES:\n");
-  for ( i=0; i<om->nass; i++ )
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    fprintf(stderr, " %d:%d,", i, ordered->i);
-  }
-  fprintf(stderr, "\n");
-#endif
+
+  /* free boolean arrays */
+  free(changedBySolver);
+  free(changedByEvents);
+  free(requiredForODEs);
+  free(requiredForEvents);
 
   return 1;
 }
 
-/* creates an assignment stage structure given a set of symbols
-   changed by an operation and and a set of assignments made before
-   the operation.
-   'assignmentsBeforeChange' is a boolean array corresponding
-   to the odeMode_t assignment field */ 
-static assignmentStage_t *AssignmentStage_create(List_t *changedSymbols,
-						 int *assignmentsBeforeChange,
-						 int timeChanged)
-{
-  assignmentStage_t *result ;
-
-  ASSIGN_NEW_MEMORY_BLOCK(result, 1, assignmentStage_t, NULL);
-
-  result->changedSymbols = changedSymbols ;
-  result->assignmentsBeforeChange = assignmentsBeforeChange;
-  result->timeChanged = timeChanged;
-
-  return result;
-}
 
 /* adds the contents of 'source' to the end of 'target'.
    List items are only shallow copied. */
@@ -442,268 +712,14 @@ static void List_append(List_t *target, List_t *source)
     List_add(target, List_get(source, i));
 }
 
-/* returns boolean result: whether the given AST is dependant on a given
-   set of variables */
-static int ODEModel_ruleIsDependantOnChangedSymbols(odeModel_t *om,
-					     ASTNode_t *rule,
-					     List_t *changedSet,
-					     int timeChanged)
-{
-  int i, j;
-  List_t *symbols = List_create();
-    
-  if ( timeChanged && ASTNode_containsTime(rule) )
-  {
-    List_free(symbols);
-    return 1;
-  }
-
-  ASTNode_getSymbols(rule, symbols);
-
-  for ( j = 0; j != List_size(symbols); j++ )
-  {
-    char *symbol = List_get(symbols, j);
-
-    for ( i = 0; i != List_size(changedSet); i++ )
-    {
-      if ( !strcmp(symbol, List_get(changedSet, i)) )
-      {
-	List_free(symbols);
-	return 1;
-      }
-    }
-
-    for ( i = 0; i != om->nass; i++ )
-    {
-      if ( !strcmp(symbol, om->names[om->neq + i]) &&
-	   ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i],
-						    changedSet, timeChanged) )
-      {
-	List_free(symbols);
-	return 1;
-      }
-    }
-  }
-
-  List_free(symbols);
-
-  return 0;
-}
-
-/* adds assignment rules from the given model to the set
-   'requiredRules' that are not in 'computedRules' that are required
-   to compute the given 'targetSymbol' given the set of
-   'changedSymbols'.  'requiredRules' and 'computedRules' are boolean
-   arrays corresponding to the odeMode_t assignment field */
-static void ODEModel_computeAssignmentRuleSetForSymbol(odeModel_t *om,
-						       char *targetSymbol,
-						       List_t *changedSymbols,
-						       int *requiredRules,
-						       int *computedRules,
-						       int timeChanged)
-{
-  int i;
-     
-  for ( i = 0; i != List_size(changedSymbols); i++ )
-    if ( !strcmp(targetSymbol, List_get(changedSymbols, i)) )
-      return ;
-
-  for ( i = 0; i != om->nass; i++ )
-  {
-    if ( !computedRules[i] && !requiredRules[i] &&
-	 !strcmp(targetSymbol, om->names[om->neq + i]) &&
-	 ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[i],
-						  changedSymbols,
-						  timeChanged) )
-    {
-      int j;
-      List_t *symbols = List_create();
-            
-      ASTNode_getSymbols(om->assignment[i], symbols);
-      requiredRules[i] = 1 ;
-
-      for ( j = 0; j != List_size(symbols); j++ )
-	ODEModel_computeAssignmentRuleSetForSymbol(om,
-						   (char *)
-						   List_get(symbols, j),
-						   changedSymbols,
-						   requiredRules,
-						   computedRules,
-						   timeChanged);
-
-      List_free(symbols);
-    }
-  }
-}
-
-/* returns a boolean array which is the set of assignment rules
-   required to compute the set 'targetSymbols' and the set of
-   'changes'.
-   'targetSymbols' is a list of char *. 'changes' is the
-   is a list of assignmentStage_t * and assumed to be in reverse order
-   of operation execution */
-static int *ODEModel_computeAssignmentRuleSet(odeModel_t *om,
-					      List_t *targetSymbols,
-					      List_t *changes)
-{
-  int *requiredRules, *computedRules ;
-  int i, timeChanged = 0 ;
-  List_t *changeSet = List_create();
-
-  ASSIGN_NEW_MEMORY_BLOCK(requiredRules, om->nass, int, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(computedRules, om->nass, int, NULL);
-
-  for ( i = 0; i != om->nass; i++ )
-  {
-    requiredRules[i] = 0 ;
-    computedRules[i] = 0 ;
-  }
-
-  /* determine the set of rules that have computed correct values despite
-     changes */
-  for ( i = 0; i != List_size(changes); i++ )
-  {
-    assignmentStage_t *stage = List_get(changes, i);
-
-    List_append(changeSet, stage->changedSymbols);   
-    timeChanged = timeChanged || stage->timeChanged ;
-
-    if ( stage->assignmentsBeforeChange )
-    {
-      int j;
-
-      for ( j = 0; j != om->nass; j++ )
-      {
-	if ( !computedRules[j] && stage->assignmentsBeforeChange[j] &&
-	     !ODEModel_ruleIsDependantOnChangedSymbols(om, om->assignment[j],
-						       changeSet,timeChanged) )
-	  computedRules[j] = 1;
-      }
-    }
-  }
-
-  /* determine the set of rules that have to be computed given the changes */
-  for ( i = 0; i != List_size(targetSymbols); i++ )
-    ODEModel_computeAssignmentRuleSetForSymbol(om, List_get(targetSymbols, i),
-					       changeSet, requiredRules,
-					       computedRules, timeChanged);
-
-  free(computedRules);
-  List_free(changeSet);
-
-  return requiredRules;
-}
-
-/* computes the values for the 'assignmentsBeforeODEs',
-   'assignmentsBeforeEvents', 'assignmentsAfterEvents'
-   fields on the given 'odeModel_t' structure */
-static void ODEModel_computeAssignmentRuleSets(odeModel_t *om)
-{
-  int i ;
-  assignmentStage_t *firstAssignmentStage, *secondAssignmentStage;
-  List_t *changes, *allVariables, *odeFunctionOfSet;
-  List_t *eventExpressionFunctionOfSet;
-  List_t *variablesAssignedByEvents ;
-    
-  changes = List_create();
-  odeFunctionOfSet = List_create();
-  eventExpressionFunctionOfSet = List_create();
-  variablesAssignedByEvents = List_create();
-  allVariables = List_create();
-
-  for ( i = 0; i != om->neq; i++ )
-  {
-    ASTNode_getSymbols(om->ode[i], odeFunctionOfSet);
-    List_add(allVariables, om->names[i]);
-  }
-
-  if ( om->simple != NULL )
-  {
-    for ( i = 0; i != Model_getNumEvents(om->simple); i++ )
-    {
-      int j ;
-      Event_t *event = Model_getEvent(om->simple, i);
-
-      ASTNode_getSymbols((ASTNode_t *)Trigger_getMath(Event_getTrigger(event)),
-			 eventExpressionFunctionOfSet);
-      
-      for ( j = 0; j != Event_getNumEventAssignments(event); j++ ) 
-      {
-	EventAssignment_t *assignment = Event_getEventAssignment(event, j);
-
-	ASTNode_getSymbols((ASTNode_t *)EventAssignment_getMath(assignment),
-			   eventExpressionFunctionOfSet);
-	List_add(variablesAssignedByEvents,
-		 (ASTNode_t *) EventAssignment_getVariable(assignment));
-      }
-    }
-  }
-
-  List_append(allVariables, variablesAssignedByEvents);
-
-  /* first assignment stage represents the state before the start of
-     the RHS function and and the start of the event function
-     in both cases all variables may have changed (including time)
-     but no assignments have been made */ 
-  firstAssignmentStage = AssignmentStage_create(allVariables,
-						NULL,
-						1 /* time has changed */);
-  List_prepend(changes, firstAssignmentStage);
-
-  /* compute set of rules required at the start of ODE RHS that is the
-     set required to compute the variables that are used by the ODEs
-     (the set of variables that the ODEs are a function of) */
-  om->assignmentsBeforeODEs =
-    ODEModel_computeAssignmentRuleSet(om, odeFunctionOfSet, changes);
-
-  /* Note that the RHS doesn't need to compute the observables that's
-     left to the event function
-
-     compute set of rules required at the start of event function that
-     is the set required to
-     compute the variables that are used by all the event expressions
-     (triggers and rhs of event assignments) */
-  om->assignmentsBeforeEvents =
-    ODEModel_computeAssignmentRuleSet(om, eventExpressionFunctionOfSet,
-				      changes);
-
-  /* compute set of rules required by the observables 
-
-  this is computed taking into account the rules already computed
-  at the beginning of the event function
-  only observables that have not already been computed
-  at the beginning of the event function
-  or are dependant on a event assignment are computed at this point.
-  obervables that aren't dependant on variables are not computed at all
-  here */
-  secondAssignmentStage =
-    AssignmentStage_create(variablesAssignedByEvents,
-			   om->assignmentsBeforeEvents,
-			   0 /* time has not changed */);
-  List_prepend(changes, secondAssignmentStage);
-  om->assignmentsAfterEvents =
-    ODEModel_computeAssignmentRuleSet(om, om->observables, changes);
-
-  /*!!! TODO : assignment ordering instead of boolean int arrays
-    generate arrays containing indices of assignments in correct ordering
-    - HOWTO account for initialAssignments ? */
-  
-  
-  free(firstAssignmentStage);
-  free(secondAssignmentStage);
-  List_free(changes);
-  List_free(allVariables);
-  List_free(odeFunctionOfSet);
-  List_free(eventExpressionFunctionOfSet);
-  List_free(variablesAssignedByEvents);
-}
-
-/* allocates memory for substructures of a new odeModel, writes
-   variable and parameter names and returns a pointer to the
+/* allocates memory for substructures of a new odeModel:
+   1) ODEs: writes variable and parameter names, creates equation,
+   2) DISCONTINUITIES: writes equations for events and initial assignments  
+   and returns a pointer to the
    the newly created odeModel. */
 static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 {
-  int i, j, found, neq, nalg, nconst, nass, nevents, nvalues;
+  int i, j, found, flag, nvalues, neq, nalg, nconst, nass, npiecewise;
   Compartment_t *c;
   Parameter_t *p;
   Species_t *s;
@@ -712,18 +728,19 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   ASTNode_t *math;  
   odeModel_t *om;
 
+  /* 1: ODE SYSTEM */
+  
+  /* size of ODE/DAE system */
   neq     = 0;
   nalg    = 0;
   nconst  = 0;
   nass    = 0;
   nvalues = 0;
   found   = 0;
-
-  /*
-    counting number of equations (ODEs/rateRules and assignment Rules)
-    to initialize cvodeData structure. Any other occuring values are
-    stored as parameters.
-  */
+  
+  /* counting number of equations (ODEs/rateRules and assignment Rules)
+     to initialize cvodeData structure. Any other occuring values are
+     stored as parameters. */
 
   for ( j=0; j<Model_getNumRules(ode); j++ )
   {
@@ -739,16 +756,13 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 
   nconst = nvalues - nass - neq - nalg;
 
-  nevents = Model_getNumEvents(ode);
   
-  om = ODEModel_allocate(neq, nconst, nass, nalg, nevents);
+  om = ODEModel_allocate(neq, nconst, nass, nalg);
   RETURN_ON_FATALS_WITH(NULL);
 
 
-  /* 
-     filling the Ids of all rate rules (ODEs) and assignment rules
-     the ODE model
-  */
+  /* filling the IDs and inital values
+     of all rate rules (ODEs) and assignment rules the ODE model */
 
   neq  = 0;
   nass = 0;
@@ -855,7 +869,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   nass = 0;
   nalg = 0;
 
-  om->npiecewise = 0;
+  npiecewise = 0;
 
   for ( j=0; j<Model_getNumRules(ode); j++ )
   {
@@ -872,7 +886,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
       om->odecode[neq]->eqn = math;
       generateFunction(om->odecode[neq], math);
 #endif
-      om->npiecewise += ASTNode_containsPiecewise(math);
+      npiecewise += ASTNode_containsPiecewise(math);
       neq++;      
     }
     else if ( type == SBML_ASSIGNMENT_RULE )
@@ -884,21 +898,22 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
       om->assignmentcode[nass]->eqn = math;
       generateFunction(om->assignmentcode[nass], math);
 #endif
-      om->npiecewise += ASTNode_containsPiecewise(math);
+      npiecewise += ASTNode_containsPiecewise(math);
       nass++;      
     }
     else if ( type == SBML_ALGEBRAIC_RULE )
     {
       math = indexAST(Rule_getMath(rl), nvalues, om->names); 
       om->algebraic[nalg] = math;
-      om->npiecewise += ASTNode_containsPiecewise(math);
+      npiecewise += ASTNode_containsPiecewise(math);
       nalg++;
     }
-  }  
-  
+  }
+
   om->simple = ode;
   /* set assignment order to NULL: done later */
   om->assignmentOrder = NULL;
+  om->initAssignmentOrder = NULL;
   /* set Jacobi to NULL: done later */
   om->jacob = NULL;
   om->jacobcode = NULL;
@@ -907,14 +922,223 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   om->jacobian = 0;
   /* set failed flag to zero: done later */
   om->jacobianFailed = 0;
+
+
+  /* set counted piecewise expressions */
+  om->npiecewise = npiecewise;
+
+  /* ... finally, retrieve values (initial conditions and parameters )
+     from input model */
+  ODEModel_initializeValuesFromSBML(om, ode);  
+
+
   
+  /* 2: DISCONTINUITIES */
+  
+  flag = ODEModel_setDiscontinuities(om, ode);
+  if ( !flag )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_SET_DISCONTINUITIES_FAILED,
+		      "setting discontinuity structures (initial assignments,"\
+		      "events) failed");
+    ODEModel_freeDiscontinuities(om);
+  }
+
   return om;
+}
+
+static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
+{
+  int i, j, flag;
+  int nvalues, nevents, ninitAss, neventAss;
+  ASTNode_t *math;
+
+  nvalues = om->neq+ om->nass + om->nconst;
+  
+  /* size of discontinuities */
+  nevents = Model_getNumEvents(ode);
+  neventAss = 0;
+  for ( i=0; i<nevents; i++ )
+    neventAss += Event_getNumEventAssignments(Model_getEvent(ode, i));    
+  ninitAss = Model_getNumInitialAssignments(ode);
+
+  /* allocate basic structures */
+  flag = ODEModel_allocateDiscontinuities(om, nvalues,
+					  nevents, neventAss, ninitAss);
+  if ( !flag ) return 0; /*!!! TODO : better error handling */
+
+  for ( i=0; i<nvalues; i++ ) /* initialize map to -1 */
+    om->indexInit[i] = -1;
+  
+
+  /* allocate and fill equations */
+  for ( i=0; i<ninitAss; i++ )
+  {
+    const InitialAssignment_t *init = Model_getInitialAssignment(ode, i);
+    const char *id = InitialAssignment_getSymbol(init);
+    int idx = ODEModel_getVariableIndexFields(om, id);
+    om->initIndex[i] = idx; /* map from om->initAssignment to om->names */
+    om->indexInit[idx] = i; /* map from om->names to om->initAssignemnt */
+    math = indexAST(InitialAssignment_getMath(init), nvalues, om->names);
+    om->initAssignment[i] = math;
+#ifdef ARITHMETIC_TEST
+    ASSIGN_NEW_MEMORY(om->initAssignmentcode[i], directCode_t, 0);
+    om->initAssignmentcode[i]->eqn = math;
+    generateFunction(om->initAssignmentcode[i], math);
+#endif
+  }
+  
+  for ( i=0; i<nevents; i++ )
+  {
+    Event_t *e = Model_getEvent(ode, i);
+    math = indexAST(Trigger_getMath(Event_getTrigger(e)),
+		    nvalues, om->names);
+    om->event[i] = math;
+#ifdef ARITHMETIC_TEST
+    ASSIGN_NEW_MEMORY(om->eventcode[i], directCode_t, 0);
+    om->eventcode[i]->eqn = math;
+    generateFunction(om->eventcode[i], math);
+#endif
+    /* event assignments */
+    int nea = Event_getNumEventAssignments(e);
+    om->neventAss[i] = nea;
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex[i], nea, int, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment[i], nea, ASTNode_t *, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode[i], nea, directCode_t *, 0);
+    
+    for ( j=0; j<nea; j++ )
+    {
+      const EventAssignment_t *ea = Event_getEventAssignment(e, j);
+      om->eventIndex[i][j] =
+	ODEModel_getVariableIndexFields(om, EventAssignment_getVariable(ea));
+      math = indexAST(EventAssignment_getMath(ea), nvalues, om->names);
+      om->eventAssignment[i][j] = math;
+      
+#ifdef ARITHMETIC_TEST
+      ASSIGN_NEW_MEMORY(om->eventAssignmentcode[i][j], directCode_t, 0);
+      om->eventAssignmentcode[i][j]->eqn = math;
+      generateFunction(om->eventAssignmentcode[i][j], math);
+#endif
+    }    
+  }
+  return 1;
+}
+
+/* initializes values in odeModel from SBML file */
+static void  ODEModel_initializeValuesFromSBML(odeModel_t *om, Model_t *ode)
+{
+  int i, nvalues;
+  nvalues = om->neq + om->nass + om->nconst;
+  /* initial conditions */
+  for ( i=0; i<om->neq; i++ )
+    om->values[i] = Model_getValueById(ode, om->names[i]);
+  
+  /* parameters */
+  for ( i=(om->neq+om->nass); i<nvalues; i++ )
+    om->values[i] = Model_getValueById(ode, om->names[i]);
+}
+
+/* free discontinuities */
+static int ODEModel_freeDiscontinuities(odeModel_t *om)
+{
+  int i, j;
+  
+  /* initial assignments */
+  for ( i=0; i<om->ninitAss; i++ )
+  {
+    ASTNode_free(om->initAssignment[i]);
+  }
+  free(om->indexInit);
+  free(om->initIndex);
+  free(om->initAssignment);
+
+#ifdef ARITHMETIC_TEST
+  for ( i=0; i<om->ninitAss; i++ )
+  {
+    destructFunction(om->initAssignmentcode[i]);
+    free(om->initAssignmentcode[i]);
+  }    
+#endif
+  free(om->initAssignmentcode);
+  
+  /* free global assignment ordering via init array */
+  for ( i=0; i<(om->nass + om->ninitAss); i++ )
+  {
+    if ( om->initAssignmentOrder != NULL )
+      free(om->initAssignmentOrder[i]);
+  }
+  /* free init. ass. array */
+  if ( om->initAssignmentOrder != NULL )
+    free(om->initAssignmentOrder);
+
+  /* events */
+#ifdef ARITHMETIC_TEST
+  for ( i=0; i<om->nevents; i++ )
+  {
+    destructFunction(om->eventcode[i]);
+    free(om->eventcode[i]);
+    for ( j=0; j<om->neventAss[i]; j++ )
+    {
+      destructFunction(om->eventAssignmentcode[i][j]);
+      free(om->eventAssignmentcode[i][j]);
+    }
+  }    
+#endif
+  for ( i=0; i<om->nevents; i++ )
+  {
+    ASTNode_free(om->event[i]);
+    for ( j=0; j<om->neventAss[i]; j++ )
+    {
+      ASTNode_free(om->eventAssignment[i][j]);
+    }
+    free(om->eventIndex[i]);
+    free(om->eventAssignment[i]);
+    free(om->eventAssignmentcode[i]);
+  }
+  free(om->event);
+  free(om->eventcode);  
+  free(om->neventAss);
+  free(om->eventIndex);
+  free(om->eventAssignment);
+  free(om->eventAssignmentcode);
+
+  /* rule ordering */
+  for ( i=0; i<om->nassbeforeevents; i++ )
+    free(om->assignmentsBeforeEvents[i]);
+  free(om->assignmentsBeforeEvents);
+
+  return 1;
+}
+ 
+/* allocates memory for a new odeModel structure and returns
+   a pointer to it */ 
+static int ODEModel_allocateDiscontinuities(odeModel_t *om, int nvalues,
+					    int nevents, int neventAss,
+					    int ninitAss)
+{
+  /* initial assignments */
+  om->ninitAss  = ninitAss;
+  ASSIGN_NEW_MEMORY_BLOCK(om->indexInit, nvalues, int, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initIndex, ninitAss, int, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignment, ninitAss, ASTNode_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentcode, ninitAss, directCode_t *, 0);
+
+  /* events and event assignments */
+  om->nevents = nevents;
+  ASSIGN_NEW_MEMORY_BLOCK(om->event, nevents, ASTNode_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->neventAss, nevents, int, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex, nevents, int *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventcode, nevents, directCode_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment, nevents, ASTNode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode, nevents, directCode_t **, 0);
+
+  return 1;
 }
 
 /* allocates memory for a new odeModel structure and returns
    a pointer to it */ 
-static odeModel_t *ODEModel_allocate(int neq, int nconst,
-				     int nass, int nalg, int nevents)
+static odeModel_t *ODEModel_allocate(int neq, int nconst, int nass, int nalg)
 {
   odeModel_t *om;
   int nvalues;
@@ -924,7 +1148,6 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   /* names */
   ASSIGN_NEW_MEMORY(om, odeModel_t, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->names, nvalues, char *, NULL);
-  ASSIGN_NEW_MEMORY_BLOCK(om->observablesArray, nvalues, int, NULL);
 
   /* values */
   /*!!! om->values currently only required for SBML independent input
@@ -938,16 +1161,20 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   /* compiled equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL);
+
 /*   ASSIGN_NEW_MEMORY_BLOCK(om->algebraiccode, nalg, directCode_t *, NULL); */
   
-
   om->neq    = neq;
   om->nconst = nconst;
   om->nass   = nass;
   om->nalg   = nalg; /*!!! this causes crash at the moment, because
 		      ODEs have been constructed for that
 		      should be defined by alg. rules */
-  om->nevents = nevents;
+
+  /* set discontinuities to 0 */
+  om->nevents = 0;
+  om->neventAss = 0;
+  om->ninitAss  = 0;
   
   /* set compiled function pointers to NULL */
   om->compiledCVODEFunctionCode = NULL;
@@ -955,7 +1182,9 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
   om->compiledCVODERhsFunction = NULL;
   om->compiledCVODEAdjointRhsFunction = NULL;
   om->compiledCVODEAdjointJacobianFunction = NULL;
-  
+
+  /* objective function */
+  /*!!!TODO : move to separate structure */
   om->vector_v = NULL;
   om->ObjectiveFunction = NULL;
   om->discrete_observation_data = 0;
@@ -974,18 +1203,7 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst,
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *sbmlFileName)
 {
-  return ODEModel_createFromFileWithObservables(sbmlFileName, NULL);
-}
-
-/** \brief Create internal model odeModel from an SBML file, that
-    contains level 1 or level 2 SBML.
-
-    'observables' is the set of symbols that the user wishes to see
-    valid at all times.  A reduced set of observables may result in
-    more optimal excution.
-*/
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char *sbmlFileName, char **observables)
-{
+  
   SBMLDocument_t *d;
   odeModel_t *om;
 
@@ -995,7 +1213,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char
     
   RETURN_ON_ERRORS_WITH(NULL);
     
-  om = ODEModel_createFromSBML2WithObservables(d, observables);
+  om = ODEModel_createFromSBML2(d);
   /* Errors will cause the program to stop, e.g. when some
      mathematical expressions are missing. */
   RETURN_ON_ERRORS_WITH(NULL);
@@ -1012,19 +1230,6 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFileWithObservables(const char
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
 {
-  return ODEModel_createFromSBML2WithObservables(d, NULL);
-}
-
-/** \brief Create internal model odeModel_t from SBMLDocument containing
-    a level 2 SBML model.
-
-    'observables' is the set of symbols that the user wishes to see
-    valid at all times.  A reduced set of observables may result in
-    more optimal excution.
-
-*/
-SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocument_t *d, char **observables)
-{
   Model_t *m;
   odeModel_t *om;
 
@@ -1040,7 +1245,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
   
   m = SBMLDocument_getModel(d);
   
-  om = ODEModel_createWithObservables(m, observables);
+  om = ODEModel_create(m);
   /* Errors will cause the program to stop, e.g. when some
      mathematical expressions are missing.  */
   RETURN_ON_ERRORS_WITH(NULL);
@@ -1069,13 +1274,13 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2WithObservables(SBMLDocum
 
 SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, int nass, int nconst, char **names, realtype *values, Model_t *events)
 {
-  int i, j, nvalues;
+  int i, nvalues, flag;
   odeModel_t *om;
 
   nvalues = neq + nass + nconst;
   
   /* allocate odeModel structure and set values */
-  om = ODEModel_allocate(neq, nconst, nass, 0, 0);
+  om = ODEModel_allocate(neq, nconst, nass, 0);
 
   /* set SBML input to NULL */
   om->d = NULL;
@@ -1098,43 +1303,31 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
     strcpy(om->names[i], names[i]);
   }
 
-  /* set values */
+  /* set discontinuities from input modelevents, initial assignments */
+  flag = ODEModel_setDiscontinuities(om, events);
+  if ( !flag )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_SET_DISCONTINUITIES_FAILED,
+		      "setting discontinuity structures (initial assignments,"\
+		      "events) failed");
+    ODEModel_freeDiscontinuities(om);
+  }
+
+  /* set values: initial conditions and parameters */
   for ( i=0; i<neq+nass+nconst; i++ )
     om->values[i] = values[i];
 
-  /* create observables list */
-  om->observables = List_create();  
-
-    /* create default list of observables */
-  for ( i = 0; i <neq+nass+nconst; i++ )
-  {
-    char *newObservable;
-    
-    ASSIGN_NEW_MEMORY_BLOCK(newObservable, strlen(names[i]) + 1, char, NULL);
-      strcpy(newObservable, names[i]);
-      List_add(om->observables, newObservable);
-  }
-
-  for ( i = 0; i <neq+nass+nconst; i++ )
-  {        
-    om->observablesArray[i] = 0;
-
-    for ( j = 0; j != List_size(om->observables); j++ )
-      if ( !strcmp(om->names[i], List_get(om->observables, j)) )
-	om->observablesArray[i] = 1;
-  }
-
-  ODEModel_computeAssignmentRuleSets(om);
-
-  /*!!! TODO : implement correct ordering ! */
   
+   /* generate ordered list of assignment rules for evaluation order */
+  ODEModel_topologicalRuleSort(om); /*!!! TODO : use return value for error
+				     handling? */
   return om;
   
 }
 
 /** \brief Frees the odeModel structures
  */
-
 SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 {
 
@@ -1143,8 +1336,12 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   if(om == NULL) return;
 
   for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
+  {
     free(om->names[i]);
+    free(om->dependencyMatrix[i]);
+  }
   free(om->names);
+  free(om->dependencyMatrix);
 
   /* free ODEs */
   for ( i=0; i<om->neq; i++ )
@@ -1161,17 +1358,25 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 #endif
   free(om->odecode);
   
+ 
+
+  /* free global assignment ordering via init array */
+  for ( i=0; i<om->nass; i++ )
+  {
+    if ( om->assignmentOrder != NULL )
+      free(om->assignmentOrder[i]);
+  }
+  /* free ass. array */
+  if ( om->assignmentOrder != NULL )
+    free(om->assignmentOrder);
+  
   /* free assignments */
   for ( i=0; i<om->nass; i++ )
   {
     ASTNode_free(om->assignment[i]);
-    if ( om->assignmentOrder != NULL )
-      free(om->assignmentOrder[i]);
   }
   free(om->assignment);
-  if ( om->assignmentOrder != NULL )
-    free(om->assignmentOrder);
-
+  
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->nass; i++ )
   {
@@ -1189,6 +1394,10 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
   
   /* free Jacobian matrix, if it has been constructed */
   ODEModel_freeJacobian(om);
+
+  /* free discontinuities */
+  ODEModel_freeDiscontinuities(om);
+  
 
   /* free objective function AST if it has been constructed */
   if ( om->ObjectiveFunction != NULL )
@@ -1221,17 +1430,11 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
     om->compiledCVODEFunctionCode = NULL;
   }
 
-  /* free assignment evaulation rules */
-  free(om->assignmentsAfterEvents);
-  free(om->assignmentsBeforeEvents);
+  /* free assignment evaulation ordering */
+  for ( i=0; i<om->nassbeforeodes; i++ )
+    free(om->assignmentsBeforeODEs[i]);
   free(om->assignmentsBeforeODEs);
-
-  /* free observable lists */
-  for (i=0; i != List_size(om->observables); i++)
-    free(List_get(om->observables, i));
-  List_free(om->observables);
-  free(om->observablesArray);
-
+  
   /* free model structure */
   free(om);
 }       
@@ -2218,15 +2421,13 @@ void ODEModel_generateASTWithoutIndex(odeModel_t *om,
 /* appends a compilable assignment to the buffer.
    The assignment is made to the 'value' array item indexed by 'index'.
    The value assigned is computed from the given AST. */
-void ODEModel_generateAssignmentCode(odeModel_t *om,
-				     int index,
-				     ASTNode_t *node,
+void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
 				     charBuffer_t *buffer)
 {
   CharBuffer_append(buffer, "value[");
   CharBuffer_appendInt(buffer, index);
   CharBuffer_append(buffer, "] = ");
-  ODEModel_generateASTWithoutIndex(om, buffer, node);
+  generateAST(buffer, node);
   CharBuffer_append(buffer, ";\n");
 }
 
@@ -2235,96 +2436,104 @@ void ODEModel_generateAssignmentCode(odeModel_t *om,
    given model however the set generated is determined by the
    given 'requiredAssignments' boolean array which is indexed in the same
    order as the 'assignment' array on the given model. */
-void ODEModel_generateAssignmentRuleCode(odeModel_t *om,
-					 int *requiredAssignments,
+void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
+					 nonzeroElem_t **orderedList,
 					 charBuffer_t *buffer)
+{
+  int i ;
+
+  for ( i=0; i<nass; i++ )
+  {
+    nonzeroElem_t *ordered = orderedList[i];
+    ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
+  }
+}
+
+void ODEModel_generateAssignmentRuleCodeOUTDATED(odeModel_t *om,
+						 int *requiredAssignments,
+						 charBuffer_t *buffer)
 {
   int i ;
 
   for ( i=0; i<om->nass; i++ )
   {
     nonzeroElem_t *ordered = om->assignmentOrder[i];
-    if ( !requiredAssignments || requiredAssignments[ordered->i] )
-      ODEModel_generateAssignmentCode(om,  om->neq + ordered->i,
-				      om->assignment[ordered->i], buffer);
+    if ( !requiredAssignments || requiredAssignments[ordered->i - om->neq] )
+      ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
   }
 }
 
 /** appends compiled code to the given buffer for the function called by
     the value of 'COMPILED_EVENT_FUNCTION_NAME' which implements the
-    assignment rules and events required to ensure that observables have
-    the correct values and that ODE variables are in the right state
-    for the next intergation step.
+    evaluation event triggers and assignment rules required for event
+    triggers and event assignments.
 */
 void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 {
-  int i, j;
+  int i, j, idx;
   ASTNode_t *trigger, *assignment;
-  Event_t *e;
-  EventAssignment_t *ea;
-  variableIndex_t *vi;
 
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_EVENT_FUNCTION_NAME);
-  CharBuffer_append(buffer,"(cvodeData_t *data, int *odeVarIsValid)\n"\
+  CharBuffer_append(buffer,"(cvodeData_t *data, int *engineIsValid)\n"\
 		    "{\n"\
 		    "    realtype *value = data->value;\n"\
 		    "    int fired = 0;\n"\
 		    "    int *trigger = data->trigger;\n");
     
-  ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeEvents, buffer);
+  ODEModel_generateAssignmentRuleCode(om, om->nassbeforeevents,
+				      om->assignmentsBeforeEvents, buffer);
 
-  if ( om->simple != NULL )
+  for ( i=0; i<om->nevents; i++ )
   {
-    for ( i=0; i<Model_getNumEvents(om->simple); i++ )
-    {
-      int setIsValidFalse = 0;
-      
-      e = Model_getEvent(om->simple, i);
-      trigger = (ASTNode_t *) Trigger_getMath(Event_getTrigger(e));
-      
-      CharBuffer_append(buffer, "if ((trigger[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] == 0) && (");
-      ODEModel_generateASTWithoutIndex(om, buffer, trigger);
-      CharBuffer_append(buffer, "))\n"\
-			"{\n"\
-			"    fired++;\n"\
-			"    trigger[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] = 1;\n");
-      
-      for ( j=0; j<Event_getNumEventAssignments(e); j++ )
-      {
-	/* generate event assignment */
-	ea = Event_getEventAssignment(e, j);
-	assignment = (ASTNode_t *) EventAssignment_getMath(ea);           
-	vi = ODEModel_getVariableIndex(om, EventAssignment_getVariable(ea));
-	CharBuffer_append(buffer, "    ");
-	ODEModel_generateAssignmentCode(om, vi->index, assignment, buffer);
-	VariableIndex_free(vi);
-	
-	/* identify cases which modify variables computed by solver which
-	   set the solver into an invalid state */
-	if ( vi->index < om->neq && !setIsValidFalse )
-	{
-	  CharBuffer_append(buffer, "    *odeVarIsValid = 0;\n");
-	  setIsValidFalse = 1 ;
-	}
-      }
-      
-      CharBuffer_append(buffer, "}\n"\
-			"else {\n"\
-			"    trigger[");
-      CharBuffer_appendInt(buffer, i);
-      CharBuffer_append(buffer, "] = 0;\n"\
-
-			"}\n");
-    }
-  }
-  /*!!! check if problem arose through SBML independent code */
-  ODEModel_generateAssignmentRuleCode(om, om->assignmentsAfterEvents, buffer);
+    int setIsValidFalse = 0;      
     
+    trigger = (ASTNode_t *) om->event[i];
+    
+    CharBuffer_append(buffer, "if ((trigger[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] == 0) && (");
+    generateAST(buffer, trigger);
+    CharBuffer_append(buffer, "))\n"		\
+		      "{\n"			\
+		      "    fired++;\n"		\
+		      "    trigger[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = 1;\n");
+    
+    for ( j=0; j<om->neventAss[i]; j++ )
+    {
+      /* generate event assignment */
+      assignment = om->eventAssignment[i][j];
+      idx = om->eventIndex[i][j];
+      CharBuffer_append(buffer, "    ");
+      ODEModel_generateAssignmentCode(om, idx, assignment, buffer);
+      
+      /* identify cases which modify variables computed by solver which
+	 set the solver into an invalid state : NOT CORRECT : solver
+         should always be reinitialized ! */
+      if ( /* idx < om->neq && */ !setIsValidFalse )
+      {
+	CharBuffer_append(buffer, "    *engineIsValid = 0;\n");
+	setIsValidFalse = 1 ;
+      }
+    }
+    
+    CharBuffer_append(buffer, "}\n"		\
+		      "else {\n"		\
+		      "    trigger[");
+    CharBuffer_appendInt(buffer, i);
+    CharBuffer_append(buffer, "] = 0;\n"	\
+		      
+		      "}\n");
+  }
+
+  /* NOT REQUIRED : complete rule set evaluated where required */
+/*   CharBuffer_append(buffer, "if ( fired )\n{\n"); */
+/*   ODEModel_generateAssignmentRuleCode(om, om->nassafterevents, */
+/* 				      om->assignmentsAfterEvents, buffer); */
+/*   CharBuffer_append(buffer, "\n}\n"); */
+  
   CharBuffer_append(buffer, "return fired;\n}\n");
 }
 
@@ -2347,17 +2556,12 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 		    "    data = (cvodeData_t *) f_data;\n"\
 		    "    value = data->value;\n"\
 		    "    ydata = NV_DATA_S(y);\n"\
-		    "    dydata = NV_DATA_S(ydot);\n"\
-		    "if (  (data->opt->Sensitivity && data->os ) &&"\
-		    " (!data->os->sensitivity || !data->model->jacobian))\n"\
-		    "    for ( i=0; i<data->nsens; i++ )\n"\
-		    "        value[data->os->index_sens[i]] = "\
-		    "data->p[i];\n\n");
+		    "    dydata = NV_DATA_S(ydot);\n");
 
   /* update time  */
   CharBuffer_append(buffer, "data->currenttime = t;\n");
 
-  /* update ODE variables from CVODE */
+  /* UPDATE ODE VARIABLES from CVODE */
   for ( i=0; i<om->neq; i++ )
   {
     CharBuffer_append(buffer, "value[");
@@ -2370,11 +2574,27 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
   CharBuffer_append(buffer, "if ( data->opt->DetectNegState  )\n");  
   CharBuffer_append(buffer, "  for ( i=0; i<data->model->neq; i++ )\n");
   CharBuffer_append(buffer, "    if (data->value[i] < 0) return (1);\n");
-  
-  /* update assignment rules */
-  ODEModel_generateAssignmentRuleCode(om, om->assignmentsBeforeODEs, buffer);
 
-  /* evaluate ODEs f(x,p,t) = dx/dt */
+  /* UPDATE ASSIGNMENT RULES */
+  /* in case sensitivity or jacobi matrix is not available */
+  CharBuffer_append(buffer,
+		    "if ( data->use_p )\n"\
+		    "{\n"\
+		    "  for ( i=0; i<data->nsens; i++ )\n"\
+		    "    value[data->os->index_sens[i]] = data->p[i];\n");
+  
+  ODEModel_generateAssignmentRuleCode(om, om->nass,
+				      om->assignmentOrder, buffer);
+  
+  /* in case sensitivity or jacobi matrix are available */
+  /* CharBuffer_append(buffer, "\n printf(\"HALLO\\n\");\n"); */
+  CharBuffer_append(buffer, "\n}\nelse\n{\n");
+  ODEModel_generateAssignmentRuleCode(om, om->nassbeforeodes,
+				      om->assignmentsBeforeODEs, buffer);
+  CharBuffer_append(buffer, "}\n");
+
+
+  /* EVALUATE ODEs f(x,p,t) = dx/dt */
   for ( i=0; i<om->neq; i++ ) 
   {
     CharBuffer_append(buffer, "dydata[");
@@ -2385,14 +2605,17 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
   }
   /* reset parameters for printout etc. */
   CharBuffer_append(buffer,
-		    "if (  (data->opt->Sensitivity && data->os ) &&"\
-		    " (!data->os->sensitivity || !data->model->jacobian))\n"\
-		    "    for ( i=0; i<data->nsens; i++ )\n"\
-		    "        value[data->os->index_sens[i]] = "\
-		    "data->p_orig[i];\n\n");
+		    "if ( data->use_p )\n"\
+		    "{"\
+		    "  for ( i=0; i<data->nsens; i++ )\n"\
+		    "    value[data->os->index_sens[i]] = data->p_orig[i];\n");
+  
+  ODEModel_generateAssignmentRuleCode(om, om->nass,
+				      om->assignmentOrder, buffer);
+  CharBuffer_append(buffer, "}\n");
 
   CharBuffer_append(buffer, "return (0);\n");
-  CharBuffer_append(buffer, "}\n");
+  CharBuffer_append(buffer, "}\n\n");
 }
 
 
@@ -2490,7 +2713,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
   int i, j ;
   ASTNode_t *jacob_ij;
   float val;
- 
+
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
@@ -2880,11 +3103,11 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
   {
     ODEModel_generateCVODEJacobianFunction(om, buffer);
     ODEModel_generateCVODEAdjointJacobianFunction(om, buffer);
+    ODEModel_generateCVODEAdjointRHSFunction(om, buffer);
   }
   
   ODEModel_generateEventFunction(om, buffer);
   ODEModel_generateCVODERHSFunction(om, buffer);
-  ODEModel_generateCVODEAdjointRHSFunction(om, buffer);
   
 
 #ifdef _DEBUG /* write out source file for debugging*/
@@ -2914,10 +3137,6 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_RHS_FUNCTION_NAME);
   
-  om->compiledCVODEAdjointRhsFunction =
-    CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			     COMPILED_ADJOINT_RHS_FUNCTION_NAME);
-  
   om->compiledEventFunction =
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_EVENT_FUNCTION_NAME);
@@ -2938,11 +3157,14 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			       COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
 
+    om->compiledCVODEAdjointRhsFunction =
+      CompiledCode_getFunction(om->compiledCVODEFunctionCode,
+			       COMPILED_ADJOINT_RHS_FUNCTION_NAME);
+    
     if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
 	 SolverError_getNum(FATAL_ERROR_TYPE) )
       return;
   }
-
 }
 
 

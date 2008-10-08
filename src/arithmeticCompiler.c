@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-12 20:22:22 raim>
-  $Id: arithmeticCompiler.c,v 1.25 2008/10/06 07:10:09 thegreywanderer Exp $
+  Last changed Time-stamp: <2008-10-08 14:26:04 raim>
+  $Id: arithmeticCompiler.c,v 1.26 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -138,245 +138,274 @@ static int analyseFPU (ASTNode_t *AST);
 /* FPUstack: extention for the internal FPU stack */
 /* storage: array for storing constants in the arithmetic expression */
 /* evaluate: name of the generated function - CALL THIS FUNCTION TO EVALUATE THE ARITHMETIC EXPRESSION */
-typedef struct {
-	int codeSize, FPUstackSize, storageSize;
-	int codePosition, FPUstackPosition, storagePosition;
-	unsigned char *prog;
-	double *FPUstack, *storage;
-	double (*evaluate)(cvodeData_t*);
+typedef struct
+{
+  int codeSize, FPUstackSize, storageSize;
+  int codePosition, FPUstackPosition, storagePosition;
+  unsigned char *prog;
+  double *FPUstack, *storage;
+  double (*evaluate)(cvodeData_t*);
 } directCode;
 
 /* initializes the basic parameters and allocated the memory */
-void initCode (directCode_t*code, ASTNode_t *AST) {
-
-	int length;
-
-	code->codeSize = 5; /* bytes for basic function construction */
-	code->codePosition = 0;
-	code->storageSize = 0;
-	code->storagePosition = 0;
-	length = analyse(code, AST);
-	if(length <= 8)
-		length = 0;
-		else
-		length -= 8;
-	code->FPUstackSize = length;
-	code->FPUstackPosition = 0;
-	
+void initCode (directCode_t*code, ASTNode_t *AST)
+{
+  int length;
+  
+  code->codeSize = 5; /* bytes for basic function construction */
+  code->codePosition = 0;
+  code->storageSize = 0;
+  code->storagePosition = 0;
+  length = analyse(code, AST);
+  if ( length <= 8 )
+    length = 0;
+  else
+    length -= 8;
+  code->FPUstackSize = length;
+  code->FPUstackPosition = 0;
+  
 #ifndef WIN32 /* LINUX */
-	code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
+  code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
 #else /* WINDOWS */
-	code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
+  code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 #endif
-	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
-	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
-
-	code->evaluate = (double (*)())code->prog;
-	}
+  code->storage = (double *)malloc(sizeof(double)*code->storageSize);
+  code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
+  
+  code->evaluate = (double (*)())code->prog;
+}
 
 /* initializes the basic parameters and allocated the memory  64 bit*/
-void initCode64 (directCode_t *code, ASTNode_t *AST) {
+void initCode64 (directCode_t *code, ASTNode_t *AST)
+{
+  int length;
 
-	int length;
-
-	code->codeSize = 19;
-	code->codePosition = 0;
-	code->storageSize = 0;
-	code->storagePosition = 0;
-	length = analyse64(code, AST);
-	if(length <= 8)
-		length = 0;
-		else
-		length -= 8;
-	code->FPUstackSize = length;
-	code->FPUstackPosition = 0;
-
+  code->codeSize = 19;
+  code->codePosition = 0;
+  code->storageSize = 0;
+  code->storagePosition = 0;
+  length = analyse64(code, AST);
+  if ( length <= 8 )
+    length = 0;
+  else
+    length -= 8;
+  code->FPUstackSize = length;
+  code->FPUstackPosition = 0;
+  
 #ifndef WIN32 /* LINUX */
-code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
+  code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
 #else /* WINDOWS */
-code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
+  code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
 #endif
-	
-	code->storage = (double *)malloc(sizeof(double)*code->storageSize);
-	code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
-	/*!!! TODO : is code->temp required anywhere ?? */
-	code->temp = (long long *)malloc(sizeof(long long)); 
-
-	code->evaluate = (double (*)())code->prog;
-	}
+  
+  code->storage = (double *)malloc(sizeof(double)*code->storageSize);
+  code->FPUstack = (double *)malloc(sizeof(double)*code->FPUstackSize);
+  /*!!! TODO : is code->temp required anywhere ?? */
+  code->temp = (long long *)malloc(sizeof(long long)); 
+  
+  code->evaluate = (double (*)())code->prog;
+}
 
 /* adds a byte to the code, extends the memory, if necessary */
-void addByte (directCode_t*code, unsigned char byte) {
-
-	if(code->codePosition >= code->codeSize)
-		printf("programm is too long\n");
+void addByte (directCode_t*code, unsigned char byte)
+{
+  if ( code->codePosition >= code->codeSize )
+    printf("programm is too long\n");
 	
-	code->prog[code->codePosition++] = byte;
-	}
+  code->prog[code->codePosition++] = byte;
+}
 
 /* adds an integer to the code */
-void addInt (directCode_t*c, int number) {
-	unsigned int num;
-	num = number;
-	addByte(c,num%256); num /= 256;
-	addByte(c,num%256); num /= 256;
-	addByte(c,num%256); num /= 256;
-	addByte(c,num%256);
-	}
+void addInt (directCode_t*c, int number)
+{
+  unsigned int num;
+  num = number;
+  addByte(c,num%256); num /= 256;
+  addByte(c,num%256); num /= 256;
+  addByte(c,num%256); num /= 256;
+  addByte(c,num%256);
+}
 
 /* adds an adress to the code */
-void addAddress (directCode_t*c, long long addy) {
-	int i, addressLength = sizeof(void (*)());
-	
-	for(i = 0 ; i < addressLength ; i++) {
-		addByte(c,addy%256);
-		addy /= 256;
-		}
-	}
+void addAddress (directCode_t*c, long long addy)
+{
+  int i, addressLength = sizeof(void (*)());
+  
+  for( i=0 ; i<addressLength ; i++ )
+  {
+    addByte(c,addy%256);
+    addy /= 256;
+  }
+}
 
 /* adds the parameter to the CPU stack, computes the necessary jump parameters for a function call and adds a call to the code */
-void callMathFunction (directCode_t*c, long long fun) {
-	addByte(c,0x83); addByte(c,0xec); addByte(c,0x08); /* SUB ESP 8 (parameter) */
-	addByte(c,0xdd); addByte(c,0x1c); addByte(c,0x24); /* load parameter 1 */
-	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
-	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
-	addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter) */
-	}
+void callMathFunction (directCode_t*c, long long fun)
+{
+  addByte(c,0x83); addByte(c,0xec); addByte(c,0x08); /* SUB ESP 8 (parameter) */
+  addByte(c,0xdd); addByte(c,0x1c); addByte(c,0x24); /* load parameter 1 */
+  fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
+  addByte(c, 0xe8); addAddress(c, fun); /* CALL */
+  addByte(c,0x83); addByte(c,0xc4); addByte(c,0x08); /* ADD ESP 8 (parameter) */
+}
 
 /* computes the necessary jump parameters for a function call and adds a call to the code */
-void callFunction (directCode_t*c, long long fun) {
-	fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
-	addByte(c, 0xe8); addAddress(c, fun); /* CALL */
-	}
+void callFunction (directCode_t*c, long long fun)
+{
+  fun -= ((long long)c->prog + c->codePosition + sizeof(void (*)()) + 1);
+  addByte(c, 0xe8); addAddress(c, fun); /* CALL */
+}
 
 /* loads the jump destination and does the call */
-void callFunction64 (directCode_t*c, long long fun) {
-	ass_MOV_rax
-	addAddress(c,fun);
-	ass_CALL
-	}
+void callFunction64 (directCode_t*c, long long fun)
+{
+  ass_MOV_rax;
+  addAddress(c,fun);
+  ass_CALL;
+}
 
 /* adds an element of the FPU stack to the external stack */
-void pushStorage (directCode_t*c) {
-	if(c->FPUstackPosition >= c->FPUstackSize)
-	  printf("code->FPUstack overflow, %s\n", c->prog);
-	ass_FSTP_mem
-	addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
-	}
+void pushStorage (directCode_t*c)
+{
+  if ( c->FPUstackPosition >= c->FPUstackSize )
+    printf("code->FPUstack overflow, %s\n", c->prog);
+  
+  ass_FSTP_mem;
+  addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
+}
 
 /* pops an element from the external stack into the FPU stack */
-void popAddress (directCode_t*code) {
-	if(code->FPUstackPosition <= 0)
-		printf("code->FPUstack underflow\n");
-	addAddress(code, (long long)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
-	}
+void popAddress (directCode_t*code)
+{
+  if ( code->FPUstackPosition <= 0 )
+    printf("code->FPUstack underflow\n");
+  
+  addAddress(code, (long long)&code->FPUstack[--code->FPUstackPosition]); /* code->FPUstack code->codePosition */
+}
 
 /* pushs the element in the xmm0 register to the external stack */
-void pushStorage64 (directCode_t*c) {
-	if(c->FPUstackPosition >= c->FPUstackSize)
-	  printf("code->FPUstack overflow:\n\tpos.: %d  >= size: %d\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, SBML_formulaToString(c->eqn));
-	ass_MOV_rax
-	addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
-	addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x11); addByte(c, 0x00); /* MOVSD xmm0 (rax) */
-	}
+void pushStorage64 (directCode_t*c)
+{
+  if ( c->FPUstackPosition >= c->FPUstackSize )
+    printf("code->FPUstack overflow:\n\tpos.: %d  >= size: %d\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, SBML_formulaToString(c->eqn));
+  ass_MOV_rax;
+  addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
+  addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x11); addByte(c, 0x00); /* MOVSD xmm0 (rax) */
+}
 
 /* pops an element form the external stack to the xmm1 register */
-void popStorage64 (directCode_t*c) {
-	if(c->FPUstackPosition <= 0)
-		printf("code->FPUstack underflow\n");
-	ass_MOV_rax
-	addAddress(c, (long long)&c->FPUstack[--c->FPUstackPosition]); /* code->FPUstack */
-	addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x08); /* MOVSD (rax) xmm1 */
+void popStorage64 (directCode_t*c)
+{
+  if ( c->FPUstackPosition <= 0 )
+    printf("code->FPUstack underflow\n");
+  ass_MOV_rax;
+  addAddress(c, (long long)&c->FPUstack[--c->FPUstackPosition]); /* code->FPUstack */
+  addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x10); addByte(c, 0x08); /* MOVSD (rax) xmm1 */
 	}
 
 /* saves a constant in the code->storage an adds the address to the code */
-void addConstant (directCode_t*code, double value) {
-	if(code->storagePosition >= code->storageSize)
-		printf("code->storage overflow\n");
-	code->storage[code->storagePosition] = value;
-	addAddress(code, (long long)&code->storage[code->storagePosition++]);
-	}
+void addConstant (directCode_t*code, double value)
+{
+  if ( code->storagePosition >= code->storageSize )
+    printf("code->storage overflow\n");
+  code->storage[code->storagePosition] = value;
+  addAddress(code, (long long)&code->storage[code->storagePosition++]);
+}
 
 /* saves a constant in the code->storage an adds the address to the code */
-void addConstant64 (directCode_t*c, double value) {
-	int i;
-	long long *test;
-	test = (long long*)&value; /*!!! TODO : gcc warning 'dereferencing type-punned pointer will break strict-aliasing rules' */
-	if(value >= 0)
-		for(i = 0 ; i < 8 ; i++) {
-			addByte(c,*test%256);
-			*test /= 256;
-			}
-		else
-		for(i = 0 ; i < 8 ; i++) {
-			addByte(c,*test%256-1);
-			*test /= 256;
-			}
-	}
+void addConstant64 (directCode_t*c, double value)
+{
+  int i;
+  long long *test;
+  test = (long long*)&value; /*!!! TODO : gcc warning 'dereferencing type-punned pointer will break strict-aliasing rules' */
+  if ( value >= 0 )
+    for(i = 0 ; i < 8 ; i++)
+    {
+      addByte(c,*test%256);
+      *test /= 256;
+    }
+  else
+    for(i = 0 ; i < 8 ; i++)
+    {
+      addByte(c,*test%256-1);
+      *test /= 256;
+    }
+}
 
 /* extern function for the case AST_NAME */
 /*!!! TODO : init result to 0 and write correct error message !!!*/
-double getAST_Name(ASTNode_t *n, cvodeData_t *data) {
-	int i, j;
-	double found = 0, datafound, findtol=1e-5, result;
-	time_series_t *ts = data->model->time_series;
-	
-	if (ASTNode_isSetIndex(n)) {
-		if (ASTNode_isSetData(n)) {
-		/* if continuous data is observed, obtain interpolated result */  
-		if ((data->model->discrete_observation_data != 1) || (data->model->compute_vector_v != 1)) {
-			result = call(ASTNode_getIndex(n),
-			data->currenttime, ts);
-			}
-			else  /* if discrete data is observed, simply obtain value from time_series */
-			{
-			datafound = 0;
-			i = data->TimeSeriesIndex;
-			if (fabs(data->currenttime - ts->time[i]) < findtol) {
-				result = ts->data[ASTNode_getIndex(n)][i];
-				datafound++;
-				}
-			if (datafound != 1) {
-/*				SolverError_error(FATAL_ERROR_TYPE,
+double getAST_Name(ASTNode_t *n, cvodeData_t *data)
+{
+  int i, j;
+  double found = 0, datafound, findtol=1e-5, result;
+  time_series_t *ts = data->model->time_series;
+  
+  if ( ASTNode_isSetIndex(n) )
+  {
+    if (ASTNode_isSetData(n))
+    {
+      /* if continuous data is observed, obtain interpolated result */  
+      if ( (data->model->discrete_observation_data != 1) ||
+	   (data->model->compute_vector_v != 1) )
+      {
+	result = call(ASTNode_getIndex(n),
+		      data->currenttime, ts);
+      }
+      else  /* if discrete data is observed, simply obtain value from time_series */
+      {
+	datafound = 0;
+	i = data->TimeSeriesIndex;
+	if  ( fabs(data->currenttime - ts->time[i]) < findtol )
+	{
+	  result = ts->data[ASTNode_getIndex(n)][i];
+	  datafound++;
+	}
+	if (datafound != 1)
+	{
+	  /*				SolverError_error(FATAL_ERROR_TYPE,
 					SOLVER_ERROR_AST_EVALUATION_FAILED_DISCRETE_DATA,
 					"use of discrete time series data failed; none or several time points matching current time"); */
-				result = 0; /*  break;  */
-				}
-				else
-				found = 1;
-			}
-		}
-		else
-		{
-		result = data->value[ASTNode_getIndex(n)];
-		}
+	  result = 0; /*  break;  */
+	}
+	else
+	  found = 1;
+      }
+    }
+    else
+    {
+      result = data->value[ASTNode_getIndex(n)];
+    }
+    found++;
+  }
+  if (found == 0)
+  {
+    if (strcmp(ASTNode_getName(n),"time") == 0 ||
+	strcmp(ASTNode_getName(n),"Time") == 0 ||
+	strcmp(ASTNode_getName(n),"TIME") == 0) {
+      result = (double) data->currenttime;
+      found++;
+    }
+  }
+  if (found == 0)
+  {
+    for (j=0; j<data->nvalues; j++)
+    {
+      if (strcmp(ASTNode_getName(n),data->model->names[j]) == 0)
+      {
+	result = data->value[j];
 	found++;
-	}
-	if (found == 0) {
-		if (strcmp(ASTNode_getName(n),"time") == 0 ||
-			strcmp(ASTNode_getName(n),"Time") == 0 ||
-			strcmp(ASTNode_getName(n),"TIME") == 0) {
-			result = (double) data->currenttime;
-			found++;
-			}
-		}
-	if (found == 0) {
-		for (j=0; j<data->nvalues; j++) {
-			if (strcmp(ASTNode_getName(n),data->model->names[j]) == 0) {
-				result = data->value[j];
-				found++;
-				}
-			}
-		}
-	if (found == 0) {
-/*		SolverError_error(FATAL_ERROR_TYPE,
-			SOLVER_ERROR_AST_EVALUATION_FAILED_MISSING_VALUE,
-			"No value found for AST_NAME %s . Defaults to Zero "
-			"to avoid program crash", ASTNode_getName(n)); */
-		result = 0;
-		}
-	return result;
-	}
+      }
+    }
+  }
+  if (found == 0)
+  {
+    /*		SolverError_error(FATAL_ERROR_TYPE,
+		SOLVER_ERROR_AST_EVALUATION_FAILED_MISSING_VALUE,
+		"No value found for AST_NAME %s . Defaults to Zero "
+		"to avoid program crash", ASTNode_getName(n)); */
+    result = 0;
+  }
+  return result;
+}
 
 /* extern function for the case AST_NAME */
 /*!!! TODO : init result to 0 and write correct error message !!!*/

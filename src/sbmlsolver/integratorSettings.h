@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-19 19:51:10 raim>
-  $Id: integratorSettings.h,v 1.35 2008/01/28 19:25:27 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2008-10-08 12:19:29 raim>
+  $Id: integratorSettings.h,v 1.36 2008/10/08 17:07:16 raimc Exp $ 
 */
 /* 
  *
@@ -57,6 +57,9 @@ typedef struct cvodeSettings cvodeSettings_t;
 			     step size if 'Indefinitely' is true */
     int PrintStep;        /**< Number of output steps from 0 to 'Time';
 			     ignored if 'Indefinitely' */
+    int StepResolution;   /**< number of internal integration steps between
+			       output steps (PrintStep), defaults to 1,
+			       but is useful for fine-grained event detection */
     double *TimePoints;   /**< Optional array for designed time-courses.
 			     If passed by the calling application,
 			     Time will be ignored and overruled by
@@ -68,7 +71,7 @@ typedef struct cvodeSettings cvodeSettings_t;
     double Error;         /**< absolute tolerance in Cvode integration */
     double RError;        /**< relative tolerance in Cvode integration */
     int Mxstep;           /**< maximum step number for CVode integration */
-    int DetectNegState; /**< makes the RHS evaluation function return 1 
+    int DetectNegState;   /**< makes the RHS evaluation function return 1 
 			        (i.e., a recoverable error)
 			        if negative state inputs are encountered */
     int CvodeMethod;      /**< set ADAMS-MOULTON (1) or BDF (0)
@@ -79,6 +82,7 @@ typedef struct cvodeSettings cvodeSettings_t;
     int ResetCvodeOnEvent; /**< restart CVODE when event is triggered */
     int SetTStop;          /**< runs CVODES with TSTOP, save mode for using
 			      IntegratorInstance_setVariableValue */
+    
     int Sensitivity;      /**< if not 0: use CVODES for sensitivity analysis */
     char **sensIDs;       /**< ID's for parameters and initial conditions 
 			     for sensitivity analysis */ 
@@ -86,18 +90,22 @@ typedef struct cvodeSettings cvodeSettings_t;
     int SensMethod;       /**< set sensitivity analysis method:
 			     0: SIMULTANEOUS,
 			     1: STAGGERED,
-			     2: STAGGERED1   */    
+			     2: STAGGERED1   */
+    
     int HaltOnEvent;      /**< if not 0: Stop integration upon an event */
     int SteadyState;      /**< if not 0: Stop integration upon a
 			     steady state */
     double ssThreshold;   /**< threshold value for steady state detection */
+    
     int UseJacobian;      /**< use of Jacobian ASTs (1) or CVODES'
 			     internal approximation (0)*/
+    
     int StoreResults;     /**< if not 0: store time course history */
 
     int compileFunctions ;  /**< if 1 use compiled functions for ODE,
 			       Jacobian and events */
 
+    /* ADJOINT */
     int observation_data_type;    /**< 0: continuous data observed
                                        1: discrete data observed  */  
 

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-30 14:08:26 raim>
-  $Id: processAST.c,v 1.63 2008/09/30 12:10:54 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 16:44:44 raim>
+  $Id: processAST.c,v 1.64 2008/10/08 17:07:16 raimc Exp $
 */
 /* 
  *
@@ -2566,7 +2566,8 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
   {
     SolverError_error(FATAL_ERROR_TYPE,
 		      SOLVER_ERROR_AST_COMPILATION_FAILED_MISSING_VALUE,
-		      "No value found for AST_NAME %s . Defaults to Zero "
+		      "ASTNode_generateName: "
+		      "No value found for AST_NAME %s. Defaults to Zero "
 		      "to avoid program crash", ASTNode_getName(n));
     CharBuffer_append(expressionStream, "0.0");
   }
@@ -2592,7 +2593,8 @@ void generateMacros(charBuffer_t *buffer)
 		    "#define coth(x) (cosh(x) / sinh(x))\n"\
 		    "#define csch(x) (1.0/sinh(x))\n"\
 		    "#define MyLog(x,y) (log10(y)/log10(x))\n"\
-		    "#define piecewise(x, y, z) ((x) ? (y) : (z))\n"\
+		    /*!!! account for piecewise with more then 3 children!*/
+		    "#define piecewise(x, y, z) ((y) ? (x) : (z))\n"\
 		    /*!!! account for odd root degrees of negative values!*/
 		    "#define root(x, y) pow(y, 1.0 / (x))\n"\
 		    "#define sec(x) (1.0/cos(x))\n"\
