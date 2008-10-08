@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2006-04-19 15:06:16 raim>
-  $Id: analyzeJacobian.c,v 1.6 2006/04/19 13:12:12 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 13:58:51 raim>
+  $Id: analyzeJacobian.c,v 1.7 2008/10/08 17:08:17 raimc Exp $
 */
 /* 
  *
@@ -94,6 +94,8 @@ int main(void)
       
       /* we need cvodeData for evaluating formulas */
       data = CvodeData_create(odeModel);
+      /* ! IMPORTANT : initialize values */
+      CvodeData_initializeValues(data);
       
       printf("Jacobian with initial conditions:\n");
       printJacobian(odeModel, data);

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-09-20 01:36:51 raim>
-  $Id: analyzeSensitivity.c,v 1.5 2007/09/20 01:16:12 raimc Exp $
+  Last changed Time-stamp: <2008-10-08 13:58:36 raim>
+  $Id: analyzeSensitivity.c,v 1.6 2008/10/08 17:08:17 raimc Exp $
 */
 /* 
  *
@@ -97,6 +97,8 @@ int main(void)
       
       /* we need cvodeData for evaluating formulas ... */
       data = CvodeData_create(odeModel);
+      /* ! IMPORTANT : initialize values */
+      CvodeData_initializeValues(data);
       
       printf("... how many parametric entries: %d\n\n",
 	     ODESense_getNsens(os));
