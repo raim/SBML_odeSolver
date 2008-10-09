@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 16:37:29 raim>
-  $Id: odeModel.c,v 1.116 2008/10/08 17:07:16 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-09 20:51:03 raim>
+  $Id: odeModel.c,v 1.117 2008/10/09 18:56:44 raimc Exp $ 
 */
 /* 
  *
@@ -126,8 +126,8 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 
 
   /* generate ordered list of assignment rules for evaluation order */
-  ODEModel_topologicalRuleSort(om); /*!!! TODO : use return value for error
-				     handling? */
+  om->hasCycle =
+    ODEModel_topologicalRuleSort(om); 
 
   return om;
 }
@@ -145,6 +145,81 @@ static void searchPath(int n, int **matrix, int start, int *required)
 	searchPath(n, matrix, i, required); /* ... PROCEED SEARCH */
 	required[i] = 1; /* tag 'i' as required (upstream have been tagged) */
       }
+}
+/** Does the ODEModel's set of assignments (initial assignments,
+    assignments, kinetic law) contain a dependency cycle?
+
+    If the model  contains a cycle in its  rules it is underdetermined
+    and  can not  be solved.  IntegratorInstance_create will  fail for
+    this model, however it's  equations can be inspected and evaluated
+    with initial condition data, using CvodeData.
+*/
+SBML_ODESOLVER_API int ODEModel_hasCycle(odeModel_t *om)
+{
+  return om->hasCycle;
+}
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(odeModel_t *om)
+{
+  return om->nassbeforeodes;
+}
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *om)
+{
+  return om->nassbeforeevents;
+}
+SBML_ODESOLVER_API int ODEModel_getNumJacobiElement(odeModel_t *om)
+{
+  return om->sparsesize;
+}
+
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentOrder(odeModel_t *om, int i)
+{
+  if ( i >= om->nass ) return NULL;
+  return om->assignmentOrder[i];
+}
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeODEs(odeModel_t *om, int i)
+{
+  if ( i >= om->nassbeforeodes ) return NULL;
+  return om->assignmentsBeforeODEs[i];
+}
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeModel_t *om, int i)
+{
+  if ( i >= om->nassbeforeevents ) return NULL;
+  return om->assignmentsBeforeEvents[i];
+}
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *om, int i)
+{
+  if ( i >= om->sparsesize ) return NULL;
+  return om->jacobSparse[i];
+}
+/* Evaluation elements */
+SBML_ODESOLVER_API const ASTNode_t *NonzeroElement_getEquation(nonzeroElem_t *nonzero)
+{
+  return nonzero->ij;
+}
+SBML_ODESOLVER_API const char *NonzeroElement_getVariableName(nonzeroElem_t *nonzero, odeModel_t*om)
+{
+  if ( nonzero->i != -1 ) return om->names[nonzero->i];
+  else return om->names[nonzero->j];
+}
+SBML_ODESOLVER_API const char *NonzeroElement_getVariable2Name(nonzeroElem_t *nonzero, odeModel_t*om)
+{
+  if ( nonzero->i == -1 || nonzero->i == -1 ) return NULL;
+  else return om->names[nonzero->j];
+}
+
+SBML_ODESOLVER_API variableIndex_t *NonzeroElement_getVariable(nonzeroElem_t *nonzero, odeModel_t*om)
+{
+  int index;
+  if ( nonzero->i != -1 ) index = nonzero->i;
+  else index = nonzero->j;
+  return ODEModel_getVariableIndexByNum(om, index);
+}
+SBML_ODESOLVER_API variableIndex_t *NonzeroElement_getVariable2(nonzeroElem_t *nonzero, odeModel_t*om)
+{
+  int index;
+  if ( nonzero->j == -1 || nonzero->i == -1 ) return NULL;
+  else index = nonzero->j;
+  return ODEModel_getVariableIndexByNum(om, index);
 }
 
 /** Topological sort:
@@ -273,8 +348,6 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
   /* free sorting list */
   List_freeItems(noincome, free, int); /* only in case of cyclic graphs ?*/
   List_free(noincome); /* free Q */
-
-  
   
   /* check whether any edges remain ... */
   ins = 0;  
@@ -304,8 +377,15 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
     List_free(sorted);
 #ifdef _DEBUG
     fprintf(stderr, "ERROR: Cyclic dependency found in topological sorting.\n");
+    fprintf(stderr, "MATRIX:\n");
+    for ( i=0; i<n; i++ )
+      for ( j=0; j<n; j++ )
+	if ( matrix[i][j] )
+	  fprintf(stderr, "%d -> %d\n", j, i);
+      fprintf(stderr, "\n");
 #endif
-    return NULL;
+    return NULL; /*!!! TODO : this could return the remaining edges, if this
+		       is meaningful */
   }
   
   /* free dependency matrix */
@@ -317,7 +397,7 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
   if ( allchanged ) free(changed);
   if ( allrequired ) free(required);
   
-  return sorted;   /* else: proposed topologically sorted order: L */
+  return sorted;   /* proposed topologically sorted order: L */
 }
 
 static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *source)
@@ -341,11 +421,16 @@ static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *source)
 static int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
   int i, j, k, l, nvalues, **matrix, *tmpIndex,
-    *changedBySolver, *changedByEvents, *requiredForODEs, *requiredForEvents;
+    *changedBySolver, *requiredForODEs, *requiredForEvents;
   List_t *dependencyList;
   ASTNode_t *math;
+  int hasCycle = 0;
   
   nvalues = om->neq + om->nass + om->nconst;
+  om->initAssignmentOrder = NULL;
+  om->assignmentOrder = NULL;
+  om->assignmentsBeforeODEs = NULL;
+  om->assignmentsBeforeEvents = NULL;
 
   /* 1: GENERATE DEPENDENCY MATRIX for complete asssignment set */
   
@@ -383,16 +468,16 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for complete rule set ",
-		      "(initial assignments, assignments and kinetic laws) ",
-		      "possibly due to a cyclic dependency in rules.",
+		      "Topological sorting failed for complete rule set "
+		      "(initial assignments, assignments and kinetic laws) "
+		      "possibly due to a cyclic dependency in rules. "
 		      "Please see previous errors.");
-    om->initAssignmentOrder = NULL;
-    return 0;
+    hasCycle = 1;
+    return hasCycle;
   }
-
+  
   /* generate ordered array of complete rule set and assignment subset */
-
+  
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, 0);
   ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentOrder, om->nass+om->ninitAss,
 			  nonzeroElem_t *, 0);
@@ -412,7 +497,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
       ordered->ijcode = om->assignmentcode[ *idx - om->neq ];
       om->initAssignmentOrder[k] = ordered;      
       k++;
-      om->assignmentOrder[l] = copyNonzeroElem(ordered); /*!!! TODO : to save memory, dont copy but just point into main ordering list om->assignmentOrder */
+      om->assignmentOrder[l] = copyNonzeroElem(ordered); 
       l++;
     }
     else if ( om->indexInit[*idx] != -1 ) /* initial assignments */
@@ -427,7 +512,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
       k++;
     }    
   }
-
+  
 #ifdef _DEBUG
   printf("COMPLETE RULE SET:\n");
   for ( i=0; i<om->nass+om->ninitAss; i++ )
@@ -440,20 +525,20 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
       printf("init.ass: %s = ", om->names[ idxJ ]);
     else 
       printf("norm.ass: %s = ", om->names[ idxI ]);
-
+    
     char *eq = SBML_formulaToString(ordered->ij);
     printf("%s\n", eq);
     free(eq);
   }
   printf("\n");
 #endif  
-
+  
   /* free dependency list */
   List_freeItems(dependencyList, free, int);
   List_free(dependencyList);
-
+  
   /* 3: ORDERING OF ASSIGNMENT SETS, for evaluation stages */
-
+  
   /* set changed variables : same for ODEs and Events */
   ASSIGN_NEW_MEMORY_BLOCK(changedBySolver, nvalues, int , 0);
   for ( i=0; i<om->neq; i++ ) /* all variables have changed */
@@ -491,16 +576,20 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForODEs);
   
   /* issue solver error and return if topo. sort was unsuccessful */
+  /* topo sort was tested on global matrix, so no errors should occur
+     when we are here !*/
   if ( dependencyList == NULL )
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for ODE rule set ",
-		      "(assignments and kinetic laws required before ODE ",
-		      "evaluation) possibly due to a cyclic dependency in",
+		      "Topological sorting failed for ODE rule set "
+		      "(assignments and kinetic laws required before ODE "
+		      "evaluation) possibly due to a cyclic dependency in"
 		      " rules. Please see previous errors.");
-    om->assignmentsBeforeODEs = NULL;
-    return 0;
+    free(requiredForODEs);
+    free(changedBySolver);
+    hasCycle = 1;
+    return hasCycle;
   }
 
   /* generate ordered array of rule set before ODEs */
@@ -573,14 +662,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* RULES TO BE EVALUATED BEFORE EVENTs: ODE variables and TIME have changed */
   /* get required rules */
   ASSIGN_NEW_MEMORY_BLOCK(requiredForEvents, nvalues, int , 0);
-  /* get changed variables : assigned by event assignment */
-  ASSIGN_NEW_MEMORY_BLOCK(changedByEvents, nvalues, int , 0);
   
   for ( j=0; j<nvalues; j++ )
-  {
     requiredForEvents[j] = 0;
-    changedByEvents[j] = 0;
-  }
 
   /* required for ODEs  */
   for ( i=0; i<om->nevents; i++ )
@@ -607,7 +691,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
       free(tmpIndex);
 
       /* set changed variable */
-      changedByEvents[om->eventIndex[i][j]] = 1;
+      /* changedByEvents[om->eventIndex[i][j]] = 1; */
     }
   }
   
@@ -619,12 +703,15 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for Event rule set ",
-		      "(assignments and kinetic laws required BEFORE event ",
-		      "evaluation) possibly due to a cyclic dependency in",
+		      "Topological sorting failed for Event rule set "
+		      "(assignments and kinetic laws required BEFORE event "
+		      "evaluation) possibly due to a cyclic dependency in"
 		      " rules. Please see previous errors.");
-    om->assignmentsBeforeEvents = NULL;
-    return 0;
+    free(requiredForODEs);
+    free(changedBySolver);
+    free(requiredForEvents);
+    hasCycle = 1;
+    return hasCycle;
   }
   
   /* generate ordered array of rule set before ODEs */
@@ -694,11 +781,10 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* free boolean arrays */
   free(changedBySolver);
-  free(changedByEvents);
   free(requiredForODEs);
   free(requiredForEvents);
 
-  return 1;
+  return hasCycle;
 }
 
 
@@ -2267,8 +2353,10 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *o
 
   if ( i > ODEModel_getNumValues(om) )
   {
-    SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-		      "No such variable in the model");
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
+		      "Requested variable is not in the model. "
+		      "Index larger then number of variables and "
+		      "paramaters");
     return NULL;	
   }
   else
@@ -2319,7 +2407,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, co
   if ( symbol == NULL )
    {
     SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-		      "symbol %s is not in the model", symbol);
+		      "NULL string passed to ODEModel_getVariableIndex", symbol);
 
     return NULL;
   }
@@ -2329,7 +2417,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, co
   if ( index == -1 )
   {
     SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
-		      "symbol %s is not in the model", symbol);
+		      "Symbol %s is not in the model", symbol);
 
     return NULL;
   }
