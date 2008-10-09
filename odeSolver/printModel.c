@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 14:38:51 raim>
-  $Id: printModel.c,v 1.24 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-09 18:45:10 raim>
+  $Id: printModel.c,v 1.25 2008/10/09 16:45:58 raimc Exp $
 */
 /* 
  *
@@ -534,6 +534,13 @@ void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
     return;
   }
 
+  if ( !data->model->jacobian )
+  {
+    Warn(stderr, "Jacobi matrix is not available - %s\n",
+	 data->model->jacobianFailed ?
+	 "differentiation failed." : "construction supressed.");
+    return;
+  }
 
 #if USE_GRACE
   if ( Opt.Xmgrace == 1 )
