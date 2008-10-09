@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 14:27:44 raim>
-  $Id: cvodeData.c,v 1.35 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-09 15:55:03 raim>
+  $Id: cvodeData.c,v 1.36 2008/10/09 16:33:35 raimc Exp $
 */
 /* 
  *
@@ -84,6 +84,8 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq)
   ASSIGN_NEW_MEMORY_BLOCK(data->trigger, nevents, int, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(data->value, nvalues, double, NULL);
 
+  data->nvalues = nvalues;
+  data->nevents = nevents;
   data->neq = neq;
   data->opt = NULL;
 
@@ -138,8 +140,6 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
   data = CvodeData_allocate(nvalues, om->nevents, om->neq);
   RETURN_ON_FATALS_WITH(NULL);
 
-  data->nvalues = nvalues;
-  data->nevents = om->nevents;
   data->allRulesUpdated = 0;
   
   /* set pointer to input model */
@@ -173,7 +173,10 @@ SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *data)
   for ( i=0; i<(om->nass + om->ninitAss); i++ ) 
   {
     nonzeroElem_t *ordered = om->initAssignmentOrder[i];
-    data->value[ordered->i] = evaluateAST(ordered->ij, data);
+    int idx = ordered->i;
+    if ( idx == -1 )
+      idx = ordered->j;
+    data->value[idx] = evaluateAST(ordered->ij, data);
   }
   data->allRulesUpdated = 1;   
 
