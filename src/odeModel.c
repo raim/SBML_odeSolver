@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-10 20:31:00 raim>
-  $Id: odeModel.c,v 1.119 2008/10/10 18:47:57 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-10 21:22:30 raim>
+  $Id: odeModel.c,v 1.120 2008/10/10 19:24:53 raimc Exp $ 
 */
 /* 
  *
@@ -470,22 +470,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   dependencyList = topoSort(matrix, nvalues, NULL, NULL);
   
   
-  /* issue solver error and return if topo. sort was unsuccessful */
-  idx = List_get(dependencyList, 0);
-  if ( *idx == -1 )
-  {
-    SolverError_error(ERROR_ERROR_TYPE,
-		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for complete rule set "
-		      "(initial assignments, assignments and kinetic laws) "
-		      "Found cyclic dependency in rules. ");
-    
-    List_freeItems(dependencyList, free, int);
-    List_free(dependencyList);
-    hasCycle = 1;
-    return hasCycle;
-  }
-  
   /* generate ordered array of complete rule set and assignment subset */
   
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, -1);
@@ -496,7 +480,24 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    /* issue solver error and return if topo. sort was unsuccessful */
+    if ( *idx == -1 )
+    {
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(initial assignments, assignments and kinetic laws) "
+			"Found cyclic dependency in rules. ");
+      /* AS -1 error is passed as single element no array elements
+	 have been allocated and can be simply freed */
+      free(om->assignmentOrder);
+      free(om->initAssignmentOrder);      
+      List_freeItems(dependencyList, free, int);
+      List_free(dependencyList);
+      hasCycle = 1;
+      return hasCycle;
+    }
+    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
       nonzeroElem_t *ordered;
       ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, -1);
@@ -584,33 +585,29 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* calculate TOPOLOGICAL SORTING of dependency matrix */
   dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForODEs);
   
-  /* issue solver error and return if topo. sort was unsuccessful */
-  /* topo sort was tested on global matrix, so no errors should occur
-     when we are here !*/
-  idx = List_get(dependencyList, 0);
-  if ( *idx == -1 )
-  {
-    SolverError_error(ERROR_ERROR_TYPE,
-		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for ODE rule set "
-		      "(assignments and kinetic laws required before ODE "
-		      "evaluation). Found cyclic dependency in rules. ");
-    List_freeItems(dependencyList, free, int);
-    List_free(dependencyList);
-    free(requiredForODEs);
-    free(changedBySolver);
-    hasCycle = 1;
-    return hasCycle;
-  }
-
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
-    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    /* issue solver error and return if topo. sort was unsuccessful */
+    /* topo sort was tested on global matrix, so no errors should occur
+       when we are here !*/
+    if ( *idx == -1 )
+    {
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(assignments and kinetic laws required before ODE "
+			"evaluation). Found cyclic dependency in rules. ");
+      
+      List_freeItems(dependencyList, free, int);
+      List_free(dependencyList);
+      hasCycle = 1;
+      return hasCycle;
+    }
+    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
   om->nassbeforeodes = k;
@@ -621,7 +618,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   k = 0;
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
@@ -641,7 +637,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   printf("DEPENDENCY LIST: %d\n", List_size(dependencyList));
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
     printf(" %d %s\n", *idx, om->names[*idx]);
   }
@@ -710,32 +705,29 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   dependencyList = topoSort(matrix, nvalues, changedBySolver,
 			    requiredForEvents);
 
-  /* issue solver error and return if topo. sort was unsuccessful */
-  idx = List_get(dependencyList, 0);
-  if ( *idx == -1 )
-  {
-    SolverError_error(ERROR_ERROR_TYPE,
-		      SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-		      "Topological sorting failed for Event rule set "
-		      "(assignments and kinetic laws required BEFORE event "
-		      "evaluation).  Found cyclic dependency in rules.");
-    List_freeItems(dependencyList, free, int);
-    List_free(dependencyList);
-    free(requiredForODEs);
-    free(changedBySolver);
-    free(requiredForEvents);
-    hasCycle = 1;
-    return hasCycle;
-  }
-  
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
-    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    /* issue solver error and return if topo. sort was unsuccessful */
+    if ( *idx == -1 )
+    {
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for Event rule set "
+			"(assignments and kinetic laws required BEFORE event "
+			"evaluation).  Found cyclic dependency in rules.");
+      List_freeItems(dependencyList, free, int);
+      List_free(dependencyList);
+      free(requiredForODEs);
+      free(changedBySolver);
+      free(requiredForEvents);
+      hasCycle = 1;
+      return hasCycle;
+    }
+    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
   
@@ -745,7 +737,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   k = 0;
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
@@ -764,7 +755,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   printf("DEPENDENCY LIST: %d\n", List_size(dependencyList));
   for ( i=0; i<List_size(dependencyList); i++ )
   {
-    int *idx;
     idx = List_get(dependencyList, i);
     printf(" %d %s\n", *idx, om->names[*idx]);
   }
