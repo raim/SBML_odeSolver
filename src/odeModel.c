@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-09 20:51:03 raim>
-  $Id: odeModel.c,v 1.117 2008/10/09 18:56:44 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-09 21:18:28 raim>
+  $Id: odeModel.c,v 1.118 2008/10/10 15:10:24 raimc Exp $ 
 */
 /* 
  *
@@ -166,7 +166,7 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *om)
 {
   return om->nassbeforeevents;
 }
-SBML_ODESOLVER_API int ODEModel_getNumJacobiElement(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(odeModel_t *om)
 {
   return om->sparsesize;
 }
@@ -2141,6 +2141,8 @@ SBML_ODESOLVER_API odeSense_t *ODEModel_constructSensitivity(odeModel_t *om)
     Once an ODE system has been constructed from an SBML model, this
     function calculates the derivative of each species' ODE with respect
     to model constants passed as SBML IDs via cvodeSettings_t structure. */
+/*!!! TODO : pass (int nsens, char **opt->sensIDs directly) instead of opt
+      and ask for adjoint and jacobian from where this is called internally!!!*/
 SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *om, cvodeSettings_t *opt)
 {
   int i, k, nsens, all, construct;
@@ -2165,8 +2167,8 @@ SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *om, cvodeSettings_t *
       all = 1;
     else
       all = 0;
-    /* check whether jacobian is present of adjoint is requested,
-     to indicate whether the sensitivity matrix shall be constructed */
+    /* check whether jacobian is present or adjoint is requested,
+       to indicate whether the sensitivity matrix shall be constructed */
     if ( opt->DoAdjoint || om->jacobian )
       construct = 1;
   }
@@ -2475,10 +2477,15 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
     changed or freed by calling applications.
 */
 
-SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *om,
-							variableIndex_t *vi)
+SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeModel_t *om)
 {
   return (const char*) om->names[vi->index];
+}
+
+/* outdated */
+const char *ODEModel_getVariableName(odeModel_t *om, variableIndex_t *vi)
+{
+  return VariableIndex_getName(vi, om);
 }
 
 /** \brief  Frees a variableIndex structure
