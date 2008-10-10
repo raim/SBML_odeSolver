@@ -1,0 +1,31 @@
+./ASTIndexTest
+sleep 1
+./printODEs
+sleep 1
+./integrate MAPK.xml 1000 100
+sleep 1
+./batchIntegrate MAPK.xml 1000 2 1 10 3 V2 J1
+sleep 1
+./defSeries MAPK.xml
+sleep 1
+./simpleIntInst
+sleep 1
+./changeIntInst
+sleep 1
+./analyzeJacobian
+sleep 1
+./analyzeSens
+sleep 1
+./sensitivity
+sleep 1
+./adj_sensitivity repressilator.xml  repressilator.objfun repressilator_data.txt
+sleep 1
+./ParameterScanner MAPK.xml 200 50 Ki 0 15 5 MAPK_PP 
+sleep 1
+./Sense MAPK.xml 200 7.5 p Ki MKKK_P MAPK_PP 
+sleep 1
+./adjsenstest
+sleep 1
+./adjsenstest_ContDiscData
+sleep 1
+./senstest
