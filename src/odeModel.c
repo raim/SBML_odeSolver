@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 19:57:57 raim>
-  $Id: odeModel.c,v 1.122 2008/10/16 18:00:28 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-16 22:08:29 raim>
+  $Id: odeModel.c,v 1.123 2008/10/16 20:09:34 raimc Exp $ 
 */
 /* 
  *
@@ -121,7 +121,18 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
   ode = Model_reduceToOdes(m);
   /* if errors occured, free SBML and return NULL */
   if ( ode == NULL )
-    return NULL;    
+    return NULL;
+
+  /* check if compatible */
+  /* algebraic rules */
+  if ( SBase_isSetNotes((SBase_t *)ode) )
+    if ( strcmp(SBase_getNotesString((SBase_t *)ode),"<notes>DAE model</notes>")
+	 == 0 )
+    {
+      Model_free(ode);
+      return NULL;
+    }
+  
 
   /* CREATE odeModel equations */
   om = ODEModel_fillStructures(ode);
@@ -900,9 +911,9 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     else if ( type == SBML_ALGEBRAIC_RULE )
     {
       /* find variables defined by algebraic rules here! */
-      ASSIGN_NEW_MEMORY_BLOCK(om->names[nvalues + nalg],
-			      strlen("tmp")+3, char, NULL);
-      sprintf(om->names[om->neq+om->nass+om->nconst+ nalg], "tmp%d", nalg);
+/*       ASSIGN_NEW_MEMORY_BLOCK(om->names[nvalues + nalg], */
+/* 			      strlen("tmp")+3, char, NULL); */
+/*       sprintf(om->names[om->neq+om->nass+om->nconst+ nalg], "tmp%d", nalg); */
       /* printf("tmp%d \n", nalg); */
       nalg++;
     }
