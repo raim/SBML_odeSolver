@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-09 18:45:10 raim>
-  $Id: printModel.c,v 1.25 2008/10/09 16:45:58 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 21:22:14 raim>
+  $Id: printModel.c,v 1.26 2008/10/16 19:30:19 raimc Exp $
 */
 /* 
  *
@@ -414,16 +414,46 @@ void printODEs(odeModel_t *om, FILE *f)
   for ( i=om->neq+om->nass; i<nvalues; i++ ) 
     fprintf(f, "%s, ", om->names[i]);
   fprintf(f, "\n");
-  fprintf(f, "# Assigned Parameters (ordered, including init. assignments):\n");
+  fprintf(f, "# Assigned Parameters, including init. assignments: ");
+  
+  if ( om->initAssignmentOrder != NULL )
+    fprintf(f, "ORDERED\n");
+  else
+    fprintf(f, "UNORDERED\n");
   for ( i=0; i<(om->nass + om->ninitAss); i++ )
   {
-    nonzeroElem_t *ordered = om->initAssignmentOrder[i];
-    char *eq = SBML_formulaToString(ordered->ij);
-    const char *id;
-    if ( ordered->i != -1 ) id = om->names[ordered->i];
-    else id = om->names[ordered->j];     
-    fprintf(f, "%d: %s =  %s;", i, id, eq);
-    if ( ordered->i == -1 ) fprintf(f, " (AT TIME=0 ONLY)");
+    char *eq;
+    int idx;
+    int init = 0;
+    if ( om->initAssignmentOrder != NULL )
+    {
+      nonzeroElem_t *ordered = om->initAssignmentOrder[i];
+      eq = SBML_formulaToString(ordered->ij);
+      idx = ordered->i;
+      if ( idx == -1 )
+      {
+	init = 1;
+	idx = ordered->j;
+      }
+    }
+    else
+    {
+      if ( i < om->nass )
+      {
+	eq = SBML_formulaToString(om->assignment[i]);
+	idx = i + om->neq;
+      }
+      else
+      {
+	init = 1;
+	eq = SBML_formulaToString(om->initAssignment[i - om->nass]);
+	idx = om->initIndex[i - om->nass];
+      }
+    }
+      
+    fprintf(f, "%d: %s =  %s;", i, om->names[idx], eq);
+    if ( init )
+     fprintf(f, " - AT TIME == 0");     
     fprintf(f, "\n");
     free(eq);
   }

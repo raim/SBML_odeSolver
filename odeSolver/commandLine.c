@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 15:36:42 raim>
-  $Id: commandLine.c,v 1.27 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 21:24:13 raim>
+  $Id: commandLine.c,v 1.28 2008/10/16 19:30:19 raimc Exp $
 */
 /* 
  *
@@ -203,7 +203,6 @@ odeSolver (int argc, char *argv[])
       /* SolverError_haltOnErrors(); */
       fprintf(outfile, "det(J) = %s\n", SBML_formulaToString(det));
       ODEModel_free(om);
-      Model_free(ode);
       xfree(sbmlFilename);
       SBMLDocument_free(d);
       ASTNode_free(det);
@@ -226,19 +225,17 @@ odeSolver (int argc, char *argv[])
       
       om = ODEModel_create(m);
       /* slight change in behavour - halt now rather than continue
-	 with null model
-         used to continue with empty model */
+	 with null model used to continue with empty model */
+      if ( om != NULL )
+      {
+	printODEs(om, outfile);
+	if ( Opt.Jacobian )
+	  ODEModel_constructJacobian(om);
+	printJacobian(om, outfile);
+	ODEModel_free(om);
+      }
       SolverError_dump(); /* write out all everything including warnings */
-      SolverError_haltOnErrors(); 
-      printODEs(om, outfile);
-      if ( Opt.Jacobian )
-	ODEModel_constructJacobian(om);
-      SolverError_dump(); /* write out all everything including warnings */
-      SolverError_haltOnErrors(); 
-      printJacobian(om, outfile);
-
-      ODEModel_free(om);
-      Model_free(ode);
+      SolverError_clear();
       xfree(sbmlFilename);
       SBMLDocument_free(d);       
       return(EXIT_SUCCESS);      
@@ -254,12 +251,13 @@ odeSolver (int argc, char *argv[])
     if ( Opt.PrintODEsToSBML == 1 )
     {
       ode = Model_reduceToOdes(m);
-      /* slight change in behavour - halt now rather than
+     /* slight change in behavour - halt now rather than
 	 continue with null model
          used to continue with empty model */
       SolverError_dump(); /* write out all everything including warnings */
-      SolverError_haltOnErrors();
-      printODEsToSBML(ode, outfile);
+      SolverError_clear();
+      if ( ode != NULL )
+	printODEsToSBML(ode, outfile);
 
       Model_free(ode);   
       xfree(sbmlFilename);
@@ -293,8 +291,13 @@ odeSolver (int argc, char *argv[])
     om = ODEModel_create(m);
    
     SolverError_dump();
-    SolverError_haltOnErrors();
     SolverError_clear();
+    if ( om == NULL )
+    {
+      xfree(sbmlFilename);
+      SBMLDocument_free(d);       
+      return(EXIT_FAILURE);
+    }
 
 
     /** Set integration parameters:
@@ -323,8 +326,15 @@ odeSolver (int argc, char *argv[])
     ii = IntegratorInstance_create(om, set);
    
     SolverError_dump();
-    SolverError_haltOnErrors();
-
+    SolverError_clear();
+    if ( ii == NULL )
+    {
+      ODEModel_free(om);
+      CvodeSettings_free(set);
+      xfree(sbmlFilename);
+      SBMLDocument_free(d);       
+      return(EXIT_FAILURE);
+    }
     /** .... we can call the integrator functions,
 	that invoke CVODE and stores results.
 	The function will also handle events and
@@ -334,7 +344,8 @@ odeSolver (int argc, char *argv[])
     integrator(ii, Opt.PrintMessage, Opt.PrintOnTheFly, outfile);
     
     SolverError_dump();
-    RETURN_ON_FATALS_WITH(EXIT_FAILURE);
+    SolverError_clear();
+    /* RETURN_ON_FATALS_WITH(EXIT_FAILURE); *//* free ode model here */
 
     /** Finally, print out the results
 	in the format specified by commanline option,
