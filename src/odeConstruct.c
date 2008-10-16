@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-07 19:08:58 raim>
-  $Id: odeConstruct.c,v 1.40 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 17:40:12 raim>
+  $Id: odeConstruct.c,v 1.41 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -86,14 +86,12 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
 
   errors = 0;
 
-  /** C.1: Initialize a new model */  
+  /** C.1: Create and initialize a new model */  
   ode = Model_copyInits(m);
 
   /** C.2: Copy predefined ODES (RateRules) */
   Model_copyOdes(m, ode);
 
-  /**!!! TODO : SBML L2V2 - check ordering of combined set of assignments:
-         initialAssignmentRules, AssignmentRules, and kineticLaws */
   /**!!! TODO : SBML L2V2 - constraints */
   /**!!! TODO : supress ODE construction for algebraic rule
          defined variables !!! */
@@ -108,11 +106,14 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
   /** C.5: Create ODEs from reactions */
   errors = Model_createOdes(m, ode);
 
-  if ( errors>0 ) 
+  if ( errors>0 )
+  {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_COULD_NOT_BE_CONSTRUCTED,
-		      "ODE model could not be constructed");
-  
+		      "ODE construction failed for %d variables.", errors);
+    Model_free(ode);
+    return NULL;
+  }
   
   /** Copy incompatible SBML structures     
       The next steps will copy remaining definitions that can't be
@@ -127,7 +128,14 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
   Model_copyEvents(m, ode);
 
   /** C.6b: Copy AlgebraicRules to new model and create error */
-  Model_copyAlgebraicRules(m, ode);
+  errors = Model_copyAlgebraicRules(m, ode);
+  if ( errors>0 )
+  {
+    SolverError_error(ERROR_ERROR_TYPE,
+		      SOLVER_ERROR_ODE_MODEL_COULD_NOT_BE_CONSTRUCTED,
+		      "Model contains %d algebraic rules.", errors);
+    SBase_setNotesString ((SBase_t *)ode, "DAE model");
+  }
 
   /** C.8: replace function definitions in all formulas */
   ODE_replaceFunctionDefinitions(ode);
@@ -567,8 +575,7 @@ static void Model_copyEvents(Model_t *m, Model_t*ode)
     Model_addEvent(ode, Model_getEvent(m, i));
     
     if ( !i )
-      SolverError_error(
-			WARNING_ERROR_TYPE,
+      SolverError_error(WARNING_ERROR_TYPE,
 			SOLVER_ERROR_THE_MODEL_CONTAINS_EVENTS,
 			"The model contains events. "
 			"The SBML_odeSolver implementation of events "
@@ -771,7 +778,7 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
 		    SOLVER_ERROR_REQUESTED_PARAMETER_NOT_FOUND,
 		    "SBML Model doesn't provide a value " \
 		    "for SBML ID %s, value defaults to 0!", id);
-
+  
 /*   fprintf(stderr, "Value for %s not found!", id);  */
 /*   fprintf(stderr, "Defaults to 0. Please check model!");  */
   return (0.0);

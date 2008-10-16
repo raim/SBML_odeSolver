@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 14:49:33 raim>
-  $Id: odeSolver.c,v 1.47 2008/09/09 12:49:51 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 18:48:01 raim>
+  $Id: odeSolver.c,v 1.48 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -80,11 +80,16 @@ SBML_ODESOLVER_API SBMLResults_t *SBML_odeSolver(SBMLDocument_t *d, cvodeSetting
   if ( SBMLDocument_getLevel(d) != 2 )
   {
     d2 = convertModel(d);
+    if ( d2 == NULL ) return NULL;
     m = SBMLDocument_getModel(d2);    
   }
   else m = SBMLDocument_getModel(d);
 
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( m == NULL )
+  {
+   if ( d2 != NULL ) SBMLDocument_free(d2);
+   return NULL;
+  }
 
   /** Call Model_odeSolver */
   results = Model_odeSolver(m, set);
@@ -117,11 +122,16 @@ SBML_ODESOLVER_API SBMLResultsArray_t *SBML_odeSolverBatch(SBMLDocument_t *d, cv
   if ( SBMLDocument_getLevel(d) != 2 )
   {
     d2 = convertModel(d);
+    if ( d2 == NULL ) return NULL;
     m = SBMLDocument_getModel(d2);
   }
   else m = SBMLDocument_getModel(d);
 
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( m == NULL )
+  {
+   if ( d2 != NULL ) SBMLDocument_free(d2);
+   return NULL;
+  }
 
   /** Call Model_odeSolverBatch */  
   resA = Model_odeSolverBatch(m, set, vs);
@@ -162,14 +172,19 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
   */
 
   om = ODEModel_create(m);      
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( om == NULL ) return NULL;
+  
   /**
      Second, an integratorInstance is created from the odeModel
      and the passed cvodeSettings. If that worked out ...
   */
   
   ii = IntegratorInstance_create(om, set);
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( ii == NULL )
+  {
+    ODEModel_free(om);
+    return NULL;
+  }
 
   /** .... the integrator loop can be started,
       that invoking CVODE to move one time step and store.
@@ -178,10 +193,11 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
   */
   while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
     if ( !IntegratorInstance_integrateOneStep(ii) )
-      errorCode = IntegratorInstance_handleError(ii);
+      break;
+  
   /* !!! on fatals: above created structures should be freed before return
      !!! */
-  RETURN_ON_FATALS_WITH(NULL); 
+  /* RETURN_ON_FATALS_WITH(NULL);  */
 
   /** finally, map cvode results back to SBML compartments, species
       and parameters  */
@@ -219,6 +235,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
 
 
   resA = SBMLResultsArray_allocate(vs->nrdesignpoints);
+  if ( resA == NULL ) return NULL;
  
   /** At first, globalize all local (kineticLaw) parameters to be varied */
   for ( i=0; i<vs->nrparams; i++ ) 
@@ -231,12 +248,35 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
      SBML model with reactions replaced by ODEs.
      See comments in Model_odeSolver for details.  */
   om = ODEModel_create(m);      
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( om == NULL )
+  {
+    
+    /** localize parameters again, unfortunately the new globalized
+	parameter cannot be freed currently  */
+    for ( i=0; i<vs->nrparams; i++ )
+      /*  ** modified after suggestion by Norihiro Kikuchi ** */
+      if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) 
+	localizeParameter(m, vs->id[i], vs->rid[i]);     
+    SBMLResultsArray_free(resA);
+    return NULL;
+  }
  
   /** an integratorInstance is created from the odeModel and the passed
      cvodeSettings. If that worked out ...  */  
   ii = IntegratorInstance_create(om, set);
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( ii == NULL )
+  {
+    
+    /** localize parameters again, unfortunately the new globalized
+	parameter cannot be freed currently  */
+    for ( i=0; i<vs->nrparams; i++ )
+      /*  ** modified after suggestion by Norihiro Kikuchi ** */
+      if ( vs->rid[i] != NULL  && strlen(vs->rid[i]) > 0 ) 
+	localizeParameter(m, vs->id[i], vs->rid[i]);     
+    SBMLResultsArray_free(resA);
+    ODEModel_free(om);
+    return NULL;
+  }
 
   ASSIGN_NEW_MEMORY_BLOCK(vi, vs->nrparams, struct variableIndex *, NULL);
 			  
@@ -257,7 +297,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     else
       vi[j] = ODEModel_getVariableIndex(om, vs->id[j]);
 
-    if ( vi[j] == NULL ) return NULL;
+    /* if ( vi[j] == NULL ) return NULL; */ /*!!! TODO : handle NULL */
   }
       
   /** now, work through the passed designpoints in varySettings */
@@ -268,10 +308,10 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     
     while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
       if ( !IntegratorInstance_integrateOneStep(ii) )
-	errorCode = IntegratorInstance_handleError(ii);
-    /* !!! on fatals: above created structures should be freed before return
-       !!! */
-    RETURN_ON_FATALS_WITH(NULL);
+	break;
+    /*!!! TODO : on fatals: above created structures should be freed
+       !!before return ! */
+    /* RETURN_ON_FATALS_WITH(NULL); */
         
     /** map cvode results back to SBML compartments, species and
 	parameters  */

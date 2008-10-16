@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-03-13 15:28:38 raim>
-  $Id: sbml.c,v 1.17 2008/05/09 21:09:43 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 16:52:50 raim>
+  $Id: sbml.c,v 1.18 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -91,15 +91,15 @@ parseModel(char *file, int printMessage, int validate)
     severity = XMLError_getSeverity((const XMLError_t *)error);
     if ( severity < 2 ) /* infos and warnings */
       storeSBMLError(WARNING_ERROR_TYPE, error);
-    else /* errors and fatals */
+    else
+    {
+      /* errors and fatals */
       storeSBMLError(FATAL_ERROR_TYPE, error);
+      SBMLDocument_free(d);
+      return NULL;
+    }
   }
 
-  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
-  {
-    SBMLDocument_free(d);
-    return NULL;
-  }
 
   
   /* convert level 1 models to level 2 */
@@ -111,13 +111,7 @@ parseModel(char *file, int printMessage, int validate)
     if ( printMessage )
       fprintf(stderr, "SBML converted from level 1 to level 2.\n"); 
     d = d2; 
-  }
- 
-  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
-  {
-    SBMLDocument_free(d);
-    return NULL;
-  }
+  } 
  
   return (d);
 }
@@ -137,15 +131,14 @@ SBMLDocument_t *convertModel (SBMLDocument_t *d1)
     severity = XMLError_getSeverity((const XMLError_t *)error);
     if ( severity < 2 ) /* infos and warnings */
       storeSBMLError(WARNING_ERROR_TYPE, error);
-    else /* errors and fatals */
+    else
+    {
+      /* errors and fatals */
       storeSBMLError(FATAL_ERROR_TYPE, error);
-  }
-  
-  if ( SolverError_getNum(FATAL_ERROR_TYPE) )
-  {
-    SBMLDocument_free(d2);
-    return NULL;
-  }
+      SBMLDocument_free(d2);
+      return NULL;
+    }
+  }  
 
   return d2;
 }

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 14:16:59 raim>
-  $Id: compiler.c,v 1.28 2008/09/09 12:51:00 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 17:55:16 raim>
+  $Id: compiler.c,v 1.29 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -82,25 +82,25 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
   /* avoid creating files in current directory if environment
      variables not set */
   if (!GetTempPath(MAX_PATH+1, tempDir))
-    {
-      SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
-      return NULL;
-    }
-
+  {
+    SolverError_storeLastWin32Error("Trying to find out location of system temp directory");
+    return NULL;
+  }
+  
   solverHandle = GetModuleHandle(solverFileName);
     
   if (!solverHandle)
-    {
-      SolverError_storeLastWin32Error("Trying to get handle of solver dll");
-      return NULL;
-    }
-
+  {
+    SolverError_storeLastWin32Error("Trying to get handle of solver dll");
+    return NULL;
+  }
+  
   /* compute tcc path from the path to this dll */
   if( !GetModuleFileName( solverHandle, tccFileName, MAX_PATH ) )
-    {
-      SolverError_storeLastWin32Error("Trying find location of the soslib dll");
-      return NULL ;
-    }
+  {
+    SolverError_storeLastWin32Error("Trying find location of the soslib dll");
+    return NULL ;
+  }
 
   for (i = strlen(tccFileName); i != -1 && tccFileName[i] != '\\'; i--);
 
@@ -149,8 +149,7 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
   remove(outFileName);
   free(outFileName);
 
-  ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) + 2),
-			  char, NULL);
+  ASSIGN_NEW_MEMORY_BLOCK(dllFileNameDot, (strlen(dllFileName) +2), char, NULL);
   
   strcpy(dllFileNameDot, dllFileName);
   strcat(dllFileNameDot, ".");
@@ -215,12 +214,15 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   cFile = fopen(cFileName, "w");
   
   if (!cFile)
-    {
-      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_OPEN_FILE,
-			"Could not open file %s - %s!",
-			cFileName, strerror(errno));  
-      return NULL;
-    }
+  {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_OPEN_FILE,
+		      "Could not open file %s - %s!",
+		      cFileName, strerror(errno));
+    free(cFileName);
+    free(oFileName);
+    free(dllFileName);
+    return NULL;
+  }
   
   fprintf(cFile, sourceCode);
   fclose(cFile);
@@ -244,38 +246,37 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   /* compile source to shared library */
   result = system(command);
   
-  /* handle possible errors */
-  if (result == -1)
-    {
-      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
-			"forking xlc compiler subprocess failed!");
-      return (NULL);
-    }
-  else if (result != 0)
-    {
-      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-			"compiling failed with errno %d - %s!",
-			result, strerror(result));    
-      return (NULL);
-    }
-  
   /* clean up compilation intermediates */
   free(tmpFileName);
   remove(cFileName);
   free(cFileName);
   remove(oFileName);
   free(oFileName);
+
+  /* handle possible errors */
+  if (result != 0)
+  {
+    if (result == -1)
+      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
+			"forking xlc compiler subprocess failed!");
+    else 
+      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"compiling failed with errno %d - %s!",
+			result, strerror(result));    
+    return (NULL);
+  }
+  
   
   /* load shared library */
   dllHandle = dlopen(dllFileName, RTLD_LAZY);
   if (dllHandle == NULL)
-    {
-      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_DL_LOAD_FAILED,
-			"loading shared library %s failed %d - %s!",
-			dllFileName, errno, strerror(errno));
-      SolverError_dumpAndClearErrors();
-      return (NULL);
-    }
+  {
+    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_DL_LOAD_FAILED,
+		      "loading shared library %s failed %d - %s!",
+		      dllFileName, errno, strerror(errno));
+    /* SolverError_dumpAndClearErrors(); */
+    return (NULL);
+  }
   
   ASSIGN_NEW_MEMORY(code, compiled_code_t, NULL);
   code->dllHandle   = dllHandle;
@@ -301,7 +302,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   FILE *cFile;
   char command[4*MAX_PATH];
   void *dllHandle;
-
+  
   /* generate a unique temprorary filename template */
   ASSIGN_NEW_MEMORY_BLOCK(tmpFileName, (MAX_PATH+1), char, NULL);
   tmpFileName = tmpnam(tmpFileName);
@@ -331,6 +332,9 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_OPEN_FILE,
 		      "Could not open file %s - %s!",
 		      cFileName, strerror(errno));  
+    free(cFileName);
+    free(oFileName);
+    free(dllFileName);
     return NULL;
   }
 
@@ -371,27 +375,27 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   /* compile source to shared library */
   result = system(command);
 
-  /* handle possible errors */
-  if (result == -1)
-  {
-    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
-		      "forking gcc compiler subprocess failed!");
-    return (NULL);
-  }
-  else if (result != 0)
-  {
-    SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
-		      "compiling failed with errno %d - %s!",
-		      result, strerror(result));    
-    return (NULL);
-  }
-
   /* clean up compilation intermediates */
   free(tmpFileName);
   remove(cFileName);
   free(cFileName);
   remove(oFileName);
   free(oFileName);
+
+  /* handle possible errors */
+  if (result != 0)
+  {
+    if (result == -1)
+      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_GCC_FORK_FAILED,
+			"forking gcc compiler subprocess failed!");
+    else 
+      SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_COMPILATION_FAILED,
+			"compiling failed with errno %d - %s!",
+			result, strerror(result));    
+    return (NULL);
+  }
+  
+
 
   /* load shared library */
   dllHandle = dlopen(dllFileName, RTLD_LAZY);
@@ -434,7 +438,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
 #endif /* end WIN32 */
 
-   return (code);
+  return (code);
 }
 
 /**

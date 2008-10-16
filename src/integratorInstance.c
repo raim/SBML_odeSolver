@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 21:20:52 raim>
-  $Id: integratorInstance.c,v 1.103 2008/10/08 19:21:29 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 18:39:29 raim>
+  $Id: integratorInstance.c,v 1.104 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -102,11 +102,12 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 {
   cvodeData_t *data;
 
+  if ( om->hasCycle ) return NULL;
+
   data = CvodeData_create(om);
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( data == NULL ) return NULL;
  
   CvodeData_initialize(data, opt, om);
-  RETURN_ON_FATALS_WITH(NULL);
 
   return IntegratorInstance_allocate(data, opt, om);      
 }
@@ -123,7 +124,7 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
 SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *engine, cvodeSettings_t *opt)
 {
   CvodeData_initialize(engine->data, opt, engine->om);  
-  RETURN_ON_FATALS_WITH(0);
+
   /* de-activate backward integration for adjoint solver */
   engine->AdjointPhase = 0;
   
@@ -320,17 +321,18 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   
   /* construct Jacobian matrix, if not yet existing */
   engine->UseJacobian = IntegratorInstance_initializeJacobian(engine->om, opt);
-  RETURN_ON_FATALS_WITH(0);
-  
+    
   /* construct sensitivities, if not yet existing */
-  /*!!! BETTER ERROR HANDLING?? !!!*/
+  /*!!! TODO : BETTER ERROR HANDLING?? !!!*/
   if ( (opt->Sensitivity || opt->DoAdjoint) && !engine->AdjointPhase )
   {
     engine->os = IntegratorInstance_initializeSensitivity(engine->om, opt,
 							  engine->os);
-    RETURN_ON_FATALS_WITH(0);
+   
+    if ( engine->os == NULL ) return 0; /* failure in sens. construction */
+    
     if ( engine->os )
-      CvodeData_initializeSensitivities(data, opt, engine->om, engine->os); 
+      CvodeData_initializeSensitivities(data, opt, engine->om, engine->os);
   }
  
   
@@ -702,17 +704,16 @@ SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integrator
   return engine->os;
 }
 /**  Starts the default integration loop with standard error
-     handling and returns 0 if integration was OK, and the error code
-     if not.
+     handling and returns 1 if integration was OK, and 0 if not.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine)
 {
   while ( engine->solver->iout <= engine->solver->nout )
     if (!IntegratorInstance_integrateOneStep(engine)) 
-      return IntegratorInstance_handleError(engine);    
+      return 0;    
  
-  return 0; /* return 0, if ok */
+  return 1; /* return 0, if ok */
 }
 
 
@@ -745,7 +746,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
   if ( !opt->StoreResults || iResults == NULL ) return NULL;
   
   results = CvodeResults_create(engine->data, iResults->nout);
-  RETURN_ON_FATALS_WITH(0);
+  if ( results == NULL ) return NULL; /* memory failure */
 
   results->nout = iResults->nout;
 
@@ -849,6 +850,9 @@ SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engi
 
 
 /**  Handles the simple case of models that contain no ODEs
+     
+     Returns 1, if integrator can proceed, 0 if errors occured
+     and the integrator can't proceed. 
  */
 
 SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *engine)
@@ -858,7 +862,7 @@ SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *en
 
   if ( engine->processEvents && engine->opt->compileFunctions &&
        !engine->om->compiledEventFunction )
-    ODEModel_compileCVODEFunctions(engine->om);
+    ODEModel_compileCVODEFunctions(engine->om); /*!!! TODO : handle error */
 
   /* ... and call the default update function */
   return IntegratorInstance_updateData(engine);  
@@ -924,6 +928,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
     The function updates assigned variables, checks for event
     triggers and steady state, increases loop variables, stores
     results and sets next output time.
+    Returns 1 if the solver can proceed, 0 if otherwise.
 */
 
 int IntegratorInstance_updateData(integratorInstance_t *engine)
@@ -955,8 +960,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	if ( data->trigger[i] )
 	{
 	  buffer = SBML_formulaToString(om->event[i]);
-	  SolverError_error(
-			    ERROR_ERROR_TYPE,
+	  SolverError_error(ERROR_ERROR_TYPE,
 			    SOLVER_ERROR_EVENT_TRIGGER_FIRED,
 			    "Event Trigger %d (%s) fired at time %g. "
 			    "Aborting simulation.",
@@ -964,7 +968,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	  free(buffer);
 	}
       }
-      flag = 0;
+      flag = 0; /* stop integration */
     }
   }
   
@@ -1043,6 +1047,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     solver->tout += opt->Time;
   else if ( solver->iout <= solver->nout )
     solver->tout = opt->TimePoints[solver->iout];
+
+  /* flag is 1 if the solver can proceed, 0 otherwise */
   return flag;
 }
 
@@ -1371,9 +1377,10 @@ void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
 
     Solvers are currently CVODES for models with ODEs or an internal
     evaluation of rules for models without ODEs (rate rules).  Returns
-    1 if integration can continue, 0 otherwise. A return value of 0
-    can also be caused by a steady state or an event if steady state
-    detection or HaltOnEvent options are activated, respectively.
+    1 if integration can continue, 0 otherwise.
+    A return value of 0 can be caused by solver failure, by detection of
+    a steady state or an event if steady state detection or
+    HaltOnEvent options are activated, respectively.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *engine)
@@ -1479,6 +1486,10 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 
 
 /**  Standard handler for when the integrate function fails.
+
+     WARNING: if you run multiple integrators, this function
+     won't work correctly as currently all errors are stored
+     globally.
  */
 
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)

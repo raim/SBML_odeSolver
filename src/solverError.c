@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-03 14:26:24 raim>
-  $Id: solverError.c,v 1.22 2008/10/08 17:07:16 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-16 19:11:11 raim>
+  $Id: solverError.c,v 1.23 2008/10/16 17:27:50 raimc Exp $ 
 */
 /* 
  *
@@ -62,6 +62,9 @@ typedef struct solverErrorMessage
 } solverErrorMessage_t ;
 
 static int SolverError_dumpHelper(char *);
+
+/*!!! TODO : GLOBAL ERROR LIST - remove and add separate lists
+  for each internal structure !!!*/
 static List_t *solverErrors[NUMBER_OF_ERROR_TYPES] = { NULL, NULL, NULL, NULL };
 
 static int memoryExhaustion = 0;

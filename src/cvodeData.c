@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-09 15:55:03 raim>
-  $Id: cvodeData.c,v 1.36 2008/10/09 16:33:35 raimc Exp $
+  Last changed Time-stamp: <2008-10-16 18:28:22 raim>
+  $Id: cvodeData.c,v 1.37 2008/10/16 17:27:50 raimc Exp $
 */
 /* 
  *
@@ -138,7 +138,7 @@ SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *om)
 
   /* allocate memory for current integration data storage */
   data = CvodeData_allocate(nvalues, om->nevents, om->neq);
-  RETURN_ON_FATALS_WITH(NULL);
+  if ( data == NULL ) return NULL;
 
   data->allRulesUpdated = 0;
   
@@ -378,7 +378,7 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   if ( opt->StoreResults )
   {
     data->results = CvodeResults_create(data, opt->PrintStep);
-    RETURN_ON_FATALS_WITH(0);
+    if ( data->results == NULL ) return 0;
   }
 
   return 1;
@@ -404,7 +404,7 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
   if ( data->sensitivity == NULL )
   {
     CvodeData_allocateSens(data, om->neq, nsens);
-    RETURN_ON_FATALS_WITH(0);
+    if ( data->sensitivity == NULL ) return 0;
   }
 
   /* bind to odeSense model */
@@ -425,8 +425,9 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
   {
     /* results from former runs have already been freed before
       result structure was re-allocated */
-    CvodeResults_allocateSens(data->results, om->neq, data->nsens,
-			      opt->PrintStep);
+    if ( !CvodeResults_allocateSens(data->results, om->neq, data->nsens,
+				    opt->PrintStep) )
+      return 0;
     /* write initial values for sensitivity */
     for ( i=0; i<os->nsens; i++ )
     {
@@ -438,8 +439,10 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
     /* Adjoint specific  */
     if  ( opt->DoAdjoint )
     {
-      CvodeResults_allocateAdjSens(data->results, om->neq,
-				   nsens, opt->PrintStep);
+      if ( !CvodeResults_allocateAdjSens(data->results, om->neq,
+					 nsens, opt->PrintStep) )
+	return 0;
+      
       /* write initial values for adj sensitivity */
       for ( i=0; i<data->results->neq; i++ )
 	data->results->adjvalue[i][0] = data->adjvalue[i];

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-09 21:21:14 raim>
-  $Id: odeModel.h,v 1.51 2008/10/10 15:10:25 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-16 18:16:59 raim>
+  $Id: odeModel.h,v 1.52 2008/10/16 17:27:50 raimc Exp $ 
 */
 /* 
  *
@@ -372,12 +372,12 @@ extern "C" {
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
 
   /* ODEModel compilation */
+  SBML_ODESOLVER_API int ODEModel_compileCVODEFunctions(odeModel_t *);
+  SBML_ODESOLVER_API int ODESense_compileCVODESenseFunctions(odeSense_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *);
   SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
-  SBML_ODESOLVER_API void ODEModel_compileCVODEFunctions(odeModel_t *);
-  SBML_ODESOLVER_API void ODESense_compileCVODESenseFunctions(odeSense_t *);
   SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(odeSense_t *);
   SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_t *);
 

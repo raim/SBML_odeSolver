@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-10 21:22:30 raim>
-  $Id: odeModel.c,v 1.120 2008/10/10 19:24:53 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-16 18:33:02 raim>
+  $Id: odeModel.c,v 1.121 2008/10/16 17:27:50 raimc Exp $ 
 */
 /* 
  *
@@ -111,23 +111,30 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_create(Model_t *m)
 {
   Model_t *ode;
   odeModel_t *om;
+
+  /* NULL SBML model passed ? */
+  if ( m == NULL )
+  {
+    return NULL;
+  }
   
   ode = Model_reduceToOdes(m);
-  RETURN_ON_ERRORS_WITH(NULL);
+  /* if errors occured, free SBML and return NULL */
+  if ( ode == NULL )
+    return NULL;    
 
   /* CREATE odeModel equations */
   om = ODEModel_fillStructures(ode);
-  /* Errors will cause the program to stop, e.g. when some
-     mathematical expressions are missing.  */
-  RETURN_ON_ERRORS_WITH(NULL);
+  /* if om is NULL a memory allocation failure has occured, pass on NULL */
+  if ( om == NULL ) return NULL;  
   
   om->m = m;
   om->d = NULL;  /* will be set and free'd if created from file */
 
 
   /* generate ordered list of assignment rules for evaluation order */
-  om->hasCycle =
-    ODEModel_topologicalRuleSort(om); 
+  /* -1 for memory allocation failures */
+  om->hasCycle = ODEModel_topologicalRuleSort(om); 
 
   return om;
 }
@@ -440,7 +447,8 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* 1: GENERATE DEPENDENCY MATRIX for complete asssignment set */
 
-  /*!!! TODO : use -1 as return value for failed alloc everywhere? */
+  /*!!! TODO : use -1/NULL as return value for failed alloc
+    everywhere in sosLib? */
   ASSIGN_NEW_MEMORY_BLOCK(matrix, nvalues, int *, -1); 
   for ( i=0; i<nvalues; i++ )
   {
@@ -456,6 +464,10 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
       if ( om->indexInit[i] != -1 ) /* check whether initial assignment exist */
 	math = om->initAssignment[om->indexInit[i]];
       matrix[i] = ASTNode_getIndexArray(math, nvalues);
+
+      /* memory error */
+      /* if ( matrix[i] == NULL ) */
+/* 	return -1; */
       
       /*!!! TODO  ALSO ADD EVENTS HERE ?? */
       
@@ -848,7 +860,8 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 
   
   om = ODEModel_allocate(neq, nconst, nass, nalg);
-  RETURN_ON_FATALS_WITH(NULL);
+  /* if om is NULL memory allocation failed, just pass on NULL */
+  if ( om == NULL ) return om;
 
 
   /* filling the IDs and inital values
@@ -969,7 +982,6 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     if ( type == SBML_RATE_RULE )
     {
       math = indexAST(Rule_getMath(rl), nvalues, om->names);
-      /*AST_dump("assigning om->ode", math);*/
       om->ode[neq] = math;
 #ifdef ARITHMETIC_TEST
       ASSIGN_NEW_MEMORY(om->odecode[neq], directCode_t, NULL);
@@ -1026,25 +1038,26 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
   /* 2: DISCONTINUITIES */
   
   flag = ODEModel_setDiscontinuities(om, ode);
-  if ( !flag )
+  if ( flag == -1 ) /* -1 memory allocation failures */
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_SET_DISCONTINUITIES_FAILED,
 		      "setting discontinuity structures (initial assignments,"\
-		      "events) failed");
-    ODEModel_freeDiscontinuities(om);
+		      "events) failed.");
+    ODEModel_freeDiscontinuities(om);    
   }
 
   return om;
 }
 
+/* returns 1 for success or -1 for memory allocation failure */
 static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
 {
   int i, j, flag;
   int nvalues, nevents, ninitAss, neventAss;
   ASTNode_t *math;
 
-  nvalues = om->neq+ om->nass + om->nconst;
+  nvalues = om->neq + om->nass + om->nconst;
   
   /* size of discontinuities */
   nevents = Model_getNumEvents(ode);
@@ -1056,7 +1069,7 @@ static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
   /* allocate basic structures */
   flag = ODEModel_allocateDiscontinuities(om, nvalues,
 					  nevents, neventAss, ninitAss);
-  if ( !flag ) return 0; /*!!! TODO : better error handling */
+  if ( flag == -1 ) return -1; /* pass on memory failure signal -1 */
 
   for ( i=0; i<nvalues; i++ ) /* initialize map to -1 */
     om->indexInit[i] = -1;
@@ -1073,7 +1086,7 @@ static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
     math = indexAST(InitialAssignment_getMath(init), nvalues, om->names);
     om->initAssignment[i] = math;
 #ifdef ARITHMETIC_TEST
-    ASSIGN_NEW_MEMORY(om->initAssignmentcode[i], directCode_t, 0);
+    ASSIGN_NEW_MEMORY(om->initAssignmentcode[i], directCode_t, -1);
     om->initAssignmentcode[i]->eqn = math;
     generateFunction(om->initAssignmentcode[i], math);
 #endif
@@ -1086,16 +1099,16 @@ static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
 		    nvalues, om->names);
     om->event[i] = math;
 #ifdef ARITHMETIC_TEST
-    ASSIGN_NEW_MEMORY(om->eventcode[i], directCode_t, 0);
+    ASSIGN_NEW_MEMORY(om->eventcode[i], directCode_t, -1);
     om->eventcode[i]->eqn = math;
     generateFunction(om->eventcode[i], math);
 #endif
     /* event assignments */
     int nea = Event_getNumEventAssignments(e);
     om->neventAss[i] = nea;
-    ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex[i], nea, int, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment[i], nea, ASTNode_t *, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode[i], nea, directCode_t *, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex[i], nea, int, -1);
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment[i], nea, ASTNode_t *, -1);
+    ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode[i], nea, directCode_t *,-1);
     
     for ( j=0; j<nea; j++ )
     {
@@ -1106,7 +1119,7 @@ static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
       om->eventAssignment[i][j] = math;
       
 #ifdef ARITHMETIC_TEST
-      ASSIGN_NEW_MEMORY(om->eventAssignmentcode[i][j], directCode_t, 0);
+      ASSIGN_NEW_MEMORY(om->eventAssignmentcode[i][j], directCode_t, -1);
       om->eventAssignmentcode[i][j]->eqn = math;
       generateFunction(om->eventAssignmentcode[i][j], math);
 #endif
@@ -1136,12 +1149,10 @@ static int ODEModel_freeDiscontinuities(odeModel_t *om)
   
   /* initial assignments */
   for ( i=0; i<om->ninitAss; i++ )
-  {
     ASTNode_free(om->initAssignment[i]);
-  }
+  free(om->initAssignment);
   free(om->indexInit);
   free(om->initIndex);
-  free(om->initAssignment);
 
 #ifdef ARITHMETIC_TEST
   for ( i=0; i<om->ninitAss; i++ )
@@ -1179,9 +1190,7 @@ static int ODEModel_freeDiscontinuities(odeModel_t *om)
   {
     ASTNode_free(om->event[i]);
     for ( j=0; j<om->neventAss[i]; j++ )
-    {
       ASTNode_free(om->eventAssignment[i][j]);
-    }
     free(om->eventIndex[i]);
     free(om->eventAssignment[i]);
     free(om->eventAssignmentcode[i]);
@@ -1202,26 +1211,27 @@ static int ODEModel_freeDiscontinuities(odeModel_t *om)
 }
  
 /* allocates memory for a new odeModel structure and returns
-   a pointer to it */ 
+   a pointer to it, returns 1 for success and -1 for memory
+   allocation failure */ 
 static int ODEModel_allocateDiscontinuities(odeModel_t *om, int nvalues,
 					    int nevents, int neventAss,
 					    int ninitAss)
 {
   /* initial assignments */
   om->ninitAss  = ninitAss;
-  ASSIGN_NEW_MEMORY_BLOCK(om->indexInit, nvalues, int, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->initIndex, ninitAss, int, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignment, ninitAss, ASTNode_t *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentcode, ninitAss, directCode_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->indexInit, nvalues, int, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initIndex, ninitAss, int, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignment, ninitAss, ASTNode_t *, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentcode, ninitAss, directCode_t *, -1);
 
   /* events and event assignments */
   om->nevents = nevents;
-  ASSIGN_NEW_MEMORY_BLOCK(om->event, nevents, ASTNode_t *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->neventAss, nevents, int, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex, nevents, int *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->eventcode, nevents, directCode_t *, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment, nevents, ASTNode_t **, 0);
-  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode, nevents, directCode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->event, nevents, ASTNode_t *, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->neventAss, nevents, int, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventIndex, nevents, int *, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventcode, nevents, directCode_t *, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignment, nevents, ASTNode_t **, -1);
+  ASSIGN_NEW_MEMORY_BLOCK(om->eventAssignmentcode, nevents, directCode_t **,-1);
 
   return 1;
 }
@@ -1232,22 +1242,27 @@ static odeModel_t *ODEModel_allocate(int neq, int nconst, int nass, int nalg)
 {
   odeModel_t *om;
   int nvalues;
+  
+  ASSIGN_NEW_MEMORY(om, odeModel_t, NULL);
+  /* init. to 0 first */
+  om->neq    = 0;
+  om->nconst = 0;
+  om->nass   = 0;
+  om->nalg   = 0;
 
   nvalues = neq + nalg + nass + nconst;
 
   /* names */
-  ASSIGN_NEW_MEMORY(om, odeModel_t, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->names, nvalues, char *, NULL);
 
-  /* values */
-  /*!!! om->values currently only required for SBML independent input
-    but should be used generally for clarity? */
+  /* values : used for storing initial values only */
   ASSIGN_NEW_MEMORY_BLOCK(om->values, nvalues, realtype, NULL);
 
   /* equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->ode, neq, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignment, nass, ASTNode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->algebraic, nalg, ASTNode_t *, NULL);
+  
   /* compiled equations */
   ASSIGN_NEW_MEMORY_BLOCK(om->odecode, neq, directCode_t *, NULL);
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentcode, nass, directCode_t *, NULL);
@@ -1299,14 +1314,12 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *sbmlFileName)
 
   d =  parseModel((char *)sbmlFileName,
 		  0 /* print message */,
-		  0 /* don't validate */);
+		  0 /* don't validate */);    
+  if ( d == NULL ) return NULL;
     
-  RETURN_ON_ERRORS_WITH(NULL);
-    
-  om = ODEModel_createFromSBML2(d);
-  /* Errors will cause the program to stop, e.g. when some
-     mathematical expressions are missing. */
-  RETURN_ON_ERRORS_WITH(NULL);
+  om = ODEModel_createFromSBML2(d);  
+  if ( om == NULL ) return NULL;
+
   /* remember for freeing afterwards */
   om->d = d;
 
@@ -1327,18 +1340,18 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromSBML2(SBMLDocument_t *d)
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_DOCUMENTLEVEL_ONE,
-		      "SBML Level %d cannot be processed",
+		      "SBML Level %d cannot be processed with function"
+		      " ODEModel_createFromSBML2",
 		      SBMLDocument_getLevel(d));
-    RETURN_ON_ERRORS_WITH(NULL);
+    return NULL;
   }
  
   
   m = SBMLDocument_getModel(d);
   
   om = ODEModel_create(m);
-  /* Errors will cause the program to stop, e.g. when some
-     mathematical expressions are missing.  */
-  RETURN_ON_ERRORS_WITH(NULL);
+  /* if om is NULL a memory allocation failure has occured, pass on NULL */
+  if ( om == NULL ) return NULL;
   
   return om;
 }
@@ -1371,6 +1384,9 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
   
   /* allocate odeModel structure and set values */
   om = ODEModel_allocate(neq, nconst, nass, 0);
+  /* if om is NULL memory allocation failed, just pass on NULL */
+  if ( om == NULL ) return om;
+
 
   /* set SBML input to NULL */
   om->d = NULL;
@@ -1395,7 +1411,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
 
   /* set discontinuities from input modelevents, initial assignments */
   flag = ODEModel_setDiscontinuities(om, events);
-  if ( !flag )
+  if ( flag == -1 ) /* -1 memory allocation failures */
   {
     SolverError_error(ERROR_ERROR_TYPE,
 		      SOLVER_ERROR_ODE_MODEL_SET_DISCONTINUITIES_FAILED,
@@ -1409,9 +1425,10 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromODEs(ASTNode_t **f, int neq, i
     om->values[i] = values[i];
 
   
-   /* generate ordered list of assignment rules for evaluation order */
-  ODEModel_topologicalRuleSort(om); /*!!! TODO : use return value for error
-				     handling? */
+  /* generate ordered list of assignment rules for evaluation order */
+  /* -1 memory allocation failures */
+  om->hasCycle = ODEModel_topologicalRuleSort(om);
+  
   return om;
   
 }
@@ -1423,7 +1440,7 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
 
   int i;
 
-  if(om == NULL) return;
+  if (om == NULL) return;
 
   for ( i=0; i<om->neq+om->nass+om->nconst; i++ )
   {
@@ -1685,7 +1702,7 @@ to all other species for which an ODE exists, i.e. it constructs the
 jacobian matrix of the ODE system. At the moment this matrix is
 freed together with the ODE model. A separate function will be available
 soon.\n
-Returns 1 if successful, 0 otherwise. 
+Returns 1 if successful, 0 otherwise, and -1 for memory allocation failures
 */
 
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
@@ -1702,13 +1719,13 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
   failed = 0;
   nvalues = om->neq + om->nass + om->nconst;
   
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacob, om->neq, ASTNode_t **, -1);
   /* compiled equations */
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode, om->neq, directCode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode, om->neq, directCode_t **, -1);
   for ( i=0; i<om->neq; i++ )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode[i], om->neq, directCode_t *, 0);
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacob[i], om->neq, ASTNode_t *, -1);
+    ASSIGN_NEW_MEMORY_BLOCK(om->jacobcode[i], om->neq, directCode_t *, -1);
   }
 
   /* create list to remember non-zero elements of the Jacobi matrix */
@@ -1752,14 +1769,14 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 	
 	/* 3: generate compiled ODE */
 #ifdef ARITHMETIC_TEST
-	ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, 0);
+	ASSIGN_NEW_MEMORY(om->jacobcode[i][j], directCode_t, -1);
 	om->jacobcode[i][j]->eqn = index;
 	generateFunction(om->jacobcode[i][j], index);
 #endif
 
 	/* 4: generate sparse list */
 	nonzeroElem_t *nonzero;
-	ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, 0);
+	ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, -1);
 	nonzero->i = i;
 	nonzero->j = j;
 	nonzero->ij = om->jacob[i][j];
@@ -1818,7 +1835,7 @@ SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 /*   fprintf(stderr,"USING SPARSE JACOBI: %d of %d elements are non-zero ...", */
 /* 	 List_size(sparse), om->neq*om->neq); */
   
-  ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(om->jacobSparse, om->sparsesize, nonzeroElem_t *, -1);
   for ( i=0; i<om->sparsesize; i++ )
     om->jacobSparse[i] = List_get(sparse, i);
   List_free(sparse);  
@@ -1928,19 +1945,19 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
   ASTNode_t *ode, *fprime, *simple, *index; 
   List_t *names, *sparse;
   
-  ASSIGN_NEW_MEMORY_BLOCK(os->sens, om->neq, ASTNode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(os->sens, om->neq, ASTNode_t **, -1);
   /* compiled equations */
-  ASSIGN_NEW_MEMORY_BLOCK(os->senscode, om->neq, directCode_t **, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(os->senscode, om->neq, directCode_t **, -1);
   /* simple logic vector of non-zero elements */
-  ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic, om->neq, int *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic, om->neq, int *, -1);
   
   /* if only init.cond. sensitivities, nsensP will be 0
      and the matrix will essentially be empty (NULL) */
   for ( i=0; i<om->neq; i++ )
   {
-    ASSIGN_NEW_MEMORY_BLOCK(os->sens[i], os->nsensP, ASTNode_t *, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(os->senscode[i], os->nsensP, directCode_t *, 0);
-    ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic[i], os->nsensP, int, 0);    
+    ASSIGN_NEW_MEMORY_BLOCK(os->sens[i], os->nsensP, ASTNode_t *, -1);
+    ASSIGN_NEW_MEMORY_BLOCK(os->senscode[i], os->nsensP, directCode_t *, -1);
+    ASSIGN_NEW_MEMORY_BLOCK(os->sensLogic[i], os->nsensP, int, -1);    
   }
 
   /* create list to remember non-zero elements of the Jacobi matrix */
@@ -1984,13 +2001,13 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 	if ( val != 0.0 )
 	{
 #ifdef ARITHMETIC_TEST
-	  ASSIGN_NEW_MEMORY(os->senscode[i][l], directCode_t, 0);
+	  ASSIGN_NEW_MEMORY(os->senscode[i][l], directCode_t, -1);
 	  os->senscode[i][l]->eqn = index;
 	  generateFunction(os->senscode[i][l], index);	  
 #endif
 	  /* generate sparse list */
 	  nonzeroElem_t *nonzero;
-	  ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, 0);
+	  ASSIGN_NEW_MEMORY(nonzero, nonzeroElem_t, -1);
 	  nonzero->i = i;
 	  nonzero->j = j;
 	  nonzero->ij = os->sens[i][l];
@@ -2047,7 +2064,7 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 /*   fprintf(stderr,"USING SPARSE PARAM: %d of %d elements are non-zero ...", */
 /* 	 os->sparsesize, om->neq*os->nsensP); */
   
-  ASSIGN_NEW_MEMORY_BLOCK(os->sensSparse, os->sparsesize, nonzeroElem_t *, 0);
+  ASSIGN_NEW_MEMORY_BLOCK(os->sensSparse, os->sparsesize, nonzeroElem_t *, -1);
   for ( i=0; i<os->sparsesize; i++ )
     os->sensSparse[i] = List_get(sparse, i);
   List_free(sparse);  
@@ -3155,8 +3172,9 @@ void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
    Events handling functions for the given model.
    The jacobian function is not generated if the jacobian AST
    expressions have not been generated.
+   Returns 1 if successful, 0 otherwise
 */
-void ODEModel_compileCVODEFunctions(odeModel_t *om)
+int ODEModel_compileCVODEFunctions(odeModel_t *om)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
@@ -3223,15 +3241,15 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     Compiler_compile(CharBuffer_getBuffer(buffer));
 
 
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
+  if ( om->compiledCVODEFunctionCode == NULL )
   {
     CharBuffer_free(buffer);
-    return ;
+    return 0;
   }
 
   CharBuffer_free(buffer);
-
+  
+  /* attach pointers */
   om->compiledCVODERhsFunction =
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_RHS_FUNCTION_NAME);
@@ -3240,11 +3258,7 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
     CompiledCode_getFunction(om->compiledCVODEFunctionCode,
 			     COMPILED_EVENT_FUNCTION_NAME);
 
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
-    return;
 			     
-
   if ( om->jacobian )
   {
     om->compiledCVODEJacobianFunction =
@@ -3258,18 +3272,16 @@ void ODEModel_compileCVODEFunctions(odeModel_t *om)
 
     om->compiledCVODEAdjointRhsFunction =
       CompiledCode_getFunction(om->compiledCVODEFunctionCode,
-			       COMPILED_ADJOINT_RHS_FUNCTION_NAME);
-    
-    if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-	 SolverError_getNum(FATAL_ERROR_TYPE) )
-      return;
+			       COMPILED_ADJOINT_RHS_FUNCTION_NAME);    
+
   }
+  return 1;
 }
 
 
 /* dynamically generates and compiles the ODE Sensitivity RHS
    for the given model */
-void ODESense_compileCVODESenseFunctions(odeSense_t *os)
+int ODESense_compileCVODESenseFunctions(odeSense_t *os)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
@@ -3318,11 +3330,10 @@ void ODESense_compileCVODESenseFunctions(odeSense_t *os)
   os->compiledCVODESensitivityCode =
     Compiler_compile(CharBuffer_getBuffer(buffer));
 
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
+  if ( os->compiledCVODESensitivityCode == NULL )
   {
     CharBuffer_free(buffer);
-    return ;
+    return 0;
   }
 
   CharBuffer_free(buffer);
@@ -3330,20 +3341,14 @@ void ODESense_compileCVODESenseFunctions(odeSense_t *os)
   os->compiledCVODESenseFunction =
     CompiledCode_getFunction(os->compiledCVODESensitivityCode,
 			     COMPILED_SENSITIVITY_FUNCTION_NAME);
-  
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
-    return;
 
   os->compiledCVODEAdjointQuadFunction =
     CompiledCode_getFunction(os->compiledCVODESensitivityCode,
 			     COMPILED_ADJOINT_QUAD_FUNCTION_NAME);
   
-  if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
-       SolverError_getNum(FATAL_ERROR_TYPE) )
-    return;
-  
   os->recompileSensitivity = 0;
+
+  return 1;
 }
 
 
@@ -3351,10 +3356,8 @@ void ODESense_compileCVODESenseFunctions(odeSense_t *os)
 SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
 {
   if ( !om->compiledCVODERhsFunction )
-  {
-    ODEModel_compileCVODEFunctions(om);
-    RETURN_ON_ERRORS_WITH(NULL);
-  }
+    if ( !ODEModel_compileCVODEFunctions(om) )
+      return NULL;
 
   return om->compiledCVODERhsFunction;
 }
@@ -3375,12 +3378,11 @@ SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeMod
   }
 
   if ( !om->compiledCVODEJacobianFunction )
-  {
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODEModel_compileCVODEFunctions(om);
-    RETURN_ON_ERRORS_WITH(NULL);
-  }
+    if ( !ODEModel_compileCVODEFunctions(om) )
+      return NULL;
+
 
   return om->compiledCVODEJacobianFunction;
 }
@@ -3406,8 +3408,8 @@ SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_
       compiled code structure */
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODESense_compileCVODESenseFunctions(os);
-    RETURN_ON_ERRORS_WITH(NULL);
+    if ( !ODESense_compileCVODESenseFunctions(os) )
+      return NULL;
   }
 
   return os->compiledCVODESenseFunction;
@@ -3429,10 +3431,8 @@ SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel
   }
 
   if ( !om->compiledCVODEAdjointRhsFunction  )
-  {
-    ODEModel_compileCVODEFunctions(om);
-    RETURN_ON_ERRORS_WITH(NULL);
-  }
+    if ( !ODEModel_compileCVODEFunctions(om) )
+      return NULL;
 
   return om->compiledCVODEAdjointRhsFunction;
 }
@@ -3453,12 +3453,10 @@ SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunctio
   }
 
   if ( !om->compiledCVODEAdjointJacobianFunction )
-  {
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODEModel_compileCVODEFunctions(om);
-    RETURN_ON_ERRORS_WITH(NULL);
-  }
+    if ( !ODEModel_compileCVODEFunctions(om) )
+      return NULL;
 
   return om->compiledCVODEAdjointJacobianFunction;
 }
@@ -3478,16 +3476,15 @@ SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(ode
   }
 
   if ( !os->compiledCVODEAdjointQuadFunction  || os->recompileSensitivity )
-  {
     /*!!! currently not used: if TCC multiple states become possible,
       until then this must have been compiled already within the main
       compiled code structure, or main must be recompiled here on
       second integrator runs when sens was switched on */
     /* only for calling independent of solver!!
        function should have been compiled already */
-    ODESense_compileCVODESenseFunctions(os); 
-    RETURN_ON_ERRORS_WITH(NULL);
-  }
+    if ( !ODESense_compileCVODESenseFunctions(os) )
+      return NULL;
+
 
   return os->compiledCVODEAdjointQuadFunction;
 }
