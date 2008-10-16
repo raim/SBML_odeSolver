@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 16:44:44 raim>
-  $Id: processAST.c,v 1.64 2008/10/08 17:07:16 raimc Exp $
+  Last changed Time-stamp: <2008-10-13 16:21:41 raim>
+  $Id: processAST.c,v 1.65 2008/10/16 17:25:40 raimc Exp $
 */
 /* 
  *
@@ -2390,7 +2390,7 @@ int ASTNode_containsPiecewise(ASTNode_t *node)
     return 1;
 
   for ( i = 0; i != ASTNode_getNumChildren(node); i++ )
-    if ( ASTNode_containsTime(ASTNode_getChild(node, i)) )
+    if ( ASTNode_containsPiecewise(ASTNode_getChild(node, i)) )
       return 1;
 
   return 0;
