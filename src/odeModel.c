@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 18:33:02 raim>
-  $Id: odeModel.c,v 1.121 2008/10/16 17:27:50 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-16 19:57:57 raim>
+  $Id: odeModel.c,v 1.122 2008/10/16 18:00:28 raimc Exp $ 
 */
 /* 
  *
@@ -484,9 +484,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   
   /* generate ordered array of complete rule set and assignment subset */
   
-  ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass, nonzeroElem_t *, -1);
-  ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentOrder, om->nass+om->ninitAss,
-			  nonzeroElem_t *, -1);
   k = 0;
   l = 0;
   for ( i=0; i<List_size(dependencyList); i++ )
@@ -502,15 +499,23 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 			"Found cyclic dependency in rules. ");
       /* AS -1 error is passed as single element no array elements
 	 have been allocated and can be simply freed */
-      free(om->assignmentOrder);
-      free(om->initAssignmentOrder);      
       List_freeItems(dependencyList, free, int);
       List_free(dependencyList);
       hasCycle = 1;
       return hasCycle;
     }
-    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    
+    if ( i == 0 ) /* create structures */
     {
+      ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass,
+			      nonzeroElem_t *, -1);
+      ASSIGN_NEW_MEMORY_BLOCK(om->initAssignmentOrder, om->nass+om->ninitAss,
+			      nonzeroElem_t *, -1);
+    }
+    
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    {
+
       nonzeroElem_t *ordered;
       ASSIGN_NEW_MEMORY(ordered, nonzeroElem_t, -1);
       ordered->i = *idx;
@@ -1148,7 +1153,7 @@ static int ODEModel_freeDiscontinuities(odeModel_t *om)
   int i, j;
   
   /* initial assignments */
-  for ( i=0; i<om->ninitAss; i++ )
+  for ( i=0; i<om->ninitAss; i++ )      
     ASTNode_free(om->initAssignment[i]);
   free(om->initAssignment);
   free(om->indexInit);
