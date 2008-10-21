@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 17:55:16 raim>
-  $Id: compiler.c,v 1.29 2008/10/16 17:27:50 raimc Exp $
+  $Id: compiler.c,v 1.30 2008/10/21 14:21:50 stefan_tbi Exp $
 */
 /* 
  *
@@ -230,9 +230,9 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   /* construct command for compiling */
   sprintf(command, "%s -I%s -I%s -I%s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
 	  gccFileName,
+	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
 	  SBML_CFLAGS,
-	  SOSLIB_CFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,
@@ -346,9 +346,9 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   sprintf(command,
 	  "%s -I%s -I%s -I%s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
  	  gccFileName,
+	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
 	  SBML_CFLAGS,
-	  SOSLIB_CFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,
@@ -358,9 +358,9 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   sprintf(command,
 	  "%s -I%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
  	  gccFileName,
+	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
 	  SBML_CFLAGS,
-	  SOSLIB_CFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,
