@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 18:16:59 raim>
-  $Id: odeModel.h,v 1.52 2008/10/16 17:27:50 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-30 15:47:57 raim>
+  $Id: odeModel.h,v 1.53 2008/10/30 14:53:13 raimc Exp $ 
 */
 /* 
  *
@@ -303,6 +303,9 @@ extern "C" {
 
   /* ODE variables and parameters */
   SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *);
+  SBML_ODESOLVER_API const Model_t *ODEModel_getOdeSBML(odeModel_t *);
+  SBML_ODESOLVER_API const Model_t *ODEModel_getInputSBML(odeModel_t *);
+
   SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *);

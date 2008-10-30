@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 22:08:29 raim>
-  $Id: odeModel.c,v 1.123 2008/10/16 20:09:34 raimc Exp $ 
+  Last changed Time-stamp: <2008-10-30 15:47:41 raim>
+  $Id: odeModel.c,v 1.124 2008/10/30 14:53:13 raimc Exp $ 
 */
 /* 
  *
@@ -1693,9 +1693,26 @@ SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *om)
     integratorInstance.
 */
 
+SBML_ODESOLVER_API const Model_t *ODEModel_getOdeSBML(odeModel_t *om)
+{  
+  return (const Model_t *) om->simple;
+}
+
+/** deprecated, please use ODEModel_getOdeSBML instead */
 SBML_ODESOLVER_API const Model_t *ODEModel_getModel(odeModel_t *om)
 {
-  return (const Model_t *) om->simple;
+  return ODEModel_getOdeSBML(om);
+}
+
+/** \brief Returns a pointer to the SBML input model from which the
+    ODE system has been created.
+    
+
+*/
+
+SBML_ODESOLVER_API const Model_t *ODEModel_getInputSBML(odeModel_t *om)
+{
+  return (const Model_t *) om->m;
 }
 
 /** @} */
