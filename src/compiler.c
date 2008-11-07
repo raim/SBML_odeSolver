@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 17:55:16 raim>
-  $Id: compiler.c,v 1.30 2008/10/21 14:21:50 stefan_tbi Exp $
+  $Id: compiler.c,v 1.31 2008/11/07 08:55:47 raimc Exp $
 */
 /* 
  *
@@ -118,7 +118,7 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
     return NULL;
   }
 
-  fprintf(cFile, sourceCode);
+  fprintf(cFile, "%s", sourceCode);
   fclose(cFile);
 
   sprintf(command, "%s -o %s -shared %s > %s",
@@ -224,7 +224,7 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
     return NULL;
   }
   
-  fprintf(cFile, sourceCode);
+  fprintf(cFile, "%s", sourceCode);
   fclose(cFile);
   
   /* construct command for compiling */
@@ -338,7 +338,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
     return NULL;
   }
 
-  fprintf(cFile, sourceCode);
+  fprintf(cFile, "%s", sourceCode);
   fclose(cFile);
 
   /* construct command for compiling */
