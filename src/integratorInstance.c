@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:39:29 raim>
-  $Id: integratorInstance.c,v 1.104 2008/10/16 17:27:50 raimc Exp $
+  $Id: integratorInstance.c,v 1.105 2008/11/07 08:57:33 raimc Exp $
 */
 /* 
  *
@@ -831,7 +831,7 @@ SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t *engi
     {
       c = Model_getCompartmentById(m, Species_getCompartment(s));
       if ( !Species_getHasOnlySubstanceUnits(s) &&
-	   Compartment_getSpatialDimensions != 0 )
+	   Compartment_getSpatialDimensions(c) != 0 )
 	Species_setInitialConcentration(s, results->value[i][nout]);
       else
 	Species_setInitialAmount(s, results->value[i][nout]);
