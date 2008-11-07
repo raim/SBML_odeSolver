@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-30 15:47:41 raim>
-  $Id: odeModel.c,v 1.124 2008/10/30 14:53:13 raimc Exp $ 
+  $Id: odeModel.c,v 1.125 2008/11/07 09:15:46 raimc Exp $ 
 */
 /* 
  *
@@ -897,7 +897,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq],
 			      strlen(Rule_getVariable(rl))+1,
 			      char, NULL);
-      sprintf(om->names[neq], Rule_getVariable(rl));
+      sprintf(om->names[neq], "%s", Rule_getVariable(rl));
       neq++;
     }
     else if ( type == SBML_ASSIGNMENT_RULE )
@@ -905,7 +905,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
       ASSIGN_NEW_MEMORY_BLOCK(om->names[om->neq+nass],
 			      strlen(Rule_getVariable(rl))+1,
 			      char, NULL);
-      sprintf(om->names[om->neq + nass], Rule_getVariable(rl));
+      sprintf(om->names[om->neq + nass], "%s", Rule_getVariable(rl));
       nass++;      
     }
     else if ( type == SBML_ALGEBRAIC_RULE )
@@ -938,7 +938,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Compartment_getId(c))+1, char, NULL);
-      sprintf(om->names[neq+nass+nconst], Compartment_getId(c));
+      sprintf(om->names[neq+nass+nconst], "%s", Compartment_getId(c));
       nconst++;      
     }
   }  
@@ -955,7 +955,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Species_getId(s))+1, char, NULL);
-      sprintf(om->names[neq+nass+nconst], Species_getId(s));
+      sprintf(om->names[neq+nass+nconst], "%s", Species_getId(s));
       nconst++;      
     }
   }
@@ -971,7 +971,7 @@ static odeModel_t *ODEModel_fillStructures(Model_t *ode)
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->names[neq+nass+nconst],
 			      strlen(Parameter_getId(p))+1, char, NULL);
-      sprintf(om->names[neq+nass+nconst], Parameter_getId(p));
+      sprintf(om->names[neq+nass+nconst], "%s", Parameter_getId(p));
       nconst++;      
     }
   }

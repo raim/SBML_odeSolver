@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 19:11:11 raim>
-  $Id: solverError.c,v 1.23 2008/10/16 17:27:50 raimc Exp $ 
+  $Id: solverError.c,v 1.24 2008/11/07 09:15:46 raimc Exp $ 
 */
 /* 
  *
@@ -233,7 +233,7 @@ SBML_ODESOLVER_API void SolverError_dump()
 {
   char *message = SolverError_dumpToString();
 
-  fprintf(stderr, message);
+  fprintf(stderr, "%s", message);
   SolverError_freeDumpString(message);
 }
 

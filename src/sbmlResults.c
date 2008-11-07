@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-03-10 17:40:47 raim>
-  $Id: sbmlResults.c,v 1.21 2008/03/10 19:24:29 raimc Exp $
+  $Id: sbmlResults.c,v 1.22 2008/11/07 09:15:46 raimc Exp $
 */
 /* 
  *
@@ -370,7 +370,7 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
       tc = results->compartments->tc[i];
       ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Compartment_getId(c))+1,
 			      char, NULL);
-      sprintf(tc->name, Compartment_getId(c));
+      sprintf(tc->name, "%s", Compartment_getId(c));
     }
   }
 
@@ -392,7 +392,7 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
       tc = results->parameters->tc[num_parameters];
       ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Parameter_getId(p))+1, char,
 			      NULL);
-      sprintf(tc->name, Parameter_getId(p));
+      sprintf(tc->name, "%s", Parameter_getId(p));
       num_parameters++;
     }
   }  
@@ -406,7 +406,7 @@ SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
     r = Model_getReaction(m, i);
     tc = results->fluxes->tc[i];
     ASSIGN_NEW_MEMORY_BLOCK(tc->name, strlen(Reaction_getId(r))+1, char, NULL);
-    sprintf(tc->name, Reaction_getId(r));
+    sprintf(tc->name, "%s", Reaction_getId(r));
   }
 
   return results;
