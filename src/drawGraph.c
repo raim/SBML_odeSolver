@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-10-26 17:39:56 raim>
-  $Id: drawGraph.c,v 1.29 2007/11/21 14:40:40 stefan_tbi Exp $
+  $Id: drawGraph.c,v 1.30 2008/11/07 08:51:53 raimc Exp $
 */
 /* 
  *
@@ -119,7 +119,7 @@ SBML_ODESOLVER_API int drawJacoby(cvodeData_t *data, char *file, char *format)
   Agsym_t *a;
   char name[WORDSIZE];
   char label[WORDSIZE];  
-  char *output[3];
+  char *output[4];
   char *command = "dot";
   char *formatopt;
   char *outfile;
@@ -377,7 +377,7 @@ SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *data, char *file, char *form
   Agsym_t *a;
   char name[WORDSIZE];
   char label[WORDSIZE];  
-  char *output[3];
+  char *output[4];
   char *command = "dot";
   char *formatopt;
   char *outfile;
