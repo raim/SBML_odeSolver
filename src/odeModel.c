@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-30 15:47:41 raim>
-  $Id: odeModel.c,v 1.125 2008/11/07 09:15:46 raimc Exp $ 
+  Last changed Time-stamp: <20-Nov-2008 13:22:31 raim>
+  $Id: odeModel.c,v 1.126 2008/11/20 12:24:24 raimc Exp $ 
 */
 /* 
  *
@@ -1076,12 +1076,16 @@ static int ODEModel_setDiscontinuities(odeModel_t *om, Model_t *ode)
   nvalues = om->neq + om->nass + om->nconst;
   
   /* size of discontinuities */
-  nevents = Model_getNumEvents(ode);
+  nevents = 0;
   neventAss = 0;
-  for ( i=0; i<nevents; i++ )
-    neventAss += Event_getNumEventAssignments(Model_getEvent(ode, i));    
-  ninitAss = Model_getNumInitialAssignments(ode);
-
+  ninitAss = 0;
+  if ( ode != NULL )
+  {
+    nevents = Model_getNumEvents(ode);
+    for ( i=0; i<nevents; i++ )
+      neventAss += Event_getNumEventAssignments(Model_getEvent(ode, i));    
+    ninitAss = Model_getNumInitialAssignments(ode);
+  }
   /* allocate basic structures */
   flag = ODEModel_allocateDiscontinuities(om, nvalues,
 					  nevents, neventAss, ninitAss);
