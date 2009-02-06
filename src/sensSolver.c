@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 19:49:21 raim>
-  $Id: sensSolver.c,v 1.76 2008/10/08 19:06:52 raimc Exp $
+  $Id: sensSolver.c,v 1.77 2009/02/06 12:41:34 stefan_tbi Exp $
 */
 /* 
  *
@@ -86,6 +86,8 @@ static int fQA(realtype t, N_Vector y, N_Vector yA, N_Vector qAdot,
 	       void *fQ_dataA);
 
 static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
+
+static int fQFIM(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 
 static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *);
 
@@ -339,54 +341,105 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensErrCon", 1);
     
 
-      /*  If linear functional exists, initialize quadrature computation  */
-    if ( (om->ObjectiveFunction == NULL) && (om->vector_v != NULL) )
-    {
-      if ( solver->qS == NULL )
-      {
-	/* initialize new qS quadrature */
-	solver->qS = N_VNew_Serial(os->nsens);
-	CVODE_HANDLE_ERROR((void *) solver->qS,
-			   "N_VNew_Serial for vector qS", 0);
-	for ( i=0; i<os->nsens; i++ )
-	  NV_Ith_S(solver->qS, i) = 0.0;
-	
-	/* if q exists, nsens has size 1 and quad can be reused */
-	if ( solver->q )
+    /*  If linear functional exists, initialize quadrature computation  */
+    if ( !opt->doFIM )
 	{
-	  N_VDestroy_Serial(engine->solver->q);
-	  engine->solver->q = NULL;
+	    if ( (om->ObjectiveFunction == NULL) && (om->vector_v != NULL) )
+		{
+		    if ( solver->qS == NULL )
+			{
+			    /* initialize new qS quadrature */
+			    solver->qS = N_VNew_Serial(os->nsens);
+			    CVODE_HANDLE_ERROR((void *) solver->qS,
+					       "N_VNew_Serial for vector qS", 0);
+			    for ( i=0; i<os->nsens; i++ )
+				NV_Ith_S(solver->qS, i) = 0.0;
+	
+			    /* if q exists, nsens has size 1 and quad can be reused */
+			    if ( solver->q )
+				{
+				    N_VDestroy_Serial(engine->solver->q);
+				    engine->solver->q = NULL;
 	  
-	  flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
-	}
-	else
-	{ /* NO QUAD EXIST, CALL MALLOC*/
-	  flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for qS", 1);
-	}
-      }
-      /* if qS still exists then the dimension hasn't changed */
-      else
-      {
-	/* just use existing quadrature */
-	for ( i=0; i<os->nsens; i++ )
-	  NV_Ith_S(solver->qS, i) = 0.0;
-	flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
-	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
-      }
+				    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
+				    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
+				}
+			    else
+				{ /* NO QUAD EXIST, CALL MALLOC*/
+				    flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
+				    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for qS", 1);
+				}
+			}
+		    /* if qS still exists then the dimension hasn't changed */
+		    else
+			{
+			    /* just use existing quadrature */
+			    for ( i=0; i<os->nsens; i++ )
+				NV_Ith_S(solver->qS, i) = 0.0;
+			    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
+			    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
+			}
 
       
-      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
+		    flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
+		    CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
       
-      /* set quadrature tolerance for objective function 
-	 to be the same as the forward solution tolerances */
-      /*!!! error init causes strange problems */
-/*       flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE, */
-/* 				CV_SS, solver->reltol, &(opt->Error)); */
-/*       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1); */
-    }
+		    /* set quadrature tolerance for objective function 
+		       to be the same as the forward solution tolerances */
+		    /*!!! error init causes strange problems */
+		    /*       flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE, */
+		    /* 				CV_SS, solver->reltol, &(opt->Error)); */
+		    /*       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1); */
+		}
+	}
+    else /* do FIM */
+	{
+	    if ( solver->qFIM == NULL )
+		{
+		    /* initialize new qFIM quadrature */
+		    solver->qFIM = N_VNew_Serial(os->nsens*os->nsens);
+		    CVODE_HANDLE_ERROR((void *) solver->qFIM,
+				       "N_VNew_Serial for vector qFIM", 0);
+		    for ( i=0; i<os->nsens*os->nsens; i++ )
+			NV_Ith_S(solver->qFIM, i) = 0.0;
+	
+		    /* if q exists, nsens has size 1 and quad can be reused */
+		    if ( solver->q )
+			{
+			    N_VDestroy_Serial(engine->solver->q);
+			    engine->solver->q = NULL;
+	  
+			    flag = CVodeQuadReInit(solver->cvode_mem, fQFIM, solver->qFIM);
+			    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQFIM", 1);
+			}
+		    else
+			{ /* NO QUAD EXIST, CALL MALLOC*/
+			    flag = CVodeQuadMalloc(solver->cvode_mem, fQFIM, solver->qFIM);
+			    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for qFIM", 1);
+			}
+		}
+	    /* if qFIM still exists then the dimension hasn't changed */
+	    else
+		{
+		    /* just use existing quadrature */
+		    for ( i=0; i<os->nsens*os->nsens; i++ )
+			NV_Ith_S(solver->qFIM, i) = 0.0;
+		    flag = CVodeQuadReInit(solver->cvode_mem, fQFIM, solver->qFIM);
+		    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQFIM", 1);
+		}
+
+      
+	    flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata for FIM", 1);
+      
+	    /* set quadrature tolerance for objective function 
+	       to be the same as the forward solution tolerances */
+	    /*!!! error init causes strange problems */
+	    /*       flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE, */
+	    /* 				CV_SS, solver->reltol, &(opt->Error)); */
+	    /*       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1); */
+
+	} /* end FIM */
     
   } 
   else /* Adjoint Phase */    
@@ -1019,7 +1072,7 @@ SBML_ODESOLVER_API int IntegratorInstance_readTimeSeriesData(integratorInstance_
  */
 SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine)
 {
-  int flag;
+  int flag, i, j;
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   int iS;
@@ -1058,12 +1111,25 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 
       /* If doing forward sensitivity analysis and vector_v exists,
 	 compute sensitivity quadrature */
-      if( opt->Sensitivity && om->ObjectiveFunction == NULL &&
-	  om->vector_v != NULL  )
+      if (!opt->doFIM)
       {
-	flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
-	CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad V_Vector", 1);
+	  if( opt->Sensitivity && om->ObjectiveFunction == NULL &&
+	      om->vector_v != NULL  )
+	      {
+		  flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
+		  CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad V_Vector", 1);
+	      }
       }
+      else /* doFIM */
+	  {
+		  flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qFIM);
+		  CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad FIM", 1);
+
+		  /* copy results to matrix FIM */
+		  for (i=0; i<os->nsens; i++)
+		      for (j=0; j<os->nsens; j++)
+			  engine->results->FIM[i][j] = NV_Ith_S(solver->qFIM, i*os->nsens + j);
+	  }
     }
     else
     {
@@ -1177,11 +1243,11 @@ SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine
   }
   else
   {
-   if ( om->ObjectiveFunction != NULL  )
-     data[0] = NV_Ith_S(engine->solver->q, 0); 
-   else if  ( engine->opt->Sensitivity )
-      for ( j=0; j<os->nsens; j++ )
-	data[j] = NV_Ith_S(engine->solver->qS, j); 
+      if ( om->ObjectiveFunction != NULL  )
+	  data[0] = NV_Ith_S(engine->solver->q, 0); 
+      else if  ( engine->opt->Sensitivity )
+	  for ( j=0; j<os->nsens; j++ )
+	      data[j] = NV_Ith_S(engine->solver->qS, j);
   }
 
   return(1);
@@ -1490,6 +1556,62 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
     for ( j=0; j<data->model->neq; j++ )
       dqdata[i] += evaluateAST(engine->om->vector_v[j], data) *
 	NV_Ith_S(yS[i], j);
+  }
+
+  N_VDestroyVectorArray_Serial(yS, data->os->nsens);
+
+  return (0);
+}
+
+static int fQFIM(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
+{
+  int i, j, k, flag;
+  realtype *dqdata;
+  cvodeData_t *data;
+  cvodeSolver_t *solver; 
+  integratorInstance_t *engine;
+  N_Vector *yS;
+  N_Vector yy;
+  
+  engine = (integratorInstance_t *) fQ_data;
+  solver = engine->solver;
+  data  =  engine->data;
+
+  dqdata = NV_DATA_S(qdot);
+
+  /* update time */
+  data->currenttime = t;
+
+  /* update sensitivities */
+  yy = N_VNew_Serial(data->model->neq);
+  yS = N_VCloneVectorArray_Serial(data->os->nsens, yy);
+  N_VDestroy_Serial(yy);
+
+  /*  At t=0, yS is initialized to 0. In this case, CvodeGetSens
+      shouldn't be used as it gives nan's */
+  if ( t != 0 )
+  {
+    flag = CVodeGetSens(solver->cvode_mem, t, yS);
+    if ( flag < 0 )
+    {
+      SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
+			"SUNDIALS_ERROR: CVodeGetSens failed "
+			"with flag %d", flag);
+      exit(EXIT_FAILURE);
+    }
+  }  
+
+
+  /* evaluate quadrature integrand: < yS_i , yS_j > for each i,j */
+  for ( i=0; i<data->os->nsens; i++ )
+  {
+    for ( j=0; j<data->os->nsens; j++ )
+    {
+    dqdata[i*data->os->nsens + j] = 0.0;
+    for ( k=0; k<data->model->neq; k++ )
+      dqdata[i*data->os->nsens + j] += engine->results->weights[k] *
+	NV_Ith_S(yS[i], k) * NV_Ith_S(yS[j], k) ;
+    }
   }
 
   N_VDestroyVectorArray_Serial(yS, data->os->nsens);

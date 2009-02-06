@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-12-06 19:46:51 raim>
-  $Id: integratorInstance.h,v 1.38 2008/01/28 19:25:27 stefan_tbi Exp $ 
+  $Id: integratorInstance.h,v 1.39 2009/02/06 12:41:34 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -76,6 +76,8 @@ struct cvodeSolver
     realtype reltolA, reltolQA;
     N_Vector abstolA, abstolQA; 
     N_Vector qA;
+    /** FIM */
+    N_Vector qFIM;    /** quadrature for Fisher Information Matrix: < yS_i , yS_j > */
 
 };
 

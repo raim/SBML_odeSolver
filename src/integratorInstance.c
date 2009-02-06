@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:39:29 raim>
-  $Id: integratorInstance.c,v 1.105 2008/11/07 08:57:33 raimc Exp $
+  $Id: integratorInstance.c,v 1.106 2009/02/06 12:41:34 stefan_tbi Exp $
 */
 /* 
  *
@@ -940,7 +940,10 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *results = engine->results;
   odeModel_t *om = engine->om;
-  div_t d;   
+  div_t d;
+
+  int j, k;
+  double sum;
 
   /* HANDLE TIME */
   data->currenttime = solver->t;
@@ -1035,6 +1038,19 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       om->compute_vector_v=0;
     }
 
+    /* FIM */
+    if ( opt->doFIM )
+    {
+      for ( i=0; i<data->nsens; i++ )
+        for ( j=0; j<data->nsens; j++ )
+	{
+	  sum = 0.; /* sum over ode variables */ 
+	  for ( k=0; k<data->neq; k++)
+	    sum += results->weights[k] * data->sensitivity[k][i] * data->sensitivity[k][j];
+	  results->FIM[i][j] += sum;
+	}
+    }
+	
   } /* if (opt->observation_data_type == 1) */
 
 

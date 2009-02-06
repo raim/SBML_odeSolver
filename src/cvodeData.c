@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:28:22 raim>
-  $Id: cvodeData.c,v 1.37 2008/10/16 17:27:50 raimc Exp $
+  $Id: cvodeData.c,v 1.38 2009/02/06 12:41:34 stefan_tbi Exp $
 */
 /* 
  *
@@ -407,6 +407,23 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
     if ( data->sensitivity == NULL ) return 0;
   }
 
+  /* do FIM stuff */
+  if ( opt->doFIM )
+  {
+    if ( data->results->FIM == NULL )
+    {
+      ASSIGN_NEW_MEMORY_BLOCK(data->results->FIM, nsens, double *, 0);
+      for ( i=0; i<nsens; i++ )
+	ASSIGN_NEW_MEMORY_BLOCK(data->results->FIM[i], nsens, double, 0);
+    }
+    else
+    {
+      for ( i=0; i<nsens; i++ )
+	for ( j=0; j<nsens; j++ )
+	    data->results->FIM[i][j] = 0.;
+    }
+  }
+	
   /* bind to odeSense model */
   data->os = os;
   
@@ -466,6 +483,15 @@ static void CvodeData_freeSensitivities(cvodeData_t * data)
     free(data->sensitivity);
     data->sensitivity = NULL;
   }
+
+  /* do FIM stuff */
+  if ( data->results->FIM != NULL )
+    {
+      for ( i=0; i<data->nsens; i++ )
+	free(data->results->FIM[i]);
+      free(data->results->FIM);
+    }
+  
   if ( data->p != NULL ) free(data->p);
   if ( data->p_orig != NULL ) free(data->p_orig);
 	   

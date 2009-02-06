@@ -1,5 +1,5 @@
 /*   Last changed Time-stamp: <2008-10-08 21:00:36 raim> */
-/*   $Id: integratorSettings.c,v 1.49 2008/10/08 19:05:57 raimc Exp $ */
+/*   $Id: integratorSettings.c,v 1.50 2009/02/06 12:41:34 stefan_tbi Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -500,6 +500,19 @@ SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *
 {
   set->observation_data_type = 0;
 }
+
+/** Sets flag that tells solver to compute FIM (instead of gradient to objective) */
+SBML_ODESOLVER_API void CvodeSettings_setFIM(cvodeSettings_t *set) 
+{
+  set->doFIM = 1;
+}
+
+/** Sets flag that tells solver not to compute FIM (but the gradient as "normal")  */
+SBML_ODESOLVER_API void CvodeSettings_unsetFIM(cvodeSettings_t *set) 
+{
+  set->doFIM = 0;
+}
+
 
 /* Reads time point column of data, for use in
    CvodeSettings_setForwAdjTimeSeriesFromData   */

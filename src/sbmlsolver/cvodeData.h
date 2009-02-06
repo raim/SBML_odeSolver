@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-06 12:39:48 raim>
-  $Id: cvodeData.h,v 1.12 2008/10/08 17:07:16 raimc Exp $
+  $Id: cvodeData.h,v 1.13 2009/02/06 12:41:34 stefan_tbi Exp $
 */
 /* 
  *
@@ -161,6 +161,10 @@ struct cvodeResults {
   /**  the time series of all adjoint variables */
   double **adjvalue;
 
+  /* Fisher Information Matrix */
+
+  double** FIM;
+  double* weights; /* for the inner product defining the entries of the FIM */
 
 } ;
 
@@ -180,6 +184,7 @@ extern "C" {
   SBML_ODESOLVER_API cvodeData_t *CvodeData_create(odeModel_t *);
   SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
   SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
+  SBML_ODESOLVER_API double** CvodeResults_getFisherInformationMatrix(cvodeResults_t *results); /* FIM */
   SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, double *dp);
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
   SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);

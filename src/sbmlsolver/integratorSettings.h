@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 21:00:52 raim>
-  $Id: integratorSettings.h,v 1.37 2008/10/08 19:05:57 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.38 2009/02/06 12:41:34 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -141,7 +141,12 @@ typedef struct cvodeSettings cvodeSettings_t;
     int OffSet;
     int InterStep;
 
+    /* Fisher Information Matrix (FIM) */
+    int doFIM;
+      
   } ;
+
+
 
   /** NOT USED CURRENTLY!
       timeSettings: start- and end times, timesteps, number of timesteps */
@@ -172,6 +177,8 @@ extern "C" {
 
   SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *); 
+  SBML_ODESOLVER_API void CvodeSettings_setFIM(cvodeSettings_t *set) ;
+  SBML_ODESOLVER_API void CvodeSettings_unsetFIM(cvodeSettings_t *set); 
   SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *, char *, int);
   SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *, time_series_t *, int);
  
