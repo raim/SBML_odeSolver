@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-05-09 23:26:31 raim>
-  $Id: arithmeticCompiler.h,v 1.5 2008/05/14 17:04:46 thegreywanderer Exp $
+  $Id: arithmeticCompiler.h,v 1.6 2009/02/10 12:42:39 stefan_tbi Exp $
 */
 /* 
  *
@@ -37,7 +37,7 @@
 #ifndef _ARITHMETICCOMPILER_H_
 #define _ARITHMETICCOMPILER_H_
 
-/* #define ARITHMETIC_TEST */ /*!!! comment in test arithmeticCompiler.c */
+/* #define ARITHMETIC_TEST */ /* comment in test arithmeticCompiler.c */
 
 typedef struct directCode directCode_t;
 

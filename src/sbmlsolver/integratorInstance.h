@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-12-06 19:46:51 raim>
-  $Id: integratorInstance.h,v 1.39 2009/02/06 12:41:34 stefan_tbi Exp $ 
+  $Id: integratorInstance.h,v 1.40 2009/02/10 12:42:39 stefan_tbi Exp $ 
 */
 /* 
  *
@@ -184,6 +184,8 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *, FILE *f);
   
+  /* */
+  SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *, double *, int);
   
 #ifdef __cplusplus
 }

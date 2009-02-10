@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 19:49:21 raim>
-  $Id: sensSolver.c,v 1.77 2009/02/06 12:41:34 stefan_tbi Exp $
+  $Id: sensSolver.c,v 1.78 2009/02/10 12:42:39 stefan_tbi Exp $
 */
 /* 
  *
@@ -1128,7 +1128,7 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 		  /* copy results to matrix FIM */
 		  for (i=0; i<os->nsens; i++)
 		      for (j=0; j<os->nsens; j++)
-			  engine->results->FIM[i][j] = NV_Ith_S(solver->qFIM, i*os->nsens + j);
+			  data->FIM[i][j] = NV_Ith_S(solver->qFIM, i*os->nsens + j);
 	  }
     }
     else
@@ -1609,7 +1609,7 @@ static int fQFIM(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
     {
     dqdata[i*data->os->nsens + j] = 0.0;
     for ( k=0; k<data->model->neq; k++ )
-      dqdata[i*data->os->nsens + j] += engine->results->weights[k] *
+      dqdata[i*data->os->nsens + j] += data->weights[k] *
 	NV_Ith_S(yS[i], k) * NV_Ith_S(yS[j], k) ;
     }
   }

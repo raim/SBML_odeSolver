@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:28:22 raim>
-  $Id: cvodeData.c,v 1.38 2009/02/06 12:41:34 stefan_tbi Exp $
+  $Id: cvodeData.c,v 1.39 2009/02/10 12:42:38 stefan_tbi Exp $
 */
 /* 
  *
@@ -384,7 +384,6 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   return 1;
 }
 
-
 /* initialize sensitivity initial values at time 0 */
 int CvodeData_initializeSensitivities(cvodeData_t *data,
 				      cvodeSettings_t *opt,
@@ -403,24 +402,31 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
   /* 2: create cvodeData and odeModel structures */
   if ( data->sensitivity == NULL )
   {
-    CvodeData_allocateSens(data, om->neq, nsens);
+    CvodeData_allocateSens(data, om->neq, nsens); /* why not data->neq ? */
     if ( data->sensitivity == NULL ) return 0;
   }
 
   /* do FIM stuff */
   if ( opt->doFIM )
   {
-    if ( data->results->FIM == NULL )
+    if ( data->FIM == NULL )
     {
-      ASSIGN_NEW_MEMORY_BLOCK(data->results->FIM, nsens, double *, 0);
+      ASSIGN_NEW_MEMORY_BLOCK(data->FIM, nsens, double *, 0);
       for ( i=0; i<nsens; i++ )
-	ASSIGN_NEW_MEMORY_BLOCK(data->results->FIM[i], nsens, double, 0);
+	ASSIGN_NEW_MEMORY_BLOCK(data->FIM[i], nsens, double, 0);
     }
     else
     {
       for ( i=0; i<nsens; i++ )
 	for ( j=0; j<nsens; j++ )
-	    data->results->FIM[i][j] = 0.;
+	    data->FIM[i][j] = 0.;
+    }
+    if (data->weights == NULL )
+    {
+      /* by default weights are set to 1 */
+      ASSIGN_NEW_MEMORY_BLOCK(data->weights, om->neq, double *, 0);
+      for ( i=0; i<om->neq; i++ )
+	data->weights[i] = 1.0;
     }
   }
 	
@@ -485,12 +491,14 @@ static void CvodeData_freeSensitivities(cvodeData_t * data)
   }
 
   /* do FIM stuff */
-  if ( data->results->FIM != NULL )
+  if ( data->FIM != NULL )
     {
       for ( i=0; i<data->nsens; i++ )
-	free(data->results->FIM[i]);
-      free(data->results->FIM);
+	free(data->FIM[i]);
+      free(data->FIM);
     }
+  if (data->weights != NULL )
+      free(data->weights);
   
   if ( data->p != NULL ) free(data->p);
   if ( data->p_orig != NULL ) free(data->p_orig);

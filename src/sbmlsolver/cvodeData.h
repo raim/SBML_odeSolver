@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-06 12:39:48 raim>
-  $Id: cvodeData.h,v 1.13 2009/02/06 12:41:34 stefan_tbi Exp $
+  $Id: cvodeData.h,v 1.14 2009/02/10 12:42:39 stefan_tbi Exp $
 */
 /* 
  *
@@ -126,6 +126,12 @@ struct cvodeData {
  
   /* for computing vector_v using discrete observation data */
   int TimeSeriesIndex;
+
+  /* Fisher Information Matrix */
+
+  double** FIM;
+  double* weights; /* for the inner product defining the entries of the FIM */
+
 } ;
 
 /** Stores CVODE specific integration results, data correspond
@@ -160,11 +166,6 @@ struct cvodeResults {
  /*  int nadjeq; */
   /**  the time series of all adjoint variables */
   double **adjvalue;
-
-  /* Fisher Information Matrix */
-
-  double** FIM;
-  double* weights; /* for the inner product defining the entries of the FIM */
 
 } ;
 

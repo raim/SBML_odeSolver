@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:39:29 raim>
-  $Id: integratorInstance.c,v 1.106 2009/02/06 12:41:34 stefan_tbi Exp $
+  $Id: integratorInstance.c,v 1.107 2009/02/10 12:42:38 stefan_tbi Exp $
 */
 /* 
  *
@@ -1046,8 +1046,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	{
 	  sum = 0.; /* sum over ode variables */ 
 	  for ( k=0; k<data->neq; k++)
-	    sum += results->weights[k] * data->sensitivity[k][i] * data->sensitivity[k][j];
-	  results->FIM[i][j] += sum;
+	    sum += data->weights[k] * data->sensitivity[k][i] * data->sensitivity[k][j];
+	  data->FIM[i][j] += sum;
 	}
     }
 	
@@ -1578,6 +1578,21 @@ SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstan
 double *IntegratorInstance_getValues(integratorInstance_t *engine)
 {
   return engine->data->value;
+}
+
+/* set weights for FIM */
+SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *ii, double *weights, int n)
+{    
+  int i;
+    
+  if ( n > ii->data->neq )
+  {    
+    fprintf(stderr, "vector of weights for FIM longer than number of ODE variables");
+    exit(0);
+  }
+
+  for ( i=0; i<ii->data->neq; i++ )
+      ii->data->weights[i] = weights[i];
 }
 
 /*@}*/
