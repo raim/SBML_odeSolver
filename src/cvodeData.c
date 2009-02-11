@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:28:22 raim>
-  $Id: cvodeData.c,v 1.39 2009/02/10 12:42:38 stefan_tbi Exp $
+  $Id: cvodeData.c,v 1.40 2009/02/11 15:43:14 stefan_tbi Exp $
 */
 /* 
  *
@@ -424,7 +424,7 @@ int CvodeData_initializeSensitivities(cvodeData_t *data,
     if (data->weights == NULL )
     {
       /* by default weights are set to 1 */
-      ASSIGN_NEW_MEMORY_BLOCK(data->weights, om->neq, double *, 0);
+      ASSIGN_NEW_MEMORY_BLOCK(data->weights, om->neq, double, 0);
       for ( i=0; i<om->neq; i++ )
 	data->weights[i] = 1.0;
     }
