@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:39:29 raim>
-  $Id: integratorInstance.c,v 1.107 2009/02/10 12:42:38 stefan_tbi Exp $
+  $Id: integratorInstance.c,v 1.108 2009/02/11 15:05:07 stefan_tbi Exp $
 */
 /* 
  *
@@ -1004,7 +1004,17 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
     }
 
     for ( i=0; i<data->nvalues; i++ )
-      results->value[i][solver->iout] = data->value[i]; 
+      results->value[i][solver->iout] = data->value[i];
+
+    /* store sensitivities */
+    for ( j=0; j<data->nsens; j++ )
+    {
+      for ( i=0; i<data->neq; i++ )
+      {
+	  results->sensitivity[i][j][solver->iout] = data->sensitivity[i][j];
+      }
+    }
+
   }
           
   /* HANDLE STEADY STATE */
@@ -1040,7 +1050,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 
     /* FIM */
     if ( opt->doFIM )
-    {
+      {
       for ( i=0; i<data->nsens; i++ )
         for ( j=0; j<data->nsens; j++ )
 	{
@@ -1049,7 +1059,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	    sum += data->weights[k] * data->sensitivity[k][i] * data->sensitivity[k][j];
 	  data->FIM[i][j] += sum;
 	}
-    }
+      }
 	
   } /* if (opt->observation_data_type == 1) */
 

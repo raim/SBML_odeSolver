@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 18:49:17 raim>
-  $Id: cvodeSolver.c,v 1.80 2008/10/08 17:07:16 raimc Exp $
+  $Id: cvodeSolver.c,v 1.81 2009/02/11 15:05:07 stefan_tbi Exp $
 */
 /* 
  *
@@ -226,13 +226,20 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     for ( i=0; i<om->neq; i++ )
       data->value[i] = ydata[i];
 
+    /*  calculating sensitivities */ /* before update rest of data */
+    if ( opt->Sensitivity )
+    {
+      flag = IntegratorInstance_getForwardSens(engine);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetFdata", 1);
+    }   
+
     /* update rest of data with internal default function */
     flag = IntegratorInstance_updateData(engine);
     if ( flag != 1 )
       return 0;
 
   }
-  /* if( !engine->AdjointPhase ) */
+  /* end if ( !engine->AdjointPhase ) */
   else
   { /* AdjointPhase: */
 
@@ -242,7 +249,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     /*!!! ==31752== Conditional jump or move depends on uninitialised
                     value(s)
 	  ==31752==    at 0x43552B: CVodeB
-(in /home/fremdling/raim/programs/SBML_odeSolver/examples/adj_sensitivity) */
+    (in /home/fremdling/raim/programs/SBML_odeSolver/examples/adj_sensitivity) */
 
     if ( flag <CV_SUCCESS  )
     {   
@@ -368,20 +375,11 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       return 0;
     }
 
-  }
-
-  /*  calculating sensitivities */
-  if ( opt->Sensitivity && !engine->AdjointPhase )
-  { 
-    flag = IntegratorInstance_getForwardSens(engine);
-    CVODE_HANDLE_ERROR(&flag, "CVodeSetFdata", 1);
-  }
-  else if( engine->AdjointPhase )
-  {
+    /* calculating sensitivities */
     IntegratorInstance_getAdjSens(engine);
+    
   }
-  else
-    return 1; /* OK, redundant? */
+  /* end if ( engine->AdjointPhase ) */
 
   return 1; /* OK, redundant? */    
 }

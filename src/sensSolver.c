@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 19:49:21 raim>
-  $Id: sensSolver.c,v 1.78 2009/02/10 12:42:39 stefan_tbi Exp $
+  $Id: sensSolver.c,v 1.79 2009/02/11 15:05:07 stefan_tbi Exp $
 */
 /* 
  *
@@ -130,9 +130,9 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
       for ( i=0; i<data->neq; i++ )
       {
 	data->sensitivity[i][j] = ySdata[i];
-	/* store results */
-	if ( opt->StoreResults )
-	  results->sensitivity[i][j][solver->iout-1] = ySdata[i];
+/* 	/\* store results *\/ */
+/* 	if ( opt->StoreResults ) */
+/* 	  results->sensitivity[i][j][solver->iout-1] = ySdata[i]; */
       }
     }
   }
