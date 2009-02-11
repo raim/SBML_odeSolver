@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-08 18:49:17 raim>
-  $Id: cvodeSolver.c,v 1.81 2009/02/11 15:05:07 stefan_tbi Exp $
+  $Id: cvodeSolver.c,v 1.82 2009/02/11 18:26:20 stefan_tbi Exp $
 */
 /* 
  *
@@ -791,6 +791,13 @@ void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *engine)
   {
     N_VDestroy_Serial(engine->solver->qS);
     engine->solver->qS = NULL;
+  }
+
+  /* Free sensitivity quadrature vector for FIM calculation */
+  if (engine->solver->qFIM != NULL)
+  {
+    N_VDestroy_Serial(engine->solver->qFIM);
+    engine->solver->qFIM = NULL;
   }
 
   CVodeSensFree(engine->solver->cvode_mem);
