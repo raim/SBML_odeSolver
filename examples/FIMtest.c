@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-09-19 15:05:31 raim>
-  $Id: FIMtest.c,v 1.3 2009/02/11 15:07:16 stefan_tbi Exp $
+  $Id: FIMtest.c,v 1.4 2009/02/11 18:27:16 stefan_tbi Exp $
 */
 /* 
  *
@@ -48,7 +48,7 @@ main (int argc, char *argv[])
   cvodeSettings_t *set;
   integratorInstance_t *ii;
 
-  variableIndex_t *p1, *p2, *p3;
+  variableIndex_t *p1, *p2, *p3, *vi;
   double *weights;
   
   /* Setting SBML ODE Solver integration parameters  */
@@ -90,9 +90,12 @@ main (int argc, char *argv[])
   IntegratorInstance_reset(ii);
 
   printf("Now Activate Sensitivity\n\n");
-  printf("ii->os->nsens   = %i\n\n", ii->data->nsens);
-  for ( i=0; i<ii->data->nsens; i++ )  
-      printf("%s\n", ODEModel_getVariableName(ii->om, ODESense_getSensParamIndexByNum(ii->os, i)) );
+  printf("nsens  = %i\n\n", ii->data->nsens);
+  for ( i=0; i<ii->data->nsens; i++ ) {
+      vi = ODESense_getSensParamIndexByNum(ii->os, i);
+      printf("%s\n", ODEModel_getVariableName(ii->om, vi) );
+      VariableIndex_free(vi);
+  }
 
   printf("\n");
   printf("sensitivities calculated for all constants\n");
@@ -189,6 +192,7 @@ main (int argc, char *argv[])
   /*   VariableIndex_free(y); */
   VariableIndex_free(p1);
   VariableIndex_free(p2);
+  VariableIndex_free(p3);
   free(weights);
   
   /* now we have the results and can free the inputs */
