@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-09-19 15:05:31 raim>
-  $Id: FIMtest.c,v 1.2 2009/02/10 12:42:29 stefan_tbi Exp $
+  $Id: FIMtest.c,v 1.3 2009/02/11 15:07:16 stefan_tbi Exp $
 */
 /* 
  *
@@ -48,7 +48,7 @@ main (int argc, char *argv[])
   cvodeSettings_t *set;
   integratorInstance_t *ii;
 
-  variableIndex_t *p1, *p2;
+  variableIndex_t *p1, *p2, *p3;
   double *weights;
   
   /* Setting SBML ODE Solver integration parameters  */
@@ -97,17 +97,19 @@ main (int argc, char *argv[])
   printf("\n");
   printf("sensitivities calculated for all constants\n");
   
-  p1 = ODESense_getSensParamIndexByNum(ii->os, 0);
-  p2 = ODESense_getSensParamIndexByNum(ii->os, 1);
-  printf("sensitivities printed for constants %s and %s\n\n",
+  p1 = ODESense_getSensParamIndexByNum(ii->os, 1);
+  p2 = ODESense_getSensParamIndexByNum(ii->os, 2);
+  p3 = ODESense_getSensParamIndexByNum(ii->os, 3);
+  printf("sensitivities printed for constants %s, %s, %s\n\n",
 	 ODEModel_getVariableName(ii->om, p1),
-	 ODEModel_getVariableName(ii->om, p2));
+	 ODEModel_getVariableName(ii->om, p2),
+	 ODEModel_getVariableName(ii->om, p3));
 
   /* create non-default weights for computation of FIM */
   /* weights should be extracted from objective function! */
   ASSIGN_NEW_MEMORY_BLOCK(weights, ii->data->neq, double, 0);
   for ( i=0; i<ii->data->neq; i++ )
-      weights[i] = 2.;
+      weights[i] = 1.;
   /* set weights (to non-default values) */
   IntegratorInstance_setFIMweights(ii, weights, ii->data->neq);
     
@@ -123,11 +125,13 @@ main (int argc, char *argv[])
     {
       IntegratorInstance_dumpPSensitivities(ii, p1);
       IntegratorInstance_dumpPSensitivities(ii, p2);
+      IntegratorInstance_dumpPSensitivities(ii, p3);
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	break;
     }    
     IntegratorInstance_dumpPSensitivities(ii, p1);
     IntegratorInstance_dumpPSensitivities(ii, p2);
+    IntegratorInstance_dumpPSensitivities(ii, p3);
 
     fprintf(stderr, "FIM =\n");
     for ( j=0; j<ii->data->nsens; j++ )
@@ -155,11 +159,13 @@ main (int argc, char *argv[])
     {
       IntegratorInstance_dumpPSensitivities(ii, p1);
       IntegratorInstance_dumpPSensitivities(ii, p2);
+      IntegratorInstance_dumpPSensitivities(ii, p3);
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	break;
     }    
     IntegratorInstance_dumpPSensitivities(ii, p1);
     IntegratorInstance_dumpPSensitivities(ii, p2);
+    IntegratorInstance_dumpPSensitivities(ii, p3);
 
     /* calculate FIM */
     IntegratorInstance_CVODEQuad(ii);
