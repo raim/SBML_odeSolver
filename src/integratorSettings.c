@@ -1,5 +1,5 @@
-/*   Last changed Time-stamp: <2008-10-08 21:00:36 raim> */
-/*   $Id: integratorSettings.c,v 1.50 2009/02/06 12:41:34 stefan_tbi Exp $ */
+/*   Last changed Time-stamp: <2009-02-12 11:42:48 raim> */
+/*   $Id: integratorSettings.c,v 1.51 2009/02/12 06:25:48 raimc Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -179,7 +179,7 @@ SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double Time, int Pr
 
 /** Creates a settings structure and copies all values from input
 */
-
+/*!!! TODO : check whether clone copies all values, find better solution */
 SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_clone(cvodeSettings_t *set)
 {
   int i;
@@ -428,7 +428,10 @@ SBML_ODESOLVER_API int CvodeSettings_setTimeSeries(cvodeSettings_t *set,
 						   int PrintStep)
 {
   int i;
-  free(set->TimePoints);
+
+  if ( set->TimePoints != NULL )
+    free(set->TimePoints);
+  
   ASSIGN_NEW_MEMORY_BLOCK(set->TimePoints, PrintStep+1, double, 0);    
   set->Time = timeseries[PrintStep-1];
   set->PrintStep = PrintStep;
@@ -473,7 +476,9 @@ SBML_ODESOLVER_API  int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
 {
   int i;
 
-  free(set->AdjTimePoints);
+  if ( set->AdjTimePoints != NULL )
+   free(set->AdjTimePoints);
+
   ASSIGN_NEW_MEMORY_BLOCK(set->AdjTimePoints, AdjPrintStep+1, double, 0);    
 
   set->AdjTime = timeseries[AdjPrintStep-1];
@@ -656,15 +661,18 @@ SBML_ODESOLVER_API int CvodeSettings_setTimePointsFromExpm(cvodeSettings_t *set,
     set->TimePoints[0] = 0.0;
     d = div(i, 1+InterStep);
 
-    if( d.rem == 0){
+    if( d.rem == 0 )
+    {
       set->TimePoints[OffSet+i] = DataTimePoints[d.quot];
     }
-    else{
-
-      if ( d.quot == n_time-1 ){
+    else
+    {
+      if ( d.quot == n_time-1 )
+      {
 	NextDataTime =  DataTimePoints[d.quot];
       }
-      else{
+      else
+      {
         NextDataTime =  DataTimePoints[d.quot+1];
       }
 
