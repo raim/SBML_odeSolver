@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-03-10 17:26:45 raim>
-  $Id: sbmlResults.h,v 1.13 2008/03/10 19:24:30 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 18:19:18 raim>
+  $Id: sbmlResults.h,v 1.14 2009/02/12 09:24:13 raimc Exp $
 */
 /* 
  *
@@ -126,6 +126,7 @@ extern "C" {
   SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
   SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *);
+  SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *, int i);
 
  

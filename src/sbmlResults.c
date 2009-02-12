@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-03-10 17:40:47 raim>
-  $Id: sbmlResults.c,v 1.22 2008/11/07 09:15:46 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 18:18:56 raim>
+  $Id: sbmlResults.c,v 1.23 2009/02/12 09:24:13 raimc Exp $
 */
 /* 
  *
@@ -228,6 +228,15 @@ SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
 
 
 /*** results matrix as returned by _odeSolverBatch parameter variation ***/
+
+/** Returns the number of SBMLResults present in the array of results,
+    returned by batch function
+*/
+
+SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *resA)
+{
+  return resA->size;  
+}
 
 /** Returns the SBMLResults for the ith designpoint, i.e. 
     parameter combination, from the a batch run
