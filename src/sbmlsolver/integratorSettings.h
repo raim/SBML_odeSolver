@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 21:00:52 raim>
-  $Id: integratorSettings.h,v 1.38 2009/02/06 12:41:34 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2009-02-12 18:06:13 raim>
+  $Id: integratorSettings.h,v 1.39 2009/02/12 09:25:05 raimc Exp $ 
 */
 /* 
  *
@@ -177,6 +177,7 @@ extern "C" {
 
   SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_unsetDiscreteObservation(cvodeSettings_t *); 
+  SBML_ODESOLVER_API int CvodeSettings_getObservationDataType(cvodeSettings_t *);
   SBML_ODESOLVER_API void CvodeSettings_setFIM(cvodeSettings_t *set) ;
   SBML_ODESOLVER_API void CvodeSettings_unsetFIM(cvodeSettings_t *set); 
   SBML_ODESOLVER_API int CvodeSettings_setForwAdjTimeSeriesFromData(cvodeSettings_t *, char *, int);

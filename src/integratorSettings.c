@@ -1,5 +1,5 @@
-/*   Last changed Time-stamp: <2009-02-12 11:42:48 raim> */
-/*   $Id: integratorSettings.c,v 1.51 2009/02/12 06:25:48 raimc Exp $ */
+/*   Last changed Time-stamp: <2009-02-12 18:14:02 raim> */
+/*   $Id: integratorSettings.c,v 1.52 2009/02/12 09:25:05 raimc Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -493,6 +493,16 @@ SBML_ODESOLVER_API  int CvodeSettings_setAdjTimeSeries(cvodeSettings_t *set,
   
   return 1;
 }
+
+/** Gets the type of observation data,
+    values are:
+    0 ... continuous data
+    1 ... discrete data  */
+SBML_ODESOLVER_API int CvodeSettings_getObservationDataType(cvodeSettings_t *set)
+{
+  return set->observation_data_type;
+}
+
 
 /** Sets flag that tells solver that the (experimental) data should be treated as discrete entities  */
 SBML_ODESOLVER_API void CvodeSettings_setDiscreteObservation(cvodeSettings_t *set) 
