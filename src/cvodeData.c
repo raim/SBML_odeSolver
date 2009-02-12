@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 18:28:22 raim>
-  $Id: cvodeData.c,v 1.40 2009/02/11 15:43:14 stefan_tbi Exp $
+  Last changed Time-stamp: <2009-02-12 17:56:09 raim>
+  $Id: cvodeData.c,v 1.41 2009/02/12 09:26:42 raimc Exp $
 */
 /* 
  *
@@ -230,17 +230,22 @@ SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *results, variabl
 }
 
 
-/** Returns the ith (0 <= i < nsens) sensitivity of ODE variable y 
-    at timestep nr. `timestep, where 0 <= timestep < CvodeResults_getNout.
+/** Returns the ith (0 <= i < nsens) sensitivity of ODE variable y
+    (0 <= y < neq) at timestep nr. `timestep
+    (0 <= timestep < CvodeResults_getNout).
 
-    Returns 0 if i >= nsens (which also happens if no sensitivity was
-    calculated).
+    Returns 0 if the requested indices are out of scope or no sensitivity
+    has been calculated.
 */
 
-SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int value, int i, int timestep)
+SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *results,  int y, int i, int timestep)
 {
+  if ( y >= results->neq ) return 0; 
   if ( i >= results->nsens ) return 0;
-  else return results->sensitivity[value][i][timestep];
+  if ( timestep >= results->nout ) return 0;
+  /* should be redundant with nsens check */
+  if ( results->sensitivity == NULL ) return 0; 
+  else return results->sensitivity[y][i][timestep];
 }
 
 
