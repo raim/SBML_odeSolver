@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-09 13:26:31 raim>
-  $Id: batch_integrate.c,v 1.23 2008/09/22 10:30:25 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 18:19:45 raim>
+  $Id: batch_integrate.c,v 1.24 2009/02/12 09:31:12 raimc Exp $
 */
 /* 
  *
@@ -151,7 +151,7 @@ main (int argc, char *argv[]){
   CvodeSettings_free(set);  
   SBMLDocument_free(d);
 
-  for ( i=0; i<resM->size; i++ )
+  for ( i=0; i<SBMLResultsArray_getNumResults(resM); i++ )
   {
     results = SBMLResultsArray_getResults(resM, i);
     printf("### Parameters: "); 

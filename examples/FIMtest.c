@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-09-19 15:05:31 raim>
-  $Id: FIMtest.c,v 1.4 2009/02/11 18:27:16 stefan_tbi Exp $
+  Last changed Time-stamp: <2009-02-12 16:19:59 raim>
+  $Id: FIMtest.c,v 1.5 2009/02/12 09:31:12 raimc Exp $
 */
 /* 
  *
@@ -43,8 +43,9 @@ int
 main (int argc, char *argv[])
 {
   int i, j, k;
-  
+  int neq, nsens;
   odeModel_t *om;
+  odeSense_t *os;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
 
@@ -66,7 +67,7 @@ main (int argc, char *argv[])
   om = ODEModel_createFromFile("MAPK.xml");
   ii = IntegratorInstance_create(om, set);
 
-  printf("\nFirst try a few integrations with default sensitivity\n");
+  printf("\nFirst try a few integrations without sensitivity\n");
   IntegratorInstance_dumpNames(ii);
   printf("\n");
   for ( i=0; i<2; i++ )
@@ -90,31 +91,39 @@ main (int argc, char *argv[])
   IntegratorInstance_reset(ii);
 
   printf("Now Activate Sensitivity\n\n");
-  printf("nsens  = %i\n\n", ii->data->nsens);
-  for ( i=0; i<ii->data->nsens; i++ ) {
-      vi = ODESense_getSensParamIndexByNum(ii->os, i);
-      printf("%s\n", ODEModel_getVariableName(ii->om, vi) );
+
+  os = IntegratorInstance_getSensitivityModel(ii);
+  nsens = ODESense_getNsens(os);
+  
+  printf("nsens  = %i\n\n", nsens);
+  for ( i=0; i<nsens; i++ ) {
+      vi = ODESense_getSensParamIndexByNum(os, i);
+      printf("%s\n", ODEModel_getVariableName(om, vi) );
       VariableIndex_free(vi);
   }
 
   printf("\n");
   printf("sensitivities calculated for all constants\n");
   
-  p1 = ODESense_getSensParamIndexByNum(ii->os, 1);
-  p2 = ODESense_getSensParamIndexByNum(ii->os, 2);
-  p3 = ODESense_getSensParamIndexByNum(ii->os, 3);
+  p1 = ODESense_getSensParamIndexByNum(os, 1);
+  p2 = ODESense_getSensParamIndexByNum(os, 2);
+  p3 = ODESense_getSensParamIndexByNum(os, 3);
   printf("sensitivities printed for constants %s, %s, %s\n\n",
-	 ODEModel_getVariableName(ii->om, p1),
-	 ODEModel_getVariableName(ii->om, p2),
-	 ODEModel_getVariableName(ii->om, p3));
+	 ODEModel_getVariableName(om, p1),
+	 ODEModel_getVariableName(om, p2),
+	 ODEModel_getVariableName(om, p3));
 
   /* create non-default weights for computation of FIM */
   /* weights should be extracted from objective function! */
-  ASSIGN_NEW_MEMORY_BLOCK(weights, ii->data->neq, double, 0);
-  for ( i=0; i<ii->data->neq; i++ )
+
+  neq = ODEModel_getNeq(om);
+  
+  ASSIGN_NEW_MEMORY_BLOCK(weights, neq, double, 0);
+  for ( i=0; i<neq; i++ )
       weights[i] = 1.;
+  
   /* set weights (to non-default values) */
-  IntegratorInstance_setFIMweights(ii, weights, ii->data->neq);
+  IntegratorInstance_setFIMweights(ii, weights, neq);
     
   /* *** *** *** *** *** *** discrete data *** *** *** *** *** *** *** */
   CvodeSettings_setDiscreteObservation(set);
@@ -137,10 +146,10 @@ main (int argc, char *argv[])
     IntegratorInstance_dumpPSensitivities(ii, p3);
 
     fprintf(stderr, "FIM =\n");
-    for ( j=0; j<ii->data->nsens; j++ )
+    for ( j=0; j<nsens; j++ )
     {
-      for ( k=0; k<ii->data->nsens; k++ )
-	  fprintf(stderr, "%g ", ii->data->FIM[j][k]);
+      for ( k=0; k<nsens; k++ )
+	fprintf(stderr, "%g ", IntegratorInstance_getFIM(ii,j,k));
       fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
@@ -174,10 +183,10 @@ main (int argc, char *argv[])
     IntegratorInstance_CVODEQuad(ii);
 
     fprintf(stderr, "FIM =\n");
-    for ( j=0; j<ii->data->nsens; j++ )
+    for ( j=0; j<nsens; j++ )
     {
-      for ( k=0; k<ii->data->nsens; k++ )
-	  fprintf(stderr, "%g ", ii->data->FIM[j][k]);
+      for ( k=0; k<nsens; k++ )
+	fprintf(stderr, "%g ", IntegratorInstance_getFIM(ii,j,k));
       fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");

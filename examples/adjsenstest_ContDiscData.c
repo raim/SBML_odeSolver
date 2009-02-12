@@ -124,7 +124,7 @@ main (int argc, char *argv[]){
     IntegratorInstance_reset(ii);
     IntegratorInstance_setVariableValue(ii, vi, 9.2);
    
-    if (ii->opt->observation_data_type == 1)
+    if (CvodeSettings_getObservationDataType(set) == 1)
     { /* discrete observation */
       fprintf(stdout, "Reading in objective '%s' ... ",    ObjFuncFileNames[RunIndex]);
       flag = IntegratorInstance_setObjectiveFunction(ii,   ObjFuncFileNames[RunIndex]);

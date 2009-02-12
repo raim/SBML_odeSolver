@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-08 13:58:36 raim>
-  $Id: analyzeSensitivity.c,v 1.6 2008/10/08 17:08:17 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 18:14:31 raim>
+  $Id: analyzeSensitivity.c,v 1.7 2009/02/12 09:31:12 raimc Exp $
 */
 /* 
  *
@@ -53,7 +53,7 @@ static void printSensiMatrix(odeSense_t *os, cvodeData_t *data)
     printf("%d   ", j);
   printf("\n");
       
-  for ( i=0; i<ODEModel_getNeq(os->om); i++ ) {
+  for ( i=0; i<ODESense_getNeq(os); i++ ) {
     printf("%d   ", i);
     for ( j=0; j<ODESense_getNsens(os); j++ ) {
       f = ODESense_getSensIJEntry(os, i, j);

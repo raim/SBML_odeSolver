@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-06 14:42:42 raim>
-  $Id: adj_sensitivity.c,v 1.14 2008/10/06 12:46:51 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 17:55:23 raim>
+  $Id: adj_sensitivity.c,v 1.15 2009/02/12 09:31:12 raimc Exp $
 */
 /* 
  *
@@ -51,6 +51,7 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
+  cvodeResults_t *results;
   variableIndex_t *p;
   char *sbml_file, *objfun_file, *data_file; 
   int flag;
@@ -102,7 +103,7 @@ main (int argc, char *argv[]){
   CvodeSettings_setnSaveSteps(set, 2);
     
   /* get the last parameter (for which we will check sensitivities) */
-  p = ODEModel_getConstantIndex(om, om->nconst-1);
+  p = ODEModel_getConstantIndex(om, ODEModel_getNumConstants(om)-1);
 
   /* initialize the integrator */
   ii = IntegratorInstance_create(om, set);
@@ -147,23 +148,28 @@ main (int argc, char *argv[]){
 	return(EXIT_FAILURE); 
 
   /* directional sensitivities */
-  dp = space(ii->results->nsens * sizeof(double));
-  for(i=0; i<ii->results->nsens; i++)
+    dp = space(IntegratorInstance_getNsens(ii) * sizeof(double));
+  for(i=0; i<IntegratorInstance_getNsens(ii); i++)
     dp[i] = 0.0;
-  dp[ii->results->nsens-1] = 1.0; /* the last parameter */
+  dp[IntegratorInstance_getNsens(ii)-1] = 1.0; /* the last parameter */
 
   fprintf(stdout, "### Now computing and printing out directional sensitivities \nwith ");
-  for(i=0; i<ii->results->nsens; i++)
+  for(i=0; i<IntegratorInstance_getNsens(ii); i++)
     fprintf(stdout," dp[%d] = %.2g ", i, dp[i]);
    fprintf(stdout, "\n");
 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
+  
+  results = IntegratorInstance_getResults(ii);
 
-  CvodeResults_computeDirectional(ii->results, dp);
-  for(j=0; j<ii->results->nout+1; j++){ 
-    fprintf(stdout, "%g  ",ii->results->time[j] );
-    for(i=0; i<ii->results->neq; i++)
+  CvodeResults_computeDirectional(results, dp);
+  
+  for(j=0; j<CvodeResults_getNout(results)+1; j++)
+  { 
+    fprintf(stdout, "%g  ",CvodeResults_getTime(results,j) );
+    
+    for(i=0; i<ODEModel_getNeq(om); i++)
       fprintf(stdout, " %.8g ", ii->results->directional[i][j]);
     fprintf(stdout, "\n");
   }
