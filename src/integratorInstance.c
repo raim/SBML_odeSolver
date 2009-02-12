@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 18:39:29 raim>
-  $Id: integratorInstance.c,v 1.108 2009/02/11 15:05:07 stefan_tbi Exp $
+  Last changed Time-stamp: <2009-02-12 13:48:52 raim>
+  $Id: integratorInstance.c,v 1.109 2009/02/12 06:25:11 raimc Exp $
 */
 /* 
  *
@@ -1594,7 +1594,8 @@ double *IntegratorInstance_getValues(integratorInstance_t *engine)
 SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *ii, double *weights, int n)
 {    
   int i;
-    
+
+  /*!!! TODO : add this to solverError messages */
   if ( n > ii->data->neq )
   {    
     fprintf(stderr, "vector of weights for FIM longer than number of ODE variables");
