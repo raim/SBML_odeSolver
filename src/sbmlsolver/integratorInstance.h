@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-12-06 19:46:51 raim>
-  $Id: integratorInstance.h,v 1.40 2009/02/10 12:42:39 stefan_tbi Exp $ 
+  Last changed Time-stamp: <2009-02-12 17:49:53 raim>
+  $Id: integratorInstance.h,v 1.41 2009/02/12 09:30:22 raimc Exp $ 
 */
 /* 
  *
@@ -141,51 +141,60 @@ extern "C" {
 #endif
 
 /* common to all solvers */
-    SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
+  /* BEFORE INTEGRATION: creation and (re-)setting  */
+  SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);
-
-  SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
-  SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
-  SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
-  SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *, variableIndex_t *y,  variableIndex_t *p);
   SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *, double);
+  SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
+
+  /* DURING INTEGRATION: */
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
+  SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *, variableIndex_t *, double);
+  SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);
+
+  SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpNames(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *);
+  SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
+  SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
+  SBML_ODESOLVER_API double *IntegratorInstance_getValues(integratorInstance_t *);
 
+  /* SENSITIVITIES INTERFACE */
+  SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integratorInstance_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *, variableIndex_t *y,  variableIndex_t *p);
+  SBML_ODESOLVER_API double IntegratorInstance_getSensitivityByNum(integratorInstance_t *, int y, int p);
+  SBML_ODESOLVER_API int IntegratorInstance_getNsens(integratorInstance_t *);
   SBML_ODESOLVER_API char* IntegratorInstance_getSensVariableName(integratorInstance_t *, int);
 
   SBML_ODESOLVER_API void IntegratorInstance_dumpYSensitivities(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance_t *, variableIndex_t *);
-  SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
-  SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
+  
+  /* FISHER INFORMATION MATRIX INTERFACE */
+  SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *, int, int);
+  SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *, double *, int);
+
+  /* AFTER INTEGRATION */
+  SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *, FILE *); /* stefan */
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
-  SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
-  SBML_ODESOLVER_API double *IntegratorInstance_getValues(integratorInstance_t *);
-  /* these functions contain solver specific switches and need to be adapted
-     for any new solver, and so does the local
-     integratorInstance_initialiyeSolverStructures */    
-  SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *, variableIndex_t *, double);
-  SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *, FILE *f);
-  
-  /* */
-  SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *, double *, int);
+
+  /* END */
+  SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);
   
 #ifdef __cplusplus
 }
@@ -201,9 +210,5 @@ int IntegratorInstance_updateData(integratorInstance_t *);
    specific ...OneStep functions */
 int IntegratorInstance_updateAdjData(integratorInstance_t *);
 
-/* internal function used for optimization of ODEs; will handle the
-   case of sensitivity analysis, where ODEs can not be optimized; */
-/*!!! will need adaptation to selected sens.analysis !!!*/
-void IntegratorInstance_optimizeOdes(integratorInstance_t *);
 
 #endif

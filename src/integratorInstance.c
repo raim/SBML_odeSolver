@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 13:48:52 raim>
-  $Id: integratorInstance.c,v 1.109 2009/02/12 06:25:11 raimc Exp $
+  Last changed Time-stamp: <2009-02-12 17:40:57 raim>
+  $Id: integratorInstance.c,v 1.110 2009/02/12 09:30:22 raimc Exp $
 */
 /* 
  *
@@ -208,7 +208,6 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
 
   engine->os = NULL;
 /*   engine->solver->nsens = 0; */
-  engine->os = NULL;
 
   if (IntegratorInstance_initializeSolver(engine, data, opt, om))
     return engine;
@@ -545,6 +544,94 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
   return data->value[vi->index];
 }
 
+/** Returns the respective entry FIM[i][j] of the
+    Fisher information matrix (FIM),
+
+    issues error message and returns 0 if FIM doesn't exist or if
+    the passed integers are larger then FIM dimension */
+/*!!! TODO : make additional interface via variableIndex */
+
+SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *ii, int i, int j)
+{
+  /*!!! TODO : add this to solverError messages! */
+  if ( ii->data->FIM == NULL )
+  {
+    fprintf(stderr, "WARNING: FIM has not been calculated.\n");
+    return 0.0;
+  }
+  if ( i >= ii->os->nsens || j >= ii->os->nsens )
+  {
+    fprintf(stderr, "WARNING: FIM is smaller then requested indices.\n");
+    return 0.0;
+  }
+  return ii->data->FIM[i][j];
+}
+
+
+/**  Set the weights for calculating the Fisher Information Matrix (FIM),
+     the size of the passed array 'weights' must equal the number
+     of variables (neq) of the ODE system */
+  
+SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *ii, double *weights, int neq)
+{    
+  int i;
+  
+
+  /*!!! TODO : add this to solverError messages and don't exit! */
+  if ( neq > ii->data->neq )
+  {    
+    fprintf(stderr, "WARNING: vector of weights for FIM longer than number of ODE variables\n");
+    return;
+  }
+  if ( ii->data->weights == NULL )
+  {
+    fprintf(stderr, "WARNING: FIM has not been calculated.\n");
+    return;
+  }
+
+  for ( i=0; i<ii->data->neq; i++ )
+      ii->data->weights[i] = weights[i];
+}
+
+/** \brief Returns the number parameters for which sensitivity
+    analysis have been requested.
+*/
+
+SBML_ODESOLVER_API int IntegratorInstance_getNsens(integratorInstance_t *engine)
+{
+  if ( engine->os == NULL )
+      return 0;
+  return engine->os->nsens;
+}
+
+/** Gets the sensitivity of variable number y to sensitivity number s at
+    the current time, where the index starts at 0, i.e.
+    0 <= y < neq and 0 <= s < nsens.
+
+    Returns 0 if no sensitivity has been calculated for s!
+*/
+SBML_ODESOLVER_API double IntegratorInstance_getSensitivityByNum(integratorInstance_t *engine, int y, int s)
+{
+  /*!!! TODO : issue proper warnings or errors */
+  if ( engine->os == NULL || engine->data->sensitivity == NULL )
+  {
+    fprintf(stderr, "WARNING: sensitivity analysis has not been initialized\n");
+    return 0.0;
+  }
+  if ( y >= engine->om->neq )
+  {
+    fprintf(stderr, "WARNING: variable index y out of scope, no ");
+    fprintf(stderr, "sensitivities can be calculated for index %d \n", y);
+    return 0.0;
+  }
+  if ( s >= engine->os->nsens )
+  {
+    fprintf(stderr, "WARNING: sensitivity index out of scope, no");
+    fprintf(stderr, " sensitivities can be calculated for index %d \n", s);
+    return 0.0;
+  }
+  return engine->data->sensitivity[y][s];
+}
 
 /** Gets the sensitivity of variable y to parameter or variable s at
     the current time.
@@ -555,18 +642,29 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
 SBML_ODESOLVER_API double IntegratorInstance_getSensitivity(integratorInstance_t *engine,  variableIndex_t *y,  variableIndex_t *s)
 {
   int i;
-  
+
+  /*!!! TODO : issue proper warnings or errors */
+  if ( engine->os == NULL  || engine->data->sensitivity == NULL )
+  {
+    fprintf(stderr, "WARNING: sensitivity analysis has not been initialized\n");
+    return 0.0;
+  }
   if ( y->index >= engine->om->neq )
   {
-    printf("Warning: ID is not a variable, no sensitivities ");
-    printf("can be calculated for %s \n", engine->om->names[y->index]);
+    fprintf(stderr, "WARNING: ID is not a variable, no sensitivities ");
+    fprintf(stderr, "can be calculated for %s \n", engine->om->names[y->index]);
     return 0.0;
   }
   /* find sensitivity for s */
   for ( i=0; i<engine->os->nsens &&
 	  !(engine->os->index_sens[i] == s->index); i++ );
 
-  if ( i == engine->os->nsens ) return 0.0;
+  if ( i == engine->os->nsens )
+  {
+    fprintf(stderr, "WARNING: No sensitivities have been calculated ");
+    fprintf(stderr, "for parameters %s\n", engine->om->names[s->index]);
+    return 0.0;
+  }
   else return engine->data->sensitivity[y->index][i];
 }
 
@@ -606,7 +704,8 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpData(integratorInstance_t *engine
      The first value is the current time, followed by adjoint
      ODE variable values.
 */
-
+/*!!! TODO : interface for adjoint via number and via variableIndex, same
+ interface for cvodeResults */
 SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *engine)
 {
   int i;
@@ -657,6 +756,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
   odeModel_t *om = engine->om;
   
   if ( data->sensitivity == NULL ) return;
+  if ( os == NULL ) return;
 
   /* find sensitivity for p */
   for ( i=0; i<os->nsens && !(os->index_sens[i] == p->index); i++ );
@@ -674,16 +774,26 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpPSensitivities(integratorInstance
 }
 
 
-/**  Returns the name of sensitivity variable i
+/**  Returns the name of the ith sensitivity variable, or NULL
+     if it doesn't exist
 */
 SBML_ODESOLVER_API char* IntegratorInstance_getSensVariableName(integratorInstance_t *engine, int i)
 {
+  if ( engine->os == NULL )
+    return NULL;
   if (i > engine->os->nsens || !engine->opt->sensIDs )
     return NULL;
 
   return engine->om->names[engine->os->index_sens[i]];
 }
 
+/** Returns a pointer to the sensitivity structure of the solver or NULL
+    if it has not been constructed.
+*/
+SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integratorInstance_t *engine)
+{
+  return engine->os;
+}
 
 /** Returns a pointer cvodeData of the integratorInstance, which contains
     the current values of all variables. This structure is `read-only'
@@ -696,13 +806,6 @@ SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t 
   return engine->data;
 }
 
-/** Returns a pointer to the sensitivity structure of the solver or NULL
-    if it has not been constructed.
-*/
-SBML_ODESOLVER_API odeSense_t *IntegratorInstance_getSensitivityModel(integratorInstance_t *engine)
-{
-  return engine->os;
-}
 /**  Starts the default integration loop with standard error
      handling and returns 1 if integration was OK, and 0 if not.
 */
@@ -727,12 +830,22 @@ SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance
   return engine->solver->iout > engine->solver->nout;
 }
 
+/**  Returns a pointer to cvodeResults structure containing
+     the results of one integration run and NULL if no results were stored.
+    
+     The results must NOT be freed by the caller.
+*/
 
-/**  Creates and returns a cvodeResults structure containing
-     the results of one integration run and NULL if not successful.
+SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integratorInstance_t *engine)
+{
+  return engine->results; 
+}
+
+/**  Creates and returns a copy of the internal cvodeResults structure
+     containing the results of one integration run and NULL if not successful.
     
      The results must be freed by the caller with
-     CvodeResults_free(results).
+     CvodeResults_free(results)!
 */
 
 SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *engine)
@@ -743,6 +856,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
   cvodeSettings_t *opt = engine->opt;
   cvodeResults_t *iResults = engine->results;
 
+  /*!!! TODO : check if all values in results structure are copied */
   if ( !opt->StoreResults || iResults == NULL ) return NULL;
   
   results = CvodeResults_create(engine->data, iResults->nout);
@@ -1007,11 +1121,14 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       results->value[i][solver->iout] = data->value[i];
 
     /* store sensitivities */
-    for ( j=0; j<data->nsens; j++ )
+    if ( opt->Sensitivity )
     {
-      for ( i=0; i<data->neq; i++ )
+      for ( j=0; j<data->nsens; j++ )
       {
+	for ( i=0; i<data->neq; i++ )
+	{
 	  results->sensitivity[i][j][solver->iout] = data->sensitivity[i][j];
+	}
       }
     }
 
@@ -1056,7 +1173,8 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
 	{
 	  sum = 0.; /* sum over ode variables */ 
 	  for ( k=0; k<data->neq; k++)
-	    sum += data->weights[k] * data->sensitivity[k][i] * data->sensitivity[k][j];
+	    sum += data->weights[k] * data->sensitivity[k][i] *
+	      data->sensitivity[k][j];
 	  data->FIM[i][j] += sum;
 	}
       }
@@ -1101,6 +1219,8 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
   data->currenttime = solver->t;
 
   /* store results */
+  /*!!! TODO : should this be done below? is it redundant with update
+    in getAdjSens ? */
   if ( opt->AdjStoreResults )
   { 
     for ( i=0; i<data->neq; i++ ) 
@@ -1590,20 +1710,5 @@ double *IntegratorInstance_getValues(integratorInstance_t *engine)
   return engine->data->value;
 }
 
-/* set weights for FIM */
-SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *ii, double *weights, int n)
-{    
-  int i;
-
-  /*!!! TODO : add this to solverError messages */
-  if ( n > ii->data->neq )
-  {    
-    fprintf(stderr, "vector of weights for FIM longer than number of ODE variables");
-    exit(0);
-  }
-
-  for ( i=0; i<ii->data->neq; i++ )
-      ii->data->weights[i] = weights[i];
-}
 
 /*@}*/
