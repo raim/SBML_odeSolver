@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <20-Nov-2008 13:22:31 raim>
-  $Id: odeModel.c,v 1.126 2008/11/20 12:24:24 raimc Exp $ 
+  Last changed Time-stamp: <2009-02-12 18:15:36 raim>
+  $Id: odeModel.c,v 1.127 2009/02/12 09:23:30 raimc Exp $ 
 */
 /* 
  *
@@ -1607,6 +1607,14 @@ SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *os)
   return os->nsens;
 }
 
+/** \brief Returns the number variables for which sensitivity
+    analysis might be requested, equals NEQ of odeModel
+
+*/
+SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *os)
+{
+  return os->neq;
+}
 
 /** \brief Returns the ODE from the odeModel for the variable with
     variableIndex vi.
@@ -2240,6 +2248,7 @@ SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *om, cvodeSettings_t *
   ASSIGN_NEW_MEMORY_BLOCK(os->index_sensP, nsens, int, NULL);
 
   os->om = om;
+  os->neq = om->neq;
   os->nsens = nsens;  
   
   /* fill with default parameters if none specified */

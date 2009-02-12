@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-30 15:47:57 raim>
-  $Id: odeModel.h,v 1.53 2008/10/30 14:53:13 raimc Exp $ 
+  Last changed Time-stamp: <2009-02-12 18:15:12 raim>
+  $Id: odeModel.h,v 1.54 2009/02/12 09:23:31 raimc Exp $ 
 */
 /* 
  *
@@ -216,6 +216,8 @@ struct odeSense
   odeModel_t *om;    /**< odeModel_t structure from which sensitivity
 			structures where derived */    
   /* forward sensitivity analysis structure, neq x nsens */
+  int neq;                 /**< number of variables for sens. analysis,
+			      equals NEQ of odeModel */
   int nsens;               /**< number of parameters and initial conditions
 			      for sens. analysis, nsens = nsensP + nsensIC */
   int *index_sens;         /**< map from sensitivity parameters and
@@ -370,6 +372,7 @@ extern "C" {
   SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API void ODESense_free(odeSense_t *);
   SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *, int);
+  SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *);
   SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
