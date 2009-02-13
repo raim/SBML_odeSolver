@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.15 2009/02/13 05:24:46 raimc Exp $
+dnl $Id: sundials.m4,v 1.16 2009/02/13 05:29:23 raimc Exp $
 
 dnl
 dnl look for SUNDIALS Library headers in some standard set of directories
@@ -98,15 +98,15 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
             [SUNDIALS lib directories])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB1], "sundials_ida",
             [SUNDIALS libs])
-  AC_DEFINE_UNQUOTED([SUNDIALS_LIB1], "sundials_kinsol",
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB2], "sundials_kinsol",
             [SUNDIALS libs])
-  AC_DEFINE_UNQUOTED([SUNDIALS_LIB2], "sundials_cvodes",
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB3], "sundials_cvodes",
             [SUNDIALS libs])
-  AC_DEFINE_UNQUOTED([SUNDIALS_LIB3], "sundials_nvecserial",
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB4], "sundials_nvecserial",
             [SUNDIALS libs])
-  AC_DEFINE_UNQUOTED([SUNDIALS_LIB4], "sundials_shared",
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB5], "sundials_shared",
             [SUNDIALS libs])
-  AC_DEFINE_UNQUOTED([SUNDIALS_LIB5], "m",
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB6], "m",
             [SUNDIALS libs])
   AC_DEFINE([USE_SUNDIALS], 1,
             [Define to 1 to use the SUNDIALS Library])
