@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.28 2008/01/28 19:25:26 stefan_tbi Exp $
+# $Id: Makefile.am,v 1.29 2009/02/13 17:45:32 chfl Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -43,9 +43,9 @@ AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
 AM_CFLAGS = @FPIC@
 AM_CXXFLAGS = @FPIC@
-lib_LIBRARIES = libODES.a
+lib_LTLIBRARIES = libODES.la
 
-libODES_a_SOURCES = ASTIndexNameNode.cpp \
+libODES_la_SOURCES = ASTIndexNameNode.cpp \
                     arithmeticCompiler.c \
                     charBuffer.cpp \
                     compiler.c \

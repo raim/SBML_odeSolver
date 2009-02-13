@@ -1,3 +1,7 @@
+2009-02-13 Christoph Flamm <xtof@tbi.univie.ac.at>
+	* changed automake/autoconf framework to produce both the static
+	  and shared library in a portable manner
+
 2007-09-20 Rainer Machne <raim@tbi.univie.ac.at>
 	* implemented thread-save sensitivity - BREAKING SENSE INTERFACES!:
 	** moved sensitivity structures from odeModel_t to new odeSense_t
