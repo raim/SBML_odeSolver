@@ -1,4 +1,4 @@
-dnl $Id: sundials.m4,v 1.14 2008/06/03 14:39:09 raimc Exp $
+dnl $Id: sundials.m4,v 1.15 2009/02/13 05:24:46 raimc Exp $
 
 dnl
 dnl look for SUNDIALS Library headers in some standard set of directories
@@ -29,7 +29,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
       SUNDIALS_LDFLAGS="-L$ac_dir/lib"
-      SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
+      SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -56,7 +56,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   else
     SUNDIALS_CFLAGS="-I$with_sundials/include"
     SUNDIALS_LDFLAGS="-L$with_sundials/lib"
-    SUNDIALS_LIBS="-lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
+    SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
   fi
   dnl check if SUNDIALS Library is functional
   AC_MSG_CHECKING([correct functioning of SUNDIALS])
@@ -96,6 +96,8 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
             [SUNDIALS include directories])
   AC_DEFINE_UNQUOTED([SUNDIALS_LDFLAGS], "${with_sundials}/lib",
             [SUNDIALS lib directories])
+  AC_DEFINE_UNQUOTED([SUNDIALS_LIB1], "sundials_ida",
+            [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB1], "sundials_kinsol",
             [SUNDIALS libs])
   AC_DEFINE_UNQUOTED([SUNDIALS_LIB2], "sundials_cvodes",
