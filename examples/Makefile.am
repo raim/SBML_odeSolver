@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.29 2009/02/06 12:41:34 stefan_tbi Exp $
+# $Id: Makefile.am,v 1.30 2009/02/15 17:51:28 chfl Exp $
 ## 
 ## This library is free software; you can redistribute it and/or modify it
 ## under the terms of the GNU Lesser General Public License as published
@@ -111,10 +111,17 @@ changeIntInst_LDADD    = -L../src -L@prefix@/lib -lODES \
                          @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 ASTIndexTest_SOURCES = ASTIndexTest.c
 ASTIndexTest_LDADD   = -L../src -L@prefix@/lib -lODES \
-                       @SBML_LDFLAGS@ @SBML_LIBS@
+                       @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
+                       @SBML_LDFLAGS@ @SBML_LIBS@ \
+                       @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
+                       
 ASTgetIndexTest_SOURCES = ASTgetIndexTest.c
 ASTgetIndexTest_LDADD   = -L../src -L@prefix@/lib -lODES \
-                       @SBML_LDFLAGS@ @SBML_LIBS@
+                       @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
+                       @SBML_LDFLAGS@ @SBML_LIBS@ \
+                       @GRACE_LDFLAGS@ @GRACE_LIBS@ \
+                       @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 analyzeJacobian_SOURCES = analyzeJacobian.c
 analyzeJacobian_LDADD   = -L../src -L@prefix@/lib -lODES \
                           @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
