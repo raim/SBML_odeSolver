@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2007-08-20 21:06:02 raim>
-  $Id: compiler.h,v 1.7 2007/08/20 19:10:08 raimc Exp $
+  $Id: compiler.h,v 1.8 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -36,6 +36,10 @@
 #ifndef _COMPILER_H_
 #define _COMPILER_H_
 
+#ifdef WIN32
+#include <WINDOWS.h>
+#endif
+
 #include "sbmlsolver/exportdefs.h"
 
 #ifdef __cplusplus
@@ -47,18 +51,18 @@ extern "C" {
 #define MAX_PATH 256
 #endif
 
+
 #if USE_TCC == 1
 #include <libtcc.h>
 #endif
   
-  /* the compiled code structure */
-  typedef struct compiled_code compiled_code_t ;
   
   /**
      A structure that stores compiled code
   */
   struct compiled_code
   {
+
 #if USE_TCC == 1
     TCCState *s;
 #else
@@ -69,7 +73,11 @@ extern "C" {
 #endif /* WIN32 */
     char *dllFileName;
 #endif /* USE_TCC == 1 */
+
   };
+
+  /* the compiled code structure */
+  typedef struct compiled_code compiled_code_t ;
 
   /**
    * create compiled code from C source
@@ -99,7 +107,7 @@ extern "C" {
   SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

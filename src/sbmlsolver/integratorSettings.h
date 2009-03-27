@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2009-02-12 18:06:13 raim>
-  $Id: integratorSettings.h,v 1.39 2009/02/12 09:25:05 raimc Exp $ 
+  $Id: integratorSettings.h,v 1.40 2009/03/27 15:55:03 fbergmann Exp $ 
 */
 /* 
  *
@@ -246,7 +246,7 @@ extern "C" {
 
   
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif /* _CVODESETTINGS_H_ */

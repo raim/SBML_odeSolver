@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-13 14:09:24 raim>
-  $Id: odeConstruct.h,v 1.10 2006/06/13 15:07:48 raimc Exp $
+  $Id: odeConstruct.h,v 1.11 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -49,7 +49,7 @@ extern "C" {
   SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *, Model_t *);
   
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-04 19:04:45 raim>
-  $Id: nullSolver.h,v 1.2 2008/01/28 19:25:27 stefan_tbi Exp $
+  $Id: nullSolver.h,v 1.3 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -47,7 +47,7 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInstance_t *, FILE *f);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 /* internal functions that are not part of the API (yet?) */

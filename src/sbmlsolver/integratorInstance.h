@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2009-02-12 17:49:53 raim>
-  $Id: integratorInstance.h,v 1.41 2009/02/12 09:30:22 raimc Exp $ 
+  $Id: integratorInstance.h,v 1.42 2009/03/27 15:55:03 fbergmann Exp $ 
 */
 /* 
  *
@@ -197,7 +197,7 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);
   
 #ifdef __cplusplus
-}
+};
 #endif
 
 /* default function for data update, event and steady state handling,

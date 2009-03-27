@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2009-02-12 18:15:12 raim>
-  $Id: odeModel.h,v 1.54 2009/02/12 09:23:31 raimc Exp $ 
+  $Id: odeModel.h,v 1.55 2009/03/27 15:55:03 fbergmann Exp $ 
 */
 /* 
  *
@@ -388,7 +388,7 @@ extern "C" {
   SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_t *);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 /* internal functions, not be used by calling applications */  

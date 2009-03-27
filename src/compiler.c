@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 17:55:16 raim>
-  $Id: compiler.c,v 1.31 2008/11/07 08:55:47 raimc Exp $
+  $Id: compiler.c,v 1.32 2009/03/27 15:54:55 fbergmann Exp $
 */
 /* 
  *
@@ -426,7 +426,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
 #ifdef WIN32
 
-  code = Compiler_compile_with_tcc(sourceCode);
+  //code = Compiler_compile_with_tcc(sourceCode);
 
 #elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__) /* AIX use xlc_r */
 

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2009-02-12 17:38:22 raim>
-  $Id: cvodeData.h,v 1.15 2009/02/12 09:26:42 raimc Exp $
+  $Id: cvodeData.h,v 1.16 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -191,7 +191,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 

@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-11-03 14:54:35 raim>
-  $Id: daeSolver.h,v 1.1 2005/11/04 10:39:15 raimc Exp $
+  $Id: daeSolver.h,v 1.2 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -52,7 +52,7 @@ extern "C" {
   void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

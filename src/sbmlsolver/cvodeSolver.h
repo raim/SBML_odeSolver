@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-10-16 18:00:39 raim>
-  $Id: cvodeSolver.h,v 1.11 2008/10/16 17:27:50 raimc Exp $
+  $Id: cvodeSolver.h,v 1.12 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -60,7 +60,7 @@ extern "C" {
   int check_flag(void *flagvalue, char *funcname, int opt);
   
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

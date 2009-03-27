@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2006-06-12 11:04:54 raim>
-  $Id: charBuffer.h,v 1.3 2006/06/12 10:25:56 raimc Exp $
+  $Id: charBuffer.h,v 1.4 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -49,7 +49,7 @@ extern "C" {
   const char *CharBuffer_getBuffer(charBuffer_t *);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

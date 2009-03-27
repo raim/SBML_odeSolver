@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-03-10 20:07:56 raim>
-  $Id: odeSolver.h,v 1.26 2008/03/10 19:24:30 raimc Exp $
+  $Id: odeSolver.h,v 1.27 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -106,7 +106,7 @@ extern "C" {
 
  
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

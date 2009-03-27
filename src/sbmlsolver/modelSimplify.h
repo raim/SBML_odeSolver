@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2005-10-27 12:46:37 raim>
-  $Id: modelSimplify.h,v 1.6 2005/10/27 12:36:13 raimc Exp $
+  $Id: modelSimplify.h,v 1.7 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -51,7 +51,7 @@ extern "C" {
 
   
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

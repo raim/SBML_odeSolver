@@ -1,6 +1,6 @@
 /*
   Last changed Time-stamp: <2008-09-24 12:18:17 raim>
-  $Id: processAST.h,v 1.23 2008/09/24 11:26:53 raimc Exp $
+  $Id: processAST.h,v 1.24 2009/03/27 15:55:03 fbergmann Exp $
 */
 /* 
  *
@@ -78,7 +78,7 @@ extern "C" {
 
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif
