@@ -1,0 +1,41 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SBML_odeSolver", "SOSLib\SOSLib.vcproj", "{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SBML_odeSolverApp", "SOS_CommandLine\SOS_CommandLine.vcproj", "{53BCE0E5-7515-46A7-BA1B-D4B72918E810}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152} = {7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SBW_odeSolver", "SBW_odeSolver\SBW_odeSolver.vcproj", "{2C00BD88-AD89-49B6-BC5B-768F51C2E7C1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152} = {7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}.Debug.ActiveCfg = Debug|Win32
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}.Debug.Build.0 = Debug|Win32
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}.Release.ActiveCfg = Release|Win32
+		{7FD00D97-BE5E-43FA-B27B-7DEA35A3E152}.Release.Build.0 = Release|Win32
+		{53BCE0E5-7515-46A7-BA1B-D4B72918E810}.Debug.ActiveCfg = Debug|Win32
+		{53BCE0E5-7515-46A7-BA1B-D4B72918E810}.Debug.Build.0 = Debug|Win32
+		{53BCE0E5-7515-46A7-BA1B-D4B72918E810}.Release.ActiveCfg = Release|Win32
+		{53BCE0E5-7515-46A7-BA1B-D4B72918E810}.Release.Build.0 = Release|Win32
+		{2C00BD88-AD89-49B6-BC5B-768F51C2E7C1}.Debug.ActiveCfg = Debug|Win32
+		{2C00BD88-AD89-49B6-BC5B-768F51C2E7C1}.Debug.Build.0 = Debug|Win32
+		{2C00BD88-AD89-49B6-BC5B-768F51C2E7C1}.Release.ActiveCfg = Release|Win32
+		{2C00BD88-AD89-49B6-BC5B-768F51C2E7C1}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
