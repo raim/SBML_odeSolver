@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 17:40:57 raim>
-  $Id: integratorInstance.c,v 1.110 2009/02/12 09:30:22 raimc Exp $
+  Last changed Time-stamp: <29-Mar-2009 05:39:46 raim>
+  $Id: integratorInstance.c,v 1.111 2009/03/29 03:41:47 raimc Exp $
 */
 /* 
  *
@@ -1019,7 +1019,7 @@ IntegratorInstance_processEventsAndAssignments(integratorInstance_t *engine)
 	data->trigger[i] = 1;
 	/** and if yes, execute the events assignments; \n*/
 	for ( j=0; j<om->neventAss[i]; j++ )
-	{	  
+        {	  
 	  double result = evaluateAST(om->eventAssignment[i][j], data);
 	  int idx = om->eventIndex[i][j]; 
 	  IntegratorInstance_setVariableValueByIndex(engine, idx, result);
@@ -1497,11 +1497,12 @@ void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
 
   /* 'solver' is no longer consistant with 'data' */
   /* to be strictly correct ALWAYS SET engine invalid (not only for
-     ODE variables as before) */
+     ODE variables as before), see biomodels 104 for an example
+     where also R.H.S. changes require re-init. of solver structures */
   /*!!! TODO : could be optimized: don't set invalid if ODEModel r.h.s
      does not depend on it */  
-  if ( idx < om->neq || opt->ResetCvodeOnEvent ) 
-    engine->isValid = 0; 
+  /* if ( idx < om->neq || opt->ResetCvodeOnEvent ) */ 
+  engine->isValid = 0; 
 
   /* and finally assignment rules, potentially depending on that variable
      need to be evaluated */
