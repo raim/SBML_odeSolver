@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-11-30 16:37:42 raim>
-  $Id: options.c,v 1.9 2007/11/30 16:06:09 raimc Exp $
+  Last changed Time-stamp: <29-Mar-2009 06:05:23 raim>
+  $Id: options.c,v 1.10 2009/03/29 04:15:34 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,7 +113,7 @@ initializeOptions (void)
   Opt.Write           = 0;
   Opt.Compile         = 0;
   Opt.Benchmark       = 0;
-  Opt.ResetCvodeOnEvents = 0;
+  Opt.ResetCvodeOnEvents = 1;
 }
 
 /**/

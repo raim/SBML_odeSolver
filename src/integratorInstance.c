@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <29-Mar-2009 05:39:46 raim>
-  $Id: integratorInstance.c,v 1.111 2009/03/29 03:41:47 raimc Exp $
+  Last changed Time-stamp: <29-Mar-2009 06:08:13 raim>
+  $Id: integratorInstance.c,v 1.112 2009/03/29 04:15:34 raimc Exp $
 */
 /* 
  *
@@ -1501,8 +1501,8 @@ void IntegratorInstance_setVariableValueByIndex(integratorInstance_t *engine,
      where also R.H.S. changes require re-init. of solver structures */
   /*!!! TODO : could be optimized: don't set invalid if ODEModel r.h.s
      does not depend on it */  
-  /* if ( idx < om->neq || opt->ResetCvodeOnEvent ) */ 
-  engine->isValid = 0; 
+  if ( idx < om->neq || opt->ResetCvodeOnEvent ) 
+    engine->isValid = 0; 
 
   /* and finally assignment rules, potentially depending on that variable
      need to be evaluated */
