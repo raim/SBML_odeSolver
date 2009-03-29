@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <29-Mar-2009 06:05:23 raim>
-  $Id: options.c,v 1.10 2009/03/29 04:15:34 raimc Exp $
+  Last changed Time-stamp: <29-Mar-2009 06:17:52 raim>
+  $Id: options.c,v 1.11 2009/03/29 04:18:38 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -347,7 +347,7 @@ processOptions (int argc, char *argv[])
       Opt.Write = 1;
       break;
     case 'z':
-      Opt.ResetCvodeOnEvents = 1;
+      Opt.ResetCvodeOnEvents = 0;
       break;
     default:
       usage (EXIT_FAILURE);
