@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-04-01 22:04:48 xtof>
-  $Id: odeModel.c,v 1.129 2009/04/01 20:23:28 chfl Exp $
+  Last changed Time-stamp: <2010-04-12 10:24:04 raim>
+  $Id: odeModel.c,v 1.130 2010/04/12 08:29:38 raimc Exp $
 */
 /*
  *
@@ -1585,7 +1585,7 @@ SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbo
 }
 
 
-/** \brief Returns the total number of values in oodeModel, equivalent
+/** \brief Returns the total number of values in odeModel, equivalent
     to ODEModel_getNeq + ODEModel_getNumAssignments +
     ODEModel_getNumConstants
 */
@@ -2518,7 +2518,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *om,
 
 /** \brief Creates and returns a variable index for ith assigned variable.
 
-Returns NULL if not existing (i > ODEModel_getNumAssignedVar(om)).
+Returns NULL if not existing (i > ODEModel_getNumAssignments(om)).
 The variableIndex must be freed by the calling application.
 */
 

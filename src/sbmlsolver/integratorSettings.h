@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 18:06:13 raim>
-  $Id: integratorSettings.h,v 1.40 2009/03/27 15:55:03 fbergmann Exp $ 
+  Last changed Time-stamp: <2010-04-12 10:24:41 raim>
+  $Id: integratorSettings.h,v 1.41 2010/04/12 08:30:28 raimc Exp $ 
 */
 /* 
  *
@@ -191,7 +191,6 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeSettings_setDetectNegState(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setTStop(cvodeSettings_t *, int);
   SBML_ODESOLVER_API void CvodeSettings_setCompileFunctions(cvodeSettings_t *, int);
-  SBML_ODESOLVER_API void CvodeSettings_setResetCvodeOnEvent(cvodeSettings_t *, int);
 
   /* Adjoint setttings */
   SBML_ODESOLVER_API void CvodeSettings_setDoAdj(cvodeSettings_t *);
