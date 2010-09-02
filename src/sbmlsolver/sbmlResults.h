@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 18:19:18 raim>
-  $Id: sbmlResults.h,v 1.14 2009/02/12 09:24:13 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 14:21:58 raim>
+  $Id: sbmlResults.h,v 1.15 2010/09/02 13:46:01 raimc Exp $
 */
 /* 
  *
@@ -128,6 +128,8 @@ extern "C" {
   SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *);
   SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *, int i);
+  /* not yet implemented */
+  SBML_ODESOLVER_API Model_t *Model_setValues(Model_t *, SBMLResults_t *);
 
  
 #ifdef __cplusplus

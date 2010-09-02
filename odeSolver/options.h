@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-11-30 16:32:18 raim>
-  $Id: options.h,v 1.8 2007/11/30 16:06:09 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 15:00:59 raim>
+  $Id: options.h,v 1.9 2010/09/02 13:46:00 raimc Exp $
 */
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
@@ -37,6 +37,7 @@ typedef struct _Options {
 			   method for numerical integration */
   int IterMethod;       /* Use Newton (default, 0) or functional (1)
 			   iteration method for integration */
+  int PrintSBML;        /* Print last time point to new SBML file */
   int PrintAll;         /* Print all given results instead of only one */
   int PrintJacobian;    /* Print out time course of the jacobian matrix */
   int PrintReactions;   /* Print out time course of the reaction rates */

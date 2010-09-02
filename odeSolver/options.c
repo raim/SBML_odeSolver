@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <29-Mar-2009 06:17:52 raim>
-  $Id: options.c,v 1.11 2009/03/29 04:18:38 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 15:10:39 raim>
+  $Id: options.c,v 1.12 2010/09/02 13:46:00 raimc Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +31,7 @@ static struct option const long_options[] =
   {"event",         no_argument,       0, 'n'},
   {"negative",      no_argument,       0, 'N'},
   {"printsbml",     no_argument,       0, 'o'},
+  {"resultstosbml", no_argument,       0, 'p'},
   {"rates",         no_argument,       0, 'r'},
   {"steadyState",   no_argument,       0, 's'},
   {"sensitivity",   no_argument,       0, 't'},
@@ -103,6 +104,7 @@ initializeOptions (void)
   Opt.Xmgrace         = 0;
   Opt.DrawReactions   = 0;
   Opt.PrintModel      = 0;
+  Opt.PrintSBML       = 0;
   Opt.PrintODEsToSBML = 0;
   Opt.PrintOnTheFly   = 0;
   Opt.PrintMessage    = 0;
@@ -130,7 +132,7 @@ processOptions (int argc, char *argv[])
   }
   
   /* process command line options */
-  while ((c = getopt_long (argc, argv, "abcdefghijklmnorstvwxyzN",
+  while ((c = getopt_long (argc, argv, "abcdefghijklmnoprstvwxyzN",
                            long_options, &option_index)) != EOF) {
     switch (c) {
     case 0:
@@ -328,6 +330,9 @@ processOptions (int argc, char *argv[])
     case 'o':
       Opt.PrintODEsToSBML = 1;
       break;
+    case 'p':
+      Opt.PrintSBML = 1;
+      break;
     case 'd':
       Opt.Determinant = 1;
       break; 
@@ -445,7 +450,9 @@ usage (int status)
     " -k, --reactions       Print time course of the reactions\n"
     "                       (kinetic laws) instead of concentrations\n"
     " -r, --rates           Print time course of the ODEs, instead of\n"
-	  "                       concentrations\n");	  
+    "                       concentrations\n"
+    " -p, --resultstosbml   Print last time-point to original SBML model\n");
+  
   fprintf(stderr,
     " -w, --write           Write results to file (path/modelfile.xml.dat)\n"  
     " -x, --xmgrace         Print results to XMGrace; uses SBML Names\n"

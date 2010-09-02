@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 21:22:14 raim>
-  $Id: printModel.c,v 1.26 2008/10/16 19:30:19 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 15:27:28 raim>
+  $Id: printModel.c,v 1.27 2010/09/02 13:46:00 raimc Exp $
 */
 /* 
  *
@@ -518,6 +518,27 @@ void printJacobian(odeModel_t *om, FILE *f)
 }
 
 /* The following functions print results of integration */
+
+void printResultsToSBML(Model_t *m, cvodeData_t *data, FILE *f)
+{      
+  int i;
+  SBMLDocument_t *d;
+  char *model;
+
+  fprintf(stderr, "##PRINTING SBML WITH FINAL INTEGRATION DATA\n");
+  fprintf(stderr, "##Final integration time\t%g\n", data->currenttime);
+  for ( i = 0; i<=data->nvalues; i++ )
+    if ( !Model_setValue(m, data->model->names[i], "", data->value[i]) )
+      printf(stderr, "WARNING: %s (reaction: %s), NOT FOUND IN MODEL!\n",
+	     data->model->names[i]);
+
+
+  d = SBMLDocument_create();
+  SBMLDocument_setModel(d, m);
+  model = writeSBMLToString(d);
+  fprintf(f, "%s", model);
+  free(model);
+}
 
 void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f)
 {

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 21:24:13 raim>
-  $Id: commandLine.c,v 1.28 2008/10/16 19:30:19 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 15:24:01 raim>
+  $Id: commandLine.c,v 1.29 2010/09/02 13:46:00 raimc Exp $
 */
 /* 
  *
@@ -175,6 +175,13 @@ odeSolver (int argc, char *argv[])
       filename = (char *) calloc(strlen(Opt.ModelPath)+
 				 strlen(Opt.ModelFile)+5, sizeof(char));
       sprintf(filename, "%s%s.dat", Opt.ModelPath, Opt.ModelFile);
+      outfile = fopen(filename, "w");
+    }
+    else if ( Opt.PrintSBML )
+    {
+      filename = (char *) calloc(strlen(Opt.ModelPath)+
+				 strlen(Opt.ModelFile)+5, sizeof(char));
+      sprintf(filename, "%s%s.soslib.xml", Opt.ModelPath, Opt.ModelFile);
       outfile = fopen(filename, "w");
     }
     else
@@ -354,8 +361,12 @@ odeSolver (int argc, char *argv[])
     /** -f, --onthefly: print results during integration
 	no other printing needed
 	-a, --all: print all results
+	-p, --resultstosbml: print last timepoint to SBML
     */
-    if ( !Opt.PrintOnTheFly && !Opt.PrintAll )
+    /** print final data to new SBML file: OVERRIDES ALL OTHER PRINT OPTIONS */
+    if ( Opt.PrintSBML )
+      printResultsToSBML(m, ii->data, outfile);
+    else if ( !Opt.PrintOnTheFly && !Opt.PrintAll )
     {
       /** -y: print time course of the jacobian matrix
 	  expressions
@@ -408,7 +419,10 @@ odeSolver (int argc, char *argv[])
       printOdeTimeCourse(ii->data, outfile);
       printConcentrationTimeCourse(ii->data, outfile);
     }
+    
 
+
+      
     /** -m: Draw the jacobian interaction graph
 	with values from the last integration point (tout)
 	defining edge color and arrowheads (red, ie. inhibitory
