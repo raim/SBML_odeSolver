@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <02-Sep-2010 18:52:53 raim>
-  $Id: printModel.c,v 1.28 2010/09/02 16:53:07 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 19:47:24 raim>
+  $Id: printModel.c,v 1.29 2010/09/02 17:48:12 raimc Exp $
 */
 /* 
  *
@@ -53,6 +53,7 @@
 #include "../src/sbmlsolver/cvodeData.h"
 #include "../src/sbmlsolver/modelSimplify.h"
 #include "../src/sbmlsolver/processAST.h"
+#include "../src/sbmlsolver/odeConstruct.h"
 
 #include "options.h"
 #include "printModel.h"
@@ -399,6 +400,7 @@ void printODEsToSBML(Model_t *ode, FILE *f)
   model = writeSBMLToString(d);
   fprintf(f, "%s", model);
   free(model);
+  SBMLDocument_free(d);
 }
 
 
@@ -525,19 +527,29 @@ void printResultsToSBML(Model_t *m, cvodeData_t *data, FILE *f)
   SBMLDocument_t *d;
   char *model;
 
-  fprintf(stderr, "##PRINTING SBML WITH FINAL INTEGRATION DATA\n");
-  fprintf(stderr, "##Final integration time\t%g\n", data->currenttime);
-  for ( i = 0; i<=data->nvalues; i++ )
-    if ( !Model_setValue(m, data->model->names[i], "", data->value[i]) )
-      printf(stderr, "WARNING: ID %s, NOT FOUND IN MODEL!\n",
-	     (char *)data->model->names[i]);
-
-
+  fprintf(stderr, "## PRINTING SBML WITH FINAL INTEGRATION DATA\n");
+  fprintf(stderr, "## Final integration time\t%g\n", data->currenttime);
+  fprintf(stderr, "## setting: ");
+  for ( i = 0; i<data->nvalues; i++ )
+  {
+    fprintf(stderr, "%s", data->model->names[i]);
+    /* TODO: skip reaction IDs */
+    if ( !Model_setValue(m, data->model->names[i], NULL, data->value[i]) )
+      fprintf(stderr, ": NOT FOUND!",
+	      (char *)data->model->names[i]);
+    fprintf(stderr, ", ");
+  }
+  fprintf(stderr, "... done ... writing SBML ... ");
+  
   d = SBMLDocument_create();
   SBMLDocument_setModel(d, m);
   model = writeSBMLToString(d);
   fprintf(f, "%s", model);
   free(model);
+  SBMLDocument_free(d);
+
+  fprintf(stderr, "done\n\n");
+  
 }
 
 void printDeterminantTimeCourse(cvodeData_t *data, ASTNode_t *det, FILE *f)

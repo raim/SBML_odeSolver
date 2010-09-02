@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2008-10-16 17:40:12 raim>
-  $Id: odeConstruct.c,v 1.41 2008/10/16 17:27:50 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 19:30:39 raim>
+  $Id: odeConstruct.c,v 1.42 2010/09/02 17:48:12 raimc Exp $
 */
 /* 
  *
@@ -800,6 +800,7 @@ SBML_ODESOLVER_API int Model_setValue(Model_t *m, const char *id, const char *ri
   Reaction_t *r;
   KineticLaw_t *kl;
 
+  
   if ( (r = Model_getReactionById(m, rid)) != NULL )
   {
     kl = Reaction_getKineticLaw(r);

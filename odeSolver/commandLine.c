@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <02-Sep-2010 15:24:01 raim>
-  $Id: commandLine.c,v 1.29 2010/09/02 13:46:00 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 19:40:39 raim>
+  $Id: commandLine.c,v 1.30 2010/09/02 17:48:12 raimc Exp $
 */
 /* 
  *
@@ -180,7 +180,7 @@ odeSolver (int argc, char *argv[])
     else if ( Opt.PrintSBML )
     {
       filename = (char *) calloc(strlen(Opt.ModelPath)+
-				 strlen(Opt.ModelFile)+5, sizeof(char));
+				 strlen(Opt.ModelFile)+12, sizeof(char));
       sprintf(filename, "%s%s.soslib.xml", Opt.ModelPath, Opt.ModelFile);
       outfile = fopen(filename, "w");
     }
