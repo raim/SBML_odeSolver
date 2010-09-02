@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <02-Sep-2010 15:27:28 raim>
-  $Id: printModel.c,v 1.27 2010/09/02 13:46:00 raimc Exp $
+  Last changed Time-stamp: <02-Sep-2010 18:52:53 raim>
+  $Id: printModel.c,v 1.28 2010/09/02 16:53:07 raimc Exp $
 */
 /* 
  *
@@ -529,8 +529,8 @@ void printResultsToSBML(Model_t *m, cvodeData_t *data, FILE *f)
   fprintf(stderr, "##Final integration time\t%g\n", data->currenttime);
   for ( i = 0; i<=data->nvalues; i++ )
     if ( !Model_setValue(m, data->model->names[i], "", data->value[i]) )
-      printf(stderr, "WARNING: %s (reaction: %s), NOT FOUND IN MODEL!\n",
-	     data->model->names[i]);
+      printf(stderr, "WARNING: ID %s, NOT FOUND IN MODEL!\n",
+	     (char *)data->model->names[i]);
 
 
   d = SBMLDocument_create();
