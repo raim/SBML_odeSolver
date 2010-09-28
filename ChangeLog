@@ -1,3 +1,6 @@
+2010-09-28 Rainer Machne <raim@tbi.univie.ac.at>
+	* added lib64 search in config/*.m4 files, patch by Takeshi Abe
+
 2009-02-13 Christoph Flamm <xtof@tbi.univie.ac.at>
 	* changed automake/autoconf framework to produce both the static
 	  and shared library in a portable manner
@@ -5,7 +8,7 @@
 2007-09-20 Rainer Machne <raim@tbi.univie.ac.at>
 	* implemented thread-save sensitivity - BREAKING SENSE INTERFACES!:
 	** moved sensitivity structures from odeModel_t to new odeSense_t
-	** separated compilation of odeModel and odeSense functions, therefore 
+	** separated compilation of odeModel and odeSense functions, therefore
 	** removed TCC (doesn't support multiple code states) online compilation
 	* added CV_NORMAL_TSTOP mode for CVODES forward solver
 	** added CvodeSettings_setTStop to allow saver dynamic value update
@@ -15,7 +18,7 @@
 	* added gcc compilation on-the-fly capability. This solves the
 	32/64 bit architecture problems we had with TCC.
 
-2007-06-20 James Lu and Stefan Mueller 
+2007-06-20 James Lu and Stefan Mueller
 	* implemented adjoint solver for discrete observation data
 	* etc. ??
 

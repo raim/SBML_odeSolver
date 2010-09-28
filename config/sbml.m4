@@ -1,4 +1,4 @@
-dnl $Id: sbml.m4,v 1.15 2008/09/09 10:53:12 raimc Exp $
+dnl $Id: sbml.m4,v 1.16 2010/09/28 13:41:08 raimc Exp $
 
 
 dnl
@@ -36,6 +36,20 @@ AC_DEFUN([AC_SBML_PATH],
           SBML_RPATH="-Wl,-R,$ac_dir"
         else
           SBML_RPATH="-Wl,-rpath,$ac_dir"
+        fi
+      fi
+      SBML_LIBS="-lsbml"
+      AC_MSG_RESULT([yes])
+      break
+    elif test -r ${ac_dir}64/libsbml.$ac_extension; then
+      SBML_LDFLAGS="-L${ac_dir}64"
+      if test $HOST_TYPE = darwin; then
+        SBML_RPATH=
+      else
+        if test $HOST_TYPE = aix; then
+          SBML_RPATH="-Wl,-R,${ac_dir}64"
+        else
+          SBML_RPATH="-Wl,-rpath,${ac_dir}64"
         fi
       fi
       SBML_LIBS="-lsbml"
