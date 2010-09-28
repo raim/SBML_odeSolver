@@ -44,7 +44,11 @@ SHORT INSTALLATION INFORMATION:
 
  NOTES FOR INSTALLATION FROM CVS VERSION:
  If you have checked out from our sourceforge CVS please
- run ./autogen.sh to generate a configure script.
+ run the autoconf/automake tool autoreconf:
+
+	autoreconf 
+	
+ to generate a configure script.
 
  INSTALLATION:
  In general compilation and installation of the package 
