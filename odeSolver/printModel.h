@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2005-11-08 11:44:21 raim>
-  $Id: printModel.h,v 1.3 2005/11/08 10:49:40 raimc Exp $
+  Last changed Time-stamp: <30-Sep-2010 11:05:29 raim>
+  $Id: printModel.h,v 1.4 2010/09/30 09:15:16 raimc Exp $
 */
 /* 
  *
@@ -49,6 +49,7 @@ void printOdeTimeCourse(cvodeData_t *, FILE *);
 void printReactionTimeCourse(cvodeData_t *, Model_t *, FILE *);
 void printJacobianTimeCourse(cvodeData_t *, FILE *);
 void printDeterminantTimeCourse(cvodeData_t *, ASTNode_t *, FILE *);
+void printResultsToSBML(Model_t *, cvodeData_t *, FILE *);
 
 void printPhase(cvodeData_t *);
 

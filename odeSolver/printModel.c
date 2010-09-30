@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <02-Sep-2010 19:47:24 raim>
-  $Id: printModel.c,v 1.29 2010/09/02 17:48:12 raimc Exp $
+  Last changed Time-stamp: <30-Sep-2010 11:14:25 raim>
+  $Id: printModel.c,v 1.30 2010/09/30 09:15:16 raimc Exp $
 */
 /* 
  *
@@ -535,7 +535,7 @@ void printResultsToSBML(Model_t *m, cvodeData_t *data, FILE *f)
     fprintf(stderr, "%s", data->model->names[i]);
     /* TODO: skip reaction IDs */
     if ( !Model_setValue(m, data->model->names[i], NULL, data->value[i]) )
-      fprintf(stderr, ": NOT FOUND!",
+      fprintf(stderr, "VALUE %s : NOT FOUND!",
 	      (char *)data->model->names[i]);
     fprintf(stderr, ", ");
   }
