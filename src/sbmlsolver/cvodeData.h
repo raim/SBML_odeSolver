@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 17:38:22 raim>
-  $Id: cvodeData.h,v 1.16 2009/03/27 15:55:03 fbergmann Exp $
+  Last changed Time-stamp: <01-Feb-2011 14:08:56 raim>
+  $Id: cvodeData.h,v 1.17 2011/03/06 09:58:11 raimc Exp $
 */
 /* 
  *
@@ -178,7 +178,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeData_free(cvodeData_t *);
   /*!!! TODO : should the initialization of data really be public???*/
   SBML_ODESOLVER_API void CvodeData_initializeValues(cvodeData_t *);
-  SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *);
+  SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *, int keepValues);
   
   /* get values from cvodeResults */
   SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);

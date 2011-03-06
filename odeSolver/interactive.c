@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2007-10-26 14:59:19 raim>
-  $Id: interactive.c,v 1.6 2007/10/26 17:52:29 raimc Exp $
+  Last changed Time-stamp: <01-Feb-2011 14:20:56 raim>
+  $Id: interactive.c,v 1.7 2011/03/06 09:58:11 raimc Exp $
 */
 /* 
  *
@@ -235,7 +235,7 @@ interactive() {
     if(strcmp(select,"jg")==0){
       if ( ii == NULL ) {
 	data = CvodeData_create(om);
-	CvodeData_initialize(data, set, om);
+	CvodeData_initialize(data, set, om, 0);
 	drawJacoby(data, sbmlFilename, Opt.GvFormat);
 	SolverError_dumpAndClearErrors();
 	CvodeData_free(data);

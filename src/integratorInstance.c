@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <29-Mar-2009 06:08:13 raim>
-  $Id: integratorInstance.c,v 1.112 2009/03/29 04:15:34 raimc Exp $
+  Last changed Time-stamp: <16-Feb-2011 11:21:34 raim>
+  $Id: integratorInstance.c,v 1.113 2011/03/06 09:58:11 raimc Exp $
 */
 /* 
  *
@@ -91,11 +91,13 @@ IntegratorInstance_setVariableValueByIndex(integratorInstance_t *, int, double);
 
 /***************** functions common to all solvers ************************/
 
-/** Creates an new integratorInstance
+/** Creates an new integratorInstance and sets valus to t0.
      
-reads initial values from odeModel and integration settings from
-cvodeSettings to create integration data cvodeData and
-cvodeResults and initializes cvodeSolver structures.
+    Reads initial values from odeModel and integration settings from
+    cvodeSettings to create integration data cvodeData and
+    cvodeResults and initializes cvode Solver structures. NOTE, that
+    all assignments and event triggers are evaluated such that the
+    values correspond to time=t0 of the original input model.
 */
 
 SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *om, cvodeSettings_t *opt)
@@ -107,23 +109,24 @@ SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *o
   data = CvodeData_create(om);
   if ( data == NULL ) return NULL;
  
-  CvodeData_initialize(data, opt, om);
+  CvodeData_initialize(data, opt, om, 0);
 
   return IntegratorInstance_allocate(data, opt, om);      
 }
 
-/** Resets an existing integratorInstance to time 0 and the
+/** Resets an existing integratorInstance to time t0 and the
     input SBML model's initial conditions with new settings.
 
-    Returns 1 if succesfull, 0 otherwise.
-    The instance can then be used for further integration runs
-    with these new settings. Don't use this function
-    during an integration run!
+    Returns 1 if succesfull, 0 otherwise.  The instance can then be
+    used for further integration runs with these new settings. Don't
+    use this function during an integration run! NOTE, that all
+    assignments and event triggers are evaluated such that the values
+    correspond to time=t0 of the original input model.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *engine, cvodeSettings_t *opt)
 {
-  CvodeData_initialize(engine->data, opt, engine->om);  
+  CvodeData_initialize(engine->data, opt, engine->om, 0);  
 
   /* de-activate backward integration for adjoint solver */
   engine->AdjointPhase = 0;
@@ -133,17 +136,41 @@ SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *engine, cvod
 }
 
 
-/**  Resets an existing integratorInstance to time 0 and the
-     input SBML model's initial conditions with original settings
+/**  Resets an existing integratorInstance to time t0 and the
+     input SBML model's initial conditions with original settings.
 
-     Returns 1 if succesfull, 0 otherwise.
-     After that, a new integration can be run. Don't use during an
-     integration run!
+     Returns 1 if succesfull, 0 otherwise.  After that, a new
+     integration can be run. Don't use during an integration run!
+     NOTE, that all assignments and event triggers are evaluated such
+     that the values correspond to time=t0 of the original input
+     model.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *engine)
 {
   return IntegratorInstance_set(engine, engine->opt);
+}
+
+/** Resets an existing integratorInstance to time t0 but KEEPS all values.
+
+    This can be used e.g. for a series of experiments, where between
+    integrations some value is reset. Alternatively, one could use
+    "indefinitely" time settings and just increase time manually.
+*/
+SBML_ODESOLVER_API int IntegratorInstance_resetTime(integratorInstance_t *engine, cvodeSettings_t *opt)
+{
+  if ( opt==NULL )
+    opt = engine->opt;
+  
+  /* re-initialize cvodeData, but KEEP current values instead of resetting them
+     from odeModel */
+  CvodeData_initialize(engine->data, opt, engine->om, 1);  
+
+  /* de-activate backward integration for adjoint solver */
+  engine->AdjointPhase = 0;
+  
+  return IntegratorInstance_initializeSolver(engine, engine->data,
+					     opt, engine->om);
 }
 
 /** Resets integrator for running the backward phase of the adjoint solver.
@@ -512,6 +539,18 @@ SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *
   return 0;
 }
 
+/**  \brief Returns the name of the variable corresponding to passed
+     variableIndex. The returned string (const char *) may NOT be
+     changed or freed by calling applications.
+    
+     Equivalent to VariableIndex_getName(variableIndex_t*, odeModel_t *),
+     and ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
+*/
+
+SBML_ODESOLVER_API const char *IntegratorInstance_getVariableName(integratorInstance_t *engine, variableIndex_t *vi)
+{
+  return VariableIndex_getName(vi, engine->om);
+}
 
 /**  Gets the value of a variable or parameter during an integration
      via its variableIndex.
@@ -827,7 +866,8 @@ SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine
 SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
 {
  
-  return engine->solver->iout > engine->solver->nout;
+  return engine->solver->iout > engine->solver->nout &&
+    !engine->opt->Indefinitely;
 }
 
 /**  Returns a pointer to cvodeResults structure containing
@@ -1418,7 +1458,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   dy_std = MySQRT(dy_var);
 
   /* stop integrator if mean + std of rates of change are lower than
-     1e-11 */
+     1e-11/ steady state threshold */
   if ( (dy_mean + dy_std) < opt->ssThreshold )
   {
     data->steadystate = 1;
@@ -1462,6 +1502,15 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
   IntegratorInstance_setVariableValueByIndex(engine, vi->index, value);
+}
+
+SBML_ODESOLVER_API void IntegratorInstance_setVariableValueByID(integratorInstance_t *engine, const char *id, double value)
+{
+
+  variableIndex_t *vi = ODEModel_getVariableIndex(engine->om, id);
+  if ( vi != NULL )
+    IntegratorInstance_setVariableValueByIndex(engine, vi->index, value);
+  VariableIndex_free(vi);
 }
 
 static

@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 17:49:53 raim>
-  $Id: integratorInstance.h,v 1.42 2009/03/27 15:55:03 fbergmann Exp $ 
+  Last changed Time-stamp: <16-Feb-2011 11:16:01 raim>
+  $Id: integratorInstance.h,v 1.43 2011/03/06 09:58:11 raimc Exp $ 
 */
 /* 
  *
@@ -145,6 +145,7 @@ extern "C" {
   SBML_ODESOLVER_API integratorInstance_t *IntegratorInstance_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_set(integratorInstance_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API int IntegratorInstance_reset(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_resetTime(integratorInstance_t *engine, cvodeSettings_t *opt);
   SBML_ODESOLVER_API int IntegratorInstance_resetAdjPhase(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *, double);
   SBML_ODESOLVER_API cvodeSettings_t *IntegratorInstance_getSettings(integratorInstance_t *);
@@ -152,6 +153,7 @@ extern "C" {
   /* DURING INTEGRATION: */
   SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *, double);
   SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *, variableIndex_t *, double);
+  SBML_ODESOLVER_API void IntegratorInstance_setVariableValueByID(integratorInstance_t *, const char*, double);
   SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_simpleOneStep(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_integrateOneStep(integratorInstance_t *);
@@ -168,6 +170,7 @@ extern "C" {
   SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
   SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
+  SBML_ODESOLVER_API const char *IntegratorInstance_getVariableName(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
   SBML_ODESOLVER_API double *IntegratorInstance_getValues(integratorInstance_t *);

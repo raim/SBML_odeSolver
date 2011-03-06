@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 17:56:09 raim>
-  $Id: cvodeData.c,v 1.41 2009/02/12 09:26:42 raimc Exp $
+  Last changed Time-stamp: <27-Feb-2011 00:28:10 raim>
+  $Id: cvodeData.c,v 1.42 2011/03/06 09:58:11 raimc Exp $
 */
 /* 
  *
@@ -324,7 +324,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
   is other then 0, and how it relates to CvodeData_initializeValues
   -> handling of initialAssignments !!!*/
 int
-CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
+CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om, int keepValues)
 {
 
   int i;
@@ -340,21 +340,24 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
 
   
   /* initialize values from odeModel */
-  CvodeData_initializeValues(data);
+  if ( !keepValues )
+    CvodeData_initializeValues(data);
      
   /* set current time : WHEN NOT 0 ?? */
   data->currenttime = opt->TimePoints[0];
 
   /* update assigned parameters, in case they depend on new time */
+  /* WHY ONLY IF TIME != 0 ?? */
   if ( data->currenttime != 0.0 )
+  {
     for ( i=0; i< (om->nass); i++ )
     {
       nonzeroElem_t *ordered = om->assignmentOrder[i];
       data->value[ordered->i] = evaluateAST(ordered->ij, data);
     }
+    data->allRulesUpdated = 1;
+  }
   
-  data->allRulesUpdated = 1;
-
   /*
     Then, check if formulas can be evaluated, and cvodeData_t *
     contains all necessary variables:
@@ -370,14 +373,15 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om)
   /* RESULTS: Now we should have all variables, and can allocate the
      results structure, where the time series will be stored ...  */
 
-  /* allow results only for finite integrations */
-  /* this is the only place where options structure is changed
-     internally! StoreResults is overruled by Indefinitely */
-  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
 
   /* free former results */
   if ( data->results != NULL )
     CvodeResults_free(data->results);
+
+  /* allow results only for finite integrations */
+  /* this is the only place where options structure is changed
+     internally! StoreResults is overruled by Indefinitely */
+  opt->StoreResults = !opt->Indefinitely && opt->StoreResults;
 
   /* create new results if required */
   if ( opt->StoreResults )
