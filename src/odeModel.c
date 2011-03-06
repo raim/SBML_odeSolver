@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2010-04-12 10:24:04 raim>
-  $Id: odeModel.c,v 1.130 2010/04/12 08:29:38 raimc Exp $
+  Last changed Time-stamp: <16-Feb-2011 11:20:38 raim>
+  $Id: odeModel.c,v 1.131 2011/03/06 09:59:46 raimc Exp $
 */
 /*
  *
@@ -2547,6 +2547,10 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
 /** \brief Returns the name of the variable corresponding to passed
     variableIndex. The returned string (const char *) may NOT be
     changed or freed by calling applications.
+
+    Equivalent to
+    IntegratorInstance_getVariableName(integratorInstance_t*, odeModel_t *),
+    and ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
 */
 
 SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeModel_t *om)
@@ -2554,7 +2558,13 @@ SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeMod
   return (const char*) om->names[vi->index];
 }
 
-/* outdated */
+/** \brief Returns the name of the variable corresponding to passed
+    variableIndex. The returned string (const char *) may NOT be
+    changed or freed by calling applications.
+
+     Equivalent to VariableIndex_getName(variableIndex_t*, odeModel_t *) and
+     IntegratorInstance_getVariableName(integratorInstance_t*, odeModel_t *);
+*/
 const char *ODEModel_getVariableName(odeModel_t *om, variableIndex_t *vi)
 {
   return VariableIndex_getName(vi, om);

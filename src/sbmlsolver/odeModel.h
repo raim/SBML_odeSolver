@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <2009-02-12 18:15:12 raim>
-  $Id: odeModel.h,v 1.55 2009/03/27 15:55:03 fbergmann Exp $ 
+  Last changed Time-stamp: <16-Feb-2011 11:16:21 raim>
+  $Id: odeModel.h,v 1.56 2011/03/06 09:59:46 raimc Exp $ 
 */
 /* 
  *
@@ -332,7 +332,7 @@ extern "C" {
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *, int);
   
   /* Variable Index */
-  /*outdated */ const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
   SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *, odeModel_t *);
   SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
