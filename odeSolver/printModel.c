@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <30-Sep-2010 11:14:25 raim>
-  $Id: printModel.c,v 1.30 2010/09/30 09:15:16 raimc Exp $
+  Last changed Time-stamp: <16-Feb-2011 00:05:59 raim>
+  $Id: printModel.c,v 1.31 2011/03/06 09:59:03 raimc Exp $
 */
 /* 
  *
@@ -74,6 +74,13 @@ static int printXMGJacobianTimeCourse(cvodeData_t *data);
 static int printXMGLegend(cvodeData_t *data, int nvalues);
 static int openXMGrace(cvodeData_t *data);
 static int closeXMGrace(cvodeData_t *data, char *name);
+#endif
+
+#ifndef max
+	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
+#endif
+#ifndef abs
+	#define abs( a ) ( ((a) > 0 ) ? (a) : (-a) )
 #endif
 
 void printModel(Model_t *m, FILE *f)
@@ -802,12 +809,43 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
   
 }
 
+/* TODO: set print precision based on rel. and abs. errors;
+   number of decimals: d=max(floor(log10(1/(X*relErr)))+1,
+                             floor(log10(1/absErr)))
+   order of magnitude: m=floor(log10(X))+1
+   FORMAT STRING "*.(d+m+1)g"
+
+   {
+   char fmt[100];
+   sprintf(fmt, "precision %%.%d \n", round(1/1e-14));
+   printf(fmt, IntegratorInstance_getVariableValue(ii, pohVI));
+   }  
+*/
+void precprintf(FILE *f, double X, double relE, double absE)
+{
+   /* number of decimals: */
+  int d, m, numDigits;
+  if ( X > absE )
+  {
+    d = max(floor(log10(1/(abs(X)*relE)))+1, floor(log10(1/absE)));
+    m = max(1, floor(log10(abs(X)))+1);
+    numDigits = d+m; /* add 1 for decimal point */
+
+/*     fprintf(stderr, "HEELLLO %d vs. %f %f; ERRS %g and %g\n", \ */
+/* 	    numDigits, abs(X),  floor(log10(abs(X)))+1, relE, absE); */
+    fprintf(f, "%.*f ", numDigits, X);
+  }
+  else
+    fprintf(f, "%f ", X);
+}
+
 void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
 {  
   int i,j, k;
   cvodeResults_t *results;
   odeModel_t *om;
   odeSense_t *os;
+
 
   if ( data == NULL || data->results == NULL )
   {
@@ -880,13 +918,16 @@ void printConcentrationTimeCourse(cvodeData_t *data, FILE *f)
       fprintf(f, "%g ", results->time[i]);
       
       for ( j=0; j<om->neq; j++ ) 
-	fprintf(f, "%g ", results->value[j][i]);
+	precprintf(f, results->value[j][i], Opt.RError, Opt.Error);
+/* 	fprintf(f, "%g ", results->value[j][i]); */
 
-      for ( j=0; j<om->nass; j++ ) 
-	fprintf(f, "%g ", results->value[om->neq+j][i]);
+      for ( j=0; j<om->nass; j++ )
+	precprintf(f, results->value[om->neq+j][i], Opt.RError, Opt.Error);
+/* 	fprintf(f, "%g ", results->value[om->neq+j][i]); */
       
       for ( j=0; j<om->nconst; j++ )
-	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]);
+	precprintf(f, results->value[om->neq+om->nass+j][i], Opt.RError, Opt.Error);
+/* 	fprintf(f, "%g ", results->value[om->neq+om->nass+j][i]); */
 
       fprintf(f, "\n");
     }
