@@ -1,5 +1,5 @@
-/*   Last changed Time-stamp: <2009-02-12 18:14:02 raim> */
-/*   $Id: integratorSettings.c,v 1.52 2009/02/12 09:25:05 raimc Exp $ */
+/*   Last changed Time-stamp: <02-Feb-2011 13:48:51 raim> */
+/*   $Id: integratorSettings.c,v 1.53 2011/03/06 09:56:18 raimc Exp $ */
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -411,6 +411,10 @@ SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTim
   int i, j;
   double *timeseries;
   ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);
+
+  /* suppress multiple printsteps for EndTime 0, such that only the
+     initial values are printed! */
+  if ( EndTime == 0.0 ) PrintStep = 0;
   
   for ( i=1; i<=PrintStep; i++ ) timeseries[i-1] = i * EndTime/PrintStep;
   
