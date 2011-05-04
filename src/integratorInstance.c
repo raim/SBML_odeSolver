@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <16-Feb-2011 11:21:34 raim>
-  $Id: integratorInstance.c,v 1.113 2011/03/06 09:58:11 raimc Exp $
+  Last changed Time-stamp: <24-Mar-2011 17:25:30 raim>
+  $Id: integratorInstance.c,v 1.114 2011/05/04 18:51:24 raimc Exp $
 */
 /* 
  *
@@ -584,7 +584,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
 }
 
 /** Returns the respective entry FIM[i][j] of the
-    Fisher information matrix (FIM),
+    Fisher Information Matrix (FIM),
 
     issues error message and returns 0 if FIM doesn't exist or if
     the passed integers are larger then FIM dimension */
@@ -1205,7 +1205,7 @@ int IntegratorInstance_updateData(integratorInstance_t *engine)
       om->compute_vector_v=0;
     }
 
-    /* FIM */
+    /* Update the Fisher Information Matrix (FIM) */
     if ( opt->doFIM )
       {
       for ( i=0; i<data->nsens; i++ )
