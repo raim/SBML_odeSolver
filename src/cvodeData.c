@@ -1,6 +1,6 @@
 /*
-  Last changed Time-stamp: <27-Feb-2011 00:28:10 raim>
-  $Id: cvodeData.c,v 1.42 2011/03/06 09:58:11 raimc Exp $
+  Last changed Time-stamp: <2011-04-14 12:01:32 raim>
+  $Id: cvodeData.c,v 1.43 2011/06/16 13:55:20 raimc Exp $
 */
 /* 
  *
@@ -342,6 +342,9 @@ CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om, in
   /* initialize values from odeModel */
   if ( !keepValues )
     CvodeData_initializeValues(data);
+
+  /* reset steadystate flag */
+  data->steadystate = 0;
      
   /* set current time : WHEN NOT 0 ?? */
   data->currenttime = opt->TimePoints[0];
