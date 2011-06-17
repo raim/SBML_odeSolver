@@ -63,8 +63,8 @@
 
 static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
-static int JacODE(long int N, DenseMat J, realtype t,
-		  N_Vector y, N_Vector fy, void *jac_data,
+static int JacODE(int N, realtype t,
+		  N_Vector y, N_Vector fy, DlsMat J, void *jac_data,
 		  N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3);
 static void
 IntegratorInstance_freeQuadrature(integratorInstance_t *);
@@ -111,7 +111,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
    respective equations within this function!!! */
   if ( opt->SetTStop || om->npiecewise )
   {
-    CV_MODE = CV_NORMAL_TSTOP;
+    CV_MODE = CV_NORMAL;
     CVodeSetStopTime(solver->cvode_mem, solver->tout);
   }  
 
@@ -126,9 +126,9 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   { 
     if( opt->DoAdjoint )
     {  
-      /* CvodeF is needed in the forward phase if the adjoint soln is
+      /* CVodeF is needed in the forward phase if the adjoint soln is
 	 desired  */  
-      flag = CVodeF(solver->cvadj_mem, solver->tout,
+      flag = CVodeF(solver->cvode_mem, solver->tout,
 		    solver->y, &(solver->t), CV_NORMAL, &(opt->ncheck));     
     }
     else
@@ -244,8 +244,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
   { /* AdjointPhase: */
 
     /* The adjoint engine*/
-    flag = CVodeB(solver->cvadj_mem, solver->tout,
-		  solver->yA, &(solver->t), CV_NORMAL);
+    flag = CVodeB(solver->cvode_mem, solver->tout, CV_NORMAL);
     /*!!! ==31752== Conditional jump or move depends on uninitialised
                     value(s)
 	  ==31752==    at 0x43552B: CVodeB
@@ -326,7 +325,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     
 	char *message2[] =
 	  { "",
-            "Cvadj_mem full", 
+            "Cvode_mem full", 
             "", 
             "Bad final time for adjoint problem",
 	    "Memory for adjoint problem not created",
@@ -359,6 +358,13 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       }
 
       return 0 ; /* Error - stop integration*/
+    }
+
+    flag = CVodeGetB(solver->cvode_mem, solver->which,
+                     &(solver->t), solver->yA);
+    if (flag != CV_SUCCESS) {
+        /* FIXME: informative message supplied */
+        return 0; /* Error - stop integration */
     }
 
     ydata = NV_DATA_S(solver->yA);
@@ -404,7 +410,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   CVRhsFn rhsFunction;
-  CVDenseJacFn jacODE = NULL;
+  CVDlsDenseJacFn jacODE = NULL;
 
 
   /* Catch Adjoint Phase*/
@@ -547,7 +553,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 /*       CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxOrd", 1); */
 
       /**
-       * Call CVodeMalloc to initialize the integrator memory:\n
+       * Call CVodeInit to initialize the integrator memory:\n
        *
        * cvode_mem:  pointer to the CVode memory block returned by
        CVodeCreate\n
@@ -555,28 +561,31 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
        * t0:    initial value of time\n
        * y:     the initial dependent variable vector (called in x in the
        *        docu)\n
-       * CV_SV: specifies scalar relative and vector absolute tolerances\n
-       * reltol: the scalar relative tolerance\n
-       * abstol: pointer to the absolute tolerance vector\n
        */
-      flag = CVodeMalloc(solver->cvode_mem, rhsFunction,
-			 solver->t0, solver->y,
-			 CV_SV, solver->reltol, solver->abstol);
-      CVODE_HANDLE_ERROR(&flag, "CVodeMalloc", 1);
+      flag = CVodeInit(solver->cvode_mem, rhsFunction,
+                       solver->t0, solver->y);
+      CVODE_HANDLE_ERROR(&flag, "CVodeInit", 1);
     }
     else
     {
-      flag = CVodeReInit(solver->cvode_mem, rhsFunction,
-			 solver->t0, solver->y,
-			 CV_SV, solver->reltol, solver->abstol);
+      flag = CVodeReInit(solver->cvode_mem,
+                         solver->t0, solver->y);
       CVODE_HANDLE_ERROR(&flag, "CVodeReInit", 1);
     }
+    /**
+     * specify scalar relative and vector absolute tolerances\n
+     * reltol: the scalar relative tolerance\n
+     * abstol: pointer to the absolute tolerance vector\n
+     */
+    flag = CVodeSVtolerances(solver->cvode_mem,
+                             solver->reltol, solver->abstol);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSStolerances", 1);
 
     /**
      * Link the main integrator with data for right-hand side function
      */ 
-    flag = CVodeSetFdata(solver->cvode_mem, engine->data);
-    CVODE_HANDLE_ERROR(&flag, "CVodeSetFdata", 1);
+    flag = CVodeSetUserData(solver->cvode_mem, engine->data);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetUserData", 1);
     /**
      * Set maximum number of internal steps to be taken
      * by the solver in its attempt to reach tout
@@ -599,10 +608,10 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
        set engine->UseJacobian */
     if ( engine->UseJacobian == 1 ) 
       /* ... user-supplied routine Jac */ 
-      flag = CVDenseSetJacFn(solver->cvode_mem, jacODE, engine->data);
+      flag = CVDlsSetDenseJacFn(solver->cvode_mem, jacODE);
     else
       /* ...the internal default difference quotient routine CVDenseDQJac */ 
-      flag = CVDenseSetJacFn(solver->cvode_mem, NULL, NULL);
+      flag = CVDlsSetDenseJacFn(solver->cvode_mem, NULL);
     CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFn", 1);
 
     
@@ -626,13 +635,13 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	  N_VDestroy_Serial(engine->solver->qS);
 	  engine->solver->qS = NULL;
 	  
-	  flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQ", 1);
+	  flag = CVodeQuadReInit(solver->cvode_mem, solver->q);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	}
 	else
 	{ /* NO QUAD EXIST, CALL MALLOC*/
-	  flag = CVodeQuadMalloc(solver->cvode_mem, fQ, solver->q);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for q", 1);
+	  flag = CVodeQuadInit(solver->cvode_mem, fQ, solver->q);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadInit for q", 1);
 	}
       }
       /* if q exists then just reinit */
@@ -640,18 +649,17 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       {
 	/* just use existing quadrature */
 	NV_Ith_S(solver->q, 0) = 0.0;
-	flag = CVodeQuadReInit(solver->cvode_mem, fQ, solver->q);
-	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQ", 1);
+	flag = CVodeQuadReInit(solver->cvode_mem, solver->q);
+	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
       }
         
-      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
-	
       /* set quadrature tolerance for objective function 
 	 to be the same as the forward solution tolerances */
-      flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE,
-				CV_SS, solver->reltol, &(opt->Error));
+      flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1);
+      flag = CVodeQuadSStolerances(solver->cvode_mem,
+                                   solver->reltol, solver->abstol);
+      CVODE_HANDLE_ERROR(&flag, "CVodeQuadSStolerances", 1);
     }
 
  
@@ -668,17 +676,13 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     } 	
 
 
-    /* If adjoint is desired, CVadjMalloc needs to be done before
+    /* If adjoint is desired, CVodeAdjInit needs to be done before
        calling CVodeF  */
     if ( opt->DoAdjoint )
     {
       
-      if ( solver->cvadj_mem == NULL )
-      {
-	solver->cvadj_mem =
-	  CVadjMalloc(solver->cvode_mem, opt->nSaveSteps, CV_HERMITE);
-	  CVODE_HANDLE_ERROR((void *)solver->cvadj_mem, "CVadjMalloc", 0);
-      }
+	  flag = CVodeAdjInit(solver->cvode_mem, opt->nSaveSteps, CV_HERMITE);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeAdjInit", 0);
     }
   } 
 
@@ -753,11 +757,7 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
   IntegratorInstance_freeAdjointSensitivity(engine);
 
   /* Free the adjoint memory */
-  if (engine->solver->cvadj_mem != NULL)
-  {
-    CVadjFree(&engine->solver->cvadj_mem);
-    engine->solver->cvadj_mem = NULL;
-  }
+  CVodeAdjFree(&engine->solver->cvode_mem);
 
   /* Free IDA vector dy */
   if (engine->solver->dy != NULL)
@@ -859,8 +859,8 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstanc
   flag = CVodeGetNumLinSolvSetups(solver->cvode_mem, &nsetups);
   CVODE_HANDLE_ERROR(&flag, "CVodeGetNumLinSolvSetups", 1);
     
-  flag = CVDenseGetNumJacEvals(solver->cvode_mem, &nje);
-  CVODE_HANDLE_ERROR(&flag, "CVDenseGetNumJacEvals", 1);
+  flag = CVDlsGetNumJacEvals(solver->cvode_mem, &nje);
+  CVODE_HANDLE_ERROR(&flag, "CVDlsGetNumJacEvals", 1);
     
   flag = CVodeGetNonlinSolvStats(solver->cvode_mem, &nni, &ncfn);
   CVODE_HANDLE_ERROR(&flag, "CVodeGetNonlinSolvStats", 1);
@@ -1038,8 +1038,8 @@ static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data)
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-static int JacODE(long int N, DenseMat J, realtype t,
-		  N_Vector y, N_Vector fy, void *jac_data,
+static int JacODE(int N, realtype t,
+				  N_Vector y, N_Vector fy, DlsMat J, void *jac_data,
 		  N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)
 {
   

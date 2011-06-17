@@ -3429,7 +3429,7 @@ SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *om)
 }
 
 /** returns the compiled Jacobian function for the given model */
-SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *om)
+SBML_ODESOLVER_API CVDlsDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *om)
 {
   if ( !om->jacobian )
   {
@@ -3504,7 +3504,7 @@ SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel
 }
 
 /** returns the compiled adjoint jacobian function for the given model */
-SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *om)
+SBML_ODESOLVER_API CVDlsDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *om)
 {
   if ( !om->jacobian )
   {

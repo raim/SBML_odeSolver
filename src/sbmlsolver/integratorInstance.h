@@ -71,7 +71,7 @@ struct cvodeSolver
     N_Vector dy;      /**< current ODE values dx/dt, IDA specific data! */
 
     /** adjoint specific */
-    void *cvadj_mem;
+    int which;
     N_Vector yA;    
     realtype reltolA, reltolQA;
     N_Vector abstolA, abstolQA; 

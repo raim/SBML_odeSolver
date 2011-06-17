@@ -78,8 +78,8 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
 	      void *fA_data);
 
 
-static int JacA(long int NB, DenseMat JA, realtype t,
-		N_Vector y, N_Vector yA, N_Vector fyA, void *jac_dataA,
+static int JacA(int NB, realtype t, N_Vector y, N_Vector yA,
+        N_Vector fyA, DlsMat JA, void *jac_dataA,
 		N_Vector tmp1A, N_Vector tmp2A, N_Vector tmp3A);
 
 static int fQA(realtype t, N_Vector y, N_Vector yA, N_Vector qAdot,
@@ -118,7 +118,7 @@ int IntegratorInstance_getForwardSens(integratorInstance_t *engine)
   results = engine->results;
 
   /* getting sensitivities */
-  flag = CVodeGetSens(solver->cvode_mem, solver->t, solver->yS);
+  flag = CVodeGetSens(solver->cvode_mem, &solver->t, solver->yS);
     
   if ( flag != CV_SUCCESS )
     return flag;
@@ -202,7 +202,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
   cvodeSolver_t *solver = engine->solver;
   cvodeSettings_t *opt = engine->opt;
   CVSensRhs1Fn sensRhsFunction = NULL;
-  CVDenseJacFnB adjointJACFunction = NULL;
+  CVDlsDenseJacFnB adjointJACFunction = NULL;
   CVQuadRhsFnB adjointQuadFunction = NULL;
   CVRhsFnB adjointRHSFunction = NULL;
   
@@ -287,9 +287,36 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     if ( reinit == 0 )
     {
-      flag = CVodeSensMalloc(solver->cvode_mem, os->nsens,
-			     sensMethod, solver->yS);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSensMalloc", 1);    
+      /* *** set parameter values or R.H.S function fS *****/
+      /* NOTES: */
+      /* !!! plist could later be used to specify requested parameters
+         for sens.analysis !!! */
+    
+      /* was construction of jacobian and parametric matrix successfull ? */
+      /* if only init.cond. sensitivities, only the jacobian
+        matrix required, and os->sensitivity will also be 1 even though
+        there is no matrix */
+      if ( os->sensitivity && om->jacobian )
+      {
+        flag = CVodeSensInit1(solver->cvode_mem, sensMethod,
+                              os->nsens, sensRhsFunction, solver->yS);
+        CVODE_HANDLE_ERROR(&flag, "CVodeSensInit1", 1);
+
+        data->use_p = 0; /* don't use data->p */
+      }
+      else
+      {
+        flag = CVodeSensInit(solver->cvode_mem, sensMethod,
+                             os->nsens, NULL, solver->yS);
+        CVODE_HANDLE_ERROR(&flag, "CVodeSensInit NULL", 1);
+
+        data->use_p = 1; /* use data->p, as fS is not available */
+
+        /* difference quotient method: CV_FORWARD or CV_CENTERED
+         see, cvs_guide.pdf CVODES doc */
+        CVodeSetSensDQMethod(solver->cvode_mem, CV_CENTERED, 0.0);
+        CVODE_HANDLE_ERROR(&flag, "CVodeSetSensDQMethod", 1);
+      }
     }
     else
     {
@@ -297,32 +324,6 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       CVODE_HANDLE_ERROR(&flag, "CVodeSensReInit", 1);	  
     }
 
-    /* *** set parameter values or R.H.S function fS *****/
-    /* NOTES: */
-    /* !!! plist could later be used to specify requested parameters
-       for sens.analysis !!! */
-    
-    /* was construction of jacobian and parametric matrix successfull ? */
-    /* if only init.cond. sensitivities, only the jacobian
-      matrix required, and os->sensitivity will also be 1 even though
-      there is no matrix */
-    if ( os->sensitivity && om->jacobian )
-    {
-      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, sensRhsFunction, data);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn Matrix", 1);
-      data->use_p = 0; /* don't use data->p */
-    }
-    else
-    {
-      flag = CVodeSetSensRhs1Fn(solver->cvode_mem, NULL, NULL);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensRhs1Fn NULL", 1);
-      data->use_p = 1; /* use data->p, as fS is not available */
-
-      /* difference quotient method: CV_FORWARD or CV_CENTERED
-       see, cvs_guide.pdf CVODES doc */
-      CVodeSetSensDQMethod(solver->cvode_mem, CV_CENTERED, 0.0);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetSensDQMethod", 1);
-    }
 
     /* initializing and setting data->p, used if the jacobian or
      the parametric matrix are not available */
@@ -361,13 +362,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	    N_VDestroy_Serial(engine->solver->q);
 	    engine->solver->q = NULL;
 	    
-	    flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
-	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
+	    flag = CVodeQuadReInit(solver->cvode_mem, solver->qS);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit", 1);
 	  }
 	  else
 	  { /* NO QUAD EXIST, CALL MALLOC*/
-	    flag = CVodeQuadMalloc(solver->cvode_mem, fQS, solver->qS);
-	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for qS", 1);
+        flag = CVodeQuadInit(solver->cvode_mem, fQS, solver->qS);
+	    CVODE_HANDLE_ERROR(&flag, "CVodeQuadInit for qS", 1);
 	  }
 	}
 	/* if qS still exists then the dimension hasn't changed */
@@ -376,13 +377,12 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	  /* just use existing quadrature */
 	  for ( i=0; i<os->nsens; i++ )
 	    NV_Ith_S(solver->qS, i) = 0.0;
-	  flag = CVodeQuadReInit(solver->cvode_mem, fQS, solver->qS);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQS", 1);
+	  flag = CVodeQuadReInit(solver->cvode_mem, solver->qS);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit qS", 1);
 	}
 	
-	
-	flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-	CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata", 1);
+	flag = CVodeSetUserData(solver->cvode_mem, engine);
+	CVODE_HANDLE_ERROR(&flag, "CVodeSetUserData", 1);
 	
 	/* set quadrature tolerance for objective function 
 	   to be the same as the forward solution tolerances */
@@ -409,13 +409,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	  N_VDestroy_Serial(engine->solver->q);
 	  engine->solver->q = NULL;
 	  
-	  flag = CVodeQuadReInit(solver->cvode_mem, fQFIM, solver->qFIM);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQFIM", 1);
+	  flag = CVodeQuadReInit(solver->cvode_mem, solver->qFIM);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit qFIM", 1);
 	}
 	else
 	{ /* NO QUAD EXIST, CALL MALLOC*/
-	  flag = CVodeQuadMalloc(solver->cvode_mem, fQFIM, solver->qFIM);
-	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadMalloc for qFIM", 1);
+	  flag = CVodeQuadInit(solver->cvode_mem, fQFIM, solver->qFIM);
+	  CVODE_HANDLE_ERROR(&flag, "CVodeQuadInit for qFIM", 1);
 	}
       }
       /* if qFIM still exists then the dimension hasn't changed */
@@ -424,13 +424,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 	/* just use existing quadrature */
 	for ( i=0; i<os->nsens*os->nsens; i++ )
 	  NV_Ith_S(solver->qFIM, i) = 0.0;
-	flag = CVodeQuadReInit(solver->cvode_mem, fQFIM, solver->qFIM);
-	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit fQFIM", 1);
+	flag = CVodeQuadReInit(solver->cvode_mem, solver->qFIM);
+	CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInit qFIM", 1);
       }
       
       
-      flag = CVodeSetQuadFdata(solver->cvode_mem, engine);
-      CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdata for FIM", 1);
+      flag = CVodeSetUserData(solver->cvode_mem, engine);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSetUserData for FIM", 1);
       
       /* set quadrature tolerance for objective function 
 	 to be the same as the forward solution tolerances */
@@ -576,36 +576,37 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
    
      if ( engine->adjrun == 1 )
     {
-      flag = CVodeCreateB(solver->cvadj_mem, method, iteration);
+      flag = CVodeCreateB(solver->cvode_mem, method, iteration, &solver->which);
       CVODE_HANDLE_ERROR(&flag, "CVodeCreateB", 1);
 
-      flag = CVodeMallocB(solver->cvadj_mem, adjointRHSFunction, solver->t0,
-			  solver->yA, CV_SV, solver->reltolA,
-			  solver->abstolA);
-      CVODE_HANDLE_ERROR(&flag, "CVodeMallocB", 1);
-     
-      flag = CVDenseB(solver->cvadj_mem, om->neq);
+      flag = CVodeInitB(solver->cvode_mem, solver->which, adjointRHSFunction,
+                        solver->t0, solver->yA);
+      CVODE_HANDLE_ERROR(&flag, "CVodeInitB", 1);
+      flag = CVodeSVtolerancesB(solver->cvode_mem, solver->which,
+                                solver->reltolA, solver->abstolA);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSVtolerancesB", 1);
+
+      flag = CVDenseB(solver->cvode_mem, solver->which, om->neq);
       CVODE_HANDLE_ERROR(&flag, "CVDenseB", 1);
 
     }
     else
     {
-      flag = CVodeReInitB(solver->cvadj_mem, adjointRHSFunction, solver->t0,
-			  solver->yA, CV_SV, solver->reltolA,
-			  solver->abstolA);
+      flag = CVodeReInitB(solver->cvode_mem, solver->which, solver->t0, solver->yA);
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
+      flag = CVodeSVtolerancesB(solver->cvode_mem, solver->which, solver->reltolA, solver->abstolA);
+      CVODE_HANDLE_ERROR(&flag, "CVodeSVtolerancesB", 1);
     }
      
-    flag = CVodeSetFdataB(solver->cvadj_mem, engine->data);
-    CVODE_HANDLE_ERROR(&flag, "CVodeSetFdataB", 1);
+    flag = CVodeSetUserDataB(solver->cvode_mem, solver->which, engine->data);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetUserDataB", 1);
 
     /*!!! could NULL be passed here if jacobian is not available ??*/
-    flag = CVDenseSetJacFnB(solver->cvadj_mem, adjointJACFunction,
-			    engine->data);
-    CVODE_HANDLE_ERROR(&flag, "CVDenseSetJacFnB", 1);
+    flag = CVDlsSetDenseJacFnB(solver->cvode_mem, solver->which, adjointJACFunction);
+    CVODE_HANDLE_ERROR(&flag, "CVDlsSetDenseJacFnB", 1);
 
     /* set adjoint max steps to be same as that for forward */
-    flag = CVodeSetMaxNumStepsB(solver->cvadj_mem, opt->Mxstep);
+    flag = CVodeSetMaxNumStepsB(solver->cvode_mem, solver->which, opt->Mxstep);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetMaxNumStepsB", 1);
 
    
@@ -619,9 +620,9 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       for( i=0; i<os->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
-      flag = CVodeQuadMallocB(solver->cvadj_mem, adjointQuadFunction,
+      flag = CVodeQuadInitB(solver->cvode_mem, solver->which, adjointQuadFunction,
 			      solver->qA);
-      CVODE_HANDLE_ERROR(&flag, "CVodeQuadMallocB", 1);
+      CVODE_HANDLE_ERROR(&flag, "CVodeQuadInitB", 1);
     }
     else
     {
@@ -629,8 +630,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       for( i=0; i<os->nsens; i++ )
 	NV_Ith_S(solver->qA, i) = 0.0;
   
-      flag = CVodeQuadReInitB(solver->cvadj_mem, adjointQuadFunction,
-			      solver->qA);
+      flag = CVodeQuadReInitB(solver->cvode_mem, solver->which, solver->qA);
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);
     }
  
@@ -653,12 +653,14 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     solver->reltolQA = solver->reltolA;
  
-    flag = CVodeSetQuadFdataB(solver->cvadj_mem, data);
-    CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadFdataB", 1);
+    flag = CVodeSetUserDataB(solver->cvode_mem, solver->which, data);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSetUserDataB", 1);
 
-    flag = CVodeSetQuadErrConB(solver->cvadj_mem, TRUE,
-			       CV_SS, solver->reltolA, &(opt->AdjError) );
+    flag = CVodeSetQuadErrConB(solver->cvode_mem, solver->which, TRUE);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrConB", 1);
+    flag = CVodeQuadSVtolerances(solver->cvode_mem, solver->reltolQA,
+                                 solver->abstolQA);
+    CVODE_HANDLE_ERROR(&flag, "CVodeQuadSVtolerances", 1);
 
 
     /* END adjoint phase */
@@ -685,37 +687,37 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstan
      /* print additional CVODES forward sensitivity statistics */
     fprintf(f, "##\n## CVodes Forward Sensitivity Statistics:\n");
 
-    flag = CVodeGetNumSensRhsEvals(solver->cvode_mem, &nfSe);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensRhsEvals", 1);
+    flag = CVodeGetSensNumRhsEvals(solver->cvode_mem, &nfSe);
+    CVODE_HANDLE_ERROR(&flag, "CVodeGetSensNumRhsEvals", 1);
     flag = CVodeGetNumRhsEvalsSens(solver->cvode_mem, &nfeS);
     CVODE_HANDLE_ERROR(&flag, "CVodeGetNumRhsEvalsSens", 1);
-    flag = CVodeGetNumSensLinSolvSetups(solver->cvode_mem, &nsetupsS);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensLinSolvSetups", 1);
-    flag = CVodeGetNumSensErrTestFails(solver->cvode_mem, &netfS);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensErrTestFails", 1);
-    flag = CVodeGetNumSensNonlinSolvIters(solver->cvode_mem, &nniS);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensNonlinSolvIters", 1);
-    flag = CVodeGetNumSensNonlinSolvConvFails(solver->cvode_mem, &ncfnS);
-    CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensNonlinSolvConvFails", 1);
+    flag = CVodeGetSensNumLinSolvSetups(solver->cvode_mem, &nsetupsS);
+    CVODE_HANDLE_ERROR(&flag, "CVodeGetSensNumLinSolvSetups", 1);
+    flag = CVodeGetSensNumErrTestFails(solver->cvode_mem, &netfS);
+    CVODE_HANDLE_ERROR(&flag, "CVodeGetSensNumErrTestFails", 1);
+    flag = CVodeGetSensNumNonlinSolvIters(solver->cvode_mem, &nniS);
+    CVODE_HANDLE_ERROR(&flag, "CVodeGetSensNumNonlinSolvIters", 1);
+    flag = CVodeGetSensNumNonlinSolvConvFails(solver->cvode_mem, &ncfnS);
+    CVODE_HANDLE_ERROR(&flag, "CVodeGetSensNumNonlinSolvConvFails", 1);
 
     fprintf(f, "## nfSe    = %5ld    nfeS     = %5ld\n", nfSe, nfeS);
     fprintf(f, "## netfs   = %5ld    nsetupsS = %5ld\n", netfS, nsetupsS);
     fprintf(f, "## nniS    = %5ld    ncfnS    = %5ld\n", nniS, ncfnS);
   }
   
-  if ( (engine->opt->DoAdjoint) && (solver->cvadj_mem != NULL) )
+  if ( engine->opt->DoAdjoint )
   { 
       /* print additional CVODES adjoint sensitivity statistics */
      fprintf(f, "##\n## CVode Adjoint Sensitivity Statistics:\n");
-     cvode_memB = CVadjGetCVodeBmem(solver->cvadj_mem);
+     cvode_memB = CVodeGetAdjCVodeBmem(solver->cvode_mem, solver->which);
      flag = CVodeGetNumSteps(cvode_memB, &nstA);
      CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSteps", 1);
      flag = CVodeGetNumRhsEvals(cvode_memB, &nfeA);
      CVODE_HANDLE_ERROR(&flag, "CVodeGetNumSensRhsEvals", 1);
      flag = CVodeGetNumLinSolvSetups(cvode_memB, &nsetupsA);
      CVODE_HANDLE_ERROR(&flag, "CVodeGetNumLinSolvSetups", 1);
-     flag = CVDenseGetNumJacEvals(cvode_memB, &njeA);
-     CVODE_HANDLE_ERROR(&flag, "CVDenseGetNumJacEvals", 1);
+     flag = CVDlsGetNumJacEvals(cvode_memB, &njeA);
+     CVODE_HANDLE_ERROR(&flag, "CVDlsGetNumJacEvals", 1);
      flag = CVodeGetNonlinSolvStats(cvode_memB, &nniA, &ncfnA);
      CVODE_HANDLE_ERROR(&flag, "CVodeGetNonlinSolvStats", 1);
      flag = CVodeGetNumErrTestFails(cvode_memB, &netfA);
@@ -1087,7 +1089,8 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
        if discrete data is observed, quadrature has been computed already */
     if ( opt->observation_data_type == 0  )
     {  
-      flag = CVodeGetQuadB(solver->cvadj_mem, solver->qA);
+        flag = CVodeGetQuadB(solver->cvode_mem, solver->which,
+                             &solver->t, solver->qA);
       CVODE_HANDLE_ERROR(&flag, "CVodeGetQuadB", 1);
     }
 
@@ -1106,7 +1109,7 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
       /* If an objective function exists */
       if( om->ObjectiveFunction != NULL )
       {
-	flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->q);
+	flag = CVodeGetQuad(solver->cvode_mem, &solver->t, solver->q);
 	CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad ObjectiveFunction", 1);
       }
 
@@ -1117,13 +1120,13 @@ SBML_ODESOLVER_API int IntegratorInstance_CVODEQuad(integratorInstance_t *engine
 	if( opt->Sensitivity && om->ObjectiveFunction == NULL &&
 	    om->vector_v != NULL  )
 	{
-	  flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qS);
+	  flag = CVodeGetQuad(solver->cvode_mem, &solver->t, solver->qS);
 	  CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad V_Vector", 1);
 	}
       }
       else /* doFIM */
       {
-	flag = CVodeGetQuad(solver->cvode_mem, solver->tout, solver->qFIM);
+	flag = CVodeGetQuad(solver->cvode_mem, &solver->t, solver->qFIM);
 	CVODE_HANDLE_ERROR(&flag, "CVodeGetQuad FIM", 1);
 	
 	/* copy results to matrix FIM */
@@ -1209,7 +1212,7 @@ SBML_ODESOLVER_API int IntegratorInstance_printQuad(integratorInstance_t *engine
       /*!!! TODO : clarify why valgrind reports
 	"==16330== Conditional jump or move depends on
 	           uninitialised value(s)" for the following print command!
-		   see file sundials-2.3.0/include/nvector/nvector_serial.h */
+		   see file sundials-2.4.0/include/nvector/nvector_serial.h */
       for ( j=0; j<os->nsens; j++ )
       {
 	value = NV_Ith_S(engine->solver->qS, j);
@@ -1440,8 +1443,8 @@ static int fA(realtype t, N_Vector y, N_Vector yA, N_Vector yAdot,
    back to CVODE's internal vector DENSE_ELEM(J,i,j).
 */
 
-static int JacA(long int NB, DenseMat JB, realtype t,
-		N_Vector y, N_Vector yB, N_Vector fyB, void *jac_dataB,
+static int JacA(int NB, realtype t,	N_Vector y, N_Vector yB,
+        N_Vector fyB, DlsMat JB, void *jac_dataB,
 		N_Vector tmp1B, N_Vector tmp2B, N_Vector tmp3B)
 {
 
@@ -1539,7 +1542,7 @@ static int fQS(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
       shouldn't be used as it gives nan's */
   if ( t != 0 )
   {
-    flag = CVodeGetSens(solver->cvode_mem, t, yS);
+    flag = CVodeGetSens(solver->cvode_mem, &solver->t, yS);
     if ( flag < 0 )
     {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,
@@ -1592,7 +1595,7 @@ static int fQFIM(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
       shouldn't be used as it gives nan's */
   if ( t != 0 )
   {
-    flag = CVodeGetSens(solver->cvode_mem, t, yS);
+    flag = CVodeGetSens(solver->cvode_mem, &solver->t, yS);
     if ( flag < 0 )
     {
       SolverError_error(FATAL_ERROR_TYPE, SOLVER_ERROR_CVODE_MALLOC_FAILED,

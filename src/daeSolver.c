@@ -71,8 +71,8 @@
 static int fRes(realtype tres, N_Vector yy, N_Vector yp,
 		N_Vector resval, void *rdata);
 
-static int JacRes(long int Neq, realtype tt, N_Vector yy, N_Vector yp,
-		  N_Vector resvec, realtype cj, void *jdata, DenseMat JJ,
+static int JacRes(int Neq, realtype tt, realtype cj, N_Vector yy,
+          N_Vector yp, N_Vector resvec, DlsMat JJ, void *jdata,
 		  N_Vector tempv1, N_Vector tempv2, N_Vector tempv3);
 
 
@@ -277,26 +277,30 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
   CVODE_HANDLE_ERROR((void *)(solver->cvode_mem), "IDACreate", 0);
 
   /*
-   * Call IDAMalloc to initialize the integrator memory:
+   * Call IDAInit to initialize the integrator memory:
    *
    * cvode_mem  pointer to the CVode memory block returned by CVodeCreate
    * fRes         user's right hand side function
    * t0         initial value of time
    * y          the dependent variable vector
    * dy         the ODE value vector
-   * IDA_SV     specifies scalar relative and vector absolute tolerances
+   */
+  flag = IDAInit(solver->cvode_mem, fRes, solver->t0, solver->y,
+                 solver->dy);
+  CVODE_HANDLE_ERROR(&flag, "IDAInit", 1);
+  /*
+   * specify scalar relative and vector absolute tolerances
    * reltol     the scalar relative tolerance
    * abstol     pointer to the absolute tolerance vector
    */
-  flag = IDAMalloc(solver->cvode_mem, fRes, solver->t0, solver->y,
-		   solver->dy, IDA_SV, solver->reltol, solver->abstol);
-  CVODE_HANDLE_ERROR(&flag, "IDAMalloc", 1);
+  flag = IDASVtolerances(solver->cvode_mem, solver->reltol, solver->abstol);
+  CVODE_HANDLE_ERROR(&flag, "IDASVtolerances", 1);
 
   /* 
    * Link the main integrator with data for right-hand side function
    */ 
-  flag = IDASetRdata(solver->cvode_mem, engine->data);
-  CVODE_HANDLE_ERROR(&flag, "IDASetRdata", 1);
+  flag = IDASetUserData(solver->cvode_mem, engine->data);
+  CVODE_HANDLE_ERROR(&flag, "IDASetUserData", 1);
     
   /*
    * Link the main integrator with the IDADENSE linear solver
@@ -309,15 +313,12 @@ IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
    * Set the routine used by the IDADense linear solver
    * to approximate the Jacobian matrix to ...
    */
-  if ( opt->UseJacobian == 1 ) 
+  if ( opt->UseJacobian == 1 ) {
     /* ... user-supplied routine JacRes : put JacRes instead of NULL
        when working */
-    flag = IDADenseSetJacFn(solver->cvode_mem, NULL, data);
-  else 
-    /* ... the internal default difference quotient routine IDADenseDQJac */
-    flag = IDADenseSetJacFn(solver->cvode_mem, NULL, NULL);    
-    
-  CVODE_HANDLE_ERROR(&flag, "IDADenseSetJacFn", 1);
+    flag = IDADlsSetDenseJacFn(solver->cvode_mem, JacRes);
+    CVODE_HANDLE_ERROR(&flag, "IDADlsSetDenseJacFn", 1);
+  }
      
   return 1; /* OK */
 }
@@ -406,8 +407,8 @@ fRes(realtype t, N_Vector y, N_Vector dy, N_Vector r, void *f_data)
 */
 
 static int
-JacRes(long int N, realtype t, N_Vector y, N_Vector dy,
-       N_Vector resvec, realtype cj, void *jac_data, DenseMat J,
+JacRes(int N, realtype t, realtype cj, N_Vector y, N_Vector dy,
+       N_Vector resvec, DlsMat J, void *jac_data,
        N_Vector tempv1, N_Vector tempv2, N_Vector tempv3)
 {
   

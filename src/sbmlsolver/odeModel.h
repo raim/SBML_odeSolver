@@ -168,7 +168,7 @@ struct odeModel
   CVRhsFn compiledCVODERhsFunction;
   /** CVODE jacobian function created by compiling
       code generated from model */
-  CVDenseJacFn compiledCVODEJacobianFunction;
+  CVDlsDenseJacFn compiledCVODEJacobianFunction;
 
   /** Event function created by compiling code generated from model */
   EventFn compiledEventFunction; 
@@ -182,9 +182,9 @@ struct odeModel
   CVRhsFnB current_AdjRHS; 
   /** CVODE adjoint jacobian function created by compiling code
       generated from model */
-  CVDenseJacFnB compiledCVODEAdjointJacobianFunction;
+  CVDlsDenseJacFnB compiledCVODEAdjointJacobianFunction;
   /* remember which function is used (compiled or hard-coded) */
-  CVDenseJacFnB current_AdjJAC;
+  CVDlsDenseJacFnB current_AdjJAC;
     
 
   /* ADJOINT */
@@ -381,9 +381,9 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_compileCVODEFunctions(odeModel_t *);
   SBML_ODESOLVER_API int ODESense_compileCVODESenseFunctions(odeSense_t *);
   SBML_ODESOLVER_API CVRhsFn ODEModel_getCompiledCVODERHSFunction(odeModel_t *);
-  SBML_ODESOLVER_API CVDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVDlsDenseJacFn ODEModel_getCompiledCVODEJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVRhsFnB ODEModel_getCompiledCVODEAdjointRHSFunction(odeModel_t *);
-  SBML_ODESOLVER_API CVDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
+  SBML_ODESOLVER_API CVDlsDenseJacFnB ODEModel_getCompiledCVODEAdjointJacobianFunction(odeModel_t *);
   SBML_ODESOLVER_API CVQuadRhsFnB ODESense_getCompiledCVODEAdjointQuadFunction(odeSense_t *);
   SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_t *);
 

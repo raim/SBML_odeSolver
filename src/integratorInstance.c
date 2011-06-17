@@ -227,7 +227,7 @@ static integratorInstance_t *IntegratorInstance_allocate(cvodeData_t *data,
   /* set IDA structure to NULL */
   engine->solver->dy = NULL;
   /* set adjoint sensitivity structures to NULL */
-  engine->solver->cvadj_mem = NULL;
+  engine->solver->which = 0;
   engine->solver->yA = NULL;
   engine->solver->qA = NULL;
   engine->solver->abstolA = NULL;
@@ -1309,7 +1309,7 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     om->compute_vector_v=0;
 
     /* compute quadrature: quad for the computed step is now added to qA  */
-    flag = CVodeGetQuadB(solver->cvadj_mem, solver->qA);
+    flag = CVodeGetQuadB(solver->cvode_mem, solver->which, &solver->t, solver->qA);
   
     if (flag != CV_SUCCESS)
     {  
@@ -1318,17 +1318,23 @@ int IntegratorInstance_updateAdjData(integratorInstance_t *engine)
     }
 
     /* reinit solvers */   
-    flag = CVodeReInitB(solver->cvadj_mem, om->current_AdjRHS,
-			data->currenttime,
-			solver->yA, CV_SV, solver->reltolA, solver->abstolA);
+    flag = CVodeReInitB(solver->cvode_mem, solver->which,
+                        data->currenttime, solver->yA);
     if (flag != CV_SUCCESS)
     { 
       CVODE_HANDLE_ERROR(&flag, "CVodeReInitB", 1);
       return 0; 
     } 
+    flag = CVodeSVtolerancesB(solver->cvode_mem, 0,
+                              solver->reltolA, solver->abstolA);
+    if (flag != CV_SUCCESS)
+    { 
+      CVODE_HANDLE_ERROR(&flag, "CVodeSVtolerancesB", 1);
+      return 0; 
+    } 
 
     /*  om->adjointQuadFunction */
-    flag = CVodeQuadReInitB(solver->cvadj_mem, os->current_AdjQAD, solver->qA);
+    flag = CVodeQuadReInitB(solver->cvode_mem, solver->which, solver->qA);
    if (flag != CV_SUCCESS)
    {   
       CVODE_HANDLE_ERROR(&flag, "CVodeQuadReInitB", 1);

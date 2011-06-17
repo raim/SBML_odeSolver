@@ -213,13 +213,13 @@ int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
 
 
   /*
-   * Call KINMalloc to initialize the integrator memory:
+   * Call KINInit to initialize the integrator memory:
    * cvode_mem  pointer to the KINSOL memory block returned by KINCreate
    * func       user's right hand side function
    * y          the dependent variable vector
    */
-  flag = KINMalloc(solver->cvode_mem, func, solver->y);
-  CVODE_HANDLE_ERROR(&flag, "KINMalloc", 1);
+  flag = KINInit(solver->cvode_mem, func, solver->y);
+  CVODE_HANDLE_ERROR(&flag, "KINInit", 1);
 
   /* for debugging */
   KINSetPrintLevel(solver->cvode_mem, 1);
@@ -233,8 +233,8 @@ int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
   /* 
    * Link the solver with data for right-hand side function
    */ 
-  flag = KINSetFdata(solver->cvode_mem, engine->data);
-  CVODE_HANDLE_ERROR(&flag, "KINSetFdata", 1);
+  flag = KINSetUserData(solver->cvode_mem, engine->data);
+  CVODE_HANDLE_ERROR(&flag, "KINSetUserData", 1);
     
   /* Call KINSpgmr to specify the linear solver KINSPGMR  */
   flag = KINSpgmr(solver->cvode_mem, 100);
