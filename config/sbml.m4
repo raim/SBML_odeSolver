@@ -168,9 +168,9 @@ AC_DEFUN([CONFIG_LIB_SBML],
   sbml_save_LDFLAGS="$LDFLAGS"
   sbml_save_LIBS="$LIBS"
   dnl add SBML specific stuff to global variables
-  CFLAGS="$CFLAGS $SBML_CFLAGS"
-  LDFLAGS="$LDFLAGS $SBML_RPATH $SBML_LDFLAGS"
-  LIBS="$LIBS $SBML_LIBS"
+  CFLAGS="$SBML_CFLAGS $CFLAGS"
+  LDFLAGS="$SBML_RPATH $SBML_LDFLAGS $LDFLAGS"
+  LIBS="$SBML_LIBS $LIBS"
   dnl can we link a mini program with libsbml?
   AC_TRY_LINK([#include <sbml/SBMLTypes.h>],
     [SBMLReader_t *sr; sr = SBMLReader_create(); SBMLReader_free(sr);],
