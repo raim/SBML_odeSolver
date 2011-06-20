@@ -426,7 +426,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
 #ifdef WIN32
 
-  //code = Compiler_compile_with_tcc(sourceCode);
+  /* code = Compiler_compile_with_tcc(sourceCode); */
 
 #elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__) /* AIX use xlc_r */
 
