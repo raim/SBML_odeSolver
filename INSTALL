@@ -22,9 +22,13 @@ SHORT INSTALLATION INFORMATION:
 
  Required libraries (SBML and numerical integration):
 	libSBML:        http://sbml.org/software/libsbml/
-			Version 2.3.2 or higher required!
+			Version 2.3.4 recommended for 1.6.0, 
+			Version 3.4.1 recommended for CVS/github version!
 	SUNDIALS Suite: http://www.llnl.gov/CASC/sundials/
-                        Version 2.1.1 or higher required!
+                        Version 2.1.1 required for 1.6.0,
+			Version 2.3.0 required for CVS/githup version!
+
+NOTE: configure Sundials with the --enable-shared option!
 	        
  Optional libraries (data visualization):
 	GRAPHVIZ:       http://www.graphviz.org
@@ -47,6 +51,8 @@ SHORT INSTALLATION INFORMATION:
  run the autoconf/automake tool autoreconf:
 
 	autoreconf 
+or, if that fails, try
+	autoreconf -i
 	
  to generate a configure script.
 
