@@ -1,0 +1,14 @@
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config/config.guess
+config/config.sub
+config/depcomp
+config/install-sh
+config/ltmain.sh
+config/missing
+configure
+examples/Makefile.in
+odeSolver/Makefile.in
+src/Makefile.in
+src/sbmlsolver/config.h.in
