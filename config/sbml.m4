@@ -156,7 +156,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
       SBML_LIBS="$SBML_LIBS -lxml2"
      else
       SBML_LIBS="$SBML_LIBS -lxml2"
-      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_xml2/lib"
+      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_libxml2/lib"
      fi
   fi
 
