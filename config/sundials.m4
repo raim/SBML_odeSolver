@@ -75,8 +75,8 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   LDFLAGS="$LDFLAGS $SUNDIALS_LDFLAGS"
   LIBS="$SUNDIALS_LIBS $LIBS"
   dnl can we link a mini program with cvodes?
-  AC_TRY_LINK([#include <sundials/sundials_nvector.h>],
-    [#include <nvector/nvector_serial.h>]
+  AC_TRY_LINK([#include <sundials/sundials_nvector.h>
+#include <nvector/nvector_serial.h>],
     [N_Vector y; y = N_VNew_Serial(3); N_VDestroy_Serial(y);],
     [sundials_functional=yes],
     [sundials_functional=no])
