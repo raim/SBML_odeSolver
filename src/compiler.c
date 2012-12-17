@@ -179,7 +179,7 @@ compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
 compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
 {
   compiled_code_t *code = NULL;
-  char gccFileName[MAX_PATH+1] = "xlc_r"; 
+  char gccFileName[MAX_PATH+1] = "xlC_r"; 
   int result;
   char *tmpFileName = NULL;
   char *cFileName   = NULL;
@@ -293,7 +293,7 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
 compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 {
   compiled_code_t *code = NULL;
-  char gccFileName[MAX_PATH+1] = "gcc"; 
+  char gccFileName[MAX_PATH+1] = "g++";
   int result;
   char *tmpFileName = NULL;
   char *cFileName   = NULL;
@@ -344,7 +344,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   /* construct command for compiling */
 #if defined (__APPLE__) && defined (__MACH__)
   sprintf(command,
-	  "%s -I%s -I%s %s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
+	  "%s -I%s -I%s %s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
@@ -356,7 +356,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  SOSLIB_LDFLAGS);
 #else
   sprintf(command,
-	  "%s -I%s -I%s %s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
+	  "%s -I%s -I%s %s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
