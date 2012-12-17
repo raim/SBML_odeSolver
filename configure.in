@@ -236,7 +236,7 @@ echo "  LDFLAGS              = $LDFLAGS"
 echo "  LIBS                 = $LIBS"
 echo "  SBML Library         = $yes_libsbml"
 if test $yes_libsbml = yes; then
-  echo "       CFLAGS          = $SBML_CFLAGS"
+  echo "       CPPFLAGS        = $SBML_CPPFLAGS"
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi

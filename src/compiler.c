@@ -228,11 +228,11 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   fclose(cFile);
   
   /* construct command for compiling */
-  sprintf(command, "%s -I%s -I%s -I%s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
+  sprintf(command, "%s -I%s -I%s %s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
 	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
-	  SBML_CFLAGS,
+	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,
@@ -344,11 +344,11 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   /* construct command for compiling */
 #if defined (__APPLE__) && defined (__MACH__)
   sprintf(command,
-	  "%s -I%s -I%s -I%s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
+	  "%s -I%s -I%s %s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
-	  SBML_CFLAGS,
+	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,
@@ -356,11 +356,11 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  SOSLIB_LDFLAGS);
 #else
   sprintf(command,
-	  "%s -I%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
+	  "%s -I%s -I%s %s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm -lstdc++",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CFLAGS,
-	  SBML_CFLAGS,
+	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,
 	  SUNDIALS_LDFLAGS,

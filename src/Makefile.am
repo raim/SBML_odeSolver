@@ -31,7 +31,7 @@
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
 INCLUDES = @SUNDIALS_CFLAGS@ \
-           @SBML_CFLAGS@ \
+           @SBML_CPPFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
            @GRACE_CFLAGS@ \
            -I.
