@@ -10,7 +10,7 @@ AC_DEFUN([AC_TCC_PATH],
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \
-    /opt                    \ 
+    /opt                    \
     ;                       \
   do
     if test -r "$ac_dir/libtcc.h"; then
@@ -67,8 +67,8 @@ AC_DEFUN([CONFIG_LIB_TCC],
       TCC_RPATH=
     else
       TCC_RPATH="-Wl,-rpath,$with_libtcc/lib"
-    fi   
-    TCC_LIBS="-ldl -ltcc"  
+    fi
+    TCC_LIBS="-ldl -ltcc"
   fi
 
 dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
@@ -100,7 +100,7 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
                    CFLAGS=$CFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
-    AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])		  
+    AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])
   fi
   dnl reset global variables to cached values
   CFLAGS=$tcc_save_CFLAGS
@@ -127,7 +127,7 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
     AC_SUBST(TCC_CFLAGS, "")
     AC_SUBST(TCC_LDFLAGS, "")
     AC_SUBST(TCC_RPATH, "")
-    AC_SUBST(TCC_LIBS, "")    
+    AC_SUBST(TCC_LIBS, "")
   fi
 
 ])

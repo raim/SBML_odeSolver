@@ -12,7 +12,7 @@ AC_DEFUN([AC_SUNDIALS_PATH],
     /usr/local/include/sundials \
     /usr/include/sundials       \
     /usr/local/share/sundials   \
-    /opt/sundials               \ 
+    /opt/sundials               \
     ;                           \
   do
     if test -r "$ac_dir/include/cvodes/cvodes.h"; then

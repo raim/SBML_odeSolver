@@ -11,7 +11,7 @@ AC_DEFUN([AC_SBML_PATH],
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \
-    /opt                    \ 
+    /opt                    \
     ;                       \
   do
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
@@ -105,7 +105,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
     dnl include /sbml folder for libSBML 2.3.4 bugs
     SBML_CPPFLAGS="-I$with_libsbml/include -I$with_libsbml/include/sbml"
     SBML_LDFLAGS="-L$with_libsbml/lib"
-    
+
     dnl ac_SBML_includes=$with_libsbml
     if test $HOST_TYPE = darwin; then
       SBML_RPATH=
@@ -115,21 +115,21 @@ AC_DEFUN([CONFIG_LIB_SBML],
       else
         SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
       fi
-    fi   
-    
+    fi
+
     SBML_LIBS="-lsbml"
   fi
 
- 
+
   dnl set default with_libxml2 to no
-  dnl if option --with-expat was given		 
+  dnl if option --with-expat was given
   if test $with_expat != no; then
      with_libxml2=no
   fi
   if test $with_xerces != no; then
      with_libxml2=no
   fi
-  
+
   dnl add xerces flags
   if test $with_xerces != no; then
      if test $with_xerces == yes; then
@@ -139,7 +139,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
        SBML_LIBS="$SBML_LIBS -lxerces-c"
      fi
   fi
-  
+
   dnl add expat flags
   if test $with_expat != no; then
      if test $with_expat == yes; then
@@ -149,7 +149,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
       SBML_LDFLAGS="$SBML_LDFLAGS -L$with_expat/lib"
      fi
   fi
-  
+
   dnl add libxml2 flags
   if test $with_libxml2 != no; then
      if test $with_libxml2 == yes; then

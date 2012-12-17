@@ -23,7 +23,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
     AC_MSG_NOTICE(checking for Graphviz Library)
     dnl Remove needless trailing slashes because it can confuse tests later.
     with_graphviz=`echo $with_graphviz | sed -e 's,\(.*\)/$,\1,g'`
-    
+
     dnl check if program dot is in the user-defined graphviz library path
     AC_PATH_PROG([DOT], [dot], [$with_graphviz/bin/dot],
                  [no-dot-found], [$with_graphviz/bin])
@@ -76,7 +76,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
   then
     GRAPHVIZ_CFLAGS="-I$graphviz_include_path"
     GRAPHVIZ_LDFLAGS="-L$graphviz_lib_path"
-  
+
     if test $HOST_TYPE = darwin; then
       GRAPHVIZ_RPATH=
     else
@@ -144,6 +144,6 @@ dnl    AC_SUBST(GRAPHVIZ_MINOR_VERSION, $dot_minor_version)
     AC_SUBST(GRAPHVIZ_CFLAGS, "")
     AC_SUBST(GRAPHVIZ_LDFLAGS, "")
     AC_SUBST(GRAPHVIZ_RPATH, "")
-    AC_SUBST(GRAPHVIZ_LIBS, "")    
+    AC_SUBST(GRAPHVIZ_LIBS, "")
   fi
 ])

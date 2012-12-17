@@ -14,7 +14,7 @@ AC_DEFUN([AC_GRACE_PATH],
     /usr/grace/include	           \
     /usr/share/grace/include	   \
     /usr/local/share/grace/include \
-    /opt/grace/include             \ 
+    /opt/grace/include             \
     ;                              \
   do
     if test -r "$ac_dir/grace_np.h"; then
@@ -73,7 +73,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
       GRACE_RPATH=
     else
       GRACE_RPATH="-Wl,-rpath,$with_grace"
-    fi    
+    fi
     GRACE_LIBS="-lgrace_np"
   fi
   dnl check if GRACE Library is functional
@@ -86,7 +86,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   dnl temporarily add GRACE specific stuff to global variables
   CFLAGS="$CFLAGS $GRACE_CFLAGS"
   LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
-  LIBS="$GRACE_LIBS $LIBS" 
+  LIBS="$GRACE_LIBS $LIBS"
   dnl can we link a mini program with grace?
   AC_TRY_LINK([#include <grace_np.h>],
     [GraceOpen(2048); GracePrintf("world xmax %g", 10.0); GraceClose();],
@@ -101,7 +101,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
     AC_MSG_RESULT([Can not link to GRACE Library!])
-    AC_MSG_RESULT([odeSolver will be installed without XMGrace functionality]) 
+    AC_MSG_RESULT([odeSolver will be installed without XMGrace functionality])
   fi
   dnl reset global variables to cached values
   CFLAGS=$grace_save_CFLAGS
@@ -121,6 +121,6 @@ AC_DEFUN([CONFIG_LIB_GRACE],
     AC_SUBST(GRACE_CFLAGS, "")
     AC_SUBST(GRACE_LDFLAGS, "")
     AC_SUBST(GRACE_RPATH, "")
-    AC_SUBST(GRACE_LIBS, "")    
+    AC_SUBST(GRACE_LIBS, "")
   fi
 ])
