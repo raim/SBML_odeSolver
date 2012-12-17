@@ -162,7 +162,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
 
   dnl check if SBML Library is functional
   AC_MSG_CHECKING([for correct functioning of SBML])
-  AC_LANG_PUSH(C)
+  AC_LANG_PUSH([C++])
   dnl cach values of some global variables
   sbml_save_CPPFLAGS="$CPPFLAGS"
   sbml_save_LDFLAGS="$LDFLAGS"
@@ -195,7 +195,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
   CPPFLAGS=$sbml_save_CPPFLAGS
   LDFLAGS=$sbml_save_LDFLAGS
   LIBS=$sbml_save_LIBS
-  AC_LANG_POP
+  AC_LANG_POP([C++])
 
   dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
   AC_DEFINE_UNQUOTED([SBML_CPPFLAGS], "${with_libsbml}/include",
