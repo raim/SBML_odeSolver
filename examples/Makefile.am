@@ -28,7 +28,7 @@
 ## Contributor(s):
 ##     Rainer Machne    
 ##
-INCLUDES = -I. -I../src -I@prefix@/include @SBML_CPPFLAGS@ @SUNDIALS_CFLAGS@ 
+AM_CPPFLAGS = -I. -I../src -I@prefix@/include @SBML_CPPFLAGS@ @SUNDIALS_CFLAGS@ 
 AM_CFLAGS  = @CFLAGS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
