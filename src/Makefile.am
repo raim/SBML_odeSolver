@@ -30,7 +30,7 @@
 ##
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
-AM_CPPFLAGS = @SUNDIALS_CFLAGS@ \
+AM_CPPFLAGS = @SUNDIALS_CPPFLAGS@ \
            @SBML_CPPFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
            @GRACE_CFLAGS@ \

@@ -234,7 +234,7 @@ if test $yes_libsbml = yes; then
 fi
 echo "  SUNDIALS Library       = $yes_libsundials"
 if test $yes_libsundials       = yes; then
-  echo "       CFLAGS          = $SUNDIALS_CFLAGS"
+  echo "       CPPFLAGS        = $SUNDIALS_CPPFLAGS"
   echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
   echo "       LIBS            = $SUNDIALS_LIBS"
 fi

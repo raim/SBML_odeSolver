@@ -29,7 +29,7 @@
 ##
 ##
 
-AM_CPPFLAGS = -I. -I../src -I@prefix@/include @SBML_CPPFLAGS@ @GRACE_CFLAGS@ @SUNDIALS_CFLAGS@
+AM_CPPFLAGS = -I. -I../src -I@prefix@/include @SBML_CPPFLAGS@ @GRACE_CFLAGS@ @SUNDIALS_CPPFLAGS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c \

@@ -231,7 +231,7 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   sprintf(command, "%s -I%s -I%s %s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
 	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
-	  SUNDIALS_CFLAGS,
+	  SUNDIALS_CPPFLAGS,
 	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,
@@ -347,7 +347,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  "%s -I%s -I%s %s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
-	  SUNDIALS_CFLAGS,
+	  SUNDIALS_CPPFLAGS,
 	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,
@@ -359,7 +359,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  "%s -I%s -I%s %s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CFLAGS, /* changed order: SOSLIB first */
-	  SUNDIALS_CFLAGS,
+	  SUNDIALS_CPPFLAGS,
 	  SBML_CPPFLAGS,
 	  dllFileName,
 	  cFileName,

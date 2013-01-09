@@ -10,4 +10,4 @@ Version: @VERSION@
 Requires: libsbml >= 3.0.2
 Libs: -L${libdir} -lODES
 Libs.private: @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ -lm
-Cflags: -I${includedir} @SUNDIALS_CFLAGS@
+Cflags: -I${includedir} @SUNDIALS_CPPFLAGS@
