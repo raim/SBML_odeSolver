@@ -111,8 +111,6 @@ AC_DEFINE_UNQUOTED([SOSLIB_LIBS], "ODES",
 				  [SOSLIB libs])
 
 dnl configure options
-dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
-dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")
 dnl AC_ARG_WITH(bindings, [  --with-bindings  build perl bindings])
 dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
 
@@ -170,7 +168,6 @@ AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([odeSolver/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/libODES.pc])
-dnl AC_CONFIG_FILES([src/inverse/Makefile])
 dnl AC_CONFIG_FILES([bindings/Makefile])
 dnl AC_CONFIG_FILES([bindings/swig/Makefile])
 dnl AC_CONFIG_FILES([bindings/perl/Makefile])
