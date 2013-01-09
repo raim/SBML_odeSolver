@@ -104,27 +104,28 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
       [$graphviz_testprg],
       [graphviz_functional=yes],
       [graphviz_functional=no])
+
+    if test $graphviz_functional = yes; then
+      AC_MSG_RESULT([$graphviz_functional])
+    else
+      AC_MSG_RESULT([$graphviz_functional:
+                     CPPFLAGS=$CPPFLAGS
+                     LDFLAGS=$LDFLAGS
+                     LIBS=$LIBS])
+      AC_MSG_RESULT([Can not link to GRAPHVIZ Library])
+      AC_MSG_RESULT([odeSolver will be installed without Graphviz functionality])
+    fi
+
+    dnl reset global variables to cached values
+    CFLAGS=$graphviz_save_CFLAGS
+    CPPFLAGS=$graphviz_save_CPPFLAGS
+    LDFLAGS=$graphviz_save_LDFLAGS
+    LIBS=$graphviz_save_LIBS
+    AC_LANG_POP(C)
+
   else
     $graphviz_functional=no
   fi
-
-  if test $graphviz_functional = yes; then
-    AC_MSG_RESULT([$graphviz_functional])
-  else
-    AC_MSG_RESULT([$graphviz_functional:
-                   CPPFLAGS=$CPPFLAGS
-                   LDFLAGS=$LDFLAGS
-                   LIBS=$LIBS])
-    AC_MSG_RESULT([Can not link to GRAPHVIZ Library])
-    AC_MSG_RESULT([odeSolver will be installed without Graphviz functionality])
-  fi
-
-  dnl reset global variables to cached values
-  CFLAGS=$graphviz_save_CFLAGS
-  CPPFLAGS=$graphviz_save_CPPFLAGS
-  LDFLAGS=$graphviz_save_LDFLAGS
-  LIBS=$graphviz_save_LIBS
-  AC_LANG_POP
 
   fi
 
