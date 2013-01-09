@@ -105,7 +105,7 @@ if test "$prefix" = "NONE"; then
 else
    ourPrefix=$prefix;
 fi
-AC_DEFINE_UNQUOTED([SOSLIB_CFLAGS], "${ourPrefix}/include",
+AC_DEFINE_UNQUOTED([SOSLIB_CPPFLAGS], "${ourPrefix}/include",
 				    [SOSLIB include directories])
 AC_DEFINE_UNQUOTED([SOSLIB_LDFLAGS], "${ourPrefix}/lib",
 				     [SOSLIB lib directories])
