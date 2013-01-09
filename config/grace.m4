@@ -19,7 +19,7 @@ AC_DEFUN([AC_GRACE_PATH],
   do
     if test -r "$ac_dir/grace_np.h"; then
       ac_GRACE_includes="$ac_dir"
-      GRACE_CFLAGS="-I$ac_GRACE_includes"
+      GRACE_CPPFLAGS="-I$ac_GRACE_includes"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -60,14 +60,14 @@ AC_DEFUN([CONFIG_LIB_GRACE],
               [with_grace=$withval],
               [with_grace=yes])
   dnl set GRACE related variables
-  GRACE_CFLAGS=
+  GRACE_CPPFLAGS=
   GRACE_LDFLAGS=
   GRACE_RPATH=
   GRACE_LIBS=
   if test $with_grace = yes; then
     AC_GRACE_PATH
   else
-    GRACE_CFLAGS="-I$with_grace/include"
+    GRACE_CPPFLAGS="-I$with_grace/include"
     GRACE_LDFLAGS="-L$with_grace/lib"
     if test $HOST_TYPE = darwin; then
       GRACE_RPATH=
@@ -80,11 +80,11 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   AC_MSG_CHECKING([correct functioning of GRACE])
   AC_LANG_PUSH(C)
   dnl cach values of some global variables
-  grace_save_CFLAGS="$CFLAGS"
+  grace_save_CPPFLAGS="$CPPFLAGS"
   grace_save_LDFLAGS="$LDFLAGS"
   grace_save_LIBS="$LIBS"
   dnl temporarily add GRACE specific stuff to global variables
-  CFLAGS="$CFLAGS $GRACE_CFLAGS"
+  CPPFLAGS="$CPPFLAGS $GRACE_CPPFLAGS"
   LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
   LIBS="$GRACE_LIBS $LIBS"
   dnl can we link a mini program with grace?
@@ -97,28 +97,28 @@ AC_DEFUN([CONFIG_LIB_GRACE],
     AC_MSG_RESULT([$grace_functional])
   else
     AC_MSG_RESULT([$grace_functional:
-                   CFLAGS=$CFLAGS
+                   CPPFLAGS=$CPPFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
     AC_MSG_RESULT([Can not link to GRACE Library!])
     AC_MSG_RESULT([odeSolver will be installed without XMGrace functionality])
   fi
   dnl reset global variables to cached values
-  CFLAGS=$grace_save_CFLAGS
+  CPPFLAGS=$grace_save_CPPFLAGS
   LDFLAGS=$grace_save_LDFLAGS
   LIBS=$grace_save_LIBS
   AC_LANG_POP
   if test $grace_functional = yes; then
     AC_DEFINE([USE_GRACE], 1, [Define to 1 to use the GRACE Library])
     AC_SUBST(USE_GRACE, 1)
-    AC_SUBST(GRACE_CFLAGS)
+    AC_SUBST(GRACE_CPPFLAGS)
     AC_SUBST(GRACE_LDFLAGS)
     AC_SUBST(GRACE_RPATH)
     AC_SUBST(GRACE_LIBS)
   else
     AC_DEFINE([USE_GRACE], 0, [Define to 1 to use the GRACE Library])
     AC_SUBST(USE_GRACE, 0)
-    AC_SUBST(GRACE_CFLAGS, "")
+    AC_SUBST(GRACE_CPPFLAGS, "")
     AC_SUBST(GRACE_LDFLAGS, "")
     AC_SUBST(GRACE_RPATH, "")
     AC_SUBST(GRACE_LIBS, "")

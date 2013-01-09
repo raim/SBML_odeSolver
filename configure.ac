@@ -248,7 +248,7 @@ dnl    echo "TCC online compilation will NOT be installed!"
 dnl fi
 echo "  GRACE                = $yes_grace"
 if test $yes_grace = yes; then
-  echo "       CFLAGS          = $GRACE_CFLAGS"
+  echo "       CPPFLAGS        = $GRACE_CPPFLAGS"
   echo "       LDFLAGS         = $GRACE_LDFLAGS"
   echo "       LIBS            = $GRACE_LIBS"
 else

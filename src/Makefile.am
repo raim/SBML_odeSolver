@@ -33,7 +33,7 @@ pkgincludedir = @includedir@/sbmlsolver
 AM_CPPFLAGS = @SUNDIALS_CPPFLAGS@ \
            @SBML_CPPFLAGS@ \
            @GRAPHVIZ_CFLAGS@ \
-           @GRACE_CFLAGS@ \
+           @GRACE_CPPFLAGS@ \
            -I.
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
