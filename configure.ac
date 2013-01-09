@@ -240,7 +240,7 @@ if test $yes_libsundials       = yes; then
 fi
 dnl echo "  TCC Library       = $yes_tcc"
 dnl if test $yes_tcc               = yes; then
-dnl   echo "       CFLAGS          = $TCC_CFLAGS"
+dnl   echo "       CPPFLAGS        = $TCC_CPPFLAGS"
 dnl   echo "       LDFLAGS         = $TCC_LDFLAGS"
 dnl   echo "       LIBS            = $TCC_LIBS"
 dnl else
