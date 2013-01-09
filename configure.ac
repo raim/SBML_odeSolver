@@ -256,7 +256,7 @@ else
 fi
 echo "  GRAPHVIZ             = $yes_graphviz"
 if test $yes_graphviz = yes; then
-  echo "       CFLAGS          = $GRAPHVIZ_CFLAGS"
+  echo "       CPPFLAGS        = $GRAPHVIZ_CPPFLAGS"
   echo "       LDFLAGS         = $GRAPHVIZ_LDFLAGS"
   echo "       LIBS            = $GRAPHVIZ_LIBS"
 else
