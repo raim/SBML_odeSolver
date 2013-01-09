@@ -1128,7 +1128,7 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
 {
 
   int i, j, n;
-  double maxY, minY, result;
+  double maxY, result;
   
   Model_t *m;
   Reaction_t *r;
@@ -1139,7 +1139,6 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
   cvodeResults_t *results = data->results;
 
   maxY = 0.0;
-  minY = 0.0;
 
   fprintf(stderr,
 	  "Printing time development of reaction fluxes to XMGrace!\n");

@@ -1089,11 +1089,9 @@ static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data)
   int i;
   realtype *ydata, *dqdata;
   cvodeData_t *data;
-  cvodeSolver_t *solver; 
   integratorInstance_t *engine;
   
   engine = (integratorInstance_t *) fQ_data;
-  solver = engine->solver;
   data  =  engine->data;
 
   ydata = NV_DATA_S(y);
