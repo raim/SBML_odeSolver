@@ -64,10 +64,8 @@ AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
 
 dnl Adding global compilation parameters
 CFLAGS="$CFLAGS -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
-LIBS="$LIBS -lm"
 AC_SEARCH_LIBS([dlopen],[dl])
 AC_SUBST(CFLAGS)
-AC_SUBST(LIBS)
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for various programs and packages.
