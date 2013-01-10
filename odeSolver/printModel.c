@@ -982,7 +982,6 @@ void printPhase(cvodeData_t *data)
   
   int i,j;
   double maxY;
-  double minY;
   double maxX;
   char *x;
   double xvalue;
@@ -993,7 +992,6 @@ void printPhase(cvodeData_t *data)
 
   maxY = 1.0;
   maxX = 1.0;
-  minY = 0.0;
   
   if ( data==NULL || data->results==NULL )
   {
@@ -1128,7 +1126,7 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
 {
 
   int i, j, n;
-  double maxY, result;
+  double maxY, minY, result;
   
   Model_t *m;
   Reaction_t *r;
@@ -1139,6 +1137,7 @@ static int printXMGReactionTimeCourse ( cvodeData_t *data )
   cvodeResults_t *results = data->results;
 
   maxY = 0.0;
+  minY = 0.0;
 
   fprintf(stderr,
 	  "Printing time development of reaction fluxes to XMGrace!\n");
