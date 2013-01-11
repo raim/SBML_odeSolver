@@ -29,7 +29,7 @@
 ##     Rainer Machne    
 ##
 AM_CPPFLAGS = -I../src -I@prefix@/include @SBML_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
-AM_CFLAGS  = @CFLAGS@
+AM_CFLAGS  = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
                simpleIntInst changeIntInst ASTIndexTest ASTgetIndexTest\
