@@ -32,7 +32,7 @@
  * Contributor(s):
  */
 
-#include "charBuffer.h"
+#include "sbmlsolver/charBuffer.h"
 
 #include <sstream>
 

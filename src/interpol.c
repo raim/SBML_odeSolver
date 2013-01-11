@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util.h"
+#include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
 
 #define PRIVATE static
@@ -18,7 +18,7 @@
 #undef VERBOSE
 /* #define VERBOSE */
 
-#include "interpol.h"
+#include "sbmlsolver/interpol.h"
 
 /* ------------------------------------------------------------------------ */
 

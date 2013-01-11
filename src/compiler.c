@@ -34,9 +34,9 @@
  */
 
 #include <stdio.h>
-#include "compiler.h"
-#include "solverError.h"
-#include "processAST.h"
+#include "sbmlsolver/compiler.h"
+#include "sbmlsolver/solverError.h"
+#include "sbmlsolver/processAST.h"
 
 #ifdef WIN32
 
