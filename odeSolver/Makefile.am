@@ -29,7 +29,7 @@
 ##
 ##
 
-AM_CPPFLAGS = -I../src -I@prefix@/include @SBML_CPPFLAGS@ @GRACE_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
+AM_CPPFLAGS = -I$(srcdir)/../src @SBML_CPPFLAGS@ @GRACE_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
 AM_CFLAGS = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = odeSolver
@@ -39,7 +39,7 @@ odeSolver_SOURCES = main.c \
 		    printModel.c \
 		    interactive.c \
                     getopt.c getopt1.c
-odeSolver_LDADD   = -L../src -L/@prefix@/lib -lODES \
+odeSolver_LDADD   = ../src/libODES.la \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
