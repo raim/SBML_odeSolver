@@ -76,6 +76,10 @@ AC_DEFUN([CONFIG_LIB_GRACE],
     fi
     GRACE_LIBS="-lgrace_np"
   fi
+
+  if test "x$with_grace" = xno; then
+    grace_functional = no
+  else
   dnl check if GRACE Library is functional
   AC_MSG_CHECKING([correct functioning of GRACE])
   AC_LANG_PUSH(C)
@@ -108,6 +112,8 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   LDFLAGS=$grace_save_LDFLAGS
   LIBS=$grace_save_LIBS
   AC_LANG_POP
+  fi
+
   if test $grace_functional = yes; then
     AC_DEFINE([USE_GRACE], 1, [Define to 1 to use the GRACE Library])
     AC_SUBST(USE_GRACE, 1)
