@@ -80,38 +80,38 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   if test "x$with_grace" = xno; then
     grace_functional = no
   else
-  dnl check if GRACE Library is functional
-  AC_MSG_CHECKING([correct functioning of GRACE])
-  AC_LANG_PUSH(C)
-  dnl cach values of some global variables
-  grace_save_CPPFLAGS="$CPPFLAGS"
-  grace_save_LDFLAGS="$LDFLAGS"
-  grace_save_LIBS="$LIBS"
-  dnl temporarily add GRACE specific stuff to global variables
-  CPPFLAGS="$CPPFLAGS $GRACE_CPPFLAGS"
-  LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
-  LIBS="$GRACE_LIBS $LIBS"
-  dnl can we link a mini program with grace?
-  AC_TRY_LINK([#include <grace_np.h>],
-    [GraceOpen(2048); GracePrintf("world xmax %g", 10.0); GraceClose();],
-    [grace_functional=yes],
-    [grace_functional=no])
+    dnl check if GRACE Library is functional
+    AC_MSG_CHECKING([correct functioning of GRACE])
+    AC_LANG_PUSH(C)
+    dnl cach values of some global variables
+    grace_save_CPPFLAGS="$CPPFLAGS"
+    grace_save_LDFLAGS="$LDFLAGS"
+    grace_save_LIBS="$LIBS"
+    dnl temporarily add GRACE specific stuff to global variables
+    CPPFLAGS="$CPPFLAGS $GRACE_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $GRACE_LDFLAGS"
+    LIBS="$GRACE_LIBS $LIBS"
+    dnl can we link a mini program with grace?
+    AC_TRY_LINK([#include <grace_np.h>],
+      [GraceOpen(2048); GracePrintf("world xmax %g", 10.0); GraceClose();],
+      [grace_functional=yes],
+      [grace_functional=no])
 
-  if test $grace_functional = yes; then
-    AC_MSG_RESULT([$grace_functional])
-  else
-    AC_MSG_RESULT([$grace_functional:
-                   CPPFLAGS=$CPPFLAGS
-                   LDFLAGS=$LDFLAGS
-                   LIBS=$LIBS])
-    AC_MSG_RESULT([Can not link to GRACE Library!])
-    AC_MSG_RESULT([odeSolver will be installed without XMGrace functionality])
-  fi
-  dnl reset global variables to cached values
-  CPPFLAGS=$grace_save_CPPFLAGS
-  LDFLAGS=$grace_save_LDFLAGS
-  LIBS=$grace_save_LIBS
-  AC_LANG_POP
+    if test $grace_functional = yes; then
+      AC_MSG_RESULT([$grace_functional])
+    else
+      AC_MSG_RESULT([$grace_functional:
+                     CPPFLAGS=$CPPFLAGS
+                     LDFLAGS=$LDFLAGS
+                     LIBS=$LIBS])
+      AC_MSG_RESULT([Can not link to GRACE Library!])
+      AC_MSG_RESULT([odeSolver will be installed without XMGrace functionality])
+    fi
+    dnl reset global variables to cached values
+    CPPFLAGS=$grace_save_CPPFLAGS
+    LDFLAGS=$grace_save_LDFLAGS
+    LIBS=$grace_save_LIBS
+    AC_LANG_POP
   fi
 
   if test $grace_functional = yes; then
