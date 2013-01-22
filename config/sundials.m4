@@ -29,12 +29,12 @@ AC_DEFUN([AC_SUNDIALS_PATH],
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/lib/libsundials_cvodes.$ac_extension; then
       SUNDIALS_LDFLAGS="-L$ac_dir/lib"
-      SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
+      SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lm"
       AC_MSG_RESULT([yes])
       break
     elif test -r $ac_dir/lib64/libsundials_cvodes.$ac_extension; then
       SUNDIALS_LDFLAGS="-L$ac_dir/lib64"
-      SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
+      SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lm"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -61,7 +61,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   else
     SUNDIALS_CPPFLAGS="-I$with_sundials/include"
     SUNDIALS_LDFLAGS="-L$with_sundials/lib"
-    SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial"
+    SUNDIALS_LIBS="-lsundials_ida -lsundials_kinsol -lsundials_cvodes -lsundials_nvecserial -lm"
   fi
   dnl check if SUNDIALS Library is functional
   AC_MSG_CHECKING([correct functioning of SUNDIALS])
