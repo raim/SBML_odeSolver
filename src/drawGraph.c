@@ -975,7 +975,7 @@ static int drawModelTxt(Model_t *m, char *file)
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = SpeciesReference_getStoichiometryMath(sref);
+	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
 	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  fprintf(f ,"%s", SBML_formulaToString(math));
       }
@@ -998,7 +998,7 @@ static int drawModelTxt(Model_t *m, char *file)
 	      Reaction_getId(re), SpeciesReference_getSpecies(sref));
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = SpeciesReference_getStoichiometryMath(sref);
+	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
 	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
 	  fprintf(f ,"%s ", SBML_formulaToString(math));
 	
