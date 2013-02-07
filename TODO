@@ -1,5 +1,3 @@
-* Geraldine Celliere reported that data->currenttime = opt->TimePoints[0]; failson infinite integration, where TimePoints is optional
-
 * check different results for events in model supplied by Michael Hopkins
   when using the -c option or not! Model: Final_combined_HCV_model_simplified_HR_09_05_12.xml.dat 
 
