@@ -39,6 +39,12 @@ NOTE: configure Sundials with the --enable-shared option!
 
 2B) COMPILE AND INSTALL SOSlib with GNU TOOLS
 
+ NOTES FOR INSTALLATION ON MAC:
+ It was noted that on Mac sometimes the .dylib extension is missing for
+ Sundials libraries in /usr/local/lib. The solution is just to add them 
+ manually for each sundials library file. This issue and the solution
+ were reported by Geraldine Cellière for Mac OS X 10.8.2.
+
  NOTES FOR INSTALLATION WINDOWS:
  Please note that there are also precompiled Windows binaries
  available, and detailed instructions to use these or how
