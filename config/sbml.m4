@@ -11,14 +11,14 @@ AC_DEFUN([AC_SBML_PATH],
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \
-    /opt                    \ 
+    /opt                    \
     ;                       \
   do
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
       ac_SBML_includes="$ac_dir"
       with_libsbml="$ac_dir"
       dnl include /sbml folder for libSBML 2.3.4 bugs
-      SBML_CFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
+      SBML_CPPFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -95,7 +95,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
 
 
   dnl set SBML related variables
-  SBML_CFLAGS=
+  SBML_CPPFLAGS=
   SBML_LDFLAGS=
   SBML_RPATH=
   SBML_LIBS=
@@ -103,9 +103,9 @@ AC_DEFUN([CONFIG_LIB_SBML],
     AC_SBML_PATH
   else
     dnl include /sbml folder for libSBML 2.3.4 bugs
-    SBML_CFLAGS="-I$with_libsbml/include -I$with_libsbml/include/sbml"
+    SBML_CPPFLAGS="-I$with_libsbml/include -I$with_libsbml/include/sbml"
     SBML_LDFLAGS="-L$with_libsbml/lib"
-    
+
     dnl ac_SBML_includes=$with_libsbml
     if test $HOST_TYPE = darwin; then
       SBML_RPATH=
@@ -115,21 +115,21 @@ AC_DEFUN([CONFIG_LIB_SBML],
       else
         SBML_RPATH="-Wl,-rpath,$with_libsbml/lib"
       fi
-    fi   
-    
+    fi
+
     SBML_LIBS="-lsbml"
   fi
 
- 
+
   dnl set default with_libxml2 to no
-  dnl if option --with-expat was given		 
+  dnl if option --with-expat was given
   if test $with_expat != no; then
      with_libxml2=no
   fi
   if test $with_xerces != no; then
      with_libxml2=no
   fi
-  
+
   dnl add xerces flags
   if test $with_xerces != no; then
      if test $with_xerces == yes; then
@@ -139,7 +139,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
        SBML_LIBS="$SBML_LIBS -lxerces-c"
      fi
   fi
-  
+
   dnl add expat flags
   if test $with_expat != no; then
      if test $with_expat == yes; then
@@ -149,26 +149,26 @@ AC_DEFUN([CONFIG_LIB_SBML],
       SBML_LDFLAGS="$SBML_LDFLAGS -L$with_expat/lib"
      fi
   fi
-  
+
   dnl add libxml2 flags
   if test $with_libxml2 != no; then
      if test $with_libxml2 == yes; then
       SBML_LIBS="$SBML_LIBS -lxml2"
      else
       SBML_LIBS="$SBML_LIBS -lxml2"
-      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_xml2/lib"
+      SBML_LDFLAGS="$SBML_LDFLAGS -L$with_libxml2/lib"
      fi
   fi
 
   dnl check if SBML Library is functional
   AC_MSG_CHECKING([for correct functioning of SBML])
-  AC_LANG_PUSH(C)
+  AC_LANG_PUSH([C++])
   dnl cach values of some global variables
-  sbml_save_CFLAGS="$CFLAGS"
+  sbml_save_CPPFLAGS="$CPPFLAGS"
   sbml_save_LDFLAGS="$LDFLAGS"
   sbml_save_LIBS="$LIBS"
   dnl add SBML specific stuff to global variables
-  CFLAGS="$SBML_CFLAGS $CFLAGS"
+  CPPFLAGS="$SBML_CPPFLAGS $CPPFLAGS"
   LDFLAGS="$SBML_RPATH $SBML_LDFLAGS $LDFLAGS"
   LIBS="$SBML_LIBS $LIBS"
   dnl can we link a mini program with libsbml?
@@ -181,7 +181,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
     AC_MSG_RESULT([$sbml_functional])
   else
     AC_MSG_RESULT([$sbml_functional:
-                   CFLAGS=$CFLAGS
+                   CPPFLAGS=$CPPFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
     AC_MSG_ERROR([Can not link to SBML Library:
@@ -189,18 +189,18 @@ AC_DEFUN([CONFIG_LIB_SBML],
   fi
 
   dnl work around broken include-header-paths in libsbml-2.3.4
-  dnl SBML_CFLAGS="$SBML_CFLAGS $SBML_CFLAGS/sbml"
+  dnl SBML_CPPFLAGS="$SBML_CPPFLAGS $SBML_CPPFLAGS/sbml"
 
   dnl reset global variables to cached values
-  CFLAGS=$sbml_save_CFLAGS
+  CPPFLAGS=$sbml_save_CPPFLAGS
   LDFLAGS=$sbml_save_LDFLAGS
   LIBS=$sbml_save_LIBS
-  AC_LANG_POP
+  AC_LANG_POP([C++])
 
-  dnl add the CFLAGS and LDFLAGS for tcc online compilation
-  AC_DEFINE_UNQUOTED([SBML_CFLAGS], "${with_libsbml}/include",
+  dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
+  AC_DEFINE_UNQUOTED([SBML_CPPFLAGS], "${with_libsbml}/include",
             [SBML include directories])
-  AC_DEFINE_UNQUOTED([SBML_CFLAGS2], "${with_libsbml}/include/sbml",
+  AC_DEFINE_UNQUOTED([SBML_CPPFLAGS2], "${with_libsbml}/include/sbml",
             [SBML include directories])
   AC_DEFINE_UNQUOTED([SBML_LDFLAGS], "${with_libsbml}/lib",
             [SBML lib directories])
@@ -212,7 +212,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
   AC_SUBST(USE_SBML, 1)
   AC_DEFINE([OLD_LIBSBML], 0, [Define to 1 for SBML Library version < 2.2.0])
   AC_SUBST(OLD_LIBSBML)
-  AC_SUBST(SBML_CFLAGS)
+  AC_SUBST(SBML_CPPFLAGS)
   AC_SUBST(SBML_LDFLAGS)
   AC_SUBST(SBML_RPATH)
   AC_SUBST(SBML_LIBS)

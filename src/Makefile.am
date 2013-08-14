@@ -30,19 +30,18 @@
 ##
 pkgconfigdir = $(libdir)/pkgconfig
 pkgincludedir = @includedir@/sbmlsolver
-INCLUDES = @SUNDIALS_CFLAGS@ \
-           @SBML_CFLAGS@ \
-           @GRAPHVIZ_CFLAGS@ \
-           @GRACE_CFLAGS@ \
-           -I.
+AM_CPPFLAGS = @SUNDIALS_CPPFLAGS@ \
+           @SBML_CPPFLAGS@ \
+           @GRAPHVIZ_CPPFLAGS@ \
+           @GRACE_CPPFLAGS@
 LDADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
         @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
         @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
         @GRACE_LDFLAGS@ @GRACE_LIBS@
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
-AM_CFLAGS = @FPIC@
-AM_CXXFLAGS = @FPIC@
+AM_CFLAGS = @FPIC@ -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
+AM_CXXFLAGS = @FPIC@ -Wno-unknown-pragmas -Wall
 lib_LTLIBRARIES = libODES.la
 
 libODES_la_SOURCES = ASTIndexNameNode.cpp \

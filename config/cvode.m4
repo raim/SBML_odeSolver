@@ -13,8 +13,8 @@ AC_DEFUN([AC_CVODE_PATH],
     /usr/include/CVODE       \
     /usr/local/share/cvode   \
     /usr/local/share/CVODE   \
-    /opt/cvode               \ 
-    /opt/CVODE               \ 
+    /opt/cvode               \
+    /opt/CVODE               \
     ;                        \
   do
     if test -r "$ac_dir/cvode.h"; then

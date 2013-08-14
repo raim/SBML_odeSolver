@@ -8,7 +8,7 @@ WriteMakefile(MAKEFILE => 'Makefile-perl',
               LIBS     => [join(' ', @Xtralib)],
 	      dynamic_lib =>
 	      {LDDLFLAGS=> '@SBML_RPATH@ @SBML_LDFLAGS@ @SBML_LIBS@'},
-              INC      => '-I../swig -I../../src -I/usr/local/include @SBML_CFLAGS@',
+              INC      => '-I../swig -I../../src -I/usr/local/include @SBML_CPPFLAGS@',
               MYEXTLIB => '../../src/libODES.a',
               OBJECT   => 'LibODES_wrap.o',
               AUTHOR   => 'Christoph Flamm <xtof@tbi.univie.ac.at>',
@@ -18,7 +18,7 @@ WriteMakefile(MAKEFILE => 'Makefile-perl',
 sub MY::postamble {
 	return <<'MAKE_FRAG';
 LibODES_wrap.c:
-	swig -Wall -perl5 -proxy -I../../src/ @SBML_CFLAGS@ LibODES.i
+	swig -Wall -perl5 -proxy -I../../src/ @SBML_CPPFLAGS@ LibODES.i
 MAKE_FRAG
 }
 

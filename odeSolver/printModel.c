@@ -982,7 +982,6 @@ void printPhase(cvodeData_t *data)
   
   int i,j;
   double maxY;
-  double minY;
   double maxX;
   char *x;
   double xvalue;
@@ -993,7 +992,6 @@ void printPhase(cvodeData_t *data)
 
   maxY = 1.0;
   maxX = 1.0;
-  minY = 0.0;
   
   if ( data==NULL || data->results==NULL )
   {

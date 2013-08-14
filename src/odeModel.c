@@ -79,7 +79,6 @@ static void ODEModel_initializeValuesFromSBML(odeModel_t *, Model_t *);
 typedef struct assignmentStage assignmentStage_t ;
 static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *);
 static int ODEModel_topologicalRuleSort(odeModel_t *);
-static void List_append(List_t *, List_t *);
 
 
 
@@ -827,16 +826,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   return hasCycle;
 }
 
-
-/* adds the contents of 'source' to the end of 'target'.
-   List items are only shallow copied. */
-static void List_append(List_t *target, List_t *source)
-{
-  int i;
-
-  for (i = 0; i != List_size(source); i++)
-    List_add(target, List_get(source, i));
-}
 
 /* allocates memory for substructures of a new odeModel:
    1) ODEs: writes variable and parameter names, creates equation,

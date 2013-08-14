@@ -10,13 +10,13 @@ AC_DEFUN([AC_TCC_PATH],
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \
-    /opt                    \ 
+    /opt                    \
     ;                       \
   do
     if test -r "$ac_dir/libtcc.h"; then
       ac_TCC_includes="$ac_dir"
       with_libtcc="$ac_dir"
-      TCC_CFLAGS="-I$ac_TCC_includes"
+      TCC_CPPFLAGS="-I$ac_TCC_includes"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -54,21 +54,21 @@ AC_DEFUN([CONFIG_LIB_TCC],
               [with_libtcc=no])
 
   dnl set TCC related variables
-  TCC_CFLAGS=
+  TCC_CPPFLAGS=
   TCC_LDFLAGS=
   TCC_RPATH=
   TCC_LIBS=
   if test $with_libtcc = yes; then
     AC_TCC_PATH
   else
-    TCC_CFLAGS="-I$with_libtcc/include"
+    TCC_CPPFLAGS="-I$with_libtcc/include"
     TCC_LDFLAGS="-L$with_libtcc/lib"
     if test $HOST_TYPE = darwin; then
       TCC_RPATH=
     else
       TCC_RPATH="-Wl,-rpath,$with_libtcc/lib"
-    fi   
-    TCC_LIBS="-ldl -ltcc"  
+    fi
+    TCC_LIBS="-ldl -ltcc"
   fi
 
 dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
@@ -77,11 +77,11 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
   AC_MSG_CHECKING([for correct functioning of TCC])
   AC_LANG_PUSH(C)
   dnl cach values of some global variables
-  tcc_save_CFLAGS="$CFLAGS"
+  tcc_save_CPPFLAGS="$CPPFLAGS"
   tcc_save_LDFLAGS="$LDFLAGS"
   tcc_save_LIBS="$LIBS"
   dnl add TCC specific stuff to global variables
-  CFLAGS="$CFLAGS $TCC_CFLAGS"
+  CPPFLAGS="$CPPFLAGS $TCC_CPPFLAGS"
   LDFLAGS="$LDFLAGS $TCC_RPATH $TCC_LDFLAGS"
   LIBS=" $TCC_LIBS $LIBS"
   dnl set headers and test program
@@ -97,19 +97,19 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
     AC_MSG_RESULT([$tcc_functional])
   else
     AC_MSG_RESULT([$tcc_functional:
-                   CFLAGS=$CFLAGS
+                   CPPFLAGS=$CPPFLAGS
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
-    AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])		  
+    AC_MSG_RESULT([Can not link to TCC Library: online compilation disabled!])
   fi
   dnl reset global variables to cached values
-  CFLAGS=$tcc_save_CFLAGS
+  CPPFLAGS=$tcc_save_CPPFLAGS
   LDFLAGS=$tcc_save_LDFLAGS
   LIBS=$tcc_save_LIBS
   AC_LANG_POP
   if test $tcc_functional = yes; then
-    dnl add the CFLAGS and LDFLAGS for tcc online compilation
-    AC_DEFINE_UNQUOTED([TCC_CFLAGS], "${with_libtcc}/include",
+    dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
+    AC_DEFINE_UNQUOTED([TCC_CPPFLAGS], "${with_libtcc}/include",
               [TCC include directories])
     AC_DEFINE_UNQUOTED([TCC_LDFLAGS], "${with_libtcc}/lib",
               [TCC lib directories])
@@ -117,17 +117,17 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
               [TCC libs])
     AC_DEFINE([USE_TCC], 1, [Define to 1 to use the TCC Library])
     AC_SUBST(USE_TCC, 1)
-    AC_SUBST(TCC_CFLAGS)
+    AC_SUBST(TCC_CPPFLAGS)
     AC_SUBST(TCC_LDFLAGS)
     AC_SUBST(TCC_RPATH)
     AC_SUBST(TCC_LIBS)
   else
     AC_DEFINE([USE_TCC], 0, [Define to 1 to use the TCC Library])
     AC_SUBST(USE_TCC, 0)
-    AC_SUBST(TCC_CFLAGS, "")
+    AC_SUBST(TCC_CPPFLAGS, "")
     AC_SUBST(TCC_LDFLAGS, "")
     AC_SUBST(TCC_RPATH, "")
-    AC_SUBST(TCC_LIBS, "")    
+    AC_SUBST(TCC_LIBS, "")
   fi
 
 ])

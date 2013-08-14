@@ -61,7 +61,8 @@ EXTRA_DIST = Win32/* \
              examples/Makefile.in \
 	     examples/Makefile.batch \
              examples/Makefile.integrate \
-             tutorial/Makefile \
+             tutorial/Makefile.am \
+             tutorial/Makefile.in \
              tutorial/*.c \
              tutorial/*.pl \
              tutorial/*.xml
