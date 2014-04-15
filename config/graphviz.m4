@@ -15,11 +15,11 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
   GRAPHVIZ_LDFLAGS=
   GRAPHVIZ_RPATH=
   GRAPHVIZ_LIBS=
-  if test $with_graphviz = no
+  if test "$with_graphviz" = no
   then
     graphviz_functional=no
   else
-  if test $with_graphviz != yes; then
+  if test "$with_graphviz" != yes; then
     AC_MSG_NOTICE(checking for Graphviz Library)
     dnl Remove needless trailing slashes because it can confuse tests later.
     with_graphviz=`echo $with_graphviz | sed -e 's,\(.*\)/$,\1,g'`
@@ -77,7 +77,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
     GRAPHVIZ_CPPFLAGS="-I$graphviz_include_path"
     GRAPHVIZ_LDFLAGS="-L$graphviz_lib_path"
 
-    if test $HOST_TYPE = darwin; then
+    if test "$HOST_TYPE" = darwin; then
       GRAPHVIZ_RPATH=
     else
       GRAPHVIZ_RPATH="-Wl,-rpath,$graphviz_lib_path"
@@ -105,7 +105,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
       [graphviz_functional=yes],
       [graphviz_functional=no])
 
-    if test $graphviz_functional = yes; then
+    if test "$graphviz_functional" = yes; then
       AC_MSG_RESULT([$graphviz_functional])
     else
       AC_MSG_RESULT([$graphviz_functional:
@@ -129,7 +129,7 @@ AC_DEFUN([CONFIG_LIB_GRAPHVIZ],
 
   fi
 
-  if test $graphviz_functional = yes; then
+  if test "$graphviz_functional" = yes; then
     AC_DEFINE([USE_GRAPHVIZ], 1, [Define to 1 to use the GRAPHVIZ Library])
     AC_SUBST(USE_GRAPHVIZ, 1)
     AC_DEFINE_UNQUOTED(GRAPHVIZ_MAJOR_VERSION, $dot_major_version,

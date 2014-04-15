@@ -51,7 +51,7 @@ AC_DEFUN([CONFIG_LIB_CVODE],
   CVODE_CFLAGS=
   CVODE_LDFLAGS=
   CVODE_LIBS=
-  if test $with_libcvode = yes; then
+  if test "$with_libcvode" = yes; then
     AC_CVODE_PATH
   else
     CVODE_CFLAGS="-I$with_libcvode/include"
@@ -77,7 +77,7 @@ AC_DEFUN([CONFIG_LIB_CVODE],
     [cvode_functional=yes],
     [cvode_functional=no])
 
-  if test $cvode_functional = yes; then
+  if test "$cvode_functional" = yes; then
     AC_MSG_RESULT([$cvode_functional])
   else
     AC_MSG_RESULT([$cvode_functional:

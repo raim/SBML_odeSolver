@@ -36,7 +36,7 @@ AC_DEFUN([AC_GRACE_PATH],
     for ac_extension in a so sl dylib; do
       if test -r $ac_dir/libgrace_np.$ac_extension; then
         GRACE_LDFLAGS="-L$ac_dir"
-        if test $HOST_TYPE = darwin; then
+        if test "$HOST_TYPE" = darwin; then
           GRACE_RPATH=
         else
           GRACE_RPATH="-Wl,-rpath,$ac_dir"
@@ -64,12 +64,12 @@ AC_DEFUN([CONFIG_LIB_GRACE],
   GRACE_LDFLAGS=
   GRACE_RPATH=
   GRACE_LIBS=
-  if test $with_grace = yes; then
+  if test "$with_grace" = yes; then
     AC_GRACE_PATH
   else
     GRACE_CPPFLAGS="-I$with_grace/include"
     GRACE_LDFLAGS="-L$with_grace/lib"
-    if test $HOST_TYPE = darwin; then
+    if test "$HOST_TYPE" = darwin; then
       GRACE_RPATH=
     else
       GRACE_RPATH="-Wl,-rpath,$with_grace"
@@ -97,7 +97,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
       [grace_functional=yes],
       [grace_functional=no])
 
-    if test $grace_functional = yes; then
+    if test "$grace_functional" = yes; then
       AC_MSG_RESULT([$grace_functional])
     else
       AC_MSG_RESULT([$grace_functional:
@@ -114,7 +114,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
     AC_LANG_POP
   fi
 
-  if test $grace_functional = yes; then
+  if test "$grace_functional" = yes; then
     AC_DEFINE([USE_GRACE], 1, [Define to 1 to use the GRACE Library])
     AC_SUBST(USE_GRACE, 1)
     AC_SUBST(GRACE_CPPFLAGS)

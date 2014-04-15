@@ -27,7 +27,7 @@ AC_DEFUN([AC_TCC_PATH],
   for ac_extension in a so sl dylib; do
     if test -r $ac_dir/libtcc.$ac_extension; then
       TCC_LDFLAGS="-L$ac_dir"
-      if test $HOST_TYPE = darwin; then
+      if test "$HOST_TYPE" = darwin; then
         TCC_RPATH=
       else
         TCC_RPATH="-Wl,-rpath,$ac_dir"
@@ -58,12 +58,12 @@ AC_DEFUN([CONFIG_LIB_TCC],
   TCC_LDFLAGS=
   TCC_RPATH=
   TCC_LIBS=
-  if test $with_libtcc = yes; then
+  if test "$with_libtcc" = yes; then
     AC_TCC_PATH
   else
     TCC_CPPFLAGS="-I$with_libtcc/include"
     TCC_LDFLAGS="-L$with_libtcc/lib"
-    if test $HOST_TYPE = darwin; then
+    if test "$HOST_TYPE" = darwin; then
       TCC_RPATH=
     else
       TCC_RPATH="-Wl,-rpath,$with_libtcc/lib"
@@ -93,7 +93,7 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
      [tcc_functional=yes],
      [tcc_functional=no])
 
-  if test $tcc_functional = yes; then
+  if test "$tcc_functional" = yes; then
     AC_MSG_RESULT([$tcc_functional])
   else
     AC_MSG_RESULT([$tcc_functional:
@@ -107,7 +107,7 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
   LDFLAGS=$tcc_save_LDFLAGS
   LIBS=$tcc_save_LIBS
   AC_LANG_POP
-  if test $tcc_functional = yes; then
+  if test "$tcc_functional" = yes; then
     dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
     AC_DEFINE_UNQUOTED([TCC_CPPFLAGS], "${with_libtcc}/include",
               [TCC include directories])

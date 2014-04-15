@@ -183,32 +183,32 @@ dnl ---------------------------------------------------------------------------
 dnl Inform users of settings
 dnl ---------------------------------------------------------------------------
 
-if test $sbml_functional != no; then
+if test "$sbml_functional" != no; then
   yes_libsbml="yes"
 else
   yes_libsbml="no"
 fi
 
-if test $sundials_functional != no; then
+if test "$sundials_functional" != no; then
   yes_libsundials="yes"
 else
   yes_libsundials="no"
 fi
 
-dnl if test $tcc_functional != no; then
+dnl if test "$tcc_functional" != no; then
 dnl  yes_tcc="yes"
 dnl else
 dnl  yes_tcc="no"
 dnl fi
 
-if test $grace_functional != no; then
+if test "$grace_functional" != no; then
   yes_grace="yes"
 else
   yes_grace="no"
 fi
 
 
-if test $graphviz_functional != no; then
+if test "$graphviz_functional" != no; then
   yes_graphviz="yes"
 else
   yes_graphviz="no"
@@ -226,19 +226,19 @@ echo "  CFLAGS               = $CFLAGS"
 echo "  LDFLAGS              = $LDFLAGS"
 echo "  LIBS                 = $LIBS"
 echo "  SBML Library         = $yes_libsbml"
-if test $yes_libsbml = yes; then
+if test "$yes_libsbml" = yes; then
   echo "       CPPFLAGS        = $SBML_CPPFLAGS"
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
 echo "  SUNDIALS Library       = $yes_libsundials"
-if test $yes_libsundials       = yes; then
+if test "$yes_libsundials" = yes; then
   echo "       CPPFLAGS        = $SUNDIALS_CPPFLAGS"
   echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
   echo "       LIBS            = $SUNDIALS_LIBS"
 fi
 dnl echo "  TCC Library       = $yes_tcc"
-dnl if test $yes_tcc               = yes; then
+dnl if test "$yes_tcc" = yes; then
 dnl   echo "       CPPFLAGS        = $TCC_CPPFLAGS"
 dnl   echo "       LDFLAGS         = $TCC_LDFLAGS"
 dnl   echo "       LIBS            = $TCC_LIBS"
@@ -246,7 +246,7 @@ dnl else
 dnl    echo "TCC online compilation will NOT be installed!"
 dnl fi
 echo "  GRACE                = $yes_grace"
-if test $yes_grace = yes; then
+if test "$yes_grace" = yes; then
   echo "       CPPFLAGS        = $GRACE_CPPFLAGS"
   echo "       LDFLAGS         = $GRACE_LDFLAGS"
   echo "       LIBS            = $GRACE_LIBS"
@@ -254,7 +254,7 @@ else
    echo "XMGRACE functionality will NOT be installed!"
 fi
 echo "  GRAPHVIZ             = $yes_graphviz"
-if test $yes_graphviz = yes; then
+if test "$yes_graphviz" = yes; then
   echo "       CPPFLAGS        = $GRAPHVIZ_CPPFLAGS"
   echo "       LDFLAGS         = $GRAPHVIZ_LDFLAGS"
   echo "       LIBS            = $GRAPHVIZ_LIBS"

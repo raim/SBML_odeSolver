@@ -56,7 +56,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   SUNDIALS_CPPFLAGS=
   SUNDIALS_LDFLAGS=
   SUNDIALS_LIBS=
-  if test $with_sundials = yes; then
+  if test "$with_sundials" = yes; then
     AC_SUNDIALS_PATH
   else
     SUNDIALS_CPPFLAGS="-I$with_sundials/include"
@@ -81,7 +81,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
     [sundials_functional=yes],
     [sundials_functional=no])
 
-  if test $sundials_functional = yes; then
+  if test "$sundials_functional" = yes; then
     AC_MSG_RESULT([$sundials_functional])
   else
     AC_MSG_RESULT([$sundials_functional:
