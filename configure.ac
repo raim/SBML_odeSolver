@@ -45,6 +45,11 @@ case $host_os in
     SHAREDLIBEXT="so"
     ;;
 
+  *mingw*)
+    HOST_TYPE="mingw"
+    SHAREDLIBEXT="dll"
+    ;;
+
   *aix*)
     HOST_TYPE="aix"
     SHAREDLIBEXT="a"
