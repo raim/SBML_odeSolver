@@ -579,7 +579,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
      */
     flag = CVodeSVtolerances(solver->cvode_mem,
                              solver->reltol, solver->abstol);
-    CVODE_HANDLE_ERROR(&flag, "CVodeSStolerances", 1);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSVtolerances", 1);
 
     /**
      * Link the main integrator with data for right-hand side function
