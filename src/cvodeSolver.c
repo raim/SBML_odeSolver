@@ -657,9 +657,9 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
 	 to be the same as the forward solution tolerances */
       flag = CVodeSetQuadErrCon(solver->cvode_mem, TRUE);
       CVODE_HANDLE_ERROR(&flag, "CVodeSetQuadErrCon", 1);
-      flag = CVodeQuadSStolerances(solver->cvode_mem,
+      flag = CVodeQuadSVtolerances(solver->cvode_mem,
                                    solver->reltol, solver->abstol);
-      CVODE_HANDLE_ERROR(&flag, "CVodeQuadSStolerances", 1);
+      CVODE_HANDLE_ERROR(&flag, "CVodeQuadSVtolerances", 1);
     }
 
  
