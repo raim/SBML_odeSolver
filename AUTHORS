@@ -1,22 +1,22 @@
-SOSlib Active Developers
+=== SOSlib Active Developers ===
 
 Please see the website
 http://www.tbi.univie.ac.at/~raim/odeSolver for full credits!
 
-The SBML_odeSolver has been developed and is maintained
-by:
+The SBML_odeSolver has been developed mainly by:
 
 Rainer Machne, 1
 raim@tbi.univie.ac.at, http://www.tbi.univie.ac.at/~raim
 
-Christoph Flamm, 1,4 
+Andrew Finney, 2
+afinney@physiomics-plc.com
+
+Christoph Flamm, 1 
 xtof@tbi.univie.ac.at, http://www.tbi.univie.ac.at/~xtof
 
 Stefan Mueller, 3
 stefan@tbi.univie.ac.at, http://www.tbi.univie.ac.at/~stefan
 
-Andrew Finney, 2
-afinney@physiomics-plc.com
 
 Addresses:
 1: 
@@ -27,6 +27,3 @@ Physiomics PLC, Magdalen Centre, Oxford Science Park, Oxford, OX4 4GA, UK
 3:
 Johann Radon Institute for Computational and Applied Mathematics (RICAM), 
 Austrian Academy of Sciences, Altenbergerstrasse 69, 4040 Linz, Austria 
-4:
-Bioinformatics, Institute for Computer Science, University of Leipzig, 
-Haertelstrasse 16-18, 04107 Leipzig, Germany

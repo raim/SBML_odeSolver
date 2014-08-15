@@ -2,9 +2,12 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
-                                                                                       
+
 Name: libODES
-Description: The SBML ODE Solver library 
+Description: The SBML ODE Solver library
+URL: http://www.tbi.univie.ac.at/~raim/odeSolver/
 Version: @VERSION@
+Requires: libsbml >= 3.0.2
 Libs: -L${libdir} -lODES
-Cflags: -I${includedir}
+Libs.private: @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ -lm
+Cflags: -I${includedir} @SUNDIALS_CPPFLAGS@

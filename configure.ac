@@ -3,7 +3,7 @@ dnl Autoconf initialization.
 dnl
 dnl Bug reports are sent to {raim,xtof}@tbi.univie.ac.at
 dnl ---------------------------------------------------------------------------
-           
+
 if test -f "VERSION.txt"; then
    m4_define(ODES_VERSION,
        m4_esyscmd(cat VERSION.txt  | sed 's/\-.*$//' | tr -d '\n\r'))
@@ -17,7 +17,7 @@ m4_include([config/grace.m4])
 m4_include([config/graphviz.m4])
 m4_include([config/sbml.m4])
 m4_include([config/sundials.m4])
-dnl m4_include([config/tcc.m4]) 
+dnl m4_include([config/tcc.m4])
 
 AC_CONFIG_SRCDIR(src/util.c)
 AC_CONFIG_HEADERS(src/sbmlsolver/config.h)
@@ -45,6 +45,11 @@ case $host_os in
     SHAREDLIBEXT="so"
     ;;
 
+  *mingw*)
+    HOST_TYPE="mingw"
+    SHAREDLIBEXT="dll"
+    ;;
+
   *aix*)
     HOST_TYPE="aix"
     SHAREDLIBEXT="a"
@@ -63,11 +68,7 @@ AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
 				    [shared library extrension])
 
 dnl Adding global compilation parameters
-dnl !!! remove -g -O2 -pg  for release ???     
-CFLAGS="-g -O2 -pg -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
-LIBS="-lm -lstdc++"	   
-AC_SUBST(CFLAGS)
-AC_SUBST(LIBS)	
+AC_SEARCH_LIBS([dlopen],[dl])
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for various programs and packages.
@@ -92,37 +93,27 @@ AC_PATH_PROG([SWIG],[swig],[swig])
 AC_PATH_PROG([PERL],[perl],[perl])
 
 dnl AC_MSG_NOTICE([LIBS=$LIBS])
-	
+
 CONFIG_LIB_SBML
 CONFIG_LIB_SUNDIALS
 dnl CONFIG_LIB_TCC
 CONFIG_LIB_GRACE
 CONFIG_LIB_GRAPHVIZ
 
-dnl Adding global compilation parameters
-dnl !!! remove -g -O2 -pg  for release ???     
-	
-dnl CFLAGS="-g -O2  -pg -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
-CFLAGS="-g -O2 -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990"
-LIBS="-ldl -lm -lstdc++"
-
-	  
 dnl add the CFLAGS and LDFLAGS for tcc online compilation
 if test "$prefix" = "NONE"; then
    ourPrefix=$ac_default_prefix;
-else	
+else
    ourPrefix=$prefix;
-fi 
-AC_DEFINE_UNQUOTED([SOSLIB_CFLAGS], "${ourPrefix}/include",
+fi
+AC_DEFINE_UNQUOTED([SOSLIB_CPPFLAGS], "${ourPrefix}/include",
 				    [SOSLIB include directories])
 AC_DEFINE_UNQUOTED([SOSLIB_LDFLAGS], "${ourPrefix}/lib",
 				     [SOSLIB lib directories])
 AC_DEFINE_UNQUOTED([SOSLIB_LIBS], "ODES",
 				  [SOSLIB libs])
-	      
+
 dnl configure options
-dnl AC_ARG_WITH(inverse, [  --with-inverse  build inverse Tools])
-dnl AM_CONDITIONAL(MAKE_INVERSE, test "$with_inverse" = "yes")
 dnl AC_ARG_WITH(bindings, [  --with-bindings  build perl bindings])
 dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
 
@@ -130,7 +121,7 @@ dnl ---------------------------------------------------------------------------
 dnl Checks for libraries.
 dnl ---------------------------------------------------------------------------
 
-AC_LANG(C)
+AC_LANG([C++])
 AC_CHECK_LIB(m, isnan)
 
 dnl ---------------------------------------------------------------------------
@@ -180,7 +171,7 @@ AC_CONFIG_FILES([examples/Makefile])
 AC_CONFIG_FILES([odeSolver/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/libODES.pc])
-dnl AC_CONFIG_FILES([src/inverse/Makefile])
+AC_CONFIG_FILES([tutorial/Makefile])
 dnl AC_CONFIG_FILES([bindings/Makefile])
 dnl AC_CONFIG_FILES([bindings/swig/Makefile])
 dnl AC_CONFIG_FILES([bindings/perl/Makefile])
@@ -192,32 +183,32 @@ dnl ---------------------------------------------------------------------------
 dnl Inform users of settings
 dnl ---------------------------------------------------------------------------
 
-if test $sbml_functional != no; then
+if test "$sbml_functional" != no; then
   yes_libsbml="yes"
 else
   yes_libsbml="no"
 fi
 
-if test $sundials_functional != no; then
+if test "$sundials_functional" != no; then
   yes_libsundials="yes"
 else
   yes_libsundials="no"
 fi
-	
-dnl if test $tcc_functional != no; then
+
+dnl if test "$tcc_functional" != no; then
 dnl  yes_tcc="yes"
 dnl else
 dnl  yes_tcc="no"
 dnl fi
-	
-if test $grace_functional != no; then
+
+if test "$grace_functional" != no; then
   yes_grace="yes"
 else
   yes_grace="no"
 fi
 
 
-if test $graphviz_functional != no; then
+if test "$graphviz_functional" != no; then
   yes_graphviz="yes"
 else
   yes_graphviz="no"
@@ -235,40 +226,40 @@ echo "  CFLAGS               = $CFLAGS"
 echo "  LDFLAGS              = $LDFLAGS"
 echo "  LIBS                 = $LIBS"
 echo "  SBML Library         = $yes_libsbml"
-if test $yes_libsbml = yes; then
-  echo "       CFLAGS          = $SBML_CFLAGS"
+if test "$yes_libsbml" = yes; then
+  echo "       CPPFLAGS        = $SBML_CPPFLAGS"
   echo "       LDFLAGS         = $SBML_LDFLAGS"
   echo "       LIBS            = $SBML_LIBS"
 fi
 echo "  SUNDIALS Library       = $yes_libsundials"
-if test $yes_libsundials       = yes; then
-  echo "       CFLAGS          = $SUNDIALS_CFLAGS"
+if test "$yes_libsundials" = yes; then
+  echo "       CPPFLAGS        = $SUNDIALS_CPPFLAGS"
   echo "       LDFLAGS         = $SUNDIALS_LDFLAGS"
   echo "       LIBS            = $SUNDIALS_LIBS"
 fi
 dnl echo "  TCC Library       = $yes_tcc"
-dnl if test $yes_tcc               = yes; then
-dnl   echo "       CFLAGS          = $TCC_CFLAGS"
+dnl if test "$yes_tcc" = yes; then
+dnl   echo "       CPPFLAGS        = $TCC_CPPFLAGS"
 dnl   echo "       LDFLAGS         = $TCC_LDFLAGS"
 dnl   echo "       LIBS            = $TCC_LIBS"
 dnl else
-dnl    echo "TCC online compilation will NOT be installed!"	
-dnl fi	
+dnl    echo "TCC online compilation will NOT be installed!"
+dnl fi
 echo "  GRACE                = $yes_grace"
-if test $yes_grace = yes; then
-  echo "       CFLAGS          = $GRACE_CFLAGS"
+if test "$yes_grace" = yes; then
+  echo "       CPPFLAGS        = $GRACE_CPPFLAGS"
   echo "       LDFLAGS         = $GRACE_LDFLAGS"
   echo "       LIBS            = $GRACE_LIBS"
 else
-   echo "XMGRACE functionality will NOT be installed!"	
+   echo "XMGRACE functionality will NOT be installed!"
 fi
 echo "  GRAPHVIZ             = $yes_graphviz"
-if test $yes_graphviz = yes; then
-  echo "       CFLAGS          = $GRAPHVIZ_CFLAGS"
+if test "$yes_graphviz" = yes; then
+  echo "       CPPFLAGS        = $GRAPHVIZ_CPPFLAGS"
   echo "       LDFLAGS         = $GRAPHVIZ_LDFLAGS"
   echo "       LIBS            = $GRAPHVIZ_LIBS"
 else
-   echo "GRAPHVIZ functionality will NOT be installed!"	
+   echo "GRAPHVIZ functionality will NOT be installed!"
 fi
 
 echo ""

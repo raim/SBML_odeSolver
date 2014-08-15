@@ -1,3 +1,6 @@
+* check different results for events in model supplied by Michael Hopkins
+  when using the -c option or not! Model: Final_combined_HCV_model_simplified_HR_09_05_12.xml.dat 
+
 * cross-check AST processing with MathML definitions
   at http://www.w3.org/TR/MathML2/appendixc.html
 

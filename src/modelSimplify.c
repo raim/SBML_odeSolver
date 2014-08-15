@@ -1,5 +1,5 @@
 /*
-  Last changed Time-stamp: <2008-10-07 19:14:09 raim>
+  Last changed Time-stamp: <2013-08-09 19:24:05 raim>
   $Id: modelSimplify.c,v 1.18 2008/10/07 17:18:02 raimc Exp $
 */
 /* 
@@ -183,16 +183,20 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
     old = List_get(names,i);
     
     /* if `old' is the searched function defintion ... */
-    if ( strcmp(ASTNode_getName(old), name) == 0 )
+    if ( ASTNode_getName(old) == NULL ) {
+      /* TODO: bug for model MODEL1303260018.xml a function without a name
+	 is passed. Is it a bug of the model or of SOSlib? */
+      fprintf(stdout, "WARNING\t%s has no name but is interpreted as a function!?\n",SBML_formulaToString(old));
+    } else if ( strcmp(ASTNode_getName(old), name) == 0 )
     {
       /* replace the arguments of the function definition copied to `new', 
-         with the arguments passed by the function call(s) in `math' */
+	with the arguments passed by the function call(s) in `math' */
       for ( j=0; j<(ASTNode_getNumChildren(function)-1); j++ )
 	AST_replaceNameByFormula(new,
 				 ASTNode_getName(ASTNode_getChild(function,j)),
 				 ASTNode_getChild(old, j));
-
-
+      
+      
       /* copy the `new' function defintion with replaced parameters
 	 into the `old' function call */
       
@@ -218,7 +222,7 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
     ASTNode_free(new);
   }
   List_free(names);
-
+  
   /* AST_dump("WITH ", math); */
 }
 

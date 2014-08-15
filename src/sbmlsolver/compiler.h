@@ -37,7 +37,7 @@
 #define _COMPILER_H_
 
 #ifdef WIN32
-#include <WINDOWS.h>
+#include <windows.h>
 #endif
 
 #include "sbmlsolver/exportdefs.h"

@@ -1,5 +1,5 @@
 /*
-  Last changed Time-stamp: <24-Mar-2011 17:25:30 raim>
+  Last changed Time-stamp: <2013-04-16 17:36:04 raim>
   $Id: integratorInstance.c,v 1.114 2011/05/04 18:51:24 raimc Exp $
 */
 /* 
@@ -1446,6 +1446,17 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   cvodeData_t *data = engine->data;
   odeModel_t *om = engine->om;
   cvodeSettings_t *opt= engine->opt;
+
+  if ( !data->allRulesUpdated )
+    for ( i=0; i<om->nassbeforeodes; i++ )
+    {
+      nonzeroElem_t *ordered = om->assignmentsBeforeODEs[i];
+#ifdef ARITHMETIC_TEST
+      data->value[ordered->i] = ordered->ijcode->evaluate(data);    
+#else
+      data->value[ordered->i] = evaluateAST(ordered->ij, data);
+#endif    
+    }
   
   /* calculate the mean and standard deviation of rates of change and
      store in cvodeData_t * */
@@ -1696,7 +1707,6 @@ SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 
 SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engine)
 {
-  cvodeData_t *data;
   cvodeSettings_t *opt;
   int errorCode;
 
@@ -1704,7 +1714,6 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
     return SolverError_getLastCode(WARNING_ERROR_TYPE);
   
   errorCode = SolverError_getLastCode(ERROR_ERROR_TYPE);
-  data = engine->data;
   opt = engine->opt;
 
   /* if (om->algebraic) ?? */

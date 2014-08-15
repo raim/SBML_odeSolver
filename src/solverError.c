@@ -293,7 +293,7 @@ void SolverError_storeLastWin32Error(const char *context)
   SolverError_error(ERROR_ERROR_TYPE, SOLVER_ERROR_WIN32_ERROR,
 		    "%s - %s", context, (const char *)lpMsgBuf);
     
-  // Free the buffer.
+  /* Free the buffer. */
   LocalFree( lpMsgBuf );
 }
 #endif
