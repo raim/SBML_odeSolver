@@ -52,7 +52,7 @@ void DumpErrors()
 {
     char *errors = SolverError_dumpToString();
 
-    fprintf(stderr, errors);
+    fprintf(stderr, "%s", errors);
     SolverError_freeDumpString(errors);
     SolverError_clear();
 }
