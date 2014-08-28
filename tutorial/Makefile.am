@@ -25,7 +25,7 @@ AM_CFLAGS = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
 AM_LDFLAGS = @SBML_LDFLAGS@ @SUNDIALS_LDFLAGS@ @GRACE_LDFLAGS@ @GRAPHVIZ_LDFLAGS@
 LDADD = ../src/libODES.la @SBML_LIBS@ @SUNDIALS_LIBS@ @GRACE_LIBS@ @GRAPHVIZ_LIBS@
 
-bin_PROGRAMS = evaluateast integrate integratorinstance odemodel setvariablevalue
+noinst_PROGRAMS = evaluateast integrate integratorinstance odemodel setvariablevalue
 evaluateast_SOURCES = evaluateast.c
 integrate_SOURCES = integrate.c
 integratorinstance_SOURCES = integratorinstance.c
