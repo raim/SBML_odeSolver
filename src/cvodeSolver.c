@@ -756,9 +756,6 @@ void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *engine)
   /* Adjoint related  */
   IntegratorInstance_freeAdjointSensitivity(engine);
 
-  /* Free the adjoint memory */
-  CVodeAdjFree(&engine->solver->cvode_mem);
-
   /* Free IDA vector dy */
   if (engine->solver->dy != NULL)
   {
