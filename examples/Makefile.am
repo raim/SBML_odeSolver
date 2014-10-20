@@ -37,7 +37,7 @@ LDADD = ../src/libODES.la \
     @GRACE_LDFLAGS@ @GRACE_LIBS@ \
     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 
-bin_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
+noinst_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
                simpleIntInst changeIntInst ASTIndexTest ASTgetIndexTest\
                ParameterScanner Sense \
                printODEs analyzeJacobian analyzeSens \

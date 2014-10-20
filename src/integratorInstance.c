@@ -366,17 +366,21 @@ static int IntegratorInstance_initializeSolver(integratorInstance_t *engine,
   if ( !engine->AdjointPhase )
   {
     /* set initial time, first output time and number of time steps */
-    solver->t0 = opt->TimePoints[0];      /* initial time           */
-  
-    /* first output time as passed to CVODE */
     if ( opt->Indefinitely )
-      solver->tout = opt->Time;      
-    else 
-      solver->tout = opt->TimePoints[1];
-
+    {
+      solver->t0 = 0;          /* initial time */
+      solver->t = 0;           /* current time */
+      solver->tout = opt->Time;/* first output time */
+    }
+    else
+    {
+      solver->t0 = opt->TimePoints[0];   /* initial time */
+      solver->t = opt->TimePoints[0];    /* current time, always 0,
+                                            when starting from odeModel */
+      solver->tout = opt->TimePoints[1]; /* first output time */
+    }
     solver->nout = opt->PrintStep;     /* number of output steps */
-    solver->t = opt->TimePoints[0];   /* CVODE current time, always 0,
-					 when starting from odeModel */
+
     /* set up loop variables */
     solver->iout=1;        /* counts integration steps, start with 1 */
 

@@ -147,7 +147,7 @@ int main (int argc, char *argv[])
     int result = doit();
     char *errors = SolverError_dumpToString();
 
-    fprintf(stderr, errors);
+    fprintf(stderr, "%s", errors);
     SolverError_freeDumpString(errors);
 
     return result;

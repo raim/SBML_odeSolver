@@ -23,7 +23,7 @@ SHORT INSTALLATION INFORMATION:
  Required libraries (SBML and numerical integration):
 	libSBML:        http://sbml.org/software/libsbml/
 			Version 2.3.4 recommended for 1.6.0, 
-			Version 3.4.1 recommended for CVS/github version!
+			Version 3.4.1 - 5.x.x for github version
 	SUNDIALS Suite: http://www.llnl.gov/CASC/sundials/
                         Version 2.1.1 required for 1.6.0,
 			Version 2.3.0 required for CVS/github version!
@@ -52,9 +52,10 @@ NOTE: configure Sundials with the --enable-shared option!
  Win32 or online at
  http://www.tbi.univie.ac.at/~raim/odeSolver/doc/installWin.html
 
- NOTES FOR INSTALLATION FROM CVS VERSION:
- If you have checked out from our sourceforge CVS please
- run the autoconf/automake tool autoreconf:
+ NOTES FOR INSTALLATION FROM GITHUB VERSION:
+ If you have cloned the source code from github, make sure
+ Autoconf, Automake, and Libtool are installed and 
+ run autoreconf:
 
 	autoreconf 
 or, if that fails, try
@@ -66,7 +67,7 @@ or, if that fails, try
  In general compilation and installation of the package 
  follows the usual procedure for GNU software.
  After unpacking the tool, change to the main directory
- (SBML_odeSolver-1.0) and type:
+ (SBML_odeSolver) and type:
 
 	./configure
 	make
