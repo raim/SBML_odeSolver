@@ -33,6 +33,9 @@
 ##else
 
    SUBDIRS = src odeSolver examples tutorial
+if UNITTEST
+SUBDIRS += unittest
+endif
 
 ##endif
 EXTRA_DIST = Win32/* \
