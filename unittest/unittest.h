@@ -8,8 +8,13 @@
 
 #include <check.h>
 
+#define EXAMPLES_FILENAME0(dirname, basename) (#dirname "/" basename)
+#define EXAMPLES_FILENAME1(dirname, basename) EXAMPLES_FILENAME0(dirname, basename)
+#define EXAMPLES_FILENAME(basename) EXAMPLES_FILENAME1(EXAMPLES, basename)
+
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
+Suite *create_suite_sbml(void);
 Suite *create_suite_solverError(void);
 Suite *create_suite_util(void);
 

@@ -2,7 +2,9 @@ TESTS = unittest
 
 noinst_PROGRAMS = unittest
 
-unittest_CPPFLAGS = -I$(srcdir)/../src @SBML_CPPFLAGS@
+unittest_CPPFLAGS = -DEXAMPLES=$(srcdir)/../examples \
+                    -I$(srcdir)/../src \
+                    @SBML_CPPFLAGS@
 unittest_CFLAGS = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
 unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 unittest_LDADD = -lcheck \
@@ -14,5 +16,6 @@ unittest_LDADD = -lcheck \
 unittest_SOURCES = main.c \
                    test_ASTIndexNameNode.c \
                    test_charBuffer.c \
+                   test_sbml.c \
                    test_solverError.c \
                    test_util.c
