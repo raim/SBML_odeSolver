@@ -163,6 +163,7 @@ SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(SBMLResults_t *result
 
 SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results)
 {
+  if (!results) return;
   TimeCourse_free(results->time);
   TimeCourseArray_free(results->species);
   TimeCourseArray_free(results->compartments);
