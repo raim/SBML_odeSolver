@@ -126,11 +126,11 @@ extern "C" {
   SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResultsMatrix_free(SBMLResultsMatrix_t *);
-  SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
   SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *);
   SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *, int i);
   /* not yet implemented */
+  SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
   SBML_ODESOLVER_API Model_t *Model_setValues(Model_t *, SBMLResults_t *);
 
  
