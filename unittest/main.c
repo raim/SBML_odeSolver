@@ -17,6 +17,7 @@ int main(void)
 	srunner_add_suite(sr, create_suite_ASTIndexNameNode());
 	srunner_add_suite(sr, create_suite_charBuffer());
 	srunner_add_suite(sr, create_suite_sbml());
+	srunner_add_suite(sr, create_suite_sbmlResults());
 	srunner_add_suite(sr, create_suite_solverError());
 	srunner_add_suite(sr, create_suite_util());
 

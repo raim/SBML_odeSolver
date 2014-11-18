@@ -15,6 +15,7 @@
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_sbml(void);
+Suite *create_suite_sbmlResults(void);
 Suite *create_suite_solverError(void);
 Suite *create_suite_util(void);
 
