@@ -36,6 +36,8 @@
 #ifndef _SBMLRESULTS_H_
 #define _SBMLRESULTS_H_
 
+#include <sbml/SBMLTypes.h>
+
 #include "sbmlsolver/exportdefs.h"
 
 typedef struct timeCourse timeCourse_t ;
