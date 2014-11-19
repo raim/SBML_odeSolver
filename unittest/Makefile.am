@@ -16,6 +16,7 @@ unittest_LDADD = -lcheck \
 unittest_SOURCES = main.c \
                    test_ASTIndexNameNode.c \
                    test_charBuffer.c \
+                   test_modelSimplify.c \
                    test_sbml.c \
                    test_sbmlResults.c \
                    test_solverError.c \

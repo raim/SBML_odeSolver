@@ -13,6 +13,7 @@
 #define EXAMPLES_FILENAME(basename) EXAMPLES_FILENAME1(EXAMPLES, basename)
 
 Suite *create_suite_ASTIndexNameNode(void);
+Suite *create_suite_modelSimplify(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_sbml(void);
 Suite *create_suite_sbmlResults(void);
