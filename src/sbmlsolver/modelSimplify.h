@@ -36,6 +36,8 @@
 #ifndef _MODELSIMPLIFY_H_
 #define _MODELSIMPLIFY_H_
 
+#include <sbml/SBMLTypes.h>
+
 #include "sbmlsolver/exportdefs.h"
 
 #ifdef __cplusplus
