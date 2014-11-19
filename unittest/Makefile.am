@@ -5,7 +5,7 @@ noinst_PROGRAMS = unittest
 unittest_CPPFLAGS = -DEXAMPLES=$(srcdir)/../examples \
                     -I$(srcdir)/../src \
                     @SBML_CPPFLAGS@
-unittest_CFLAGS = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
+unittest_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
 unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 unittest_LDADD = -lcheck \
                  ../src/libODES.la \
