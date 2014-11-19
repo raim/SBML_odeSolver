@@ -174,13 +174,15 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
   int i, j;  
   ASTNode_t *old, *new;
   List_t *names;
+  unsigned int n;
  
   names = ASTNode_getListOfNodes(math, (ASTNodePredicate) ASTNode_isFunction);
+  n = List_size(names);
 
-  for ( i=0; i<List_size(names); i++ )
+  for ( i=0; i<n; i++ )
   {
     new = copyAST(ASTNode_getRightChild(function)); /* holds function r.h.s */
-    old = List_get(names,i);
+    old = List_get(names, n-i-1);
     
     /* if `old' is the searched function defintion ... */
     if ( ASTNode_getName(old) == NULL ) {
