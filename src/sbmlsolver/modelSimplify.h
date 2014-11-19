@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _MODEL_H_
-#define _MODEL_H_
+#ifndef _MODELSIMPLIFY_H_
+#define _MODELSIMPLIFY_H_
 
 #include "sbmlsolver/exportdefs.h"
 
