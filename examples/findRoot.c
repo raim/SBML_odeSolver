@@ -52,7 +52,10 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   integratorInstance_t *ii;
   
-   
+  if (argc < 2) {
+    fprintf(stderr, "Give me a filename as argument\n");
+    return EXIT_FAILURE;
+  }
   sscanf(argv[1], "%s", model);
 
   /* parsing the SBML model with libSBML */
