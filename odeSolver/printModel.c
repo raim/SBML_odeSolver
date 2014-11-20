@@ -104,7 +104,7 @@ void printModel(Model_t *m, FILE *f)
 
 void printSpecies(Model_t *m, FILE *f)
 {
-  int i, j;
+  unsigned int i, j;
   Species_t *s;  
   Compartment_t *c;
 
@@ -170,7 +170,7 @@ void printSpecies(Model_t *m, FILE *f)
 void printReactions(Model_t *m, FILE *f)
 {
   
-  int i,j,k;
+  unsigned int i,j,k;
   Reaction_t *r;
   SpeciesReference_t *sref;
   KineticLaw_t *kl;
@@ -732,7 +732,7 @@ void printOdeTimeCourse(cvodeData_t *data, FILE *f)
 
 void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
 {
-  int i, j;
+  unsigned int i, j;
   cvodeResults_t *results;
   Reaction_t *r;
   KineticLaw_t *kl;

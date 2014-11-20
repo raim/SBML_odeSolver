@@ -58,7 +58,7 @@
 */
 SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname)
 {
-  int i;
+  unsigned int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
@@ -76,7 +76,7 @@ SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name,
 
 SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x)
 {
-  int i;
+  unsigned int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
@@ -95,7 +95,7 @@ SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name
 
 SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp)
 {
-  int i,j;
+  unsigned int i,j;
   Parameter_t *p;
   List_t *names;
 
@@ -120,7 +120,7 @@ SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *l
 
 SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula)
 {
-  int i, j;  
+  unsigned int i, j;
   ASTNode_t *old;
   List_t *names;
 
@@ -171,7 +171,7 @@ SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *na
 
 SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const char *name, const ASTNode_t *function)
 {  
-  int i, j;  
+  unsigned int i, j;
   ASTNode_t *old, *new;
   List_t *names;
   unsigned int n;
@@ -232,7 +232,7 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
 
 SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
 {
-  int i, j, found;
+  unsigned int i, j, found;
   Parameter_t *p;
   Compartment_t *c;
   Species_t *s;

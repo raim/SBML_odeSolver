@@ -941,7 +941,7 @@ static int drawModelTxt(Model_t *m, char *file)
   const ASTNode_t *math;
   SpeciesReference_t *sref;
   SpeciesReference_t *mref;
-  int i,j;
+  unsigned int i,j;
   int reversible;
   char filename[WORDSIZE];
   FILE *f;

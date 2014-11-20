@@ -118,7 +118,7 @@ parseModel(char *file, int printMessage, int validate)
 
 SBMLDocument_t *convertModel (SBMLDocument_t *d1)
 {
-  int i, severity;
+  unsigned int i, severity;
   SBMLDocument_t *d2;
   const SBMLError_t *error;
   

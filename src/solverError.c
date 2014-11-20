@@ -347,7 +347,8 @@ static int SolverError_dumpHelper(char *s)
       "    Warning",
       "    Message" } ;
 
-  int i, j;
+  int i;
+  unsigned int j;
 
   for ( i=0; i != NUMBER_OF_ERROR_TYPES; i++ )
   {

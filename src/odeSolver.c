@@ -344,7 +344,8 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
 
 static int globalizeParameter(Model_t *m, char *id, char *rid)
 {
-  int i, found;
+  unsigned int i;
+  int found;
   Reaction_t *r;
   KineticLaw_t *kl;
   Parameter_t *p, *p_global;
@@ -430,7 +431,8 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
 
 SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii)
 {
-  int i, j, k, flag;
+  unsigned int i, j, k;
+  int flag;
   Reaction_t *r;
   KineticLaw_t *kl;
   ASTNode_t **kls;

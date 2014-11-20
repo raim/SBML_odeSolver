@@ -335,7 +335,7 @@ SBMLResultsArray_allocate(int size)
    and parameters.  */
 SBMLResults_t *SBMLResults_create(Model_t *m, int timepoints)
 {
-  int i, num_reactions, num_species, num_compartments, num_parameters;
+  unsigned int i, num_reactions, num_species, num_compartments, num_parameters;
   Species_t *s;
   Compartment_t *c;
   Parameter_t *p;

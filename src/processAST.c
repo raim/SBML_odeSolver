@@ -159,7 +159,7 @@ void AST_dump(const char *context, ASTNode_t *node)
 
 ASTNode_t *copyAST(const ASTNode_t *f)
 {
-  int i;
+  unsigned int i;
   ASTNode_t *copy;
 
   copy = ASTNode_create();
@@ -685,7 +685,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
 SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 {
-  int i, j, childnum;
+  unsigned int i, j, childnum;
   int found;
   ASTNodeType_t type;
   ASTNode_t *fprime, *helper, *simple;
@@ -1891,7 +1891,7 @@ calls itself recursively for childnodes,
 
 SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
 {  
-  int i, childnum;
+  unsigned int i, childnum;
   int simplify;
   ASTNode_t *simple, *left, *right, *helper;
   ASTNodeType_t type;
@@ -2305,7 +2305,7 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old)
    should not be freed and exist as long as the AST. */
 void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_NAME )
     List_add(symbols, (char*) ASTNode_getName(node));
@@ -2316,7 +2316,7 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
 /* appends the indices in the given indexed AST to the given list. */
 int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
 {
-  int i; 
+  unsigned int i;
 
   if ( ASTNode_isSetIndex(node) )
   {
@@ -2365,7 +2365,7 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
 /* returns boolean result: whether the given AST contains a time symbol. */
 int ASTNode_containsTime(ASTNode_t *node)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_NAME_TIME /* || */
 /*        (ASTNode_getType(node) == AST_NAME && */
@@ -2384,7 +2384,7 @@ int ASTNode_containsTime(ASTNode_t *node)
 /* returns boolean result: whether the given AST contains a time symbol. */
 int ASTNode_containsPiecewise(ASTNode_t *node)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_FUNCTION_PIECEWISE )
     return 1;

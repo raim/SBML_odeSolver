@@ -834,7 +834,8 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
    the newly created odeModel. */
 static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 {
-  int i, j, found, flag, nvalues, neq, nalg, nconst, nass, npiecewise;
+  unsigned int i, j, found, nvalues, neq, nalg, nconst, nass, npiecewise;
+  int flag;
   Compartment_t *c;
   Parameter_t *p;
   Species_t *s;
@@ -1750,7 +1751,8 @@ Returns 1 if successful, 0 otherwise, and -1 for memory allocation failures
 
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 {
-  int i, j, k, failed, nvalues;
+  int i, j, failed, nvalues;
+  unsigned int k;
   double val;
   ASTNode_t *fprime, *simple, *index, *ode;
   List_t *names, *sparse;
@@ -1981,7 +1983,8 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 
 int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 {
-  int i, j, l, k, nvalues, failed;
+  int i, j, nvalues, failed;
+  unsigned int k, l;
   double val;
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names, *sparse;

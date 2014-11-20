@@ -907,7 +907,8 @@ SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunctionFromString(integra
 
 static int ODEModel_construct_vector_v_FromObjectiveFunction(odeModel_t *om)
 {  
-  int i, j, failed;
+  int i, failed;
+  unsigned int j;
   ASTNode_t *fprime, *ObjFun;
   List_t *names;
 
@@ -1258,7 +1259,7 @@ SBML_ODESOLVER_API int IntegratorInstance_writeQuad(integratorInstance_t *engine
    by attaching the string extension "_data" to variable names */
 static ASTNode_t *copyRevertDataAST(const ASTNode_t *f)
 {
-  int i;
+  unsigned int i;
   ASTNode_t *copy;
   char *tempstr = NULL;
   char *tempstr2 = NULL;
