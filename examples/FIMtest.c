@@ -40,7 +40,7 @@
 
 
 int
-main (int argc, char *argv[])
+main(void)
 {
   int i, j, k;
   int neq, nsens;

@@ -972,6 +972,7 @@ void printPhase(cvodeData_t *data)
 {
 
 #if !USE_GRACE
+  (void)data;
 
   fprintf(stderr,
 	  "odeSolver has been compiled without XMGRACE functionality.\n");

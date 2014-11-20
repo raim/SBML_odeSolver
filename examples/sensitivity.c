@@ -39,7 +39,7 @@
 
 
 int
-main (int argc, char *argv[]){
+main (void){
   int i, j;
   
   odeModel_t *om;

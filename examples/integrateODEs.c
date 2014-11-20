@@ -39,7 +39,7 @@
 
 
 int
-main (int argc, char *argv[])
+main(void)
 {
   int neq, nass, nconst;
   char *x[3];

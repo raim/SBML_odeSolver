@@ -36,8 +36,8 @@
 
 
 int
-main (int argc, char *argv[]){
-  
+main(void)
+{
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
