@@ -232,7 +232,7 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
 
 SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
 {
-  unsigned int i, j, found;
+  unsigned int i, j, found, nrules;
   Parameter_t *p;
   Compartment_t *c;
   Species_t *s;
@@ -251,9 +251,10 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
      assignment rules can be used is subsequent assignments.
      Thus this direction should catch all assignments.
   */
-  for ( i=(Model_getNumRules(m)-1); i>=0; i-- )
+  nrules = Model_getNumRules(m);
+  for ( i=0; i<nrules; i++ )
   {
-    rl = Model_getRule(m, i);
+    rl = Model_getRule(m, nrules-i-1);
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_ASSIGNMENT_RULE )
       if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) ) 
