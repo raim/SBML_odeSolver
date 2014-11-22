@@ -2,14 +2,27 @@
 #include "unittest.h"
 
 #include <sbmlsolver/modelSimplify.h>
+#include <sbmlsolver/sbml.h>
 
 /* fixtures */
+static SBMLDocument_t *doc = NULL;
+static char *formula = NULL;
 static ASTNode_t *node;
 
 static void setup_node(void)
 {
 	node = SBML_parseFormula("1 + (x * x)");
 	ck_assert(node != NULL);
+}
+
+static void teardown_doc(void)
+{
+	SBMLDocument_free(doc);
+}
+
+static void teardown_formula(void)
+{
+	free(formula);
 }
 
 static void teardown_node(void)
@@ -168,9 +181,54 @@ START_TEST(test_AST_replaceFunctionDefinition)
 }
 END_TEST
 
-START_TEST(test_AST_replaceConstants)
+START_TEST(test_AST_replaceConstants_MAPK)
 {
-	/* TODO */
+	Model_t *m;
+
+	doc = parseModel(EXAMPLES_FILENAME("MAPK.xml"), 0, 1);
+	ck_assert(doc != NULL);
+	m = SBMLDocument_getModel(doc);
+	ck_assert(m != NULL);
+	node = SBML_parseFormula("V1 + Ki + K1");
+	ck_assert(node != NULL);
+	AST_replaceConstants(m, node);
+	formula = SBML_formulaToString(node);
+	ck_assert(formula != NULL);
+	ck_assert_str_eq(formula, "2.5 + 9 + 10");
+}
+END_TEST
+
+START_TEST(test_AST_replaceConstants_basic_model1_forward_l2)
+{
+	Model_t *m;
+
+	doc = parseModel(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"), 0, 1);
+	ck_assert(doc != NULL);
+	m = SBMLDocument_getModel(doc);
+	ck_assert(m != NULL);
+	node = SBML_parseFormula("c + k_1 + k_2");
+	ck_assert(node != NULL);
+	AST_replaceConstants(m, node);
+	formula = SBML_formulaToString(node);
+	ck_assert(formula != NULL);
+	ck_assert_str_eq(formula, "1 + k_1 + k_2");
+}
+END_TEST
+
+START_TEST(test_AST_replaceConstants_basic)
+{
+	Model_t *m;
+
+	doc = parseModel(EXAMPLES_FILENAME("basic.xml"), 0, 1);
+	ck_assert(doc != NULL);
+	m = SBMLDocument_getModel(doc);
+	ck_assert(m != NULL);
+	node = SBML_parseFormula("c + k_1 + k_2");
+	ck_assert(node != NULL);
+	AST_replaceConstants(m, node);
+	formula = SBML_formulaToString(node);
+	ck_assert(formula != NULL);
+	ck_assert_str_eq(formula, "1 + 1 + k_2");
 }
 END_TEST
 
@@ -183,6 +241,7 @@ Suite *create_suite_modelSimplify(void)
 	TCase *tc_AST_replaceNameByValue;
 	TCase *tc_AST_replaceNameByParameters;
 	TCase *tc_AST_replaceFunctionDefinition;
+	TCase *tc_AST_replaceConstants;
 
 	s = suite_create("modelSimplify");
 
@@ -220,6 +279,21 @@ Suite *create_suite_modelSimplify(void)
 							  teardown_node_with_function_definition);
 	tcase_add_test(tc_AST_replaceFunctionDefinition, test_AST_replaceFunctionDefinition);
 	suite_add_tcase(s, tc_AST_replaceFunctionDefinition);
+
+	tc_AST_replaceConstants = tcase_create("AST_replaceConstants");
+	tcase_add_checked_fixture(tc_AST_replaceConstants,
+							  NULL,
+							  teardown_doc);
+	tcase_add_checked_fixture(tc_AST_replaceConstants,
+							  NULL,
+							  teardown_formula);
+	tcase_add_checked_fixture(tc_AST_replaceConstants,
+							  NULL,
+							  teardown_node);
+	tcase_add_test(tc_AST_replaceConstants, test_AST_replaceConstants_MAPK);
+	tcase_add_test(tc_AST_replaceConstants, test_AST_replaceConstants_basic_model1_forward_l2);
+	tcase_add_test(tc_AST_replaceConstants, test_AST_replaceConstants_basic);
+	suite_add_tcase(s, tc_AST_replaceConstants);
 
 	return s;
 }
