@@ -36,11 +36,6 @@ static void setup_node_with_function_definition(void)
 	ck_assert(node != NULL);
 }
 
-static void teardown_node_with_function_definition(void)
-{
-	ASTNode_free(node);
-}
-
 /* test cases */
 START_TEST(test_AST_replaceNameByFormula)
 {
@@ -276,7 +271,7 @@ Suite *create_suite_modelSimplify(void)
 	tc_AST_replaceFunctionDefinition = tcase_create("AST_replaceFunctionDefinition");
 	tcase_add_checked_fixture(tc_AST_replaceFunctionDefinition,
 							  setup_node_with_function_definition,
-							  teardown_node_with_function_definition);
+							  teardown_node);
 	tcase_add_test(tc_AST_replaceFunctionDefinition, test_AST_replaceFunctionDefinition);
 	suite_add_tcase(s, tc_AST_replaceFunctionDefinition);
 
