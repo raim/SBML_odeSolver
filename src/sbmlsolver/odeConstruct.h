@@ -36,7 +36,8 @@
 #ifndef _ODECONSTRUCT_H_
 #define _ODECONSTRUCT_H_
 
-#include "cvodeData.h"
+#include <sbml/SBMLTypes.h>
+
 #include "sbmlsolver/exportdefs.h"
 
 #ifdef __cplusplus
