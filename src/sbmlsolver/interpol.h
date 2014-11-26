@@ -58,6 +58,10 @@ typedef struct ts time_series_t;
   } ;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
   int read_header_line(char *file, int n_var, char **var,
 			    int *col, int *index);
   int read_columns(char *file, int n_col, int *col, int *index,
@@ -81,6 +85,10 @@ typedef struct ts time_series_t;
   int  bisection(int n, double *x, double x_);
   void hunt(int n, double *x, double x_, int *low);
   
+#ifdef __cplusplus
+};
+#endif
+
 #endif
 
 /* end of file */
