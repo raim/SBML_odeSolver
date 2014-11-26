@@ -12,9 +12,6 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
 
-#define PRIVATE static
-#define PUBLIC SBML_ODESOLVER_API
-
 #undef VERBOSE
 /* #define VERBOSE */
 
