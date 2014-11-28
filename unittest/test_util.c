@@ -25,12 +25,15 @@ START_TEST(test_get_line)
 	line = get_line(rfp);
 	ck_assert(line != NULL);
 	ck_assert_str_eq(line, "abc");
+	xfree(line);
 	line = get_line(rfp);
 	ck_assert(line != NULL);
 	ck_assert_str_eq(line, "xyz\r");
+	xfree(line);
 	line = get_line(rfp);
 	ck_assert(line != NULL);
 	ck_assert_str_eq(line, "");
+	xfree(line);
 	line = get_line(rfp);
 	ck_assert(line == NULL);
 	line = get_line(rfp);
@@ -46,22 +49,22 @@ START_TEST(test_concat)
 	p = concat("", "");
 	ck_assert(p != NULL);
 	ck_assert_str_eq(p, "/");
-	free(p);
+	xfree(p);
 
 	p = concat("", "xyz");
 	ck_assert(p != NULL);
 	ck_assert_str_eq(p, "/xyz");
-	free(p);
+	xfree(p);
 
 	p = concat("abc", "");
 	ck_assert(p != NULL);
 	ck_assert_str_eq(p, "abc/");
-	free(p);
+	xfree(p);
 
 	p = concat("abc", "xyz");
 	ck_assert(p != NULL);
 	ck_assert_str_eq(p, "abc/xyz");
-	free(p);
+	xfree(p);
 }
 END_TEST
 
