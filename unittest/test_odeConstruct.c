@@ -30,18 +30,6 @@ static void check_species(int i, const char *expected)
 	ASTNode_free(n);
 }
 
-#define CHECK_PARAMETER(m, i, expected) do {				\
-		Parameter_t *p = Model_getParameter((m), (i));		\
-		ck_assert(p != NULL);								\
-		ck_assert_str_eq(Parameter_getId(p), (expected));	\
-	} while (0)
-
-#define CHECK_RULE(m, i, expected) do {							\
-		Rule_t *r = Model_getRule((m), (i));					\
-		ck_assert(r != NULL);									\
-		ck_assert_str_eq(Rule_getFormula(r), (expected));		\
-	} while (0)
-
 /* test cases */
 START_TEST(test_Model_getValueById)
 {

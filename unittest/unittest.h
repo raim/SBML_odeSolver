@@ -12,6 +12,29 @@
 #define EXAMPLES_FILENAME1(dirname, basename) EXAMPLES_FILENAME0(dirname, basename)
 #define EXAMPLES_FILENAME(basename) EXAMPLES_FILENAME1(EXAMPLES, basename)
 
+#define CHECK_PARAMETER(m, i, expected) do {				\
+		Parameter_t *p = Model_getParameter((m), (i));		\
+		ck_assert(p != NULL);								\
+		ck_assert_str_eq(Parameter_getId(p), (expected));	\
+	} while (0)
+
+#define CHECK_REACTION(m, i, id, formula) do {					\
+		Reaction_t *r;											\
+		KineticLaw_t *k;										\
+		r = Model_getReaction((m), (i));						\
+		ck_assert(r != NULL);									\
+		ck_assert_str_eq(Reaction_getId(r), (id));				\
+		k = Reaction_getKineticLaw(r);							\
+		ck_assert(k != NULL);									\
+		ck_assert_str_eq(KineticLaw_getFormula(k), (formula));	\
+	} while (0)
+
+#define CHECK_RULE(m, i, expected) do {						\
+		Rule_t *r = Model_getRule((m), (i));				\
+		ck_assert(r != NULL);								\
+		ck_assert_str_eq(Rule_getFormula(r), (expected));	\
+	} while (0)
+
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_modelSimplify(void);
