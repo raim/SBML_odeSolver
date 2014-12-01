@@ -4,6 +4,7 @@ noinst_PROGRAMS = unittest
 
 unittest_CPPFLAGS = -DEXAMPLES=$(srcdir)/../examples \
                     -I$(srcdir)/../src \
+                    @SUNDIALS_CPPFLAGS@ \
                     @SBML_CPPFLAGS@
 unittest_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
 unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
@@ -18,6 +19,7 @@ unittest_SOURCES = main.c \
                    test_charBuffer.c \
                    test_modelSimplify.c \
                    test_odeConstruct.c \
+                   test_odeModel.c \
                    test_sbml.c \
                    test_sbmlResults.c \
                    test_solverError.c \
