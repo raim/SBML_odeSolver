@@ -41,7 +41,7 @@
 #include "../src/sbmlsolver/exportdefs.h"
 #include "../src/sbmlsolver/integratorInstance.h"
 
-SBMLDocument_t* parseModelWithArguments(char *file);
+SBMLDocument_t* parseModelWithArguments(const char *file);
 int integrator(integratorInstance_t *engine, int PrintMessage,
 	       int PrintOnTheFly, FILE *outfile);
 

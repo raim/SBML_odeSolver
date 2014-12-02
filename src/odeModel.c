@@ -1330,7 +1330,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *sbmlFileName)
   SBMLDocument_t *d;
   odeModel_t *om;
 
-  d =  parseModel((char *)sbmlFileName,
+  d = parseModel(sbmlFileName,
 		  0 /* print message */,
 		  0 /* don't validate */);
   if ( d == NULL ) return NULL;

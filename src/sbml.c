@@ -61,7 +61,7 @@ void storeSBMLError(errorType_t type, const SBMLError_t *error )
     were encountered during libSBML validation and consistency check,
     stores libSBML warngings */
 SBMLDocument_t *
-parseModel(char *file, int printMessage, int validate)
+parseModel(const char *file, int printMessage, int validate)
 {
   unsigned int i, errors, severity;
   SBMLDocument_t *d;

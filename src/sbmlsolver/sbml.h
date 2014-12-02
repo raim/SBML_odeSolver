@@ -47,7 +47,7 @@ SBMLDocument_t *convertModel (SBMLDocument_t *d1);
 extern "C" {
 #endif
 
-  SBML_ODESOLVER_API SBMLDocument_t*parseModel(char *file, int printMessage,
+SBML_ODESOLVER_API SBMLDocument_t *parseModel(const char *file, int printMessage,
 					       int validate);
 
 #endif
