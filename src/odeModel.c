@@ -37,10 +37,9 @@
    created by configure script */
 #ifndef WIN32
 #include "config.h"
-#else
-#include "stdio.h"
 #endif
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
