@@ -1568,7 +1568,7 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
     exists in the ODEModel.
 */
 
-SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbol)
+SBML_ODESOLVER_API int ODEModel_hasVariable(const odeModel_t *model, const char *symbol)
 {
   return ODEModel_getVariableIndexFields(model, symbol) != -1;
 }
@@ -1579,7 +1579,7 @@ SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbo
     ODEModel_getNumConstants
 */
 
-SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumValues(const odeModel_t *om)
 {
   return om->neq + om->nass + om->nconst + om->nalg ;
 }
@@ -1589,7 +1589,7 @@ SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
     odeModel
 */
 
-SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNeq(const odeModel_t *om)
 {
   return om->neq;
 }
@@ -1636,7 +1636,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableInde
 /** \brief Returns the number of variable assignments in the odeModel
  */
 
-SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignments(const odeModel_t *om)
 {
   return om->nass;
 }
@@ -1662,7 +1662,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, varia
 /** \brief Returns the number of constant parameters of the odeModel
  */
 
-SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumConstants(const odeModel_t *om)
 {
   return om->nconst;
 }
@@ -1676,7 +1676,7 @@ SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *om)
     of no use.
 */
 
-SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNalg(const odeModel_t *om)
 {
   return om->nalg;
 }
@@ -2375,7 +2375,7 @@ SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *
 
 /* searches for the string "symbol" in the odeModel's names array
    and returns its index number, or -1 if it doesn't exist */
-int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
+int ODEModel_getVariableIndexFields(const odeModel_t *om, const char *symbol)
 {
   int i, nvalues;
 
@@ -2388,7 +2388,7 @@ int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
 }
 
 
-int VariableIndex_getIndex(variableIndex_t *vi)
+int VariableIndex_getIndex(const variableIndex_t *vi)
 {
   return vi->index ;
 }
@@ -2412,7 +2412,7 @@ IntegratorInstance_setVariable, respectively. The variableIndex
 must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(const odeModel_t *om, int i)
 {
   variableIndex_t *vi;
 
@@ -2544,7 +2544,8 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
     and ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
 */
 
-SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeModel_t *om)
+SBML_ODESOLVER_API const char *VariableIndex_getName(const variableIndex_t *vi,
+													 const odeModel_t *om)
 {
   return (const char*) om->names[vi->index];
 }
@@ -2556,7 +2557,7 @@ SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeMod
      Equivalent to VariableIndex_getName(variableIndex_t*, odeModel_t *) and
      IntegratorInstance_getVariableName(integratorInstance_t*, odeModel_t *);
 */
-const char *ODEModel_getVariableName(odeModel_t *om, variableIndex_t *vi)
+const char *ODEModel_getVariableName(const odeModel_t *om, const variableIndex_t *vi)
 {
   return VariableIndex_getName(vi, om);
 }
