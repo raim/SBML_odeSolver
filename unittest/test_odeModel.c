@@ -55,6 +55,9 @@ START_TEST(test_ODEModel_createFromFile_MAPK)
 	CHECK_VARIABLEINDEX(19, "V1");
 	CHECK_VARIABLEINDEX(20, "Ki");
 	CHECK_VARIABLEINDEX(21, "K1");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 10);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -73,6 +76,9 @@ START_TEST(test_ODEModel_createFromFile_basic_model1_forward_l2)
 	CHECK_VARIABLEINDEX(2, "R1");
 	CHECK_VARIABLEINDEX(3, "R2");
 	CHECK_VARIABLEINDEX(4, "c");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 2);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -92,6 +98,9 @@ START_TEST(test_ODEModel_createFromFile_basic)
 	CHECK_VARIABLEINDEX(3, "R2");
 	CHECK_VARIABLEINDEX(4, "c");
 	CHECK_VARIABLEINDEX(5, "k_1");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 2);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -109,6 +118,9 @@ START_TEST(test_ODEModel_createFromFile_events_1_event_1_assignment_l2)
 	CHECK_VARIABLEINDEX(1, "S2");
 	CHECK_VARIABLEINDEX(2, "R");
 	CHECK_VARIABLEINDEX(3, "compartment");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 1);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -126,6 +138,9 @@ START_TEST(test_ODEModel_createFromFile_events_2_events_1_assignment_l2)
 	CHECK_VARIABLEINDEX(1, "S2");
 	CHECK_VARIABLEINDEX(2, "R");
 	CHECK_VARIABLEINDEX(3, "compartment");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 1);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -182,6 +197,9 @@ START_TEST(test_ODEModel_createFromFile_huang96)
 	CHECK_VARIABLEINDEX(40, "r10a");
 	CHECK_VARIABLEINDEX(41, "r10b");
 	CHECK_VARIABLEINDEX(42, "compartment");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 20);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
@@ -205,6 +223,9 @@ START_TEST(test_ODEModel_createFromFile_repressilator)
 	CHECK_VARIABLEINDEX(7, "alpha");
 	CHECK_VARIABLEINDEX(8, "beta");
 	CHECK_VARIABLEINDEX(9, "rho");
+	ck_assert(!ODEModel_hasCycle(model));
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 0);
+	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeEvents(model), 0);
 }
 END_TEST
 
