@@ -394,7 +394,4 @@ extern "C" {
 
 /* internal functions, not be used by calling applications */  
 int ODEModel_getVariableIndexFields(const odeModel_t *, const char *SBML_ID);
-int ODESense_constructMatrix(odeSense_t *, odeModel_t *);
-void ODESense_freeMatrix(odeSense_t *);
-void ODESense_freeStructures(odeSense_t *);
 #endif

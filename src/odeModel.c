@@ -1980,7 +1980,7 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 
 /************* SENSITIVITY *****************/
 
-int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
+static int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 {
   int i, j, nvalues, failed;
   unsigned int k, l;
@@ -2116,7 +2116,7 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 
 }
 
-void ODESense_freeMatrix(odeSense_t *os)
+static void ODESense_freeMatrix(odeSense_t *os)
 {
   int i, j;
 
@@ -2163,7 +2163,7 @@ void ODESense_freeMatrix(odeSense_t *os)
   }
 }
 
-void ODESense_freeStructures(odeSense_t *os)
+static void ODESense_freeStructures(odeSense_t *os)
 {
   if ( os->index_sens != NULL )
     free(os->index_sens);
