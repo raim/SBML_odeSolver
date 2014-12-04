@@ -322,9 +322,9 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);
 
   /* Topological sorting */
-  SBML_ODESOLVER_API int ODEModel_hasCycle(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_hasCycle(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(const odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(odeModel_t *);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentOrder(odeModel_t *, int);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeODEs(odeModel_t *, int);

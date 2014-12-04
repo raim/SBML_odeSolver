@@ -174,15 +174,15 @@ static void searchPath(int n, int **matrix, int start, int *required)
     this model, however it's  equations can be inspected and evaluated
     with initial condition data, using CvodeData.
 */
-SBML_ODESOLVER_API int ODEModel_hasCycle(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_hasCycle(const odeModel_t *om)
 {
   return om->hasCycle;
 }
-SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(const odeModel_t *om)
 {
   return om->nassbeforeodes;
 }
-SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(const odeModel_t *om)
 {
   return om->nassbeforeevents;
 }
