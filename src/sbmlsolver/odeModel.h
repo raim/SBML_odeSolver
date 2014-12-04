@@ -353,12 +353,13 @@ extern "C" {
   /* diverse other useful functions */
   SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n, int *changed, int*required);
 
+#if 0 /* not yet implemented */
   /* Discontinuities */
   SBML_ODESOLVER_API int ODEModel_getNumPiecewise(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumEvents(odeModel_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getEventTrigger(odeModel_t *, int);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getEventAssignment(odeModel_t *, int, int);
-  
+#endif
 
   /* ODE Jacobi matrix */
   SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *);
