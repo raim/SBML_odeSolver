@@ -1627,7 +1627,7 @@ SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *os)
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(const odeModel_t *om,
 													const variableIndex_t *vi)
 {
-  if ( 0 <= vi->index && vi->index < om->neq )
+  if ( vi->type == ODE_VARIABLE && 0 <= vi->index && vi->index < om->neq )
     return (const ASTNode_t *) om->ode[vi->index];
   else return NULL;
 }
@@ -1656,7 +1656,7 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignments(const odeModel_t *om)
 SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(const odeModel_t *om,
 														   const variableIndex_t *vi)
 {
-  if (  0 <= vi->type_index && vi->type_index < om->nass )
+  if ( vi->type == ASSIGNMENT_VARIABLE && 0 <= vi->type_index && vi->type_index < om->nass )
     return (const ASTNode_t *) om->assignment[vi->type_index];
   else return NULL;
 }
