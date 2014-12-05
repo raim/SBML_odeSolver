@@ -12,13 +12,55 @@ static void teardown_model(void)
 }
 
 /* helpers */
+#define CHECK_VI_EQ(vi, expected) do {			\
+		const ASTNode_t *node;					\
+		char *actual;							\
+		node = ODEModel_getOde(model, (vi));	\
+		ck_assert(node != NULL);				\
+		actual = SBML_formulaToString(node);	\
+		ck_assert_str_eq(actual, (expected));	\
+		free(actual);							\
+	} while (0)
+
+#define CHECK_VI_ASSIGNMENT(vi, expected) do {		\
+		const ASTNode_t *node;						\
+		char *actual;								\
+		node = ODEModel_getAssignment(model, (vi));	\
+		ck_assert(node != NULL);					\
+		actual = SBML_formulaToString(node);		\
+		ck_assert_str_eq(actual, (expected));		\
+		free(actual);								\
+	} while (0)
+
 #define CHECK_VARIABLEINDEX(i, name) do {								\
 		variableIndex_t *vi;											\
-		vi = ODEModel_getVariableIndexByNum(model, i);					\
+		vi = ODEModel_getVariableIndexByNum(model, (i));				\
 		ck_assert(vi != NULL);											\
-		ck_assert_str_eq(VariableIndex_getName(vi, model), name);		\
+		ck_assert_str_eq(VariableIndex_getName(vi, model), (name));		\
 		ck_assert(VariableIndex_getName(vi, model) == ODEModel_getVariableName(model, vi));	\
-		ck_assert_int_eq(VariableIndex_getIndex(vi), i);				\
+		ck_assert_int_eq(VariableIndex_getIndex(vi), (i));				\
+		VariableIndex_free(vi);											\
+	} while (0)
+
+#define CHECK_EQ(i, name, expected) do {								\
+		variableIndex_t *vi;											\
+		vi = ODEModel_getVariableIndexByNum(model, (i));				\
+		ck_assert(vi != NULL);											\
+		ck_assert_str_eq(VariableIndex_getName(vi, model), (name));		\
+		ck_assert(VariableIndex_getName(vi, model) == ODEModel_getVariableName(model, vi));	\
+		ck_assert_int_eq(VariableIndex_getIndex(vi), (i));				\
+		CHECK_VI_EQ(vi, expected);										\
+		VariableIndex_free(vi);											\
+	} while (0)
+
+#define CHECK_ASSIGNMENT(i, name, expected) do {						\
+		variableIndex_t *vi;											\
+		vi = ODEModel_getVariableIndexByNum(model, (i));				\
+		ck_assert(vi != NULL);											\
+		ck_assert_str_eq(VariableIndex_getName(vi, model), (name));		\
+		ck_assert(VariableIndex_getName(vi, model) == ODEModel_getVariableName(model, vi));	\
+		ck_assert_int_eq(VariableIndex_getIndex(vi), (i));				\
+		CHECK_VI_ASSIGNMENT(vi, expected);								\
 		VariableIndex_free(vi);											\
 	} while (0)
 
@@ -33,24 +75,24 @@ START_TEST(test_ODEModel_createFromFile_MAPK)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 4);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 22);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "MKKK");
-	CHECK_VARIABLEINDEX(1, "MKKK_P");
-	CHECK_VARIABLEINDEX(2, "MKK");
-	CHECK_VARIABLEINDEX(3, "MKK_P");
-	CHECK_VARIABLEINDEX(4, "MKK_PP");
-	CHECK_VARIABLEINDEX(5, "MAPK");
-	CHECK_VARIABLEINDEX(6, "MAPK_P");
-	CHECK_VARIABLEINDEX(7, "MAPK_PP");
-	CHECK_VARIABLEINDEX(8, "J0");
-	CHECK_VARIABLEINDEX(9, "J1");
-	CHECK_VARIABLEINDEX(10, "J2");
-	CHECK_VARIABLEINDEX(11, "J3");
-	CHECK_VARIABLEINDEX(12, "J4");
-	CHECK_VARIABLEINDEX(13, "J5");
-	CHECK_VARIABLEINDEX(14, "J6");
-	CHECK_VARIABLEINDEX(15, "J7");
-	CHECK_VARIABLEINDEX(16, "J8");
-	CHECK_VARIABLEINDEX(17, "J9");
+	CHECK_EQ(0, "MKKK", "(J1 - J0) / uVol");
+	CHECK_EQ(1, "MKKK_P", "(J0 - J1) / uVol");
+	CHECK_EQ(2, "MKK", "(J5 - J2) / uVol");
+	CHECK_EQ(3, "MKK_P", "(J2 - J3 + J4 - J5) / uVol");
+	CHECK_EQ(4, "MKK_PP", "(J3 - J4) / uVol");
+	CHECK_EQ(5, "MAPK", "(J9 - J6) / uVol");
+	CHECK_EQ(6, "MAPK_P", "(J6 - J7 + J8 - J9) / uVol");
+	CHECK_EQ(7, "MAPK_PP", "(J7 - J8) / uVol");
+	CHECK_ASSIGNMENT(8, "J0", "V1 * MKKK / ((1 + (MAPK_PP / Ki)^1) * (K1 + MKKK))");
+	CHECK_ASSIGNMENT(9, "J1", "0.25 * MKKK_P / (8 + MKKK_P)");
+	CHECK_ASSIGNMENT(10, "J2", "0.025 * MKKK_P * MKK / (15 + MKK)");
+	CHECK_ASSIGNMENT(11, "J3", "0.025 * MKKK_P * MKK_P / (15 + MKK_P)");
+	CHECK_ASSIGNMENT(12, "J4", "0.75 * MKK_PP / (15 + MKK_PP)");
+	CHECK_ASSIGNMENT(13, "J5", "0.75 * MKK_P / (15 + MKK_P)");
+	CHECK_ASSIGNMENT(14, "J6", "0.025 * MKK_PP * MAPK / (15 + MAPK)");
+	CHECK_ASSIGNMENT(15, "J7", "0.025 * MKK_PP * MAPK_P / (15 + MAPK_P)");
+	CHECK_ASSIGNMENT(16, "J8", "0.5 * MAPK_PP / (15 + MAPK_PP)");
+	CHECK_ASSIGNMENT(17, "J9", "0.5 * MAPK_P / (15 + MAPK_P)");
 	CHECK_VARIABLEINDEX(18, "uVol");
 	CHECK_VARIABLEINDEX(19, "V1");
 	CHECK_VARIABLEINDEX(20, "Ki");
@@ -71,10 +113,10 @@ START_TEST(test_ODEModel_createFromFile_basic_model1_forward_l2)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 1);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 5);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "S1");
-	CHECK_VARIABLEINDEX(1, "S2");
-	CHECK_VARIABLEINDEX(2, "R1");
-	CHECK_VARIABLEINDEX(3, "R2");
+	CHECK_EQ(0, "S1", "(R2 - R1) / c");
+	CHECK_EQ(1, "S2", "(R1 - R2) / c");
+	CHECK_ASSIGNMENT(2, "R1", "1 * S1");
+	CHECK_ASSIGNMENT(3, "R2", "0 * S2");
 	CHECK_VARIABLEINDEX(4, "c");
 	ck_assert(!ODEModel_hasCycle(model));
 	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 2);
@@ -92,10 +134,10 @@ START_TEST(test_ODEModel_createFromFile_basic)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 2);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 6);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "S1");
-	CHECK_VARIABLEINDEX(1, "S2");
-	CHECK_VARIABLEINDEX(2, "R1");
-	CHECK_VARIABLEINDEX(3, "R2");
+	CHECK_EQ(0, "S1", "(R2 - R1) / c");
+	CHECK_EQ(1, "S2", "(R1 - R2) / c");
+	CHECK_ASSIGNMENT(2, "R1", "k_1 * S1");
+	CHECK_ASSIGNMENT(3, "R2", "0 * S2");
 	CHECK_VARIABLEINDEX(4, "c");
 	CHECK_VARIABLEINDEX(5, "k_1");
 	ck_assert(!ODEModel_hasCycle(model));
@@ -114,9 +156,9 @@ START_TEST(test_ODEModel_createFromFile_events_1_event_1_assignment_l2)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 1);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 4);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "S1");
-	CHECK_VARIABLEINDEX(1, "S2");
-	CHECK_VARIABLEINDEX(2, "R");
+	CHECK_EQ(0, "S1", "-(R / compartment)");
+	CHECK_EQ(1, "S2", "R / compartment");
+	CHECK_ASSIGNMENT(2, "R", "S1");
 	CHECK_VARIABLEINDEX(3, "compartment");
 	ck_assert(!ODEModel_hasCycle(model));
 	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 1);
@@ -134,9 +176,9 @@ START_TEST(test_ODEModel_createFromFile_events_2_events_1_assignment_l2)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 1);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 4);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "S1");
-	CHECK_VARIABLEINDEX(1, "S2");
-	CHECK_VARIABLEINDEX(2, "R");
+	CHECK_EQ(0, "S1", "-(R / compartment)");
+	CHECK_EQ(1, "S2", "R / compartment");
+	CHECK_ASSIGNMENT(2, "R", "S1");
 	CHECK_VARIABLEINDEX(3, "compartment");
 	ck_assert(!ODEModel_hasCycle(model));
 	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 1);
@@ -154,48 +196,48 @@ START_TEST(test_ODEModel_createFromFile_huang96)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 1);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 43);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "E1");
-	CHECK_VARIABLEINDEX(1, "E2");
-	CHECK_VARIABLEINDEX(2, "KKK");
-	CHECK_VARIABLEINDEX(3, "P_KKK");
-	CHECK_VARIABLEINDEX(4, "KK");
-	CHECK_VARIABLEINDEX(5, "P_KK");
-	CHECK_VARIABLEINDEX(6, "PP_KK");
-	CHECK_VARIABLEINDEX(7, "K");
-	CHECK_VARIABLEINDEX(8, "P_K");
-	CHECK_VARIABLEINDEX(9, "PP_K");
-	CHECK_VARIABLEINDEX(10, "KPase");
-	CHECK_VARIABLEINDEX(11, "KKPase");
-	CHECK_VARIABLEINDEX(12, "E1_KKK");
-	CHECK_VARIABLEINDEX(13, "E2_P_KKK");
-	CHECK_VARIABLEINDEX(14, "P_KKK_KK");
-	CHECK_VARIABLEINDEX(15, "P_KKK_P_KK");
-	CHECK_VARIABLEINDEX(16, "PP_KK_K");
-	CHECK_VARIABLEINDEX(17, "PP_KK_P_K");
-	CHECK_VARIABLEINDEX(18, "KKPase_PP_KK");
-	CHECK_VARIABLEINDEX(19, "KKPase_P_KK");
-	CHECK_VARIABLEINDEX(20, "KPase_PP_K");
-	CHECK_VARIABLEINDEX(21, "KPase_P_K");
-	CHECK_VARIABLEINDEX(22, "r1a");
-	CHECK_VARIABLEINDEX(23, "r1b");
-	CHECK_VARIABLEINDEX(24, "r2a");
-	CHECK_VARIABLEINDEX(25, "r2b");
-	CHECK_VARIABLEINDEX(26, "r3a");
-	CHECK_VARIABLEINDEX(27, "r3b");
-	CHECK_VARIABLEINDEX(28, "r4a");
-	CHECK_VARIABLEINDEX(29, "r4b");
-	CHECK_VARIABLEINDEX(30, "r5a");
-	CHECK_VARIABLEINDEX(31, "r5b");
-	CHECK_VARIABLEINDEX(32, "r6a");
-	CHECK_VARIABLEINDEX(33, "r6b");
-	CHECK_VARIABLEINDEX(34, "r7a");
-	CHECK_VARIABLEINDEX(35, "r7b");
-	CHECK_VARIABLEINDEX(36, "r8a");
-	CHECK_VARIABLEINDEX(37, "r8b");
-	CHECK_VARIABLEINDEX(38, "r9a");
-	CHECK_VARIABLEINDEX(39, "r9b");
-	CHECK_VARIABLEINDEX(40, "r10a");
-	CHECK_VARIABLEINDEX(41, "r10b");
+	CHECK_EQ(0, "E1", "(r1b - r1a) / compartment");
+	CHECK_EQ(1, "E2", "(r2b - r2a) / compartment");
+	CHECK_EQ(2, "KKK", "(r2b - r1a) / compartment");
+	CHECK_EQ(3, "P_KKK", "(r1b - r2a - r3a + r3b - r5a + r5b) / compartment");
+	CHECK_EQ(4, "KK", "(r4b - r3a) / compartment");
+	CHECK_EQ(5, "P_KK", "(r3b - r4a - r5a + r6b) / compartment");
+	CHECK_EQ(6, "PP_KK", "(r5b - r6a - r7a + r7b - r9a + r9b) / compartment");
+	CHECK_EQ(7, "K", "(r8b - r7a) / compartment");
+	CHECK_EQ(8, "P_K", "(r7b - r8a - r9a + r10b) / compartment");
+	CHECK_EQ(9, "PP_K", "(r9b - r10a) / compartment");
+	CHECK_EQ(10, "KPase", "(r8b - r8a - r10a + r10b) / compartment");
+	CHECK_EQ(11, "KKPase", "(r4b - r4a - r6a + r6b) / compartment");
+	CHECK_EQ(12, "E1_KKK", "(r1a - r1b) / compartment");
+	CHECK_EQ(13, "E2_P_KKK", "(r2a - r2b) / compartment");
+	CHECK_EQ(14, "P_KKK_KK", "(r3a - r3b) / compartment");
+	CHECK_EQ(15, "P_KKK_P_KK", "(r5a - r5b) / compartment");
+	CHECK_EQ(16, "PP_KK_K", "(r7a - r7b) / compartment");
+	CHECK_EQ(17, "PP_KK_P_K", "(r9a - r9b) / compartment");
+	CHECK_EQ(18, "KKPase_PP_KK", "(r6a - r6b) / compartment");
+	CHECK_EQ(19, "KKPase_P_KK", "(r4a - r4b) / compartment");
+	CHECK_EQ(20, "KPase_PP_K", "(r10a - r10b) / compartment");
+	CHECK_EQ(21, "KPase_P_K", "(r8a - r8b) / compartment");
+	CHECK_ASSIGNMENT(22, "r1a", "1000 * E1 * KKK - 150 * E1_KKK");
+	CHECK_ASSIGNMENT(23, "r1b", "150 * E1_KKK");
+	CHECK_ASSIGNMENT(24, "r2a", "1000 * E2 * P_KKK - 150 * E2_P_KKK");
+	CHECK_ASSIGNMENT(25, "r2b", "150 * E2_P_KKK");
+	CHECK_ASSIGNMENT(26, "r3a", "1000 * KK * P_KKK - 150 * P_KKK_KK");
+	CHECK_ASSIGNMENT(27, "r3b", "150 * P_KKK_KK");
+	CHECK_ASSIGNMENT(28, "r4a", "1000 * P_KK * KKPase - 150 * KKPase_P_KK");
+	CHECK_ASSIGNMENT(29, "r4b", "150 * KKPase_P_KK");
+	CHECK_ASSIGNMENT(30, "r5a", "1000 * P_KK * P_KKK - 150 * P_KKK_P_KK");
+	CHECK_ASSIGNMENT(31, "r5b", "150 * P_KKK_P_KK");
+	CHECK_ASSIGNMENT(32, "r6a", "1000 * PP_KK * KKPase - 150 * KKPase_PP_KK");
+	CHECK_ASSIGNMENT(33, "r6b", "150 * KKPase_PP_KK");
+	CHECK_ASSIGNMENT(34, "r7a", "1000 * K * PP_KK - 150 * PP_KK_K");
+	CHECK_ASSIGNMENT(35, "r7b", "150 * PP_KK_K");
+	CHECK_ASSIGNMENT(36, "r8a", "1000 * P_K * KPase - 150 * KPase_P_K");
+	CHECK_ASSIGNMENT(37, "r8b", "150 * KPase_P_K");
+	CHECK_ASSIGNMENT(38, "r9a", "1000 * P_K * PP_KK - 150 * PP_KK_P_K");
+	CHECK_ASSIGNMENT(39, "r9b", "150 * PP_KK_P_K");
+	CHECK_ASSIGNMENT(40, "r10a", "1000 * PP_K * KPase - 150 * KPase_PP_K");
+	CHECK_ASSIGNMENT(41, "r10b", "150 * KPase_PP_K");
 	CHECK_VARIABLEINDEX(42, "compartment");
 	ck_assert(!ODEModel_hasCycle(model));
 	ck_assert_int_eq(ODEModel_getNumAssignmentsBeforeODEs(model), 20);
@@ -213,12 +255,12 @@ START_TEST(test_ODEModel_createFromFile_repressilator)
 	ck_assert_int_eq(ODEModel_getNumConstants(model), 4);
 	ck_assert_int_eq(ODEModel_getNumValues(model), 10);
 	ck_assert_int_eq(ODEModel_hasVariable(model, "no_such_variable"), 0);
-	CHECK_VARIABLEINDEX(0, "x1");
-	CHECK_VARIABLEINDEX(1, "x2");
-	CHECK_VARIABLEINDEX(2, "x3");
-	CHECK_VARIABLEINDEX(3, "y1");
-	CHECK_VARIABLEINDEX(4, "y2");
-	CHECK_VARIABLEINDEX(5, "y3");
+	CHECK_EQ(0, "x1", "beta * (y1 - x1)");
+	CHECK_EQ(1, "x2", "beta * (y2 - x2)");
+	CHECK_EQ(2, "x3", "beta * (y3 - x3)");
+	CHECK_EQ(3, "y1", "alpha * x1 / (1 + x1 + rho * x3) - y1");
+	CHECK_EQ(4, "y2", "alpha * x2 / (1 + x2 + rho * x1) - y2");
+	CHECK_EQ(5, "y3", "alpha * x3 / (1 + x3 + rho * x2) - y3");
 	CHECK_VARIABLEINDEX(6, "compartment");
 	CHECK_VARIABLEINDEX(7, "alpha");
 	CHECK_VARIABLEINDEX(8, "beta");
