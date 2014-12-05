@@ -346,8 +346,8 @@ extern "C" {
 
   
   /* ODEs and assignments */
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(const odeModel_t *, const variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(const odeModel_t *, const variableIndex_t *);
 
 
   /* diverse other useful functions */
