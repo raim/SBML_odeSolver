@@ -271,11 +271,234 @@ START_TEST(test_ODEModel_createFromFile_repressilator)
 }
 END_TEST
 
+START_TEST(test_topoSort_1)
+{
+	static int *matrix[1];
+	static int row[1];
+	List_t *r;
+	int *p;
+
+	matrix[0] = row;
+
+	row[0] = 0;
+	r = topoSort(matrix, 1, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, 0);
+	List_free(r);
+
+	row[0] = 1;
+	r = topoSort(matrix, 1, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+}
+END_TEST
+
+START_TEST(test_topoSort_2)
+{
+	static int *matrix[2];
+	static int row0[2];
+	static int row1[2];
+	List_t *r;
+	int *p;
+
+	matrix[0] = row0;
+	matrix[1] = row1;
+
+	row0[0] = 0;
+	row0[1] = 0;
+	row1[0] = 0;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 2);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, 0);
+	p = List_get(r, 1);
+	ck_assert_int_eq(*p, 1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 0;
+	row1[0] = 0;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 0;
+	row1[0] = 1;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 2);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, 0);
+	p = List_get(r, 1);
+	ck_assert_int_eq(*p, 1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 0;
+	row1[0] = 1;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 1;
+	row1[0] = 0;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 2);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, 1);
+	p = List_get(r, 1);
+	ck_assert_int_eq(*p, 0);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 1;
+	row1[0] = 0;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 1;
+	row1[0] = 1;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 0;
+	row0[1] = 1;
+	row1[0] = 1;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 0;
+	row1[0] = 0;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 0;
+	row1[0] = 0;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 0;
+	row1[0] = 1;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 0;
+	row1[0] = 1;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 1;
+	row1[0] = 0;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 1;
+	row1[0] = 0;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 1;
+	row1[0] = 1;
+	row1[1] = 0;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+
+	row0[0] = 1;
+	row0[1] = 1;
+	row1[0] = 1;
+	row1[1] = 1;
+	r = topoSort(matrix, 2, NULL, NULL);
+	ck_assert(r != NULL);
+	ck_assert(List_size(r) == 1);
+	p = List_get(r, 0);
+	ck_assert_int_eq(*p, -1);
+	List_free(r);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
 	Suite *s;
 	TCase *tc_ODEModel_createFromFile;
+	TCase *tc_topoSort;
 
 	s = suite_create("odeModel");
 
@@ -291,6 +514,11 @@ Suite *create_suite_odeModel(void)
 	tcase_add_test(tc_ODEModel_createFromFile, test_ODEModel_createFromFile_huang96);
 	tcase_add_test(tc_ODEModel_createFromFile, test_ODEModel_createFromFile_repressilator);
 	suite_add_tcase(s, tc_ODEModel_createFromFile);
+
+	tc_topoSort = tcase_create("topoSort");
+	tcase_add_test(tc_topoSort, test_topoSort_1);
+	tcase_add_test(tc_topoSort, test_topoSort_2);
+	suite_add_tcase(s, tc_topoSort);
 
 	return s;
 }
