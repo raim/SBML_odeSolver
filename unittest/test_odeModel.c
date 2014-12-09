@@ -286,6 +286,7 @@ START_TEST(test_topoSort_1)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, 0);
+	free(p);
 	List_free(r);
 
 	row[0] = 1;
@@ -294,6 +295,7 @@ START_TEST(test_topoSort_1)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 }
 END_TEST
@@ -318,8 +320,10 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 2);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, 0);
+	free(p);
 	p = List_get(r, 1);
 	ck_assert_int_eq(*p, 1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -331,6 +335,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -342,8 +347,10 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 2);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, 0);
+	free(p);
 	p = List_get(r, 1);
 	ck_assert_int_eq(*p, 1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -355,6 +362,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -366,8 +374,10 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 2);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, 1);
+	free(p);
 	p = List_get(r, 1);
 	ck_assert_int_eq(*p, 0);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -379,6 +389,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -390,6 +401,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 0;
@@ -401,6 +413,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -412,6 +425,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -423,6 +437,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -434,6 +449,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -445,6 +461,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -456,6 +473,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -467,6 +485,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -478,6 +497,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 
 	row0[0] = 1;
@@ -489,6 +509,7 @@ START_TEST(test_topoSort_2)
 	ck_assert(List_size(r) == 1);
 	p = List_get(r, 0);
 	ck_assert_int_eq(*p, -1);
+	free(p);
 	List_free(r);
 }
 END_TEST
