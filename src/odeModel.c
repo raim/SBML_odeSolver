@@ -389,7 +389,6 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
   /* if graph has edges then */
   if ( ins )
   {
-    int *idx;
 #ifdef _DEBUG
     fprintf(stderr, "ERROR: Cyclic dependency found in topological sorting.\n");
     fprintf(stderr, "MATRIX:\n");
@@ -405,11 +404,7 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
 		      "Cyclic dependency found in topological sorting.");
     List_freeItems(sorted, free, int);
     List_free(sorted);
-    sorted = List_create();
-
-    ASSIGN_NEW_MEMORY(idx, int, NULL);
-    *idx = -1;
-    List_add(sorted, idx);
+	sorted = NULL;
     /*!!! TODO : this could return the remaining edges, if this is meaningful*/
   }
 
@@ -451,7 +446,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
     *changedBySolver, *requiredForODEs, *requiredForEvents;
   List_t *dependencyList;
   ASTNode_t *math;
-  int hasCycle = 0;
 
   nvalues = om->neq + om->nass + om->nconst;
   om->initAssignmentOrder = NULL;
@@ -494,7 +488,15 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* 2: ORDERING OF COMPLETE ASSIGNMENT SET, all changed, all required */
   dependencyList = topoSort(matrix, nvalues, NULL, NULL);
-
+  if (!dependencyList) {
+	  /* issue solver error and return if topo. sort was unsuccessful */
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(initial assignments, assignments and kinetic laws) "
+			"Found cyclic dependency in rules. ");
+      return 1;
+  }
 
   /* generate ordered array of complete rule set and assignment subset */
 
@@ -503,22 +505,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for complete rule set "
-			"(initial assignments, assignments and kinetic laws) "
-			"Found cyclic dependency in rules. ");
-      /* AS -1 error is passed as single element no array elements
-	 have been allocated and can be simply freed */
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      hasCycle = 1;
-      return hasCycle;
-    }
-
     if ( i == 0 ) /* create structures */
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass,
@@ -616,6 +602,17 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* calculate TOPOLOGICAL SORTING of dependency matrix */
   dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForODEs);
+  if (!dependencyList) {
+    /* issue solver error and return if topo. sort was unsuccessful */
+    /* topo sort was tested on global matrix, so no errors should occur
+       when we are here !*/
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(assignments and kinetic laws required before ODE "
+			"evaluation). Found cyclic dependency in rules. ");
+      return 1;
+  }
 
   /* generate ordered array of rule set before ODEs */
   k = 0;
@@ -623,23 +620,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    /* topo sort was tested on global matrix, so no errors should occur
-       when we are here !*/
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for complete rule set "
-			"(assignments and kinetic laws required before ODE "
-			"evaluation). Found cyclic dependency in rules. ");
-
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      hasCycle = 1;
-      return hasCycle;
-    }
-    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
   om->nassbeforeodes = k;
@@ -737,6 +718,18 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* calculate TOPOLOGICAL SORTING of dependency matrix */
   dependencyList = topoSort(matrix, nvalues, changedBySolver,
 			    requiredForEvents);
+  if (!dependencyList) {
+	  /* issue solver error and return if topo. sort was unsuccessful */
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for Event rule set "
+			"(assignments and kinetic laws required BEFORE event "
+			"evaluation).  Found cyclic dependency in rules.");
+      free(requiredForODEs);
+      free(changedBySolver);
+      free(requiredForEvents);
+      return 1;
+  }
 
   /* generate ordered array of rule set before ODEs */
   k = 0;
@@ -744,23 +737,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for Event rule set "
-			"(assignments and kinetic laws required BEFORE event "
-			"evaluation).  Found cyclic dependency in rules.");
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      free(requiredForODEs);
-      free(changedBySolver);
-      free(requiredForEvents);
-      hasCycle = 1;
-      return hasCycle;
-    }
-    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
 
@@ -822,7 +799,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   free(requiredForODEs);
   free(requiredForEvents);
 
-  return hasCycle;
+  return 0;
 }
 
 

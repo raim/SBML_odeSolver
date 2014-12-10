@@ -303,12 +303,7 @@ START_TEST(test_topoSort_1)
 
 	row[0] = 1;
 	r = topoSort(matrix, 1, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 }
 END_TEST
@@ -345,12 +340,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
@@ -374,12 +364,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
@@ -403,12 +388,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
@@ -416,12 +396,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 0;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
@@ -429,12 +404,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -442,12 +412,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 0;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -455,12 +420,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -468,12 +428,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 0;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -481,12 +436,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -494,12 +444,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 0;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -507,12 +452,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 0;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -520,12 +460,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 0;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
@@ -533,12 +468,7 @@ START_TEST(test_topoSort_2)
 	row1[0] = 1;
 	row1[1] = 1;
 	r = topoSort(matrix, 2, NULL, NULL);
-	ck_assert(r != NULL);
-	ck_assert(List_size(r) == 1);
-	p = List_get(r, 0);
-	ck_assert_int_eq(*p, -1);
-	free(p);
-	List_free(r);
+	ck_assert(r == NULL);
 	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 }
 END_TEST
