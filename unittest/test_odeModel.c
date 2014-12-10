@@ -2,6 +2,7 @@
 #include "unittest.h"
 
 #include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/solverError.h>
 
 /* fixtures */
 static odeModel_t *model;
@@ -62,6 +63,16 @@ static void teardown_model(void)
 		ck_assert_int_eq(VariableIndex_getIndex(vi), (i));				\
 		CHECK_VI_ASSIGNMENT(vi, expected);								\
 		VariableIndex_free(vi);											\
+	} while (0)
+
+#define CHECK_NO_ERROR() \
+	ck_assert_int_eq(SolverError_getNum(ERROR_ERROR_TYPE), 0)
+
+#define CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY() do {						\
+		ck_assert_int_eq(SolverError_getNum(ERROR_ERROR_TYPE), 1);		\
+		ck_assert_str_eq(SolverError_getMessage(ERROR_ERROR_TYPE, 0),	\
+						 "Cyclic dependency found in topological sorting."); \
+		SolverError_clear();											\
 	} while (0)
 
 /* test cases */
@@ -288,6 +299,7 @@ START_TEST(test_topoSort_1)
 	ck_assert_int_eq(*p, 0);
 	free(p);
 	List_free(r);
+	CHECK_NO_ERROR();
 
 	row[0] = 1;
 	r = topoSort(matrix, 1, NULL, NULL);
@@ -297,6 +309,7 @@ START_TEST(test_topoSort_1)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 }
 END_TEST
 
@@ -325,6 +338,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, 1);
 	free(p);
 	List_free(r);
+	CHECK_NO_ERROR();
 
 	row0[0] = 0;
 	row0[1] = 0;
@@ -337,6 +351,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
 	row0[1] = 0;
@@ -352,6 +367,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, 1);
 	free(p);
 	List_free(r);
+	CHECK_NO_ERROR();
 
 	row0[0] = 0;
 	row0[1] = 0;
@@ -364,6 +380,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
 	row0[1] = 1;
@@ -379,6 +396,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, 0);
 	free(p);
 	List_free(r);
+	CHECK_NO_ERROR();
 
 	row0[0] = 0;
 	row0[1] = 1;
@@ -391,6 +409,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
 	row0[1] = 1;
@@ -403,6 +422,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 0;
 	row0[1] = 1;
@@ -415,6 +435,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 0;
@@ -427,6 +448,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 0;
@@ -439,6 +461,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 0;
@@ -451,6 +474,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 0;
@@ -463,6 +487,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 1;
@@ -475,6 +500,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 1;
@@ -487,6 +513,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 1;
@@ -499,6 +526,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 
 	row0[0] = 1;
 	row0[1] = 1;
@@ -511,6 +539,7 @@ START_TEST(test_topoSort_2)
 	ck_assert_int_eq(*p, -1);
 	free(p);
 	List_free(r);
+	CHECK_ERROR_ABOUT_CYCLIC_DEPENDENCY();
 }
 END_TEST
 
