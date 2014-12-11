@@ -473,12 +473,75 @@ START_TEST(test_topoSort_2)
 }
 END_TEST
 
+START_TEST(test_ODEModel_constructJacobian_NULL)
+{
+	ck_assert_int_eq(ODEModel_constructJacobian(NULL), 0);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_MAPK)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 26);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_basic_model1_forward_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_basic)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_events_1_event_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-1-event-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_events_2_events_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-2-events-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_huang96)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("huang96.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 92);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructJacobian_repressilator)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("repressilator.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 15);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
 	Suite *s;
 	TCase *tc_ODEModel_createFromFile;
 	TCase *tc_topoSort;
+	TCase *tc_ODEModel_constructJacobian;
 
 	s = suite_create("odeModel");
 
@@ -499,6 +562,20 @@ Suite *create_suite_odeModel(void)
 	tcase_add_test(tc_topoSort, test_topoSort_1);
 	tcase_add_test(tc_topoSort, test_topoSort_2);
 	suite_add_tcase(s, tc_topoSort);
+
+	tc_ODEModel_constructJacobian = tcase_create("ODEModel_constructJacobian");
+	tcase_add_checked_fixture(tc_ODEModel_constructJacobian,
+							  NULL,
+							  teardown_model);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_NULL);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_MAPK);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_basic_model1_forward_l2);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_basic);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_events_1_event_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_events_2_events_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_huang96);
+	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_repressilator);
+	suite_add_tcase(s, tc_ODEModel_constructJacobian);
 
 	return s;
 }
