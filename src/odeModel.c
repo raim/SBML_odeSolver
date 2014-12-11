@@ -186,7 +186,7 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(const odeModel_t *
 {
   return om->nassbeforeevents;
 }
-SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(const odeModel_t *om)
 {
   return om->sparsesize;
 }
