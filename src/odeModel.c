@@ -208,7 +208,7 @@ SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeMo
 }
 SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(const odeModel_t *om, int i)
 {
-  if ( i >= om->sparsesize ) return NULL;
+  if ( i < 0 || i >= om->sparsesize ) return NULL;
   return om->jacobSparse[i];
 }
 /* Evaluation elements */
