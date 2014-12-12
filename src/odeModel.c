@@ -206,7 +206,7 @@ SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeMo
   if ( i >= om->nassbeforeevents ) return NULL;
   return om->assignmentsBeforeEvents[i];
 }
-SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *om, int i)
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(const odeModel_t *om, int i)
 {
   if ( i >= om->sparsesize ) return NULL;
   return om->jacobSparse[i];

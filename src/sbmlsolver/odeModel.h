@@ -329,7 +329,7 @@ extern "C" {
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentOrder(odeModel_t *, int);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeODEs(odeModel_t *, int);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeModel_t *, int);
-  SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *, int);
+  SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(const odeModel_t *, int);
   
   /* Variable Index */
   SBML_ODESOLVER_API const char *ODEModel_getVariableName(const odeModel_t *, const variableIndex_t *);
