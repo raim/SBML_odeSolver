@@ -75,6 +75,14 @@ static void teardown_model(void)
 		SolverError_clear();											\
 	} while (0)
 
+#define CHECK_JACOBI_ELEMENT(n, expected_i, expected_j) do {	\
+		const nonzeroElem_t *nze;								\
+		nze = ODEModel_getJacobiElement(model, (n));			\
+		ck_assert(nze != NULL);									\
+		ck_assert_int_eq(nze->i, (expected_i));					\
+		ck_assert_int_eq(nze->j, (expected_j));					\
+	} while (0)
+
 /* test cases */
 START_TEST(test_ODEModel_createFromFile_MAPK)
 {
@@ -482,56 +490,147 @@ END_TEST
 START_TEST(test_ODEModel_constructJacobian_MAPK)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 26);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 0, 1);
+	CHECK_JACOBI_ELEMENT(2, 0, 7);
+	CHECK_JACOBI_ELEMENT(3, 1, 0);
+	CHECK_JACOBI_ELEMENT(4, 1, 1);
+	CHECK_JACOBI_ELEMENT(5, 1, 7);
+	CHECK_JACOBI_ELEMENT(6, 2, 1);
+	CHECK_JACOBI_ELEMENT(7, 2, 2);
+	CHECK_JACOBI_ELEMENT(8, 2, 3);
+	CHECK_JACOBI_ELEMENT(9, 3, 1);
+	CHECK_JACOBI_ELEMENT(10, 3, 2);
+	CHECK_JACOBI_ELEMENT(11, 3, 3);
+	CHECK_JACOBI_ELEMENT(12, 3, 4);
+	CHECK_JACOBI_ELEMENT(13, 4, 1);
+	CHECK_JACOBI_ELEMENT(14, 4, 3);
+	CHECK_JACOBI_ELEMENT(15, 4, 4);
+	CHECK_JACOBI_ELEMENT(16, 5, 4);
+	CHECK_JACOBI_ELEMENT(17, 5, 5);
+	CHECK_JACOBI_ELEMENT(18, 5, 6);
+	CHECK_JACOBI_ELEMENT(19, 6, 4);
+	CHECK_JACOBI_ELEMENT(20, 6, 5);
+	CHECK_JACOBI_ELEMENT(21, 6, 6);
+	CHECK_JACOBI_ELEMENT(22, 6, 7);
+	CHECK_JACOBI_ELEMENT(23, 7, 4);
+	CHECK_JACOBI_ELEMENT(24, 7, 6);
+	CHECK_JACOBI_ELEMENT(25, 7, 7);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_basic_model1_forward_l2)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 1, 0);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_basic)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 1, 0);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_events_1_event_1_assignment_l2)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-1-event-1-assignment-l2.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 1, 0);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_events_2_events_1_assignment_l2)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-2-events-1-assignment-l2.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 2);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 1, 0);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_huang96)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("huang96.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 92);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
 START_TEST(test_ODEModel_constructJacobian_repressilator)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("repressilator.xml"));
+	ck_assert_int_eq(model->jacobian, 0);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	ck_assert_int_eq(model->jacobian, 1);
+	ck_assert_int_eq(model->jacobianFailed, 0);
 	ck_assert_int_eq(ODEModel_getNumJacobiElements(model), 15);
+	CHECK_JACOBI_ELEMENT(0, 0, 0);
+	CHECK_JACOBI_ELEMENT(1, 0, 3);
+	CHECK_JACOBI_ELEMENT(2, 1, 1);
+	CHECK_JACOBI_ELEMENT(3, 1, 4);
+	CHECK_JACOBI_ELEMENT(4, 2, 2);
+	CHECK_JACOBI_ELEMENT(5, 2, 5);
+	CHECK_JACOBI_ELEMENT(6, 3, 0);
+	CHECK_JACOBI_ELEMENT(7, 3, 2);
+	CHECK_JACOBI_ELEMENT(8, 3, 3);
+	CHECK_JACOBI_ELEMENT(9, 4, 0);
+	CHECK_JACOBI_ELEMENT(10, 4, 1);
+	CHECK_JACOBI_ELEMENT(11, 4, 4);
+	CHECK_JACOBI_ELEMENT(12, 5, 1);
+	CHECK_JACOBI_ELEMENT(13, 5, 2);
+	CHECK_JACOBI_ELEMENT(14, 5, 5);
+	ODEModel_freeJacobian(model);
+	ck_assert_int_eq(model->jacobian, 0);
 }
 END_TEST
 
