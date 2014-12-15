@@ -12,6 +12,13 @@ static void teardown_model(void)
 	ODEModel_free(model);
 }
 
+static ASTNode_t *det;
+
+static void teardown_determinant(void)
+{
+	ASTNode_free(det);
+}
+
 /* helpers */
 #define CHECK_VI_EQ(vi, expected) do {			\
 		const ASTNode_t *node;					\
@@ -81,6 +88,13 @@ static void teardown_model(void)
 		ck_assert(nze != NULL);									\
 		ck_assert_int_eq(nze->i, (expected_i));					\
 		ck_assert_int_eq(nze->j, (expected_j));					\
+	} while (0)
+
+#define CHECK_DETERMINANT(expected) do {		\
+		char *actual;							\
+		actual = SBML_formulaToString(det);		\
+		ck_assert_str_eq(actual, (expected));	\
+		free(actual);							\
 	} while (0)
 
 /* test cases */
@@ -634,6 +648,103 @@ START_TEST(test_ODEModel_constructJacobian_repressilator)
 }
 END_TEST
 
+START_TEST(test_ODEModel_constructDeterminant_MAPK)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	/* too big to check the determinant */
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_basic_model1_forward_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	CHECK_DETERMINANT(""); /* TODO: is it really expected? */
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_basic)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	CHECK_DETERMINANT(""); /* TODO: is it really expected? */
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_events_1_event_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-1-event-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	CHECK_DETERMINANT(""); /* TODO: is it really expected? */
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_events_2_events_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-2-events-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	CHECK_DETERMINANT(""); /* TODO: is it really expected? */
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_huang96)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("huang96.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+#if 0 /* seems too big to construct its determinant */
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+#else
+	det = NULL;
+#endif
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructDeterminant_repressilator)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("repressilator.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	det = ODEModel_constructDeterminant(model);
+	ck_assert(det != NULL);
+	CHECK_DETERMINANT(" - beta * ( - beta * ( - beta * ( - ( + 1)) + alpha * x1 "
+					  "/ (1 + x1 + rho * x3)^2 * rho *  - (alpha / (1 + x3 + rho"
+					  " * x2) - alpha * x3 / (1 + x3 + rho * x2)^2) * ( +  + bet"
+					  "a)) - (alpha / (1 + x2 + rho * x1) - alpha * x2 / (1 + x2"
+					  " + rho * x1)^2) * ( + beta * ( + ( - beta)) - alpha * x1 "
+					  "/ (1 + x1 + rho * x3)^2 * rho *  - (alpha / (1 + x3 + rho"
+					  " * x2) - alpha * x3 / (1 + x3 + rho * x2)^2) * ( - ( + be"
+					  "ta * beta))) - alpha * x3 / (1 + x3 + rho * x2)^2 * rho *"
+					  " ( + beta * ( + ) - alpha * x1 / (1 + x1 + rho * x3)^2 * "
+					  "rho * )) - (alpha / (1 + x1 + rho * x3) - alpha * x1 / (1"
+					  " + x1 + rho * x3)^2) * ( + beta * ( + beta * ( + beta * ("
+					  " + 1)) - (alpha / (1 + x3 + rho * x2) - alpha * x3 / (1 +"
+					  " x3 + rho * x2)^2) * ( + beta * ( + beta))) - (alpha / (1"
+					  " + x2 + rho * x1) - alpha * x2 / (1 + x2 + rho * x1)^2) *"
+					  " ( - beta * ( + beta * ( - beta)) - (alpha / (1 + x3 + rh"
+					  "o * x2) - alpha * x3 / (1 + x3 + rho * x2)^2) * ( + beta "
+					  "* ( + beta * beta))) - alpha * x3 / (1 + x3 + rho * x2)^2"
+					  " * rho * ( - beta * ( + beta * ))) - alpha * x2 / (1 + x2"
+					  " + rho * x1)^2 * rho * ( + beta * ( + beta * ( + beta *  "
+					  "+ ) - alpha * x1 / (1 + x1 + rho * x3)^2 * rho * ( + beta"
+					  " * ) - (alpha / (1 + x3 + rho * x2) - alpha * x3 / (1 + x"
+					  "3 + rho * x2)^2) * ( + beta *  - )) - alpha * x3 / (1 + x"
+					  "3 + rho * x2)^2 * rho * ( - beta * ( + beta *  - ) + alph"
+					  "a * x1 / (1 + x1 + rho * x3)^2 * rho * ( + beta * ( + bet"
+					  "a * beta))))");
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
@@ -641,6 +752,7 @@ Suite *create_suite_odeModel(void)
 	TCase *tc_ODEModel_createFromFile;
 	TCase *tc_topoSort;
 	TCase *tc_ODEModel_constructJacobian;
+	TCase *tc_ODEModel_constructDeterminant;
 
 	s = suite_create("odeModel");
 
@@ -675,6 +787,22 @@ Suite *create_suite_odeModel(void)
 	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_huang96);
 	tcase_add_test(tc_ODEModel_constructJacobian, test_ODEModel_constructJacobian_repressilator);
 	suite_add_tcase(s, tc_ODEModel_constructJacobian);
+
+	tc_ODEModel_constructDeterminant = tcase_create("ODEModel_constructDeterminant");
+	tcase_add_checked_fixture(tc_ODEModel_constructDeterminant,
+							  NULL,
+							  teardown_model);
+	tcase_add_checked_fixture(tc_ODEModel_constructDeterminant,
+							  NULL,
+							  teardown_determinant);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_MAPK);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_basic_model1_forward_l2);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_basic);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_events_1_event_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_events_2_events_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_huang96);
+	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_repressilator);
+	suite_add_tcase(s, tc_ODEModel_constructDeterminant);
 
 	return s;
 }
