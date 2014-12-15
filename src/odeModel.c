@@ -1946,7 +1946,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, va
     and must free it, if not required.
 */
 
-SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
+SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(const odeModel_t *om)
 {
   if ( om->jacob != NULL && om->jacobian == 1 )
     return determinantNAST(om->jacob, om->neq);

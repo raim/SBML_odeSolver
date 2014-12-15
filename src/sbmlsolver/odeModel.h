@@ -366,7 +366,7 @@ extern "C" {
   SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
-  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
+  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(const odeModel_t *);
 
   /* Sensitivity Model */
   SBML_ODESOLVER_API odeSense_t *ODEModel_constructSensitivity(odeModel_t *);
