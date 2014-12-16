@@ -82,12 +82,19 @@ static void teardown_determinant(void)
 		SolverError_clear();											\
 	} while (0)
 
-#define CHECK_JACOBI_ELEMENT(n, expected_i, expected_j) do {	\
-		const nonzeroElem_t *nze;								\
-		nze = ODEModel_getJacobiElement(model, (n));			\
-		ck_assert(nze != NULL);									\
-		ck_assert_int_eq(nze->i, (expected_i));					\
-		ck_assert_int_eq(nze->j, (expected_j));					\
+#define CHECK_JACOBI_ELEMENT(n, expected_i, expected_j) do {			\
+		const nonzeroElem_t *nze;										\
+		variableIndex_t *vi_i, *vi_j;									\
+		nze = ODEModel_getJacobiElement(model, (n));					\
+		vi_i = ODEModel_getVariableIndexByNum(model, (expected_i));		\
+		vi_j = ODEModel_getVariableIndexByNum(model, (expected_j));		\
+		ck_assert(nze != NULL);											\
+		ck_assert_int_eq(nze->i, (expected_i));							\
+		ck_assert_int_eq(nze->j, (expected_j));							\
+		ck_assert(ODEModel_getJacobianIJEntry(model, (expected_i), (expected_j)) == nze->ij); \
+		ck_assert(ODEModel_getJacobianEntry(model, vi_i, vi_j) == nze->ij); \
+		VariableIndex_free(vi_i);										\
+		VariableIndex_free(vi_j);										\
 	} while (0)
 
 #define CHECK_DETERMINANT(expected) do {		\
@@ -506,6 +513,7 @@ START_TEST(test_ODEModel_constructJacobian_MAPK)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -546,6 +554,7 @@ START_TEST(test_ODEModel_constructJacobian_basic_model1_forward_l2)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -562,6 +571,7 @@ START_TEST(test_ODEModel_constructJacobian_basic)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -578,6 +588,7 @@ START_TEST(test_ODEModel_constructJacobian_events_1_event_1_assignment_l2)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-1-event-1-assignment-l2.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -594,6 +605,7 @@ START_TEST(test_ODEModel_constructJacobian_events_2_events_1_assignment_l2)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-2-events-1-assignment-l2.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -610,6 +622,7 @@ START_TEST(test_ODEModel_constructJacobian_huang96)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("huang96.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
@@ -624,6 +637,7 @@ START_TEST(test_ODEModel_constructJacobian_repressilator)
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("repressilator.xml"));
 	ck_assert_int_eq(model->jacobian, 0);
 	ck_assert_int_eq(model->jacobianFailed, 0);
+	ck_assert(ODEModel_getJacobianIJEntry(model, 0, 0) == NULL);
 	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
 	ck_assert_int_eq(model->jacobian, 1);
 	ck_assert_int_eq(model->jacobianFailed, 0);
