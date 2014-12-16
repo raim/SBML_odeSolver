@@ -1919,7 +1919,8 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
      structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(const odeModel_t *om,
+																int i, int j)
 {
   if ( om->jacob == NULL ) return NULL;
   if ( i >= om->neq || j >= om->neq ) return NULL;
@@ -1934,7 +1935,9 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, 
     within the odeModel structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(const odeModel_t *om,
+															  const variableIndex_t *vi1,
+															  const variableIndex_t *vi2)
 {
   return ODEModel_getJacobianIJEntry(om, vi1->index, vi2->index);
 }

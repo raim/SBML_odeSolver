@@ -364,8 +364,8 @@ extern "C" {
   /* ODE Jacobi matrix */
   SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(const odeModel_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(const odeModel_t *, const variableIndex_t *, const variableIndex_t *);
   SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(const odeModel_t *);
 
   /* Sensitivity Model */
