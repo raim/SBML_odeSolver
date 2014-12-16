@@ -2480,7 +2480,8 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, co
     variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(const odeModel_t *om,
+																 int i)
 {
   if ( i < om->neq )
     return ODEModel_getVariableIndexByNum(om, i);
@@ -2495,7 +2496,8 @@ Returns NULL if not existing (i > ODEModel_getNumAssignments(om)).
 The variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(const odeModel_t *om,
+																	  int i)
 {
   if ( i < om->nass )
     return ODEModel_getVariableIndexByNum(om, i + om->neq);
@@ -2509,7 +2511,8 @@ Returns NULL if not existing (i > ODEModel_getNumConstants(om)).
 The variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(const odeModel_t *om,
+															  int i)
 {
   if ( i < om->nconst )
     return ODEModel_getVariableIndexByNum(om, i + om->neq + om->nass);

@@ -315,9 +315,9 @@ extern "C" {
   SBML_ODESOLVER_API int ODEModel_getNumConstants(const odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_hasVariable(const odeModel_t *, const char *);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(const odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(const odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(const odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(const odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *);
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);
 
