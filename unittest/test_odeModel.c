@@ -19,6 +19,13 @@ static void teardown_determinant(void)
 	ASTNode_free(det);
 }
 
+static odeSense_t *sense;
+
+static void teardown_sense(void)
+{
+	ODESense_free(sense);
+}
+
 /* helpers */
 #define CHECK_VARIABLEINDEX(vi, i, name) do {							\
 		ck_assert(vi != NULL);											\
@@ -117,6 +124,14 @@ static void teardown_determinant(void)
 		actual = SBML_formulaToString(det);		\
 		ck_assert_str_eq(actual, (expected));	\
 		free(actual);							\
+	} while (0)
+
+#define CHECK_SENSITIVITY(n, expected) do {					\
+		variableIndex_t *vi;								\
+		vi = ODESense_getSensParamIndexByNum(sense, (n));	\
+		ck_assert(vi != NULL);								\
+		ck_assert_int_eq(vi->index, (expected));			\
+		VariableIndex_free(vi);								\
 	} while (0)
 
 /* test cases */
@@ -774,6 +789,97 @@ START_TEST(test_ODEModel_constructDeterminant_repressilator)
 }
 END_TEST
 
+START_TEST(test_ODEModel_constructSensitivity_MAPK)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 8);
+	ck_assert_int_eq(ODESense_getNsens(sense), 4);
+	CHECK_SENSITIVITY(0, 18);
+	CHECK_SENSITIVITY(1, 19);
+	CHECK_SENSITIVITY(2, 20);
+	CHECK_SENSITIVITY(3, 21);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_basic_model1_forward_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic-model1-forward-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 2);
+	ck_assert_int_eq(ODESense_getNsens(sense), 1);
+	CHECK_SENSITIVITY(0, 4);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_basic)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("basic.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 2);
+	ck_assert_int_eq(ODESense_getNsens(sense), 2);
+	CHECK_SENSITIVITY(0, 4);
+	CHECK_SENSITIVITY(1, 5);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_events_1_event_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-1-event-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 2);
+	ck_assert_int_eq(ODESense_getNsens(sense), 1);
+	CHECK_SENSITIVITY(0, 3);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_events_2_events_1_assignment_l2)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("events-2-events-1-assignment-l2.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 2);
+	ck_assert_int_eq(ODESense_getNsens(sense), 1);
+	CHECK_SENSITIVITY(0, 3);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_huang96)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("huang96.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 22);
+	ck_assert_int_eq(ODESense_getNsens(sense), 1);
+	CHECK_SENSITIVITY(0, 42);
+}
+END_TEST
+
+START_TEST(test_ODEModel_constructSensitivity_repressilator)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("repressilator.xml"));
+	ck_assert_int_eq(ODEModel_constructJacobian(model), 1);
+	sense = ODEModel_constructSensitivity(model);
+	ck_assert(sense != NULL);
+	ck_assert_int_eq(ODESense_getNeq(sense), 6);
+	ck_assert_int_eq(ODESense_getNsens(sense), 4);
+	CHECK_SENSITIVITY(0, 6);
+	CHECK_SENSITIVITY(1, 7);
+	CHECK_SENSITIVITY(2, 8);
+	CHECK_SENSITIVITY(3, 9);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
@@ -782,6 +888,7 @@ Suite *create_suite_odeModel(void)
 	TCase *tc_topoSort;
 	TCase *tc_ODEModel_constructJacobian;
 	TCase *tc_ODEModel_constructDeterminant;
+	TCase *tc_ODEModel_constructSensitivity;
 
 	s = suite_create("odeModel");
 
@@ -832,6 +939,22 @@ Suite *create_suite_odeModel(void)
 	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_huang96);
 	tcase_add_test(tc_ODEModel_constructDeterminant, test_ODEModel_constructDeterminant_repressilator);
 	suite_add_tcase(s, tc_ODEModel_constructDeterminant);
+
+	tc_ODEModel_constructSensitivity = tcase_create("ODEModel_constructSensitivity");
+	tcase_add_checked_fixture(tc_ODEModel_constructSensitivity,
+							  NULL,
+							  teardown_model);
+	tcase_add_checked_fixture(tc_ODEModel_constructSensitivity,
+							  NULL,
+							  teardown_sense);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_MAPK);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_basic_model1_forward_l2);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_basic);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_events_1_event_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_events_2_events_1_assignment_l2);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_huang96);
+	tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_repressilator);
+	suite_add_tcase(s, tc_ODEModel_constructSensitivity);
 
 	return s;
 }
