@@ -372,9 +372,9 @@ extern "C" {
   SBML_ODESOLVER_API odeSense_t *ODEModel_constructSensitivity(odeModel_t *);
   SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API void ODESense_free(odeSense_t *);
-  SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *, int);
-  SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *);
-  SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *);
+  SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(const odeSense_t *, int);
+  SBML_ODESOLVER_API int ODESense_getNeq(const odeSense_t *);
+  SBML_ODESOLVER_API int ODESense_getNsens(const odeSense_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
   SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
 

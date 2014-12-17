@@ -1577,7 +1577,7 @@ SBML_ODESOLVER_API int ODEModel_getNeq(const odeModel_t *om)
 
 */
 
-SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *os)
+SBML_ODESOLVER_API int ODESense_getNsens(const odeSense_t *os)
 {
   return os->nsens;
 }
@@ -1586,7 +1586,7 @@ SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *os)
     analysis might be requested, equals NEQ of odeModel
 
 */
-SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *os)
+SBML_ODESOLVER_API int ODESense_getNeq(const odeSense_t *os)
 {
   return os->neq;
 }
@@ -2342,7 +2342,8 @@ SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *os, variab
     yet, or if j => ODEModel_getNsens;
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *os, int j)
+SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(const odeSense_t *os,
+																	int j)
 {
   if ( j < os->nsens )
     return ODEModel_getVariableIndexByNum(os->om, os->index_sens[j]);
