@@ -375,8 +375,8 @@ extern "C" {
   SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(const odeSense_t *, int);
   SBML_ODESOLVER_API int ODESense_getNeq(const odeSense_t *);
   SBML_ODESOLVER_API int ODESense_getNsens(const odeSense_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(const odeSense_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(const odeSense_t *, const variableIndex_t *, const variableIndex_t *);
 
   /* ODEModel compilation */
   SBML_ODESOLVER_API int ODEModel_compileCVODEFunctions(odeModel_t *);

@@ -2306,7 +2306,8 @@ SBML_ODESOLVER_API void ODESense_free(odeSense_t *os)
      Returns NULL if either the parametric has not been constructed yet,
      or if i > neq or j > nsens. Ownership remains within the odeModel
      structure. */
-SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *os, int i, int j)
+SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(const odeSense_t *os,
+															int i, int j)
 {
   if ( os->sens == NULL ) return NULL;
   if ( i >= os->om->neq || j >= os->nsens ) return NULL;
@@ -2323,7 +2324,9 @@ SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *os, int 
     Ownership remains within the odeModel structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *os, variableIndex_t *vi1, variableIndex_t *vi2)
+SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(const odeSense_t *os,
+														  const variableIndex_t *vi1,
+														  const variableIndex_t *vi2)
 {
   int i;
   /* find sensitivity parameter/variable */
