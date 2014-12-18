@@ -134,6 +134,23 @@ static void teardown_sense(void)
 		VariableIndex_free(vi);								\
 	} while (0)
 
+#define CHECK_SENSITIVITY_ENTRY(i, j, expected) do {		\
+		variableIndex_t *vi_i, *vi_j;						\
+		const ASTNode_t *node0, *node1;						\
+		char *actual;										\
+		vi_i = ODEModel_getVariableIndexByNum(model, (i));	\
+		vi_j = ODESense_getSensParamIndexByNum(sense, (j));	\
+		node0 = ODESense_getSensEntry(sense, vi_i, vi_j);	\
+		ck_assert(node0 != NULL);							\
+		actual = SBML_formulaToString(node0);				\
+		ck_assert_str_eq(actual, (expected));				\
+		free(actual);										\
+		node1 = ODESense_getSensIJEntry(sense, (i), (j));	\
+		ck_assert(node0 == node1);							\
+		VariableIndex_free(vi_i);							\
+		VariableIndex_free(vi_j);							\
+	} while (0)
+
 /* test cases */
 START_TEST(test_ODEModel_createFromFile_MAPK)
 {
@@ -801,6 +818,14 @@ START_TEST(test_ODEModel_constructSensitivity_MAPK)
 	CHECK_SENSITIVITY(1, 19);
 	CHECK_SENSITIVITY(2, 20);
 	CHECK_SENSITIVITY(3, 21);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "-((0.25 * MKKK_P / (8 + MKKK_P) - V1 * MKKK / ((1 + MAPK_PP / Ki) * (K1 + MKKK))) / uVol^2)");
+	CHECK_SENSITIVITY_ENTRY(0, 1, "-(MKKK / ((1 + MAPK_PP / Ki) * (K1 + MKKK)) / uVol)");
+	CHECK_SENSITIVITY_ENTRY(0, 2, "-(V1 * MKKK / ((1 + MAPK_PP / Ki) * (K1 + MKKK))^2 * (MAPK_PP / Ki)^(1 - 1) * (MAPK_PP / Ki^2) * (K1 + MKKK) / uVol)");
+	CHECK_SENSITIVITY_ENTRY(0, 3, "V1 * MKKK / ((1 + MAPK_PP / Ki) * (K1 + MKKK))^2 * (1 + MAPK_PP / Ki) / uVol");
+	CHECK_SENSITIVITY_ENTRY(7, 0, "-((0.025 * MKK_PP * MAPK_P / (15 + MAPK_P) - 0.5 * MAPK_PP / (15 + MAPK_PP)) / uVol^2)");
+	CHECK_SENSITIVITY_ENTRY(7, 1, "0");
+	CHECK_SENSITIVITY_ENTRY(7, 2, "0");
+	CHECK_SENSITIVITY_ENTRY(7, 3, "0");
 }
 END_TEST
 
@@ -813,6 +838,8 @@ START_TEST(test_ODEModel_constructSensitivity_basic_model1_forward_l2)
 	ck_assert_int_eq(ODESense_getNeq(sense), 2);
 	ck_assert_int_eq(ODESense_getNsens(sense), 1);
 	CHECK_SENSITIVITY(0, 4);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "S1 / c^2");
+	CHECK_SENSITIVITY_ENTRY(1, 0, "-(S1 / c^2)");
 }
 END_TEST
 
@@ -826,6 +853,10 @@ START_TEST(test_ODEModel_constructSensitivity_basic)
 	ck_assert_int_eq(ODESense_getNsens(sense), 2);
 	CHECK_SENSITIVITY(0, 4);
 	CHECK_SENSITIVITY(1, 5);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "k_1 * S1 / c^2");
+	CHECK_SENSITIVITY_ENTRY(0, 1, "-(S1 / c)");
+	CHECK_SENSITIVITY_ENTRY(1, 0, "-(k_1 * S1 / c^2)");
+	CHECK_SENSITIVITY_ENTRY(1, 1, "S1 / c");
 }
 END_TEST
 
@@ -838,6 +869,8 @@ START_TEST(test_ODEModel_constructSensitivity_events_1_event_1_assignment_l2)
 	ck_assert_int_eq(ODESense_getNeq(sense), 2);
 	ck_assert_int_eq(ODESense_getNsens(sense), 1);
 	CHECK_SENSITIVITY(0, 3);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "S1 / compartment^2");
+	CHECK_SENSITIVITY_ENTRY(1, 0, "-(S1 / compartment^2)");
 }
 END_TEST
 
@@ -850,6 +883,8 @@ START_TEST(test_ODEModel_constructSensitivity_events_2_events_1_assignment_l2)
 	ck_assert_int_eq(ODESense_getNeq(sense), 2);
 	ck_assert_int_eq(ODESense_getNsens(sense), 1);
 	CHECK_SENSITIVITY(0, 3);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "S1 / compartment^2");
+	CHECK_SENSITIVITY_ENTRY(1, 0, "-(S1 / compartment^2)");
 }
 END_TEST
 
@@ -862,6 +897,10 @@ START_TEST(test_ODEModel_constructSensitivity_huang96)
 	ck_assert_int_eq(ODESense_getNeq(sense), 22);
 	ck_assert_int_eq(ODESense_getNsens(sense), 1);
 	CHECK_SENSITIVITY(0, 42);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "-((150 * E1_KKK - (1000 * E1 * KKK - 150 * E1_KKK)) / compartment^2)");
+	CHECK_SENSITIVITY_ENTRY(1, 0, "-((150 * E2_P_KKK - (1000 * E2 * P_KKK - 150 * E2_P_KKK)) / compartment^2)");
+	CHECK_SENSITIVITY_ENTRY(2, 0, "-((150 * E2_P_KKK - (1000 * E1 * KKK - 150 * E1_KKK)) / compartment^2)");
+	CHECK_SENSITIVITY_ENTRY(21, 0, "-((1000 * P_K * KPase - 150 * KPase_P_K - 150 * KPase_P_K) / compartment^2)");
 }
 END_TEST
 
@@ -877,6 +916,14 @@ START_TEST(test_ODEModel_constructSensitivity_repressilator)
 	CHECK_SENSITIVITY(1, 7);
 	CHECK_SENSITIVITY(2, 8);
 	CHECK_SENSITIVITY(3, 9);
+	CHECK_SENSITIVITY_ENTRY(0, 0, "0");
+	CHECK_SENSITIVITY_ENTRY(0, 1, "0");
+	CHECK_SENSITIVITY_ENTRY(0, 2, "y1 - x1");
+	CHECK_SENSITIVITY_ENTRY(0, 3, "0");
+	CHECK_SENSITIVITY_ENTRY(5, 0, "0");
+	CHECK_SENSITIVITY_ENTRY(5, 1, "x3 / (1 + x3 + rho * x2)");
+	CHECK_SENSITIVITY_ENTRY(5, 2, "0");
+	CHECK_SENSITIVITY_ENTRY(5, 3, "-(alpha * x3 / (1 + x3 + rho * x2)^2 * x2)");
 }
 END_TEST
 
