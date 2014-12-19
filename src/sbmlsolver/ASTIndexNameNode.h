@@ -5,33 +5,6 @@
 
 #include "sbmlsolver/exportdefs.h"
 
-#ifdef __cplusplus
-
-class ASTIndexNameNode :
-public ASTNode
-{
- public:
-  ASTIndexNameNode();
-  virtual ~ASTIndexNameNode(void);
-
-  unsigned int getIndex() const { return index; }
-  unsigned int isSetIndex() const { return indexSet; }
-  void setIndex(unsigned int i) { index = i; indexSet = 1; }
-
-  unsigned int isSetData() const { return dataSet; }
-  void setData() { dataSet = 1; } 
-
- private:
-  unsigned int index ;
-  int indexSet ;
- 
-  /* used for differentiating whether the name refers
-     to a variable for which "data" is available   */
-  int dataSet;
-};
-
-#endif /* __cplusplus */
-
 BEGIN_C_DECLS
 
 /* creates a new AST node with an index field */
