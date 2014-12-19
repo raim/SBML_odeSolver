@@ -2404,7 +2404,7 @@ int ASTNode_containsPiecewise(ASTNode_t *node)
 /* appends the given AST in compilable form to the given buffer.
    The form is enclosed in brackets when necessary so that the AST
    can be incorporated as a sub expression of another expression. */
-void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
+static void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
 				      const ASTNode_t *node)
 {
   switch ( ASTNode_getType(node) )
@@ -2469,7 +2469,7 @@ void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a unary operator.
    'op' is the compilable operator string for the node. */
-void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
+static void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
 				   const ASTNode_t *node, const char *op)
 {
   CharBuffer_append(expressionStream,op); ;
@@ -2480,7 +2480,7 @@ void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a Nary operator.
    'op' is the compilable operator string for the node. */
-void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
+static void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
 				  const ASTNode_t *node, const char *op)
 {
   unsigned int i;
@@ -2501,7 +2501,7 @@ void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a function.
    'func' is the compilable function string for the node. */
-void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
+static void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
 				  const ASTNode_t *node, const char *func)
 {
   unsigned int i;
@@ -2522,7 +2522,7 @@ void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
    array 'value' indexed by the the index associated with the node by
    the function 'indexAST'.  If the ASTNode doesn't have an index
    value then an error is created and '0' is appended to the buffer. */
-void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
+static void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
 {
   int found = 0;
 
@@ -2616,7 +2616,7 @@ SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer)
 
 /* appends compilable code to the given buffer for the given AST assuming
    the AST is an XOR expression. */
-void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
+static void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
 {
   unsigned int i;
     
