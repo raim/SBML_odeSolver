@@ -122,9 +122,19 @@ START_TEST(test_AST_replaceNameByParameters)
 	ASTNode_t *c, *gc;
 	int i;
 
+#if LIBSBML_VERSION >= 40000
+	p = Parameter_create(2, 4);
+	Parameter_setId(p, "x");
+	Parameter_setName(p, "name");
+#else
 	p = Parameter_createWith("x", "name");
+#endif
 	Parameter_setValue(p, 2.5);
+#if LIBSBML_VERSION >= 40000
+	lo = ListOf_create(2, 4);
+#else
 	lo = ListOf_create();
+#endif
 	ListOf_appendAndOwn(lo, (SBase_t *)p);
 
 	AST_replaceNameByParameters(node, lo);
