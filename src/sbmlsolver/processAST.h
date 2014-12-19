@@ -61,7 +61,6 @@ extern "C" {
   SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer);
   SBML_ODESOLVER_API void generateAST(charBuffer_t *buffer, const ASTNode_t *n);
   SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);
-  SBML_ODESOLVER_API ASTNode_t *AST_simplify(ASTNode_t *f);
   SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
   SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f);
   SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
