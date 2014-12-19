@@ -19,6 +19,7 @@ int main(void)
 	srunner_add_suite(sr, create_suite_modelSimplify());
 	srunner_add_suite(sr, create_suite_odeConstruct());
 	srunner_add_suite(sr, create_suite_odeModel());
+	srunner_add_suite(sr, create_suite_processAST());
 	srunner_add_suite(sr, create_suite_sbml());
 	srunner_add_suite(sr, create_suite_sbmlResults());
 	srunner_add_suite(sr, create_suite_solverError());
