@@ -137,10 +137,6 @@ SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*)
   UsrDefFunc = udf;
 }
 
-#if OLD_LIBSBML
-#define AST_FUNCTION_DELAY AST_NAME_DELAY
-#endif
-
 /* ------------------------------------------------------------------------ */
 
 /** writes the given AST to standard out.  The string 'context'
