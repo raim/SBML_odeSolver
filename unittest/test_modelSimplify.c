@@ -130,7 +130,7 @@ START_TEST(test_AST_replaceNameByParameters)
 	p = Parameter_createWith("x", "name");
 #endif
 	Parameter_setValue(p, 2.5);
-#if LIBSBML_VERSION >= 40000
+#if LIBSBML_VERSION >= 50000
 	lo = ListOf_create(2, 4);
 #else
 	lo = ListOf_create();
