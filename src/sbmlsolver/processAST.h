@@ -47,11 +47,7 @@
 
 #define MySQR(x) ((x)*(x))
 #define MySQRT(x) pow((x),(.5))
-/* Helper Macros to get the second or the third child
-   of an Abstract Syntax Tree */
 #define child(x,y)  ASTNode_getChild(x,y)
-#define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
-#define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
 
 #ifdef __cplusplus
 extern "C" {

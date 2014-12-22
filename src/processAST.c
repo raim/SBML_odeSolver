@@ -63,6 +63,10 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/interpol.h"
 
+/* Helper Macros to get the second or the third child
+   of an Abstract Syntax Tree */
+#define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
+#define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
 
 static double aCosh(double x)
 {
