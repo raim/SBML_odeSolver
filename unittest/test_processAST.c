@@ -120,7 +120,7 @@ START_TEST(test_differentiateAST)
 	CHECK_DIFF("arctanh(x)", "1 / (1 - x^2)");
 	CHECK_DIFF("ceil(x)", "ceil(1)"); /* TODO */
 	CHECK_DIFF("cos(x)", "-sin(x)");
-	CHECK_DIFF("cosh(x)", "-sinh(x)"); /* wrong */
+	CHECK_DIFF("cosh(x)", "sinh(x)");
 	CHECK_DIFF("cot(x)", "-(1 / sin(x)^2)");
 	CHECK_DIFF("coth(x)", "-(1 / sinh(x)^2)");
 	CHECK_DIFF("csc(x)", "-(1 * csc(x) * cot(x))");

@@ -1341,13 +1341,11 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COSH:
-      /** f(x)=cosh(a(x)) => f' = a' * -sinh(a) */   
+      /** f(x)=cosh(a(x)) => f' = a' * sinh(a) */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
-      ASTNode_addChild(ASTNode_getChild(fprime,0), ASTNode_create());      
-      ASTNode_setType(child2(fprime,0,0), AST_FUNCTION_SINH);
-      ASTNode_addChild(child2(fprime,0,0), copyAST(ASTNode_getChild(f,0)));
+      ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_SINH);
+      ASTNode_addChild(ASTNode_getChild(fprime,0), copyAST(ASTNode_getChild(f,0)));
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COT:
