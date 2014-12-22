@@ -16,6 +16,19 @@
 		ASTNode_free(node);											\
 	} while (0)
 
+#define CHECK_DIFF(input, expected) do {		\
+		ASTNode_t *node, *diff;					\
+		char *actual;							\
+		node = SBML_parseFormula(input);		\
+		ck_assert(node != NULL);				\
+		diff = differentiateAST(node, "x");	\
+		actual = SBML_formulaToString(diff);	\
+		ck_assert_str_eq(actual, (expected));	\
+		free(actual);							\
+		ASTNode_free(diff);						\
+		ASTNode_free(node);						\
+	} while (0)
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -75,17 +88,75 @@ START_TEST(test_generateAST)
 }
 END_TEST
 
+START_TEST(test_differentiateAST)
+{
+	CHECK_DIFF("1", "0");
+	CHECK_DIFF("x", "1");
+	CHECK_DIFF("x^2", "2 * x^(2 - 1)");
+	CHECK_DIFF("x^3", "3 * x^(3 - 1)");
+	CHECK_DIFF("x + x^2", "1 + 2 * x^(2 - 1)");
+	CHECK_DIFF("x - x^2", "1 - 2 * x^(2 - 1)");
+	CHECK_DIFF("- x", "-1");
+	CHECK_DIFF("- x", "-1");
+	CHECK_DIFF("x * x", "x + x");
+	CHECK_DIFF("2 * x", "2");
+	CHECK_DIFF("x * 2", "2");
+	CHECK_DIFF("x / 2", "1 / 2");
+	CHECK_DIFF("2 / x", "-(2 / x^2)");
+	CHECK_DIFF("x^2 / x", "2 * x^(2 - 1) / x - x^2 / x^2");
+	CHECK_DIFF("x^x", "x^x * (x / x + log(x))");
+	CHECK_DIFF("abs(x)", "piecewise(-1, lt(x, 0), 0, eq(x, 0), 1, gt(x, 0))");
+	CHECK_DIFF("arccos(x)", "-(1 / sqrt(1 - x^2))");
+	CHECK_DIFF("arccosh(x)", "1 / sqrt(x^2 - 1)");
+	CHECK_DIFF("arccot(x)", "-(1 / (1 + x^2))");
+	CHECK_DIFF("arccoth(x)", "-(1 / (x^2 - 1))");
+	CHECK_DIFF("arccsc(x)", "-(1 * x * sqrt(x^2 - 1))"); /* wrong */
+	CHECK_DIFF("arccsch(x)", "-(1 * x * sqrt(x^2 + 1))"); /* wrong */
+	CHECK_DIFF("arcsec(x)", "x * sqrt(x^2 - 1)"); /* wrong */
+	CHECK_DIFF("arcsech(x)", "-(1 * x * sqrt(1 - x^2))"); /* wrong */
+	CHECK_DIFF("arcsin(x)", "1 / sqrt(1 - x^2)");
+	CHECK_DIFF("arcsinh(x)", "1 / sqrt(1 + x^2)");
+	CHECK_DIFF("arctan(x)", "1 / (1 + x^2)");
+	CHECK_DIFF("arctanh(x)", "1 / (1 - x^2)");
+	CHECK_DIFF("ceil(x)", "ceil(1)"); /* TODO */
+	CHECK_DIFF("cos(x)", "-sin(x)");
+	CHECK_DIFF("cosh(x)", "-sinh(x)"); /* wrong */
+	CHECK_DIFF("cot(x)", "-(1 / sin(x)^2)");
+	CHECK_DIFF("coth(x)", "-(1 / sinh(x)^2)");
+	CHECK_DIFF("csc(x)", "-(1 * csc(x) * cot(x))");
+	CHECK_DIFF("csch(x)", "-(1 * csch(x) * coth(x))");
+	CHECK_DIFF("exp(x)", "exp(x)");
+	CHECK_DIFF("floor(x)", "floor(1)"); /* TODO */
+	CHECK_DIFF("ln(x)", "1 / x");
+	CHECK_DIFF("log(3, x)", "1 / log(3) * (1 / x)");
+	CHECK_DIFF("log(x, 3)", "0"); /* TODO */
+	CHECK_DIFF("root(x, 3)", "1 / 3 * x^(1 / 3 - 1)");
+	CHECK_DIFF("root(3, x)", "-(pow(3, 1 / x) * log(3) * (1 / x^2))");
+	CHECK_DIFF("sec(x)", "sec(x) * tan(x)");
+	CHECK_DIFF("sech(x)", "-(1 * sech(x) * tanh(x))");
+	CHECK_DIFF("sin(x)", "cos(x)");
+	CHECK_DIFF("sinh(x)", "cosh(x)");
+	CHECK_DIFF("tan(x)", "1 / cos(x)^2");
+	CHECK_DIFF("tanh(x)", "1 / cosh(x)^2");
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
 	Suite *s;
 	TCase *tc_generateAST;
+	TCase *tc_differentiateAST;
 
 	s = suite_create("processAST");
 
 	tc_generateAST = tcase_create("generateAST");
 	tcase_add_test(tc_generateAST, test_generateAST);
 	suite_add_tcase(s, tc_generateAST);
+
+	tc_differentiateAST = tcase_create("differentiateAST");
+	tcase_add_test(tc_differentiateAST, test_differentiateAST);
+	suite_add_tcase(s, tc_differentiateAST);
 
 	return s;
 }
