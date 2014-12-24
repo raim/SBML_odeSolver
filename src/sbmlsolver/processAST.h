@@ -60,7 +60,7 @@ extern "C" {
   SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*));
   SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f);
   SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N);
-  SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f);
+  SBML_ODESOLVER_API ASTNode_t *simplifyAST(const ASTNode_t *f);
   SBML_ODESOLVER_API ASTNode_t *ASTNode_indexAST(const ASTNode_t *f, odeModel_t *om);
   
   ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);

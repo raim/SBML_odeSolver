@@ -80,9 +80,9 @@ ASTNode_t *ASTNode_createIndexName(void)
 
 /** Returns the index of an indexed AST_NAME node (ASTIndexNameNode)
  */
-unsigned int ASTNode_getIndex(ASTNode_t *node)
+unsigned int ASTNode_getIndex(const ASTNode_t *node)
 {
-  return static_cast<ASTIndexNameNode*>(node)->getIndex();
+  return static_cast<const ASTIndexNameNode*>(node)->getIndex();
 }
 
 /** Sets the index of an indexed AST_NAME node (ASTIndexNameNode)
@@ -98,17 +98,17 @@ void ASTNode_setIndex(ASTNode_t *node, unsigned int index)
 
 /** Returns true (1) if the ASTNode is an ASTIndexNameNode
  */
-SBML_ODESOLVER_API int ASTNode_isIndexName(ASTNode_t *node)
+SBML_ODESOLVER_API int ASTNode_isIndexName(const ASTNode_t *node)
 {
-  return dynamic_cast<ASTIndexNameNode*>(node) != 0;
+  return dynamic_cast<const ASTIndexNameNode*>(node) != 0;
 }
 
 /** Returns true (1) if the an indexed ASTNode (ASTIndexNameNode) has
     it's index set
 */
-SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
+SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(const ASTNode_t *node)
 {
-  return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetIndex();
+  return ASTNode_isIndexName(node) && static_cast<const ASTIndexNameNode*>(node)->isSetIndex();
 }
 
 
@@ -117,9 +117,9 @@ SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(ASTNode_t *node)
 /** Returns true (1) if the an indexed ASTNode (ASTIndexNameNode) has
     its data set
 */
-SBML_ODESOLVER_API unsigned int ASTNode_isSetData(ASTNode_t *node)
+SBML_ODESOLVER_API unsigned int ASTNode_isSetData(const ASTNode_t *node)
 {
-  return ASTNode_isIndexName(node) && static_cast<ASTIndexNameNode*>(node)->isSetData();
+  return ASTNode_isIndexName(node) && static_cast<const ASTIndexNameNode*>(node)->isSetData();
 }
 
 /** Sets the data of an indexed AST_NAME node (ASTIndexNameNode)

@@ -1887,7 +1887,7 @@ calls itself recursively for childnodes,
    
 */
 
-SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
+SBML_ODESOLVER_API ASTNode_t *simplifyAST(const ASTNode_t *f)
 {  
   unsigned int i, childnum;
   int simplify;
@@ -1909,13 +1909,13 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
   /* variables */
   else if ( ASTNode_isName(f) )
   {
-    if ( ASTNode_isSetIndex((ASTNode_t *)f) )
+    if ( ASTNode_isSetIndex(f) )
     {
       ASTNode_free(simple);
       simple = ASTNode_createIndexName();
-      ASTNode_setIndex(simple, ASTNode_getIndex((ASTNode_t *)f));
+      ASTNode_setIndex(simple, ASTNode_getIndex(f));
 
-      if ( ASTNode_isSetData((ASTNode_t *)f) )
+      if ( ASTNode_isSetData(f) )
 	 ASTNode_setData(simple);
     } 
     ASTNode_setName(simple, ASTNode_getName(f));
