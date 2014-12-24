@@ -29,6 +29,34 @@
 		ASTNode_free(node);						\
 	} while (0)
 
+#define CHECK_COPY(expr) do {					\
+		ASTNode_t *node, *copied;				\
+		char *actual;							\
+		node = SBML_parseFormula(expr);			\
+		ck_assert(node != NULL);				\
+		copied = copyAST(node);					\
+		ck_assert(copied != NULL);				\
+		actual = SBML_formulaToString(copied);	\
+		ck_assert_str_eq(actual, (expr));		\
+		free(actual);							\
+		ASTNode_free(copied);					\
+		ASTNode_free(node);						\
+	} while (0)
+
+#define CHECK_SIMPLIFY(input, expected) do {		\
+		ASTNode_t *node, *simplified;				\
+		char *actual;								\
+		node = SBML_parseFormula(input);			\
+		ck_assert(node != NULL);					\
+		simplified = simplifyAST(node);				\
+		ck_assert(simplified != NULL);				\
+		actual = SBML_formulaToString(simplified);	\
+		ck_assert_str_eq(actual, (expected));		\
+		free(actual);								\
+		ASTNode_free(simplified);					\
+		ASTNode_free(node);							\
+	} while (0)
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -141,12 +169,60 @@ START_TEST(test_differentiateAST)
 }
 END_TEST
 
+START_TEST(test_copyAST)
+{
+	CHECK_COPY("0");
+	CHECK_COPY("1.5");
+	CHECK_COPY("foo");
+	CHECK_COPY("(x + 1) * exp(y) / (pi * log(y - exponentiale))");
+	CHECK_COPY("lambda(x, y, x + y)");
+}
+END_TEST
+
+START_TEST(test_simplifyAST)
+{
+	CHECK_SIMPLIFY("0", "0");
+	CHECK_SIMPLIFY("1.5", "1.5");
+	CHECK_SIMPLIFY("foo", "foo");
+	CHECK_SIMPLIFY("x + 0", "x");
+	CHECK_SIMPLIFY("0 + x", "x");
+	CHECK_SIMPLIFY("x - 0", "x");
+	CHECK_SIMPLIFY("0 - x", "-x");
+	CHECK_SIMPLIFY("x * 0", "0");
+	CHECK_SIMPLIFY("0 * x", "0");
+	CHECK_SIMPLIFY("x * 1", "x");
+	CHECK_SIMPLIFY("1 * x", "x");
+	CHECK_SIMPLIFY("0 / x", "0");
+	CHECK_SIMPLIFY("x / 1", "x");
+	CHECK_SIMPLIFY("x^0", "1");
+	CHECK_SIMPLIFY("x^1", "x");
+	CHECK_SIMPLIFY("0^x", "0");
+	CHECK_SIMPLIFY("1^x", "1");
+	CHECK_SIMPLIFY("--x", "x");
+	CHECK_SIMPLIFY("-x + -y", "-(x + y)");
+	CHECK_SIMPLIFY("-x + y", "y - x");
+	CHECK_SIMPLIFY("x + -y", "x - y");
+	CHECK_SIMPLIFY("-x - -y", "y - x");
+	CHECK_SIMPLIFY("-x - y", "-(x + y)");
+	CHECK_SIMPLIFY("x - -y", "x + y");
+	CHECK_SIMPLIFY("-x * -y", "x * y");
+	CHECK_SIMPLIFY("-x * y", "-(x * y)");
+	CHECK_SIMPLIFY("x * -y", "-(x * y)");
+	CHECK_SIMPLIFY("-x / -y", "x / y");
+	CHECK_SIMPLIFY("-x / y", "-(x / y)");
+	CHECK_SIMPLIFY("x / -y", "-(x / y)");
+	CHECK_SIMPLIFY("log(0 + pi) / -(1 * x)", "-(log(pi) / x)");
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
 	Suite *s;
 	TCase *tc_generateAST;
 	TCase *tc_differentiateAST;
+	TCase *tc_copyAST;
+	TCase *tc_simplifyAST;
 
 	s = suite_create("processAST");
 
@@ -157,6 +233,14 @@ Suite *create_suite_processAST(void)
 	tc_differentiateAST = tcase_create("differentiateAST");
 	tcase_add_test(tc_differentiateAST, test_differentiateAST);
 	suite_add_tcase(s, tc_differentiateAST);
+
+	tc_copyAST = tcase_create("copyAST");
+	tcase_add_test(tc_copyAST, test_copyAST);
+	suite_add_tcase(s, tc_copyAST);
+
+	tc_simplifyAST = tcase_create("simplifyAST");
+	tcase_add_test(tc_simplifyAST, test_simplifyAST);
+	suite_add_tcase(s, tc_simplifyAST);
 
 	return s;
 }
