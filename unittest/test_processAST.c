@@ -94,6 +94,14 @@
 		ASTNode_free(node);										\
 	} while (0)
 
+#define CONTAINS_PIECEWISE(input, expected) do {						\
+		ASTNode_t *node;												\
+		node = readMathMLFromString(LINE0 MATH_OPEN input MATH_CLOSE);	\
+		ck_assert(node != NULL);										\
+		ck_assert_int_eq(ASTNode_containsPiecewise(node), expected);	\
+		ASTNode_free(node);												\
+	} while (0)
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -273,6 +281,34 @@ START_TEST(test_ASTNode_containsTime)
 }
 END_TEST
 
+START_TEST(test_ASTNode_containsPiecewise)
+{
+	CONTAINS_PIECEWISE("<cn>0</cn>", 0);
+	CONTAINS_PIECEWISE("<ci>x</ci>", 0);
+	CONTAINS_PIECEWISE("<piecewise><otherwise><ci>foo</ci></otherwise></piecewise>", 1);
+	CONTAINS_PIECEWISE("<apply>"
+					   " <times/>"
+					   " <ci>piece</ci>"
+					   " <ci>piecewise</ci>"
+					   "</apply>",
+					   0);
+	CONTAINS_PIECEWISE("<apply>"
+					   " <times/>"
+					   " <ci>x</ci>"
+					   " <piecewise>"
+					   "  <piece>"
+					   "   <ci>y</ci>"
+					   "   <apply><gt/><ci>a</ci><cn>1</cn></apply>"
+                       "  </piece>"
+					   "  <otherwise>"
+                       "   <ci>z</ci>"
+					   "  </otherwise>"
+					   " </piecewise>"
+					   "</apply>",
+					   1);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -283,6 +319,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_simplifyAST;
 	TCase *tc_ASTNode_getSymbols;
 	TCase *tc_ASTNode_containsTime;
+	TCase *tc_ASTNode_containsPiecewise;
 
 	s = suite_create("processAST");
 
@@ -309,6 +346,10 @@ Suite *create_suite_processAST(void)
 	tc_ASTNode_containsTime = tcase_create("ASTNode_containsTime");
 	tcase_add_test(tc_ASTNode_containsTime, test_ASTNode_containsTime);
 	suite_add_tcase(s, tc_ASTNode_containsTime);
+
+	tc_ASTNode_containsPiecewise = tcase_create("ASTNode_containsPiecewise");
+	tcase_add_test(tc_ASTNode_containsPiecewise, test_ASTNode_containsPiecewise);
+	suite_add_tcase(s, tc_ASTNode_containsPiecewise);
 
 	return s;
 }
