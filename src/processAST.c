@@ -2380,7 +2380,7 @@ int ASTNode_containsTime(const ASTNode_t *node)
 }
 
 /* returns boolean result: whether the given AST contains a time symbol. */
-int ASTNode_containsPiecewise(ASTNode_t *node)
+int ASTNode_containsPiecewise(const ASTNode_t *node)
 {
   unsigned int i;
 
