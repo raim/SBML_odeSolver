@@ -2301,7 +2301,7 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old)
 /* appends the symbols in the given AST to the given list.
    'char *' strings are appended to the list these strings
    should not be freed and exist as long as the AST. */
-void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
+void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols)
 {
   unsigned int i;
 
