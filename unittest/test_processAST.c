@@ -82,6 +82,18 @@
 #define CHECK_SYMBOLS2(input, e1) CHECK_SYMBOLS3(input, e1, NULL)
 #define CHECK_SYMBOLS1(input) CHECK_SYMBOLS2(input, NULL)
 
+#define LINE0 "<?xml version='1.0' encoding='UTF-8'?>\n"
+#define MATH_OPEN "<math xmlns='http://www.w3.org/1998/Math/MathML'>\n"
+#define MATH_CLOSE "\n</math>"
+
+#define CONTAINS_TIME(input, expected) do {						\
+		ASTNode_t *node;										\
+		node = readMathMLFromString(LINE0 MATH_OPEN input MATH_CLOSE);	\
+		ck_assert(node != NULL);								\
+		ck_assert_int_eq(ASTNode_containsTime(node), expected);	\
+		ASTNode_free(node);										\
+	} while (0)
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -250,6 +262,17 @@ START_TEST(test_ASTNode_getSymbols)
 }
 END_TEST
 
+START_TEST(test_ASTNode_containsTime)
+{
+	CONTAINS_TIME("<cn>0</cn>", 0);
+	CONTAINS_TIME("<ci>x</ci>", 0);
+	CONTAINS_TIME("<ci>time</ci>", 0);
+	CONTAINS_TIME("<csymbol encoding='text' definitionURL='http://www.sbml.org/sbml/symbols/time'>t</csymbol>", 1);
+	CONTAINS_TIME("<apply><plus/><cn>4</cn><ci>t</ci></apply>", 0);
+	CONTAINS_TIME("<apply><plus/><csymbol encoding='text' definitionURL='http://www.sbml.org/sbml/symbols/time'>t</csymbol><cn>4</cn></apply>", 1);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -259,6 +282,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_copyAST;
 	TCase *tc_simplifyAST;
 	TCase *tc_ASTNode_getSymbols;
+	TCase *tc_ASTNode_containsTime;
 
 	s = suite_create("processAST");
 
@@ -281,6 +305,10 @@ Suite *create_suite_processAST(void)
 	tc_ASTNode_getSymbols = tcase_create("ASTNode_getSymbols");
 	tcase_add_test(tc_ASTNode_getSymbols, test_ASTNode_getSymbols);
 	suite_add_tcase(s, tc_ASTNode_getSymbols);
+
+	tc_ASTNode_containsTime = tcase_create("ASTNode_containsTime");
+	tcase_add_test(tc_ASTNode_containsTime, test_ASTNode_containsTime);
+	suite_add_tcase(s, tc_ASTNode_containsTime);
 
 	return s;
 }
