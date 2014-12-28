@@ -57,6 +57,31 @@
 		ASTNode_free(node);							\
 	} while (0)
 
+#define CHECK_SYMBOLS4(input, e1, e2, e3) do {					\
+		static const char * arr[] = {e1, e2, e3};				\
+		ASTNode_t *node;										\
+		List_t *symbols;										\
+		size_t len, i;											\
+		symbols = List_create();								\
+		node = SBML_parseFormula(input);						\
+		ck_assert(node != NULL);								\
+		ASTNode_getSymbols(node, symbols);						\
+		for (len=0;len<3;len++) {								\
+			if (!arr[len]) break;								\
+		}														\
+		ck_assert(List_size(symbols) == len);					\
+		for (i=0;i<len;i++) {									\
+			const char *s = (const char *)List_get(symbols, i);	\
+			ck_assert_str_eq(s, arr[i]);						\
+		}														\
+		ASTNode_free(node);										\
+		List_free(symbols);										\
+	} while (0)
+
+#define CHECK_SYMBOLS3(input, e1, e2) CHECK_SYMBOLS4(input, e1, e2, NULL)
+#define CHECK_SYMBOLS2(input, e1) CHECK_SYMBOLS3(input, e1, NULL)
+#define CHECK_SYMBOLS1(input) CHECK_SYMBOLS2(input, NULL)
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -215,6 +240,16 @@ START_TEST(test_simplifyAST)
 }
 END_TEST
 
+START_TEST(test_ASTNode_getSymbols)
+{
+	CHECK_SYMBOLS1("pi");
+	CHECK_SYMBOLS2("x", "x");
+	CHECK_SYMBOLS4("x + y/z", "x", "y", "z");
+	CHECK_SYMBOLS3("cos(time + foo)", "time", "foo");
+	CHECK_SYMBOLS4("foo + bar + foo", "foo", "bar", "foo"); /* TODO: intended? */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -223,6 +258,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_differentiateAST;
 	TCase *tc_copyAST;
 	TCase *tc_simplifyAST;
+	TCase *tc_ASTNode_getSymbols;
 
 	s = suite_create("processAST");
 
@@ -241,6 +277,10 @@ Suite *create_suite_processAST(void)
 	tc_simplifyAST = tcase_create("simplifyAST");
 	tcase_add_test(tc_simplifyAST, test_simplifyAST);
 	suite_add_tcase(s, tc_simplifyAST);
+
+	tc_ASTNode_getSymbols = tcase_create("ASTNode_getSymbols");
+	tcase_add_test(tc_ASTNode_getSymbols, test_ASTNode_getSymbols);
+	suite_add_tcase(s, tc_ASTNode_getSymbols);
 
 	return s;
 }
