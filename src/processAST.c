@@ -2361,7 +2361,7 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
 }
 
 /* returns boolean result: whether the given AST contains a time symbol. */
-int ASTNode_containsTime(ASTNode_t *node)
+int ASTNode_containsTime(const ASTNode_t *node)
 {
   unsigned int i;
 
