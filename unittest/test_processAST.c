@@ -309,6 +309,46 @@ START_TEST(test_ASTNode_containsPiecewise)
 }
 END_TEST
 
+START_TEST(test_ASTNode_getIndices)
+{
+	ASTNode_t *node;
+	List_t *indices;
+	int r;
+	void *p;
+
+	node = ASTNode_create();
+	ASTNode_setCharacter(node, '+');
+	ASTNode_addChild(node, ASTNode_create());
+	ASTNode_addChild(node, ASTNode_create());
+	ASTNode_setCharacter(ASTNode_getLeftChild(node), '*');
+	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_createIndexName());
+	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_create());
+	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), "x");
+	ASTNode_setIndex(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), 100);
+	ASTNode_setName(ASTNode_getRightChild(ASTNode_getLeftChild(node)), "y");
+	ASTNode_setCharacter(ASTNode_getRightChild(node), '/');
+	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_create());
+	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_createIndexName());
+	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getRightChild(node)), "z");
+	ASTNode_setName(ASTNode_getRightChild(ASTNode_getRightChild(node)), "a");
+	ASTNode_setIndex(ASTNode_getRightChild(ASTNode_getRightChild(node)), 101);
+
+	indices = List_create();
+	r = ASTNode_getIndices(node, indices);
+	ck_assert_int_eq(r, 1);
+	ck_assert(List_size(indices) == 2);
+	p = List_get(indices, 0);
+	ck_assert_int_eq(*((unsigned int *)p), 100);
+	free(p);
+	p = List_get(indices, 1);
+	ck_assert_int_eq(*((unsigned int *)p), 101);
+	free(p);
+	List_free(indices);
+
+	ASTNode_free(node);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -320,6 +360,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_ASTNode_getSymbols;
 	TCase *tc_ASTNode_containsTime;
 	TCase *tc_ASTNode_containsPiecewise;
+	TCase *tc_ASTNode_getIndices;
 
 	s = suite_create("processAST");
 
@@ -350,6 +391,10 @@ Suite *create_suite_processAST(void)
 	tc_ASTNode_containsPiecewise = tcase_create("ASTNode_containsPiecewise");
 	tcase_add_test(tc_ASTNode_containsPiecewise, test_ASTNode_containsPiecewise);
 	suite_add_tcase(s, tc_ASTNode_containsPiecewise);
+
+	tc_ASTNode_getIndices = tcase_create("ASTNode_getIndices");
+	tcase_add_test(tc_ASTNode_getIndices, test_ASTNode_getIndices);
+	suite_add_tcase(s, tc_ASTNode_getIndices);
 
 	return s;
 }
