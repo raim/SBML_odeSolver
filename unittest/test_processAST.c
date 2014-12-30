@@ -102,6 +102,28 @@
 		ASTNode_free(node);												\
 	} while (0)
 
+static ASTNode_t *prepare_node(void)
+{
+	ASTNode_t *node;
+	node = ASTNode_create();
+	ASTNode_setCharacter(node, '+');
+	ASTNode_addChild(node, ASTNode_create());
+	ASTNode_addChild(node, ASTNode_create());
+	ASTNode_setCharacter(ASTNode_getLeftChild(node), '*');
+	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_createIndexName());
+	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_create());
+	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), "x");
+	ASTNode_setIndex(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), 100);
+	ASTNode_setName(ASTNode_getRightChild(ASTNode_getLeftChild(node)), "y");
+	ASTNode_setCharacter(ASTNode_getRightChild(node), '/');
+	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_create());
+	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_createIndexName());
+	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getRightChild(node)), "z");
+	ASTNode_setName(ASTNode_getRightChild(ASTNode_getRightChild(node)), "a");
+	ASTNode_setIndex(ASTNode_getRightChild(ASTNode_getRightChild(node)), 101);
+	return node;
+}
+
 /* test cases */
 START_TEST(test_generateAST)
 {
@@ -316,22 +338,7 @@ START_TEST(test_ASTNode_getIndices)
 	int r;
 	void *p;
 
-	node = ASTNode_create();
-	ASTNode_setCharacter(node, '+');
-	ASTNode_addChild(node, ASTNode_create());
-	ASTNode_addChild(node, ASTNode_create());
-	ASTNode_setCharacter(ASTNode_getLeftChild(node), '*');
-	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_createIndexName());
-	ASTNode_addChild(ASTNode_getLeftChild(node), ASTNode_create());
-	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), "x");
-	ASTNode_setIndex(ASTNode_getLeftChild(ASTNode_getLeftChild(node)), 100);
-	ASTNode_setName(ASTNode_getRightChild(ASTNode_getLeftChild(node)), "y");
-	ASTNode_setCharacter(ASTNode_getRightChild(node), '/');
-	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_create());
-	ASTNode_addChild(ASTNode_getRightChild(node), ASTNode_createIndexName());
-	ASTNode_setName(ASTNode_getLeftChild(ASTNode_getRightChild(node)), "z");
-	ASTNode_setName(ASTNode_getRightChild(ASTNode_getRightChild(node)), "a");
-	ASTNode_setIndex(ASTNode_getRightChild(ASTNode_getRightChild(node)), 101);
+	node = prepare_node();
 
 	indices = List_create();
 	r = ASTNode_getIndices(node, indices);
@@ -349,6 +356,24 @@ START_TEST(test_ASTNode_getIndices)
 }
 END_TEST
 
+START_TEST(test_ASTNode_getIndexArray)
+{
+	ASTNode_t *node;
+	int *arr;
+	int i;
+	node = prepare_node();
+	arr = ASTNode_getIndexArray(node, 102);
+	ck_assert(arr != NULL);
+	for (i=0; i<100; i++) {
+		ck_assert_int_eq(arr[i], 0);
+	}
+	ck_assert_int_eq(arr[100], 1);
+	ck_assert_int_eq(arr[101], 1);
+	free(arr);
+	ASTNode_free(node);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -361,6 +386,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_ASTNode_containsTime;
 	TCase *tc_ASTNode_containsPiecewise;
 	TCase *tc_ASTNode_getIndices;
+	TCase *tc_ASTNode_getIndexArray;
 
 	s = suite_create("processAST");
 
@@ -395,6 +421,10 @@ Suite *create_suite_processAST(void)
 	tc_ASTNode_getIndices = tcase_create("ASTNode_getIndices");
 	tcase_add_test(tc_ASTNode_getIndices, test_ASTNode_getIndices);
 	suite_add_tcase(s, tc_ASTNode_getIndices);
+
+	tc_ASTNode_getIndexArray = tcase_create("ASTNode_getIndexArray");
+	tcase_add_test(tc_ASTNode_getIndexArray, test_ASTNode_getIndexArray);
+	suite_add_tcase(s, tc_ASTNode_getIndexArray);
 
 	return s;
 }
