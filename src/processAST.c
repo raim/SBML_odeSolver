@@ -2331,7 +2331,7 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 }
 /* generates a boolean vector of size nvalues, indicating whether
    an index occurs in the given indexed AST */
-int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
+int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
 {
   int i;
   int *result;

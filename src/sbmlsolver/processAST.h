@@ -69,7 +69,7 @@ extern "C" {
   int ASTNode_containsTime(const ASTNode_t *node);
   int ASTNode_containsPiecewise(const ASTNode_t *node);
   int ASTNode_getIndices(const ASTNode_t *node, List_t *indices);
-  int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues);
+  int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues);
 
 
 #ifdef __cplusplus
