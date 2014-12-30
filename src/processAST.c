@@ -2312,7 +2312,7 @@ void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols)
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
 }
 /* appends the indices in the given indexed AST to the given list. */
-int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
+int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 {
   unsigned int i;
 
