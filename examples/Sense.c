@@ -99,7 +99,7 @@ void printGraph(
 
 int doit(int argc, char *argv[])
 {
-    int i, parameterMode ;
+    int i, parameterMode = -1;
     cvodeSettings_t *settings = CvodeSettings_create();
     variableIndex_t *symbolVI, **symbolsVI;
     integratorInstance_t *integratorInstance;

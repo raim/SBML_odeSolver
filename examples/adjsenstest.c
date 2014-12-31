@@ -42,7 +42,8 @@
 void create_simple_v_file(char *v_file, int n_var, char **var);
 
 int
-main (int argc, char *argv[]){
+main(void)
+{
   int i;
   
   odeModel_t *om;

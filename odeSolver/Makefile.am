@@ -30,7 +30,7 @@
 ##
 
 AM_CPPFLAGS = -I$(srcdir)/../src @SBML_CPPFLAGS@ @GRACE_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
-AM_CFLAGS = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
+AM_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 bin_PROGRAMS = odeSolver
 odeSolver_SOURCES = main.c \

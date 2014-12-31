@@ -5,7 +5,7 @@
 #ifndef _DRAWGRAPH_H_
 #define _DRAWGRAPH_H_
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 #ifdef __cplusplus
 extern "C" {

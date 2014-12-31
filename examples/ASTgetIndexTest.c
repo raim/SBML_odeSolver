@@ -42,7 +42,7 @@
 
 void printIndex(ASTNode_t *f)
 {
-  int i;
+  unsigned int i;
   if (ASTNode_isSetIndex(f))
   {
     printf("index of %s is %d\n", ASTNode_getName(f), ASTNode_getIndex(f));
@@ -58,7 +58,7 @@ void printIndex(ASTNode_t *f)
 
 int main(void)
 {
-    int i;
+    unsigned int i;
     char *formula;
     ASTNode_t *old = SBML_parseFormula("(A * B )+ 1/(C+D)^2");
     ASTNode_t *new;

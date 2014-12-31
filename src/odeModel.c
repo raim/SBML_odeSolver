@@ -37,10 +37,9 @@
    created by configure script */
 #ifndef WIN32
 #include "config.h"
-#else
-#include "stdio.h"
 #endif
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -175,19 +174,19 @@ static void searchPath(int n, int **matrix, int start, int *required)
     this model, however it's  equations can be inspected and evaluated
     with initial condition data, using CvodeData.
 */
-SBML_ODESOLVER_API int ODEModel_hasCycle(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_hasCycle(const odeModel_t *om)
 {
   return om->hasCycle;
 }
-SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(const odeModel_t *om)
 {
   return om->nassbeforeodes;
 }
-SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(const odeModel_t *om)
 {
   return om->nassbeforeevents;
 }
-SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(const odeModel_t *om)
 {
   return om->sparsesize;
 }
@@ -207,9 +206,9 @@ SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeMo
   if ( i >= om->nassbeforeevents ) return NULL;
   return om->assignmentsBeforeEvents[i];
 }
-SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *om, int i)
+SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(const odeModel_t *om, int i)
 {
-  if ( i >= om->sparsesize ) return NULL;
+  if ( i < 0 || i >= om->sparsesize ) return NULL;
   return om->jacobSparse[i];
 }
 /* Evaluation elements */
@@ -390,7 +389,6 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
   /* if graph has edges then */
   if ( ins )
   {
-    int *idx;
 #ifdef _DEBUG
     fprintf(stderr, "ERROR: Cyclic dependency found in topological sorting.\n");
     fprintf(stderr, "MATRIX:\n");
@@ -406,11 +404,7 @@ SBML_ODESOLVER_API List_t *topoSort(int **inMatrix, int n, int *changed, int*req
 		      "Cyclic dependency found in topological sorting.");
     List_freeItems(sorted, free, int);
     List_free(sorted);
-    sorted = List_create();
-
-    ASSIGN_NEW_MEMORY(idx, int, NULL);
-    *idx = -1;
-    List_add(sorted, idx);
+	sorted = NULL;
     /*!!! TODO : this could return the remaining edges, if this is meaningful*/
   }
 
@@ -452,7 +446,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
     *changedBySolver, *requiredForODEs, *requiredForEvents;
   List_t *dependencyList;
   ASTNode_t *math;
-  int hasCycle = 0;
 
   nvalues = om->neq + om->nass + om->nconst;
   om->initAssignmentOrder = NULL;
@@ -495,7 +488,15 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* 2: ORDERING OF COMPLETE ASSIGNMENT SET, all changed, all required */
   dependencyList = topoSort(matrix, nvalues, NULL, NULL);
-
+  if (!dependencyList) {
+	  /* issue solver error and return if topo. sort was unsuccessful */
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(initial assignments, assignments and kinetic laws) "
+			"Found cyclic dependency in rules. ");
+      return 1;
+  }
 
   /* generate ordered array of complete rule set and assignment subset */
 
@@ -504,22 +505,6 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for complete rule set "
-			"(initial assignments, assignments and kinetic laws) "
-			"Found cyclic dependency in rules. ");
-      /* AS -1 error is passed as single element no array elements
-	 have been allocated and can be simply freed */
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      hasCycle = 1;
-      return hasCycle;
-    }
-
     if ( i == 0 ) /* create structures */
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass,
@@ -617,6 +602,17 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   /* calculate TOPOLOGICAL SORTING of dependency matrix */
   dependencyList = topoSort(matrix, nvalues, changedBySolver, requiredForODEs);
+  if (!dependencyList) {
+    /* issue solver error and return if topo. sort was unsuccessful */
+    /* topo sort was tested on global matrix, so no errors should occur
+       when we are here !*/
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for complete rule set "
+			"(assignments and kinetic laws required before ODE "
+			"evaluation). Found cyclic dependency in rules. ");
+      return 1;
+  }
 
   /* generate ordered array of rule set before ODEs */
   k = 0;
@@ -624,23 +620,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    /* topo sort was tested on global matrix, so no errors should occur
-       when we are here !*/
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for complete rule set "
-			"(assignments and kinetic laws required before ODE "
-			"evaluation). Found cyclic dependency in rules. ");
-
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      hasCycle = 1;
-      return hasCycle;
-    }
-    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
   om->nassbeforeodes = k;
@@ -738,6 +718,18 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* calculate TOPOLOGICAL SORTING of dependency matrix */
   dependencyList = topoSort(matrix, nvalues, changedBySolver,
 			    requiredForEvents);
+  if (!dependencyList) {
+	  /* issue solver error and return if topo. sort was unsuccessful */
+      SolverError_error(ERROR_ERROR_TYPE,
+			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
+			"Topological sorting failed for Event rule set "
+			"(assignments and kinetic laws required BEFORE event "
+			"evaluation).  Found cyclic dependency in rules.");
+      free(requiredForODEs);
+      free(changedBySolver);
+      free(requiredForEvents);
+      return 1;
+  }
 
   /* generate ordered array of rule set before ODEs */
   k = 0;
@@ -745,23 +737,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   for ( i=0; i<List_size(dependencyList); i++ )
   {
     idx = List_get(dependencyList, i);
-    /* issue solver error and return if topo. sort was unsuccessful */
-    if ( *idx == -1 )
-    {
-      SolverError_error(ERROR_ERROR_TYPE,
-			SOLVER_ERROR_ODE_MODEL_RULE_SORTING_FAILED,
-			"Topological sorting failed for Event rule set "
-			"(assignments and kinetic laws required BEFORE event "
-			"evaluation).  Found cyclic dependency in rules.");
-      List_freeItems(dependencyList, free, int);
-      List_free(dependencyList);
-      free(requiredForODEs);
-      free(changedBySolver);
-      free(requiredForEvents);
-      hasCycle = 1;
-      return hasCycle;
-    }
-    else if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
+    if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
 
@@ -823,7 +799,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   free(requiredForODEs);
   free(requiredForEvents);
 
-  return hasCycle;
+  return 0;
 }
 
 
@@ -834,7 +810,8 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
    the newly created odeModel. */
 static odeModel_t *ODEModel_fillStructures(Model_t *ode)
 {
-  int i, j, found, flag, nvalues, neq, nalg, nconst, nass, npiecewise;
+  unsigned int i, j, found, nvalues, neq, nalg, nconst, nass, npiecewise;
+  int flag;
   Compartment_t *c;
   Parameter_t *p;
   Species_t *s;
@@ -1330,7 +1307,7 @@ SBML_ODESOLVER_API odeModel_t *ODEModel_createFromFile(const char *sbmlFileName)
   SBMLDocument_t *d;
   odeModel_t *om;
 
-  d =  parseModel((char *)sbmlFileName,
+  d = parseModel(sbmlFileName,
 		  0 /* print message */,
 		  0 /* don't validate */);
   if ( d == NULL ) return NULL;
@@ -1568,7 +1545,7 @@ SBML_ODESOLVER_API void ODEModel_free(odeModel_t *om)
     exists in the ODEModel.
 */
 
-SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbol)
+SBML_ODESOLVER_API int ODEModel_hasVariable(const odeModel_t *model, const char *symbol)
 {
   return ODEModel_getVariableIndexFields(model, symbol) != -1;
 }
@@ -1579,7 +1556,7 @@ SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *model, const char *symbo
     ODEModel_getNumConstants
 */
 
-SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumValues(const odeModel_t *om)
 {
   return om->neq + om->nass + om->nconst + om->nalg ;
 }
@@ -1589,7 +1566,7 @@ SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *om)
     odeModel
 */
 
-SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNeq(const odeModel_t *om)
 {
   return om->neq;
 }
@@ -1600,7 +1577,7 @@ SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *om)
 
 */
 
-SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *os)
+SBML_ODESOLVER_API int ODESense_getNsens(const odeSense_t *os)
 {
   return os->nsens;
 }
@@ -1609,7 +1586,7 @@ SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *os)
     analysis might be requested, equals NEQ of odeModel
 
 */
-SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *os)
+SBML_ODESOLVER_API int ODESense_getNeq(const odeSense_t *os)
 {
   return os->neq;
 }
@@ -1624,9 +1601,10 @@ SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *os)
     of all values of the odeModel.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableIndex_t *vi)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(const odeModel_t *om,
+													const variableIndex_t *vi)
 {
-  if ( 0 <= vi->index && vi->index < om->neq )
+  if ( vi->type == ODE_VARIABLE && 0 <= vi->index && vi->index < om->neq )
     return (const ASTNode_t *) om->ode[vi->index];
   else return NULL;
 }
@@ -1636,7 +1614,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *om, variableInde
 /** \brief Returns the number of variable assignments in the odeModel
  */
 
-SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumAssignments(const odeModel_t *om)
 {
   return om->nass;
 }
@@ -1652,9 +1630,10 @@ SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *om)
     of all values of the odeModel.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, variableIndex_t *vi)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(const odeModel_t *om,
+														   const variableIndex_t *vi)
 {
-  if (  0 <= vi->type_index && vi->type_index < om->nass )
+  if ( vi->type == ASSIGNMENT_VARIABLE && 0 <= vi->type_index && vi->type_index < om->nass )
     return (const ASTNode_t *) om->assignment[vi->type_index];
   else return NULL;
 }
@@ -1662,7 +1641,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *om, varia
 /** \brief Returns the number of constant parameters of the odeModel
  */
 
-SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNumConstants(const odeModel_t *om)
 {
   return om->nconst;
 }
@@ -1676,7 +1655,7 @@ SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *om)
     of no use.
 */
 
-SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *om)
+SBML_ODESOLVER_API int ODEModel_getNalg(const odeModel_t *om)
 {
   return om->nalg;
 }
@@ -1750,7 +1729,8 @@ Returns 1 if successful, 0 otherwise, and -1 for memory allocation failures
 
 SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *om)
 {
-  int i, j, k, failed, nvalues;
+  int i, j, failed, nvalues;
+  unsigned int k;
   double val;
   ASTNode_t *fprime, *simple, *index, *ode;
   List_t *names, *sparse;
@@ -1939,7 +1919,8 @@ SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *om)
      structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, int i, int j)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(const odeModel_t *om,
+																int i, int j)
 {
   if ( om->jacob == NULL ) return NULL;
   if ( i >= om->neq || j >= om->neq ) return NULL;
@@ -1954,7 +1935,9 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *om, 
     within the odeModel structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, variableIndex_t *vi1, variableIndex_t *vi2)
+SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(const odeModel_t *om,
+															  const variableIndex_t *vi1,
+															  const variableIndex_t *vi2)
 {
   return ODEModel_getJacobianIJEntry(om, vi1->index, vi2->index);
 }
@@ -1966,7 +1949,7 @@ SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *om, va
     and must free it, if not required.
 */
 
-SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
+SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(const odeModel_t *om)
 {
   if ( om->jacob != NULL && om->jacobian == 1 )
     return determinantNAST(om->jacob, om->neq);
@@ -1979,9 +1962,10 @@ SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *om)
 
 /************* SENSITIVITY *****************/
 
-int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
+static int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 {
-  int i, j, l, k, nvalues, failed;
+  int i, j, nvalues, failed;
+  unsigned int k, l;
   double val;
   ASTNode_t *ode, *fprime, *simple, *index;
   List_t *names, *sparse;
@@ -2114,7 +2098,7 @@ int ODESense_constructMatrix(odeSense_t *os, odeModel_t *om)
 
 }
 
-void ODESense_freeMatrix(odeSense_t *os)
+static void ODESense_freeMatrix(odeSense_t *os)
 {
   int i, j;
 
@@ -2161,7 +2145,7 @@ void ODESense_freeMatrix(odeSense_t *os)
   }
 }
 
-void ODESense_freeStructures(odeSense_t *os)
+static void ODESense_freeStructures(odeSense_t *os)
 {
   if ( os->index_sens != NULL )
     free(os->index_sens);
@@ -2322,7 +2306,8 @@ SBML_ODESOLVER_API void ODESense_free(odeSense_t *os)
      Returns NULL if either the parametric has not been constructed yet,
      or if i > neq or j > nsens. Ownership remains within the odeModel
      structure. */
-SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *os, int i, int j)
+SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(const odeSense_t *os,
+															int i, int j)
 {
   if ( os->sens == NULL ) return NULL;
   if ( i >= os->om->neq || j >= os->nsens ) return NULL;
@@ -2339,7 +2324,9 @@ SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *os, int 
     Ownership remains within the odeModel structure.
 */
 
-SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *os, variableIndex_t *vi1, variableIndex_t *vi2)
+SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(const odeSense_t *os,
+														  const variableIndex_t *vi1,
+														  const variableIndex_t *vi2)
 {
   int i;
   /* find sensitivity parameter/variable */
@@ -2358,7 +2345,8 @@ SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *os, variab
     yet, or if j => ODEModel_getNsens;
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *os, int j)
+SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(const odeSense_t *os,
+																	int j)
 {
   if ( j < os->nsens )
     return ODEModel_getVariableIndexByNum(os->om, os->index_sens[j]);
@@ -2373,7 +2361,7 @@ SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *
 
 /* searches for the string "symbol" in the odeModel's names array
    and returns its index number, or -1 if it doesn't exist */
-int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
+int ODEModel_getVariableIndexFields(const odeModel_t *om, const char *symbol)
 {
   int i, nvalues;
 
@@ -2386,7 +2374,7 @@ int ODEModel_getVariableIndexFields(odeModel_t *om, const char *symbol)
 }
 
 
-int VariableIndex_getIndex(variableIndex_t *vi)
+int VariableIndex_getIndex(const variableIndex_t *vi)
 {
   return vi->index ;
 }
@@ -2410,7 +2398,7 @@ IntegratorInstance_setVariable, respectively. The variableIndex
 must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(const odeModel_t *om, int i)
 {
   variableIndex_t *vi;
 
@@ -2496,7 +2484,8 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *om, co
     variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(const odeModel_t *om,
+																 int i)
 {
   if ( i < om->neq )
     return ODEModel_getVariableIndexByNum(om, i);
@@ -2511,7 +2500,8 @@ Returns NULL if not existing (i > ODEModel_getNumAssignments(om)).
 The variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(const odeModel_t *om,
+																	  int i)
 {
   if ( i < om->nass )
     return ODEModel_getVariableIndexByNum(om, i + om->neq);
@@ -2525,7 +2515,8 @@ Returns NULL if not existing (i > ODEModel_getNumConstants(om)).
 The variableIndex must be freed by the calling application.
 */
 
-SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, int i)
+SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(const odeModel_t *om,
+															  int i)
 {
   if ( i < om->nconst )
     return ODEModel_getVariableIndexByNum(om, i + om->neq + om->nass);
@@ -2542,7 +2533,8 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *om, in
     and ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
 */
 
-SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeModel_t *om)
+SBML_ODESOLVER_API const char *VariableIndex_getName(const variableIndex_t *vi,
+													 const odeModel_t *om)
 {
   return (const char*) om->names[vi->index];
 }
@@ -2554,7 +2546,7 @@ SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *vi, odeMod
      Equivalent to VariableIndex_getName(variableIndex_t*, odeModel_t *) and
      IntegratorInstance_getVariableName(integratorInstance_t*, odeModel_t *);
 */
-const char *ODEModel_getVariableName(odeModel_t *om, variableIndex_t *vi)
+const char *ODEModel_getVariableName(const odeModel_t *om, const variableIndex_t *vi)
 {
   return VariableIndex_getName(vi, om);
 }

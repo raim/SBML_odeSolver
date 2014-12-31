@@ -152,7 +152,7 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
    spatial dimension 0 */ 
 static Model_t *Model_copyInits(Model_t *old)
 {
-  int i;
+  unsigned int i;
   Model_t *new;
   Compartment_t *c;
   Species_t *s, *s_new;
@@ -217,7 +217,7 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
   SBMLTypeCode_t type;
   ASTNode_t *math;
   
-  int j;
+  unsigned int j;
 
   math   = NULL;
   
@@ -258,7 +258,8 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
   SBMLTypeCode_t type;
   ASTNode_t *math;
 
-  int i, j, errors, found;
+  unsigned int i, j, found;
+  int errors;
 
   errors = 0;
   found  = 0;
@@ -406,7 +407,7 @@ the ODE system and thus improve the performance of integration routines.
 SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
 {
 
-  int j, k, errors;
+  unsigned int j, k, errors;
   Reaction_t *r;
   KineticLaw_t *kl;
   SpeciesReference_t *sref;
@@ -588,7 +589,7 @@ SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *s, Model_t *m)
     copy events to new model and print warning */
 static void Model_copyEvents(Model_t *m, Model_t*ode)
 {
-  int i;
+  unsigned int i;
     
   for ( i=0; i<Model_getNumEvents(m); i++ )
   {
@@ -611,7 +612,7 @@ static void Model_copyEvents(Model_t *m, Model_t*ode)
    message, return number of AlgebraicRules */
 static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
 {
-  int i, j;
+  unsigned int i, j;
   Rule_t *rl, *alr_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;
@@ -656,7 +657,7 @@ static int Model_copyAlgebraicRules(Model_t *m, Model_t*ode)
 
 static void Model_copyInitialAssignmentRules(Model_t *m, Model_t*ode)
 {
-  int i;
+  unsigned int i;
   for ( i=0; i<Model_getNumInitialAssignments(m); i++ )
   {  
     Model_addInitialAssignment(ode, Model_getInitialAssignment(m, i));
@@ -666,7 +667,7 @@ static void Model_copyInitialAssignmentRules(Model_t *m, Model_t*ode)
 /* Copy Assignment Rules  */
 static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 {
-  int i;
+  unsigned int i;
   Rule_t *rl, *ar_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;  
@@ -701,7 +702,7 @@ static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 */
 static void ODE_replaceFunctionDefinitions(Model_t *m)
 {
-  int i, j, k;
+  unsigned int i, j, k;
   Rule_t *rl_new;
   FunctionDefinition_t *f;
   Event_t *e;
@@ -821,7 +822,7 @@ SBML_ODESOLVER_API double Model_getValueById(Model_t *m, const char *id)
 
 SBML_ODESOLVER_API int Model_setValue(Model_t *m, const char *id, const char *rid, double value)
 {
-  int i;
+  unsigned int i;
   Compartment_t *c;
   Species_t *s;
   Parameter_t *p;

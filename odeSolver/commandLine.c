@@ -487,7 +487,7 @@ odeSolver (int argc, char *argv[])
 }
 
 SBMLDocument_t*
-parseModelWithArguments (char *file)
+parseModelWithArguments(const char *file)
 {
     return parseModel(file, Opt.PrintMessage, Opt.Validate);
 }

@@ -36,8 +36,8 @@
 #ifndef _DAESOLVER_H_
 #define _DAESOLVER_H_
 
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/integratorInstance.h"
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorInstance.h>
 
 #ifdef __cplusplus
 extern "C" {

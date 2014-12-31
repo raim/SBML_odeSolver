@@ -44,8 +44,8 @@ typedef struct directCode directCode_t;
 /*!!!! NOTE: includes need to be below typedef definition to avoid
    circular include problem, but struct declarations needs to
    be after includes, however some compilers require struct before typedef */
-#include "sbmlsolver/ASTIndexNameNode.h"
-#include "sbmlsolver/cvodeData.h"
+#include <sbmlsolver/ASTIndexNameNode.h>
+#include <sbmlsolver/cvodeData.h>
 
 struct directCode
 {

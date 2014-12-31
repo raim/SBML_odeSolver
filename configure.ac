@@ -77,6 +77,7 @@ dnl ---------------------------------------------------------------------------
 LT_INIT
 AC_PROG_CXX
 AC_PROG_CC
+AM_PROG_CC_C_O # deprecated as of automake 1.14
 AC_PROG_CC_FPIC
 AC_SUBST(FPIC)
 AC_ARG_VAR(FPIC,[compiler flag for generating PIC code that can be used in a shared library])
@@ -116,6 +117,18 @@ AC_DEFINE_UNQUOTED([SOSLIB_LIBS], "ODES",
 dnl configure options
 dnl AC_ARG_WITH(bindings, [  --with-bindings  build perl bindings])
 dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
+
+AC_ARG_ENABLE(unittest,
+              [AS_HELP_STRING([--enable-unittest],
+                              [turn on unit tests. [default=no]])],
+              [AC_CHECK_HEADER([check.h],
+                               [AC_CHECK_LIB(check,
+                                             check_fork,
+                                             [enable_unittest=yes],
+                                             [AC_MSG_ERROR([could not link to libcheck])])],
+                               [AC_MSG_ERROR([could not find Check's header file <check.h>])])],
+              [enable_unittest=no])
+AM_CONDITIONAL([UNITTEST], [test "x$enable_unittest" = "xyes"])
 
 dnl ---------------------------------------------------------------------------
 dnl Checks for libraries.
@@ -172,6 +185,7 @@ AC_CONFIG_FILES([odeSolver/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/libODES.pc])
 AC_CONFIG_FILES([tutorial/Makefile])
+AC_CONFIG_FILES([unittest/Makefile])
 dnl AC_CONFIG_FILES([bindings/Makefile])
 dnl AC_CONFIG_FILES([bindings/swig/Makefile])
 dnl AC_CONFIG_FILES([bindings/perl/Makefile])
@@ -266,7 +280,7 @@ echo ""
 echo "NOTE:"
 echo "     SOSlib has the following dependencies:"
 echo "     (*) SUNDIALS suite v2.3.0"
-echo "     (*) libSBML v3.0.2 or CVS"
+echo "     (*) libSBML v3.4.1 or later"
 dnl echo "     (*) libxerces-c v2.7.0 or expat v2.0.0"
 dnl echo "     (*) tcc from http://savannah.nongnu.org/projects/tinycc"
 echo ""

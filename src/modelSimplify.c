@@ -58,7 +58,7 @@
 */
 SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name, const char *newname)
 {
-  int i;
+  unsigned int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
@@ -76,7 +76,7 @@ SBML_ODESOLVER_API void AST_replaceNameByName(ASTNode_t *math, const char *name,
 
 SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name, double x)
 {
-  int i;
+  unsigned int i;
   List_t *names;
 
   names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
@@ -95,7 +95,7 @@ SBML_ODESOLVER_API void AST_replaceNameByValue(ASTNode_t *math, const char *name
 
 SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *lp)
 {
-  int i,j;
+  unsigned int i,j;
   Parameter_t *p;
   List_t *names;
 
@@ -120,7 +120,7 @@ SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *l
 
 SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *name, const ASTNode_t *formula)
 {
-  int i, j;  
+  unsigned int i, j;
   ASTNode_t *old;
   List_t *names;
 
@@ -171,16 +171,18 @@ SBML_ODESOLVER_API void AST_replaceNameByFormula(ASTNode_t *math, const char *na
 
 SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const char *name, const ASTNode_t *function)
 {  
-  int i, j;  
+  unsigned int i, j;
   ASTNode_t *old, *new;
   List_t *names;
+  unsigned int n;
  
   names = ASTNode_getListOfNodes(math, (ASTNodePredicate) ASTNode_isFunction);
+  n = List_size(names);
 
-  for ( i=0; i<List_size(names); i++ )
+  for ( i=0; i<n; i++ )
   {
     new = copyAST(ASTNode_getRightChild(function)); /* holds function r.h.s */
-    old = List_get(names,i);
+    old = List_get(names, n-i-1);
     
     /* if `old' is the searched function defintion ... */
     if ( ASTNode_getName(old) == NULL ) {
@@ -230,7 +232,7 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
 
 SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
 {
-  int i, j, found;
+  unsigned int i, j, found, nrules;
   Parameter_t *p;
   Compartment_t *c;
   Species_t *s;
@@ -249,9 +251,10 @@ SBML_ODESOLVER_API void AST_replaceConstants(Model_t *m, ASTNode_t *math)
      assignment rules can be used is subsequent assignments.
      Thus this direction should catch all assignments.
   */
-  for ( i=(Model_getNumRules(m)-1); i>=0; i-- )
+  nrules = Model_getNumRules(m);
+  for ( i=0; i<nrules; i++ )
   {
-    rl = Model_getRule(m, i);
+    rl = Model_getRule(m, nrules-i-1);
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_ASSIGNMENT_RULE )
       if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) ) 

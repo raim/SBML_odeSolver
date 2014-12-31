@@ -29,7 +29,7 @@
 ##     Rainer Machne    
 ##
 AM_CPPFLAGS = -I$(srcdir)/../src @SBML_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
-AM_CFLAGS  = -Wno-unknown-pragmas -Wall -ansi -std=iso9899:1990
+AM_CFLAGS  = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
 LDADD = ../src/libODES.la \
     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \

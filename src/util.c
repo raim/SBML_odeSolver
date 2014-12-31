@@ -119,10 +119,14 @@ char *get_line(FILE *fp)
 char*
 concat (char *a, char *b)
 {
-  char *tmp = NULL;
-  tmp = (char *)xalloc(strlen(a)+strlen(b)+2, sizeof(char));
+  size_t alen, blen;
+  char *tmp;
+
+  alen = strlen(a);
+  blen = strlen(b);
+  tmp = (char *)xalloc(alen+blen+2, sizeof(char));
   strcpy(tmp, a);
-  if (tmp[strlen(a)-1] != '/') strcat(tmp, "/");
+  if (alen == 0 || tmp[alen-1] != '/') tmp[alen] = '/';
   strcat(tmp, b);
   return (tmp);
 }

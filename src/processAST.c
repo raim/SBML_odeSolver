@@ -63,6 +63,10 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/interpol.h"
 
+/* Helper Macros to get the second or the third child
+   of an Abstract Syntax Tree */
+#define child2(x,y,z)  ASTNode_getChild(ASTNode_getChild(x,y),z)
+#define child3(x,y,z,w) ASTNode_getChild(ASTNode_getChild(ASTNode_getChild(x,y),z),w)
 
 static double aCosh(double x)
 {
@@ -137,10 +141,6 @@ SBML_ODESOLVER_API void setUserDefinedFunction(double(*udf)(char*, int, double*)
   UsrDefFunc = udf;
 }
 
-#if OLD_LIBSBML
-#define AST_FUNCTION_DELAY AST_NAME_DELAY
-#endif
-
 /* ------------------------------------------------------------------------ */
 
 /** writes the given AST to standard out.  The string 'context'
@@ -157,9 +157,9 @@ void AST_dump(const char *context, ASTNode_t *node)
     returns the copy.
 */
 
-ASTNode_t *copyAST(const ASTNode_t *f)
+SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f)
 {
-  int i;
+  unsigned int i;
   ASTNode_t *copy;
 
   copy = ASTNode_create();
@@ -685,7 +685,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
 SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 {
-  int i, j, childnum;
+  unsigned int i, j, childnum;
   int found;
   ASTNodeType_t type;
   ASTNode_t *fprime, *helper, *simple;
@@ -1345,13 +1345,11 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COSH:
-      /** f(x)=cosh(a(x)) => f' = a' * -sinh(a) */   
+      /** f(x)=cosh(a(x)) => f' = a' * sinh(a) */
       ASTNode_setType(fprime,AST_TIMES);
       ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
-      ASTNode_addChild(ASTNode_getChild(fprime,0), ASTNode_create());      
-      ASTNode_setType(child2(fprime,0,0), AST_FUNCTION_SINH);
-      ASTNode_addChild(child2(fprime,0,0), copyAST(ASTNode_getChild(f,0)));
+      ASTNode_setType(ASTNode_getChild(fprime,0), AST_FUNCTION_SINH);
+      ASTNode_addChild(ASTNode_getChild(fprime,0), copyAST(ASTNode_getChild(f,0)));
       ASTNode_addChild(fprime,differentiateAST(ASTNode_getChild(f,0),x));
       break;
     case AST_FUNCTION_COT:
@@ -1653,7 +1651,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 */
 
 
-ASTNode_t *determinantNAST(ASTNode_t ***A, int N)
+SBML_ODESOLVER_API ASTNode_t *determinantNAST(ASTNode_t ***A, int N)
 {
   int k, i, j, l, check;
   ASTNode_t ***B;
@@ -1889,9 +1887,9 @@ calls itself recursively for childnodes,
    
 */
 
-SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
+SBML_ODESOLVER_API ASTNode_t *simplifyAST(const ASTNode_t *f)
 {  
-  int i, childnum;
+  unsigned int i, childnum;
   int simplify;
   ASTNode_t *simple, *left, *right, *helper;
   ASTNodeType_t type;
@@ -1911,13 +1909,13 @@ SBML_ODESOLVER_API ASTNode_t *simplifyAST(ASTNode_t *f)
   /* variables */
   else if ( ASTNode_isName(f) )
   {
-    if ( ASTNode_isSetIndex((ASTNode_t *)f) )
+    if ( ASTNode_isSetIndex(f) )
     {
       ASTNode_free(simple);
       simple = ASTNode_createIndexName();
-      ASTNode_setIndex(simple, ASTNode_getIndex((ASTNode_t *)f));
+      ASTNode_setIndex(simple, ASTNode_getIndex(f));
 
-      if ( ASTNode_isSetData((ASTNode_t *)f) )
+      if ( ASTNode_isSetData(f) )
 	 ASTNode_setData(simple);
     } 
     ASTNode_setName(simple, ASTNode_getName(f));
@@ -2303,9 +2301,9 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old)
 /* appends the symbols in the given AST to the given list.
    'char *' strings are appended to the list these strings
    should not be freed and exist as long as the AST. */
-void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
+void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_NAME )
     List_add(symbols, (char*) ASTNode_getName(node));
@@ -2314,9 +2312,9 @@ void ASTNode_getSymbols(ASTNode_t *node, List_t *symbols)
     ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
 }
 /* appends the indices in the given indexed AST to the given list. */
-int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
+int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 {
-  int i; 
+  unsigned int i;
 
   if ( ASTNode_isSetIndex(node) )
   {
@@ -2333,7 +2331,7 @@ int ASTNode_getIndices(ASTNode_t *node, List_t *indices)
 }
 /* generates a boolean vector of size nvalues, indicating whether
    an index occurs in the given indexed AST */
-int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
+int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
 {
   int i;
   int *result;
@@ -2363,9 +2361,9 @@ int *ASTNode_getIndexArray(ASTNode_t *node, int nvalues)
 }
 
 /* returns boolean result: whether the given AST contains a time symbol. */
-int ASTNode_containsTime(ASTNode_t *node)
+int ASTNode_containsTime(const ASTNode_t *node)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_NAME_TIME /* || */
 /*        (ASTNode_getType(node) == AST_NAME && */
@@ -2382,9 +2380,9 @@ int ASTNode_containsTime(ASTNode_t *node)
 }
 
 /* returns boolean result: whether the given AST contains a time symbol. */
-int ASTNode_containsPiecewise(ASTNode_t *node)
+int ASTNode_containsPiecewise(const ASTNode_t *node)
 {
-  int i ;
+  unsigned int i;
 
   if ( ASTNode_getType(node) == AST_FUNCTION_PIECEWISE )
     return 1;
@@ -2404,7 +2402,7 @@ int ASTNode_containsPiecewise(ASTNode_t *node)
 /* appends the given AST in compilable form to the given buffer.
    The form is enclosed in brackets when necessary so that the AST
    can be incorporated as a sub expression of another expression. */
-void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
+static void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
 				      const ASTNode_t *node)
 {
   switch ( ASTNode_getType(node) )
@@ -2469,7 +2467,7 @@ void ASTNode_generateNestedExpression(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a unary operator.
    'op' is the compilable operator string for the node. */
-void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
+static void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
 				   const ASTNode_t *node, const char *op)
 {
   CharBuffer_append(expressionStream,op); ;
@@ -2480,7 +2478,7 @@ void ASTNode_generateUnaryOperator(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a Nary operator.
    'op' is the compilable operator string for the node. */
-void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
+static void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
 				  const ASTNode_t *node, const char *op)
 {
   unsigned int i;
@@ -2501,7 +2499,7 @@ void ASTNode_generateNaryOperator(charBuffer_t *expressionStream,
 /* appends the given node to the given buffer in compilable form assuming
    the node is a function.
    'func' is the compilable function string for the node. */
-void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
+static void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
 				  const ASTNode_t *node, const char *func)
 {
   unsigned int i;
@@ -2522,7 +2520,7 @@ void ASTNode_generateFunctionCall(charBuffer_t *expressionStream,
    array 'value' indexed by the the index associated with the node by
    the function 'indexAST'.  If the ASTNode doesn't have an index
    value then an error is created and '0' is appended to the buffer. */
-void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
+static void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
 {
   int found = 0;
 
@@ -2575,7 +2573,7 @@ void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t *n)
 
 /** appends compilable macros and functions to buffer to enable the code
     in buffer to support the code generated by the 'generateAST' function. */
-void generateMacros(charBuffer_t *buffer)
+SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer)
 {
   /* was using
      "#define asech(x) log((1.0 + MySQRT(1.0 - MySQR(x))) / (x))\n"\ */
@@ -2616,7 +2614,7 @@ void generateMacros(charBuffer_t *buffer)
 
 /* appends compilable code to the given buffer for the given AST assuming
    the AST is an XOR expression. */
-void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
+static void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
 {
   unsigned int i;
     
@@ -2637,7 +2635,7 @@ void ASTNode_generateXOR(charBuffer_t *expressionStream, const ASTNode_t *node)
 
 /* appends compilable code to the given buffer that
    implements the given AST. */
-void generateAST(charBuffer_t *expressionStream, const ASTNode_t *node)
+SBML_ODESOLVER_API void generateAST(charBuffer_t *expressionStream, const ASTNode_t *node)
 {
   switch (ASTNode_getType(node))
   {

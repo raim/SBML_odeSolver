@@ -49,12 +49,12 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 #include <cvodes/cvodes_dense.h>
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/interpol.h"
-#include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/compiler.h"
-#include "sbmlsolver/arithmeticCompiler.h"
-#include "sbmlsolver/variableIndex.h"
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/interpol.h>
+#include <sbmlsolver/integratorSettings.h>
+#include <sbmlsolver/compiler.h>
+#include <sbmlsolver/arithmeticCompiler.h>
+#include <sbmlsolver/variableIndex.h>
 
 /** The internal ODE Model as constructed in odeModel.c from an SBML
     input file, that only contains rate rules (constructed from
@@ -308,33 +308,33 @@ extern "C" {
   SBML_ODESOLVER_API const Model_t *ODEModel_getOdeSBML(odeModel_t *);
   SBML_ODESOLVER_API const Model_t *ODEModel_getInputSBML(odeModel_t *);
 
-  SBML_ODESOLVER_API int ODEModel_getNumValues(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNeq(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNalg(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumAssignments(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumConstants(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_hasVariable(odeModel_t *, const char *);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(odeModel_t *, int);
-  SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(odeModel_t *, int);
+  SBML_ODESOLVER_API int ODEModel_getNumValues(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNeq(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNalg(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumAssignments(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumConstants(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_hasVariable(const odeModel_t *, const char *);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(const odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getOdeVariableIndex(const odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getAssignedVariableIndex(const odeModel_t *, int);
+  SBML_ODESOLVER_API variableIndex_t *ODEModel_getConstantIndex(const odeModel_t *, int);
   SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndex(odeModel_t *, const char *);
   SBML_ODESOLVER_API void ODEModel_dumpNames(odeModel_t *);
 
   /* Topological sorting */
-  SBML_ODESOLVER_API int ODEModel_hasCycle(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(odeModel_t *);
-  SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_hasCycle(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeODEs(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumAssignmentsBeforeEvents(const odeModel_t *);
+  SBML_ODESOLVER_API int ODEModel_getNumJacobiElements(const odeModel_t *);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentOrder(odeModel_t *, int);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeODEs(odeModel_t *, int);
   SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getAssignmentBeforeEvents(odeModel_t *, int);
-  SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(odeModel_t *, int);
+  SBML_ODESOLVER_API const nonzeroElem_t *ODEModel_getJacobiElement(const odeModel_t *, int);
   
   /* Variable Index */
-  SBML_ODESOLVER_API const char *ODEModel_getVariableName(odeModel_t *, variableIndex_t *);
-  SBML_ODESOLVER_API const char *VariableIndex_getName(variableIndex_t *, odeModel_t *);
-  SBML_ODESOLVER_API int VariableIndex_getIndex(variableIndex_t *);
+  SBML_ODESOLVER_API const char *ODEModel_getVariableName(const odeModel_t *, const variableIndex_t *);
+  SBML_ODESOLVER_API const char *VariableIndex_getName(const variableIndex_t *, const odeModel_t *);
+  SBML_ODESOLVER_API int VariableIndex_getIndex(const variableIndex_t *);
   SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *);
   /* Evaluation elements */
   /*!!! TODO : fuse nonzeroElem with variableIndex and use list of variableIndex instead */
@@ -346,36 +346,37 @@ extern "C" {
 
   
   /* ODEs and assignments */
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(odeModel_t *, variableIndex_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(odeModel_t *, variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getOde(const odeModel_t *, const variableIndex_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getAssignment(const odeModel_t *, const variableIndex_t *);
 
 
   /* diverse other useful functions */
   SBML_ODESOLVER_API List_t *topoSort(int **matrix, int n, int *changed, int*required);
 
+#if 0 /* not yet implemented */
   /* Discontinuities */
   SBML_ODESOLVER_API int ODEModel_getNumPiecewise(odeModel_t *);
   SBML_ODESOLVER_API int ODEModel_getNumEvents(odeModel_t *);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getEventTrigger(odeModel_t *, int);
   SBML_ODESOLVER_API const ASTNode_t *ODEModel_getEventAssignment(odeModel_t *, int, int);
-  
+#endif
 
   /* ODE Jacobi matrix */
   SBML_ODESOLVER_API int ODEModel_constructJacobian(odeModel_t *);
   SBML_ODESOLVER_API void ODEModel_freeJacobian(odeModel_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(odeModel_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(odeModel_t *, variableIndex_t *, variableIndex_t *);
-  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(odeModel_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianIJEntry(const odeModel_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODEModel_getJacobianEntry(const odeModel_t *, const variableIndex_t *, const variableIndex_t *);
+  SBML_ODESOLVER_API ASTNode_t *ODEModel_constructDeterminant(const odeModel_t *);
 
   /* Sensitivity Model */
   SBML_ODESOLVER_API odeSense_t *ODEModel_constructSensitivity(odeModel_t *);
   SBML_ODESOLVER_API odeSense_t *ODESense_create(odeModel_t *, cvodeSettings_t *);
   SBML_ODESOLVER_API void ODESense_free(odeSense_t *);
-  SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(odeSense_t *, int);
-  SBML_ODESOLVER_API int ODESense_getNeq(odeSense_t *);
-  SBML_ODESOLVER_API int ODESense_getNsens(odeSense_t *);
-  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(odeSense_t *, int i, int j);
-  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(odeSense_t *, variableIndex_t *, variableIndex_t *);
+  SBML_ODESOLVER_API variableIndex_t *ODESense_getSensParamIndexByNum(const odeSense_t *, int);
+  SBML_ODESOLVER_API int ODESense_getNeq(const odeSense_t *);
+  SBML_ODESOLVER_API int ODESense_getNsens(const odeSense_t *);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensIJEntry(const odeSense_t *, int i, int j);
+  SBML_ODESOLVER_API const ASTNode_t *ODESense_getSensEntry(const odeSense_t *, const variableIndex_t *, const variableIndex_t *);
 
   /* ODEModel compilation */
   SBML_ODESOLVER_API int ODEModel_compileCVODEFunctions(odeModel_t *);
@@ -392,8 +393,5 @@ extern "C" {
 #endif
 
 /* internal functions, not be used by calling applications */  
-int ODEModel_getVariableIndexFields(odeModel_t *, const char *SBML_ID);
-int ODESense_constructMatrix(odeSense_t *, odeModel_t *);
-void ODESense_freeMatrix(odeSense_t *);
-void ODESense_freeStructures(odeSense_t *);
+int ODEModel_getVariableIndexFields(const odeModel_t *, const char *SBML_ID);
 #endif

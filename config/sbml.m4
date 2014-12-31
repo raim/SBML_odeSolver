@@ -207,11 +207,6 @@ AC_DEFUN([CONFIG_LIB_SBML],
   AC_DEFINE_UNQUOTED([SBML_LIBS], "sbml",
             [SBML libs])
 
-
-  AC_DEFINE([USE_SBML], 1, [Define to 1 to use the SBML Library])
-  AC_SUBST(USE_SBML, 1)
-  AC_DEFINE([OLD_LIBSBML], 0, [Define to 1 for SBML Library version < 2.2.0])
-  AC_SUBST(OLD_LIBSBML)
   AC_SUBST(SBML_CPPFLAGS)
   AC_SUBST(SBML_LDFLAGS)
   AC_SUBST(SBML_RPATH)

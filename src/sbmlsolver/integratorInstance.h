@@ -37,15 +37,15 @@
 #define _INTEGRATORINSTANCE_H_
 
 #include <time.h>
-#include "nvector/nvector_serial.h"
+#include <nvector/nvector_serial.h>
 
 typedef struct cvodeSolver cvodeSolver_t;
 typedef struct integratorInstance integratorInstance_t ;
 
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/cvodeData.h"
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorSettings.h>
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/cvodeData.h>
 
 /** Solver State Information */
 struct cvodeSolver

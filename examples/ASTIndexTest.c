@@ -42,7 +42,7 @@
 
 int main(void)
 {
-    int i;
+    unsigned int i;
     char *formula;
     ASTNode_t *top = SBML_parseFormula("A * B");
     ASTNode_t *temp = ASTNode_create();
