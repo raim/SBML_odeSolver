@@ -40,7 +40,7 @@
 #include <windows.h>
 #endif
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 #ifdef __cplusplus
 extern "C" {

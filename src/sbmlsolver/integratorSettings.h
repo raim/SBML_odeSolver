@@ -40,8 +40,8 @@
 typedef struct timeSettings timeSettings_t;
 typedef struct cvodeSettings cvodeSettings_t;
 
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/interpol.h"
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/interpol.h>
   
   /** Settings for CVODE Integration
 

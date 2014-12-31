@@ -36,7 +36,7 @@
 #ifndef _CVODESOLVER_H_
 #define _CVODESOLVER_H_
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 #ifdef __cplusplus
 extern "C" {

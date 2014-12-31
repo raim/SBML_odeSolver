@@ -38,7 +38,7 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 typedef struct timeCourse timeCourse_t ;
 typedef struct timeCourseArray timeCourseArray_t ;

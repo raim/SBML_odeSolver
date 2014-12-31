@@ -39,7 +39,7 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 SBMLDocument_t *convertModel (SBMLDocument_t *d1);
 

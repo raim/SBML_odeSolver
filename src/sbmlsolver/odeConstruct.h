@@ -38,7 +38,7 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 #ifdef __cplusplus
 extern "C" {

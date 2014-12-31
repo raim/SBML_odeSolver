@@ -46,10 +46,10 @@ typedef struct cvodeResults cvodeResults_t ;
 #include <stdio.h>
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/variableIndex.h"
+#include <sbmlsolver/integratorSettings.h>
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/variableIndex.h>
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel

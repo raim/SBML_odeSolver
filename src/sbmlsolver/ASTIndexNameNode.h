@@ -1,9 +1,9 @@
 #ifndef _ASTINDEXNAMENODE_H_
 #define _ASTINDEXNAMENODE_H_
 
-#include "sbml/math/ASTNode.h"
+#include <sbml/math/ASTNode.h>
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 BEGIN_C_DECLS
 

@@ -39,7 +39,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/exportdefs.h>
 
 /** error codes.
     codes < 0 reserved for CVODE\n

@@ -49,12 +49,12 @@ typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 #include <cvodes/cvodes_dense.h>
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/interpol.h"
-#include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/compiler.h"
-#include "sbmlsolver/arithmeticCompiler.h"
-#include "sbmlsolver/variableIndex.h"
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/interpol.h>
+#include <sbmlsolver/integratorSettings.h>
+#include <sbmlsolver/compiler.h>
+#include <sbmlsolver/arithmeticCompiler.h>
+#include <sbmlsolver/variableIndex.h>
 
 /** The internal ODE Model as constructed in odeModel.c from an SBML
     input file, that only contains rate rules (constructed from

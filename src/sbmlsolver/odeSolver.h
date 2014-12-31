@@ -42,23 +42,23 @@ typedef struct varySettings varySettings_t;
 #include <sbml/SBMLTypes.h>
 
 /* own header files */
-#include "sbmlsolver/util.h"
-#include "sbmlsolver/sbml.h"
-#include "sbmlsolver/modelSimplify.h"
-#include "sbmlsolver/cvodeData.h"
-#include "sbmlsolver/odeConstruct.h"
-#include "sbmlsolver/integratorSettings.h"
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
-#include "sbmlsolver/drawGraph.h"
-#include "sbmlsolver/processAST.h"
-#include "sbmlsolver/sbmlResults.h"
-#include "sbmlsolver/exportdefs.h"
+#include <sbmlsolver/util.h>
+#include <sbmlsolver/sbml.h>
+#include <sbmlsolver/modelSimplify.h>
+#include <sbmlsolver/cvodeData.h>
+#include <sbmlsolver/odeConstruct.h>
+#include <sbmlsolver/integratorSettings.h>
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
+#include <sbmlsolver/drawGraph.h>
+#include <sbmlsolver/processAST.h>
+#include <sbmlsolver/sbmlResults.h>
+#include <sbmlsolver/exportdefs.h>
 
 /* needed by sm */
-#include "sbmlsolver/ASTIndexNameNode.h"
-#include "sbmlsolver/variableIndex.h"
-#include "sbmlsolver/odeModel.h"
+#include <sbmlsolver/ASTIndexNameNode.h>
+#include <sbmlsolver/variableIndex.h>
+#include <sbmlsolver/odeModel.h>
 
 
   /** Settings for batch integration with parameter variation */

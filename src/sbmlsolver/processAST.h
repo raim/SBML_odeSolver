@@ -40,10 +40,10 @@
 #include <sbml/SBMLTypes.h>
 
 /* own header files */
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/cvodeData.h"
-#include "sbmlsolver/exportdefs.h"
-#include "sbmlsolver/charBuffer.h"
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/cvodeData.h>
+#include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/charBuffer.h>
 
 #define MySQR(x) ((x)*(x))
 #define MySQRT(x) pow((x),(.5))
