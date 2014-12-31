@@ -246,6 +246,28 @@ START_TEST(test_copyAST)
 }
 END_TEST
 
+START_TEST(test_indexAST)
+{
+	static const char input[] = "x + tan(y) / (2 * z)";
+	static const char *names[] = {"a", "b", "x", "y", "z"};
+	ASTNode_t *node, *indexed;
+	char *s;
+	node = SBML_parseFormula(input);
+	indexed = indexAST(node, 5, (char **)names);
+	s = SBML_formulaToString(indexed);
+	ck_assert_str_eq(s, input);
+	free(s);
+	ck_assert_int_eq(ASTNode_isIndexName(ASTNode_getLeftChild(indexed)), 1);
+	ck_assert(ASTNode_getIndex(ASTNode_getLeftChild(indexed)) == 2);
+	ck_assert_int_eq(ASTNode_isIndexName(ASTNode_getLeftChild(ASTNode_getLeftChild(ASTNode_getRightChild(indexed)))), 1);
+	ck_assert(ASTNode_getIndex(ASTNode_getLeftChild(ASTNode_getLeftChild(ASTNode_getRightChild(indexed)))) == 3);
+	ck_assert_int_eq(ASTNode_isIndexName(ASTNode_getRightChild(ASTNode_getRightChild(ASTNode_getRightChild(indexed)))), 1);
+	ck_assert(ASTNode_getIndex(ASTNode_getRightChild(ASTNode_getRightChild(ASTNode_getRightChild(indexed)))) == 4);
+	ASTNode_free(indexed);
+	ASTNode_free(node);
+}
+END_TEST
+
 START_TEST(test_simplifyAST)
 {
 	CHECK_SIMPLIFY("0", "0");
@@ -382,6 +404,7 @@ Suite *create_suite_processAST(void)
 	TCase *tc_differentiateAST;
 	TCase *tc_copyAST;
 	TCase *tc_simplifyAST;
+	TCase *tc_indexAST;
 	TCase *tc_ASTNode_getSymbols;
 	TCase *tc_ASTNode_containsTime;
 	TCase *tc_ASTNode_containsPiecewise;
@@ -405,6 +428,10 @@ Suite *create_suite_processAST(void)
 	tc_simplifyAST = tcase_create("simplifyAST");
 	tcase_add_test(tc_simplifyAST, test_simplifyAST);
 	suite_add_tcase(s, tc_simplifyAST);
+
+	tc_indexAST = tcase_create("indexAST");
+	tcase_add_test(tc_indexAST, test_indexAST);
+	suite_add_tcase(s, tc_indexAST);
 
 	tc_ASTNode_getSymbols = tcase_create("ASTNode_getSymbols");
 	tcase_add_test(tc_ASTNode_getSymbols, test_ASTNode_getSymbols);
