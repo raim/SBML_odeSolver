@@ -37,6 +37,7 @@
 
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
+Suite *create_suite_interpol(void);
 Suite *create_suite_modelSimplify(void);
 Suite *create_suite_odeConstruct(void);
 Suite *create_suite_odeModel(void);

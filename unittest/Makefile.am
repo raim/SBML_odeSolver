@@ -17,6 +17,7 @@ unittest_LDADD = -lcheck \
 unittest_SOURCES = main.c \
                    test_ASTIndexNameNode.c \
                    test_charBuffer.c \
+                   test_interpol.c \
                    test_modelSimplify.c \
                    test_odeConstruct.c \
                    test_odeModel.c \
