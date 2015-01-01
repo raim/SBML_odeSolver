@@ -62,16 +62,16 @@ typedef struct ts time_series_t;
 extern "C" {
 #endif
 
-  int read_header_line(char *file, int n_var, char **var,
+  int read_header_line(const char *file, int n_var, char **var,
 			    int *col, int *index);
-  int read_columns(char *file, int n_col, int *col, int *index,
+  int read_columns(const char *file, int n_col, int *col, int *index,
 			time_series_t *ts);
 
   void free_data(time_series_t *ts);
   void print_data(time_series_t *ts);
   void test_interpol(time_series_t *ts);
 
-  time_series_t *read_data(char *file, int num, char **var);
+  time_series_t *read_data(const char *file, int num, char **var);
 
   double call(int i, double x, time_series_t *ts);
 

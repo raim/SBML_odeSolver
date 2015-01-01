@@ -139,7 +139,7 @@ void test_interpol(time_series_t* ts)
     the second derivatives for spline interpolation, and returns a
     pointer to the created data structure. */
 
-time_series_t *read_data(char *file, int n_var, char **var)
+time_series_t *read_data(const char *file, int n_var, char **var)
 {
     int i;
     char *name;
@@ -232,7 +232,7 @@ time_series_t *read_data(char *file, int n_var, char **var)
 /* and returns the list of found columns (their indices) */
 /* and the corresponding variables (their indices). */
 
-int read_header_line(char *file, int n_var, char **var,
+int read_header_line(const char *file, int n_var, char **var,
 		     int *col, int *index)
 {    
     FILE *fp;
@@ -312,7 +312,7 @@ int read_header_line(char *file, int n_var, char **var,
 /* and returns the number of read lines. */
 /* (or only counts the number of lines, if the pointer is NULL.) */
 
-int read_columns(char *file, int n_col, int *col, int *index,
+int read_columns(const char *file, int n_col, int *col, int *index,
 		 time_series_t *ts)
 {    
     FILE *fp;
