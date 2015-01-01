@@ -38,9 +38,11 @@ void free_data(time_series_t* ts)
     free(ts->data2);
     
     /* free warnings */
+	if (ts->warn) {
     for ( i=0; i<2; i++ )
 	if ( ts->warn[i] != 0 ) /* ??? use SolverError here ??? */
 	    Warn(stderr, "call(): %s: %d times\n", ts->mess[i], ts->warn[i]);
+	}
   
     free(ts->mess);
     free(ts->warn); 
