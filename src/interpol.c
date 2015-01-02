@@ -542,6 +542,7 @@ void hunt(int n, double *x, double x_, int *low)
     inc = 1;
     if ( x_ >= x[*low] )
 	{
+		if (*low == n-1) return;
 	    /* hunt up */
 	    high = *low + inc;
 	    while ( x_ >= x[high] )
@@ -562,6 +563,7 @@ void hunt(int n, double *x, double x_, int *low)
 	    /* hunt down */
 	    high = *low;
 	    *low -= inc;
+		if (*low == -1) return;
 	    while ( x_ < x[*low] )
 		{
 		    inc <<= 1;

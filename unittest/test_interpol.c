@@ -102,6 +102,34 @@ START_TEST(test_bisection)
 }
 END_TEST
 
+START_TEST(test_hunt)
+{
+	static const double x[] = {-20.0, -4.5, 0.0, 1.25, 8.5};
+	static const int n = (int)sizeof(x)/sizeof(x[0]);
+	int i, r;
+	for (i=0;i<n;i++) {
+		r = i;
+		hunt(n, x, -30.0, &r);
+		ck_assert_int_eq(r, -1);
+	}
+	for (i=0;i<n;i++) {
+		r = i;
+		hunt(n, x, 0.1, &r);
+		ck_assert_int_eq(r, 2);
+	}
+	for (i=0;i<n;i++) {
+		r = i;
+		hunt(n, x, 0.0, &r);
+		ck_assert_int_eq(r, 2);
+	}
+	for (i=0;i<n;i++) {
+		r = i;
+		hunt(n, x, 10.0, &r);
+		ck_assert_int_eq(r, 4);
+	}
+}
+END_TEST
+
 /* public */
 Suite *create_suite_interpol(void)
 {
@@ -110,6 +138,7 @@ Suite *create_suite_interpol(void)
 	TCase *tc_read_columns;
 	TCase *tc_read_data;
 	TCase *tc_bisection;
+	TCase *tc_hunt;
 
 	s = suite_create("interpol");
 
@@ -128,6 +157,10 @@ Suite *create_suite_interpol(void)
 	tc_bisection = tcase_create("bisection");
 	tcase_add_test(tc_bisection, test_bisection);
 	suite_add_tcase(s, tc_bisection);
+
+	tc_hunt = tcase_create("hunt");
+	tcase_add_test(tc_hunt, test_hunt);
+	suite_add_tcase(s, tc_hunt);
 
 	return s;
 }
