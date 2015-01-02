@@ -17,7 +17,7 @@ extern "C" {
   SBML_ODESOLVER_API int drawSensitivity(cvodeData_t *, char *, char*, double);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

@@ -49,7 +49,7 @@ extern "C" {
   const char *CharBuffer_getBuffer(charBuffer_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

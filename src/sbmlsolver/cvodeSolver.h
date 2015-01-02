@@ -60,7 +60,7 @@ extern "C" {
   int check_flag(void *flagvalue, char *funcname, int opt);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

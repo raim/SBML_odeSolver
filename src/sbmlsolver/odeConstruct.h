@@ -50,7 +50,7 @@ extern "C" {
   SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *, Model_t *);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

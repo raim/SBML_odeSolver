@@ -245,7 +245,7 @@ extern "C" {
 
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif /* _CVODESETTINGS_H_ */

@@ -200,7 +200,7 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 /* default function for data update, event and steady state handling,

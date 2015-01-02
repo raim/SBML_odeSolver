@@ -191,7 +191,7 @@ extern "C" {
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 

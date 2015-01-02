@@ -107,7 +107,7 @@ extern "C" {
   SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

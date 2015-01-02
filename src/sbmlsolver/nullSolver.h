@@ -47,7 +47,7 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInstance_t *, FILE *f);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 /* internal functions that are not part of the API (yet?) */

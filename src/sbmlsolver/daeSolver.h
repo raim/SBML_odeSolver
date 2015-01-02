@@ -52,7 +52,7 @@ extern "C" {
   void IntegratorInstance_freeIDASolverStructures(integratorInstance_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

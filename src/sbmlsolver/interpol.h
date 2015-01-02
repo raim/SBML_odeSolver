@@ -86,7 +86,7 @@ extern "C" {
   void hunt(int n, const double *x, double x_, int *low);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

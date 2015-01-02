@@ -389,7 +389,7 @@ extern "C" {
   SBML_ODESOLVER_API CVSensRhs1Fn ODESense_getCompiledCVODESenseFunction(odeSense_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 /* internal functions, not be used by calling applications */  
