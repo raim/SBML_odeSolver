@@ -510,7 +510,7 @@ void linint(int n, double *x, double *y, double x_, double *y_, int *j)
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-int bisection(int n, double *x, double x_)
+int bisection(int n, const double *x, double x_)
 {
     int low, high, med;
 

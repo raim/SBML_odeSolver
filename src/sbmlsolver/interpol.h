@@ -82,7 +82,7 @@ extern "C" {
   void linint(int n, double *x, double *y,
 	      double x_, double *y_, int *j);
 	    
-  int  bisection(int n, double *x, double x_);
+  int  bisection(int n, const double *x, double x_);
   void hunt(int n, double *x, double x_, int *low);
   
 #ifdef __cplusplus
