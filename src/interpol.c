@@ -535,7 +535,7 @@ int bisection(int n, const double *x, double x_)
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-void hunt(int n, double *x, double x_, int *low)
+void hunt(int n, const double *x, double x_, int *low)
 {
     int high, med, inc;
 

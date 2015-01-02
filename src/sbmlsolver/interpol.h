@@ -83,7 +83,7 @@ extern "C" {
 	      double x_, double *y_, int *j);
 	    
   int  bisection(int n, const double *x, double x_);
-  void hunt(int n, double *x, double x_, int *low);
+  void hunt(int n, const double *x, double x_, int *low);
   
 #ifdef __cplusplus
 };
