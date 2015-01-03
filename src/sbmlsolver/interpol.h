@@ -75,11 +75,11 @@ extern "C" {
 
   double call(int i, double x, time_series_t *ts);
 
-  int spline(int n, double *x, double *y, double *y2);
-  void splint(int n, double *x, double *y, double *y2,
+  int spline(int n, const double *x, const double *y, double *y2);
+  void splint(int n, const double *x, const double *y, const double *y2,
 	      double x_, double *y_, int *j);
 
-  void linint(int n, double *x, double *y,
+  void linint(int n, const double *x, const double *y,
 	      double x_, double *y_, int *j);
 	    
   int  bisection(int n, const double *x, double x_);

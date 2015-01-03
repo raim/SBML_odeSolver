@@ -437,7 +437,7 @@ double call(int i, double x, time_series_t *ts)
 /* spline returns y2[0..n-1] */
 /* containing the second derivatives of the cubic-spline interpolation */
 
-int spline(int n, double *x, double *y, double *y2)
+int spline(int n, const double *x, const double *y, double *y2)
 {    
     int i;
     double p, sig, *u;
@@ -472,7 +472,7 @@ int spline(int n, double *x, double *y, double *y2)
 /* spline returns the interpolated value y_ = f(x_) */
 /* and the left interval boundary j, i.e. x[j] <= x_ < x[j+1] */
 
-void splint(int n, double *x, double *y, double *y2,
+void splint(int n, const double *x, const double *y, const double *y2,
 	    double x_, double *y_, int *j)
 {
 
@@ -490,7 +490,8 @@ void splint(int n, double *x, double *y, double *y2,
 
 /* ------------------------------------------------------------------------ */
 
-void linint(int n, double *x, double *y, double x_, double *y_, int *j)
+void linint(int n, const double *x, const double *y, double x_,
+			double *y_, int *j)
 {
     double h, b, a;
 
