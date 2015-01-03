@@ -7,6 +7,13 @@
 static const char *vars[] = {"MAPK", "MAPK_PP", "MKKK", "MKK_PP"};
 static const int n_vars = (int)(sizeof(vars)/sizeof(vars[0]));
 
+static const double xs[] = {0.0, 1.0, 2.0, 3.0, 5.0, 10.0};
+static const double ys[] = {-2.5, 1.5, -0.5, 0.25, 1.0, 2.0};
+static const int n_xs = (int)(sizeof(xs)/sizeof(xs[0]));
+
+/* helpers */
+#define CHECK_DOUBLE_WITH_TOLERANCE(d, expected) ck_assert(fabs((d) - (expected)) <= DBL_EPSILON)
+
 /* test cases */
 START_TEST(test_read_header_line)
 {
@@ -130,6 +137,78 @@ START_TEST(test_hunt)
 }
 END_TEST
 
+START_TEST(test_spline)
+{
+	assert(sizeof(xs)/sizeof(xs[0]) == sizeof(ys)/sizeof(ys[0]));
+	double *y2;
+	int r;
+	y2 = calloc(n_xs, sizeof(*y2));
+	r = spline(n_xs, xs, ys, y2);
+	ck_assert_int_eq(r, 1);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[0], 0.0);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[1], -10.80891608391608471607);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[2], 7.23566433566433531155);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[3], -1.63374125874125875058);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[4], 0.15839160839160837391);
+	CHECK_DOUBLE_WITH_TOLERANCE(y2[5], 0.0);
+	free(y2);
+}
+END_TEST
+
+START_TEST(test_splint)
+{
+	double *y2;
+	double y;
+	int j;
+	y2 = calloc(n_xs, sizeof(*y2));
+	(void)spline(n_xs, xs, ys, y2);
+	splint(n_xs, xs, ys, y2, 0.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
+	ck_assert_int_eq(j, 0);
+	splint(n_xs, xs, ys, y2, 1.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
+	ck_assert_int_eq(j, 1);
+	splint(n_xs, xs, ys, y2, 2.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
+	ck_assert_int_eq(j, 2);
+	splint(n_xs, xs, ys, y2, 4.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 0.99383741258741253866);
+	ck_assert_int_eq(j, 3);
+	splint(n_xs, xs, ys, y2, 8.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 1.37825174825174845417);
+	ck_assert_int_eq(j, 4);
+	splint(n_xs, xs, ys, y2, 16.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
+	ck_assert_int_eq(j, 5);
+	free(y2);
+}
+END_TEST
+
+START_TEST(test_linint)
+{
+	double y;
+	int j;
+	linint(n_xs, xs, ys, 0.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
+	ck_assert_int_eq(j, 0);
+	linint(n_xs, xs, ys, 1.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
+	ck_assert_int_eq(j, 1);
+	linint(n_xs, xs, ys, 2.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
+	ck_assert_int_eq(j, 2);
+	linint(n_xs, xs, ys, 4.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 0.625);
+	ck_assert_int_eq(j, 3);
+	linint(n_xs, xs, ys, 8.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 1.60000000000000008882);
+	ck_assert_int_eq(j, 4);
+	linint(n_xs, xs, ys, 16.0, &y, &j);
+	CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
+	ck_assert_int_eq(j, 5);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_interpol(void)
 {
@@ -139,6 +218,9 @@ Suite *create_suite_interpol(void)
 	TCase *tc_read_data;
 	TCase *tc_bisection;
 	TCase *tc_hunt;
+	TCase *tc_spline;
+	TCase *tc_splint;
+	TCase *tc_linint;
 
 	s = suite_create("interpol");
 
@@ -161,6 +243,18 @@ Suite *create_suite_interpol(void)
 	tc_hunt = tcase_create("hunt");
 	tcase_add_test(tc_hunt, test_hunt);
 	suite_add_tcase(s, tc_hunt);
+
+	tc_spline = tcase_create("spline");
+	tcase_add_test(tc_spline, test_spline);
+	suite_add_tcase(s, tc_spline);
+
+	tc_splint = tcase_create("splint");
+	tcase_add_test(tc_splint, test_splint);
+	suite_add_tcase(s, tc_splint);
+
+	tc_linint = tcase_create("linint");
+	tcase_add_test(tc_linint, test_linint);
+	suite_add_tcase(s, tc_linint);
 
 	return s;
 }
