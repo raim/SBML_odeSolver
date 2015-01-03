@@ -38,7 +38,6 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "../src/sbmlsolver/exportdefs.h"
 #include "../src/sbmlsolver/integratorInstance.h"
 
 SBMLDocument_t* parseModelWithArguments(const char *file);
