@@ -38,6 +38,8 @@
 		ck_assert_str_eq(Rule_getFormula(r), (expected));	\
 	} while (0)
 
+#define CHECK_DOUBLE_WITH_TOLERANCE(d, expected) ck_assert(fabs((d) - (expected)) <= DBL_EPSILON)
+
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_interpol(void);

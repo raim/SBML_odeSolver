@@ -11,9 +11,6 @@ static const double xs[] = {0.0, 1.0, 2.0, 3.0, 5.0, 10.0};
 static const double ys[] = {-2.5, 1.5, -0.5, 0.25, 1.0, 2.0};
 static const int n_xs = (int)(sizeof(xs)/sizeof(xs[0]));
 
-/* helpers */
-#define CHECK_DOUBLE_WITH_TOLERANCE(d, expected) ck_assert(fabs((d) - (expected)) <= DBL_EPSILON)
-
 /* test cases */
 START_TEST(test_read_header_line)
 {
