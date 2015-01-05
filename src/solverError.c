@@ -88,7 +88,7 @@ SBML_ODESOLVER_API solverErrorMessage_t *SolverError_getError(errorType_t type, 
   List_t *errors = solverErrors[type];
 
   if ( type == FATAL_ERROR_TYPE && memoryExhaustion &&
-       errorNum == (errors ? List_size(errors) : 0) )
+       errorNum == (errors ? (int)List_size(errors) : 0) )
     return &memoryExhaustionFixedMessage ;
 
   if ( !errors )

@@ -1778,6 +1778,7 @@ SBML_ODESOLVER_API ASTNode_t *ASTNode_indexAST(const ASTNode_t *f, odeModel_t *o
 ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
 {
   int i, found;
+  unsigned int k;
   ASTNode_t *index;
 
   const char *str;
@@ -1853,8 +1854,8 @@ ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char **names)
     /* user-defined functions: name must be set */
     if ( ASTNode_getType(f) == AST_FUNCTION ) 
       ASTNode_setName(index, ASTNode_getName(f));    
-    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) 
-      ASTNode_addChild(index, indexAST(ASTNode_getChild(f,i), nvalues, names));
+    for ( k=0; k<ASTNode_getNumChildren(f); k++ )
+      ASTNode_addChild(index, indexAST(ASTNode_getChild(f,k), nvalues, names));
   }
   
   return index;
