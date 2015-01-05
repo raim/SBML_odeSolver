@@ -7,7 +7,7 @@ Name: libODES
 Description: The SBML ODE Solver library
 URL: http://www.tbi.univie.ac.at/~raim/odeSolver/
 Version: @VERSION@
-Requires: libsbml >= 3.0.2
+Requires: libsbml >= 3.4.1
 Libs: -L${libdir} -lODES
 Libs.private: @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ -lm
 Cflags: -I${includedir} @SUNDIALS_CPPFLAGS@
