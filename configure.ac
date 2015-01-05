@@ -12,7 +12,6 @@ AC_INIT([odeSolver],ODES_VERSION, [{raim,xtof}@tbi.univie.ac.at], [SBML_odeSolve
 AC_CONFIG_AUX_DIR(config)
 dnl Reference custom macros
 m4_include([config/cvode.m4])
-m4_include([config/fpic.m4])
 m4_include([config/grace.m4])
 m4_include([config/graphviz.m4])
 m4_include([config/sbml.m4])
@@ -78,9 +77,6 @@ LT_INIT
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_CC_C_O # deprecated as of automake 1.14
-AC_PROG_CC_FPIC
-AC_SUBST(FPIC)
-AC_ARG_VAR(FPIC,[compiler flag for generating PIC code that can be used in a shared library])
 AC_PROG_CPP
 dnl AC_PROG_RANLIB obsolete because of AC_PROG_LIBTOOL
 AC_PROG_INSTALL
