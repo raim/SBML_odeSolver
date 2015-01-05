@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _CVODESETTINGS_H_
-#define _CVODESETTINGS_H_
+#ifndef _INTEGRATORSETTINGS_H_
+#define _INTEGRATORSETTINGS_H_
 
 /* structures */
 typedef struct timeSettings timeSettings_t;
@@ -248,5 +248,5 @@ extern "C" {
 }
 #endif
 
-#endif /* _CVODESETTINGS_H_ */
+#endif /* _INTEGRATORSETTINGS_H_ */
 
