@@ -33,8 +33,8 @@
  *     Rainer Machne
  */
 
-#ifndef _SOLVERERROR_H_
-#define _SOLVERERROR_H_
+#ifndef SBMLSOLVER_SOLVERERROR_H_
+#define SBMLSOLVER_SOLVERERROR_H_
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -229,6 +229,4 @@ extern "C" {
 }
 #endif
 
-#endif 
-/* _SOLVERERROR_H_ */
-
+#endif

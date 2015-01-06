@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef _NULLSOLVER_H_
-#define _NULLSOLVER_H_
+#ifndef SBMLSOLVER_NULLSOLVER_H_
+#define SBMLSOLVER_NULLSOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
 

@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _INTEGRATORSETTINGS_H_
-#define _INTEGRATORSETTINGS_H_
+#ifndef SBMLSOLVER_INTEGRATORSETTINGS_H_
+#define SBMLSOLVER_INTEGRATORSETTINGS_H_
 
 /* structures */
 typedef struct timeSettings timeSettings_t;

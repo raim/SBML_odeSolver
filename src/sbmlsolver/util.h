@@ -34,8 +34,8 @@
  *     
  */
 
-#ifndef _UTIL_H_
-#define _UTIL_H_
+#ifndef SBMLSOLVER_UTIL_H_
+#define SBMLSOLVER_UTIL_H_
 
 #include <sbmlsolver/exportdefs.h>
 

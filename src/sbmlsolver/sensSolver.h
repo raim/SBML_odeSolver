@@ -33,8 +33,8 @@
  *     Andrew Finney
  */
 
-#ifndef _SENSSOLVER_H_
-#define _SENSSOLVER_H_
+#ifndef SBMLSOLVER_SENSSOLVER_H_
+#define SBMLSOLVER_SENSSOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
 

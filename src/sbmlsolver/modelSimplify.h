@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _MODELSIMPLIFY_H_
-#define _MODELSIMPLIFY_H_
+#ifndef SBMLSOLVER_MODELSIMPLIFY_H_
+#define SBMLSOLVER_MODELSIMPLIFY_H_
 
 #include <sbml/SBMLTypes.h>
 

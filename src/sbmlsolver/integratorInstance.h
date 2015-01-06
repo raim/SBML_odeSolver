@@ -33,8 +33,8 @@
  *     Rainer Machne
  */
 
-#ifndef _INTEGRATORINSTANCE_H_
-#define _INTEGRATORINSTANCE_H_
+#ifndef SBMLSOLVER_INTEGRATORINSTANCE_H_
+#define SBMLSOLVER_INTEGRATORINSTANCE_H_
 
 #include <time.h>
 #include <nvector/nvector_serial.h>

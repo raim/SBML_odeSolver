@@ -33,8 +33,8 @@
  *     Rainer Machne
  */
 
-#ifndef _VARIABLEINDEX_H_
-#define _VARIABLEINDEX_H_
+#ifndef SBMLSOLVER_VARIABLEINDEX_H_
+#define SBMLSOLVER_VARIABLEINDEX_H_
 
 /** variable types */
 enum variableType
@@ -66,4 +66,3 @@ struct variableIndex
 typedef struct variableIndex variableIndex_t;
 
 #endif
-/* _VARIABLEINDEX_H_ */

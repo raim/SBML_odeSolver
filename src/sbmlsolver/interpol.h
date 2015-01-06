@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _INTERPOL_H_
-#define _INTERPOL_H_
+#ifndef SBMLSOLVER_INTERPOL_H_
+#define SBMLSOLVER_INTERPOL_H_
 
 typedef struct ts time_series_t;
 

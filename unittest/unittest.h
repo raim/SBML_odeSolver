@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: t; c-basic-offset: 4 -*- */
-#ifndef _UNITTEST_UNITTEST_H_
-#define _UNITTEST_UNITTEST_H_
+#ifndef UNITTEST_UNITTEST_H_
+#define UNITTEST_UNITTEST_H_
 
 #include <assert.h>
 #include <float.h>

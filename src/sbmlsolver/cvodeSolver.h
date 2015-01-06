@@ -33,8 +33,8 @@
  *     Andrew Finney
  */
 
-#ifndef _CVODESOLVER_H_
-#define _CVODESOLVER_H_
+#ifndef SBMLSOLVER_CVODESOLVER_H_
+#define SBMLSOLVER_CVODESOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
 

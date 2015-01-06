@@ -32,8 +32,8 @@
  * Contributor(s):
  */
 
-#ifndef _EXPORTDEFS_H_
-#define _EXPORTDEFS_H_
+#ifndef SBMLSOLVER_EXPORTDEFS_H_
+#define SBMLSOLVER_EXPORTDEFS_H_
 
 /* The following ifdef block is the standard way of creating macros
 which make exporting from a DLL simpler. All files within this DLL are

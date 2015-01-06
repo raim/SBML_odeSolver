@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _ODECONSTRUCT_H_
-#define _ODECONSTRUCT_H_
+#ifndef SBMLSOLVER_ODECONSTRUCT_H_
+#define SBMLSOLVER_ODECONSTRUCT_H_
 
 #include <sbml/SBMLTypes.h>
 

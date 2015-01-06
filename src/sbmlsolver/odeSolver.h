@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _ODESOLVER_H_
-#define _ODESOLVER_H_
+#ifndef SBMLSOLVER_ODESOLVER_H_
+#define SBMLSOLVER_ODESOLVER_H_
 
 typedef struct varySettings varySettings_t;
 

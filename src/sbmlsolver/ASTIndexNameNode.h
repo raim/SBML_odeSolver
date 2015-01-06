@@ -1,5 +1,5 @@
-#ifndef _ASTINDEXNAMENODE_H_
-#define _ASTINDEXNAMENODE_H_
+#ifndef SBMLSOLVER_ASTINDEXNAMENODE_H_
+#define SBMLSOLVER_ASTINDEXNAMENODE_H_
 
 #include <sbml/math/ASTNode.h>
 
@@ -33,4 +33,4 @@ SBML_ODESOLVER_API void ASTNode_setData(ASTNode_t *);
 
 END_C_DECLS
 
-#endif /* _ASTINDEXNAMENODE_H_ */
+#endif

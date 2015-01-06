@@ -34,8 +34,8 @@
  *     
  */
 
-#ifndef _CVODEDATA_H_
-#define _CVODEDATA_H_
+#ifndef SBMLSOLVER_CVODEDATA_H_
+#define SBMLSOLVER_CVODEDATA_H_
 
 typedef struct cvodeData cvodeData_t ;
 typedef struct cvodeResults cvodeResults_t ;

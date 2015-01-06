@@ -33,8 +33,8 @@
  *    Christoph Flamm, Rainer Machne
  */
 
-#ifndef _COMPILER_H_
-#define _COMPILER_H_
+#ifndef SBMLSOLVER_COMPILER_H_
+#define SBMLSOLVER_COMPILER_H_
 
 #ifdef WIN32
 #include <windows.h>

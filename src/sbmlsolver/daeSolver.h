@@ -33,8 +33,8 @@
  *     Andrew Finney
  */
 
-#ifndef _DAESOLVER_H_
-#define _DAESOLVER_H_
+#ifndef SBMLSOLVER_DAESOLVER_H_
+#define SBMLSOLVER_DAESOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/integratorInstance.h>

@@ -33,8 +33,8 @@
  *     Rainer Machne     
  */
 
-#ifndef _ODEMODEL_H_
-#define _ODEMODEL_H_
+#ifndef SBMLSOLVER_ODEMODEL_H_
+#define SBMLSOLVER_ODEMODEL_H_
 
 typedef struct odeModel odeModel_t;
 typedef struct odeSense odeSense_t;

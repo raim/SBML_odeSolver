@@ -34,8 +34,8 @@
  *     Rainer Machne
  */
 
-#ifndef _ARITHMETICCOMPILER_H_
-#define _ARITHMETICCOMPILER_H_
+#ifndef SBMLSOLVER_ARITHMETICCOMPILER_H_
+#define SBMLSOLVER_ARITHMETICCOMPILER_H_
 
 /* #define ARITHMETIC_TEST */ /* comment in test arithmeticCompiler.c */
 
@@ -61,4 +61,4 @@ struct directCode
 void generateFunction(directCode_t *, ASTNode_t *);
 void destructFunction(directCode_t *);
 
-#endif /* _ARITHMETICCOMPILER_H_ */
+#endif
