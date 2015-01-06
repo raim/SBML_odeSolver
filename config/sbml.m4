@@ -183,7 +183,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
                    LDFLAGS=$LDFLAGS
                    LIBS=$LIBS])
     AC_MSG_ERROR([Can not link to SBML Library:
-		  Please, make sure to use libSBML version >= 3.0.2 or CVS])
+		  Please, make sure to use libSBML version >= 3.4.1])
   fi
 
   dnl reset global variables to cached values
