@@ -17,8 +17,7 @@ AC_DEFUN([AC_SBML_PATH],
     if test -r "$ac_dir/sbml/SBMLTypes.h"; then
       ac_SBML_includes="$ac_dir"
       with_libsbml="$ac_dir"
-      dnl include /sbml folder for libSBML 2.3.4 bugs
-      SBML_CPPFLAGS="-I$ac_SBML_includes -I$ac_SBML_includes/sbml"
+      SBML_CPPFLAGS="-I$ac_SBML_includes"
       AC_MSG_RESULT([yes])
       break
     fi
@@ -102,8 +101,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
   if test "$with_libsbml" = yes; then
     AC_SBML_PATH
   else
-    dnl include /sbml folder for libSBML 2.3.4 bugs
-    SBML_CPPFLAGS="-I$with_libsbml/include -I$with_libsbml/include/sbml"
+    SBML_CPPFLAGS="-I$with_libsbml/include"
     SBML_LDFLAGS="-L$with_libsbml/lib"
 
     dnl ac_SBML_includes=$with_libsbml
@@ -187,9 +185,6 @@ AC_DEFUN([CONFIG_LIB_SBML],
     AC_MSG_ERROR([Can not link to SBML Library:
 		  Please, make sure to use libSBML version >= 3.0.2 or CVS])
   fi
-
-  dnl work around broken include-header-paths in libsbml-2.3.4
-  dnl SBML_CPPFLAGS="$SBML_CPPFLAGS $SBML_CPPFLAGS/sbml"
 
   dnl reset global variables to cached values
   CPPFLAGS=$sbml_save_CPPFLAGS
