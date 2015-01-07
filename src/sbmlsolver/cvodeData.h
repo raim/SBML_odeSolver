@@ -41,10 +41,7 @@ typedef struct cvodeData cvodeData_t ;
 typedef struct cvodeResults cvodeResults_t ;
 
 /* Header Files for CVODE: required only for realtype *p  */
-#include "nvector/nvector_serial.h"
-
-#include <stdio.h>
-#include <sbml/SBMLTypes.h>
+#include <nvector/nvector_serial.h>
 
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/exportdefs.h>
@@ -200,8 +197,6 @@ cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
 int CvodeData_initializeSensitivities(cvodeData_t *,cvodeSettings_t *,
 				      odeModel_t *, odeSense_t *);
-/* Adjoint specific internal functions used by integratorInstance.c */
-int CvodeResults_allocateAdjSens(cvodeResults_t *, int neq, int nadjsens, int nout);
 
 #endif
 
