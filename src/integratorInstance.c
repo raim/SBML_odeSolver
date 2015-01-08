@@ -937,11 +937,8 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(const integr
 SBML_ODESOLVER_API void IntegratorInstance_printResults(const integratorInstance_t *ii, FILE *fp)
 {
   int n, j;
-  cvodeResults_t *results;
   variableIndex_t *vi;
   
-  results = IntegratorInstance_createResults(ii);
-
   fprintf(fp, "#t ");
   for (j=0; j<ii->om->neq; j++){
     vi = ODEModel_getOdeVariableIndex(ii->om, j);
@@ -950,18 +947,15 @@ SBML_ODESOLVER_API void IntegratorInstance_printResults(const integratorInstance
   }
   fprintf(fp, "\n");
   
-  for (n=0; n<CvodeResults_getNout(results); n++){
-    fprintf(fp, "%g ", CvodeResults_getTime(results, n));
+  for (n=0; n<CvodeResults_getNout(ii->results); n++){
+    fprintf(fp, "%g ", CvodeResults_getTime(ii->results, n));
     for (j=0; j<ii->om->neq; j++){
       vi = ODEModel_getOdeVariableIndex(ii->om, j);
-      fprintf(fp, "%g ", CvodeResults_getValue(results, vi, n));
+      fprintf(fp, "%g ", CvodeResults_getValue(ii->results, vi, n));
       VariableIndex_free(vi);
     }
     fprintf(fp, "\n");
   }
-  
-  CvodeResults_free(results);
-  
 }
 
 /**  Writes current simulation data to the original model.
