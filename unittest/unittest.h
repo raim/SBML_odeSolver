@@ -43,6 +43,7 @@
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_cvodeData(void);
+Suite *create_suite_integratorInstance(void);
 Suite *create_suite_integratorSettings(void);
 Suite *create_suite_interpol(void);
 Suite *create_suite_modelSimplify(void);
