@@ -672,7 +672,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     forward and adjoint sensitivity analysis routines
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(const integratorInstance_t *engine, FILE *f)
 {
   int flag;
   long int nfSe, nfeS, nsetupsS, nniS, ncfnS, netfS;

@@ -491,7 +491,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 
 /**  Returns the current time of an integration */
 
-SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engine)
+SBML_ODESOLVER_API double IntegratorInstance_getTime(const integratorInstance_t *engine)
 {
   return engine->solver->t;
 }
@@ -867,7 +867,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine
     for the passed integratorInstance
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
+SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(const integratorInstance_t *engine)
 {
  
   return engine->solver->iout > engine->solver->nout &&
@@ -880,7 +880,7 @@ SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance
      The results must NOT be freed by the caller.
 */
 
-SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integratorInstance_t *engine)
+SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(const integratorInstance_t *engine)
 {
   return engine->results; 
 }
@@ -892,7 +892,7 @@ SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integrato
      CvodeResults_free(results)!
 */
 
-SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *engine)
+SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(const integratorInstance_t *engine)
 {
   int i, j, k;
   cvodeResults_t *results;
@@ -934,7 +934,7 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 
 /** Writes results to file
  */
-SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *ii, FILE *fp)
+SBML_ODESOLVER_API void IntegratorInstance_printResults(const integratorInstance_t *ii, FILE *fp)
 {
   int n, j;
   cvodeResults_t *results;
@@ -1746,7 +1746,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
 /**  Prints some final statistics of the solver
  */
 
-SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API void IntegratorInstance_printStatistics(const integratorInstance_t *engine, FILE *f)
 {
   odeModel_t *om = engine->om;
 
@@ -1760,7 +1760,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
 
 /** returns the time elapsed in seconds since the start of integration
  */
-SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *engine)
+SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(const integratorInstance_t *engine)
 {
   if (engine->clockStarted)
     return ((double)(clock() - engine->startTime)) / CLOCKS_PER_SEC; 

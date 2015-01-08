@@ -842,7 +842,7 @@ void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *engine)
     are located in CVODE's iopt array.
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(const integratorInstance_t *engine, FILE *f)
 {
   int flag;
   long int nst, nfe, nsetups, nje, nni, ncfn, netf;

@@ -51,7 +51,7 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
-  cvodeResults_t *results;
+  const cvodeResults_t *results;
   variableIndex_t *p;
   char *sbml_file, *objfun_file, *data_file; 
   int flag;

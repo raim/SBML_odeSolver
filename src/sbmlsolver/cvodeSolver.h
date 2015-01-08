@@ -50,7 +50,7 @@ extern "C" {
   
   /* CVODE SOLVER */
   SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(const integratorInstance_t *, FILE *f);
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);

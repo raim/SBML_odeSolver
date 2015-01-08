@@ -160,7 +160,7 @@ extern "C" {
   SBML_ODESOLVER_API int IntegratorInstance_integrateOneStepWithoutEventProcessing(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_checkTrigger(integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *);
+  SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(const integratorInstance_t *);
   SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *);
 
   SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *);
@@ -169,10 +169,10 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_dumpAdjData(integratorInstance_t *);
   SBML_ODESOLVER_API cvodeData_t *IntegratorInstance_getData(integratorInstance_t *);
   SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_t *target, integratorInstance_t *source);
-  SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getTime(const integratorInstance_t *);
   SBML_ODESOLVER_API const char *IntegratorInstance_getVariableName(integratorInstance_t *, variableIndex_t *);
   SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance_t *, variableIndex_t *);
-  SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *);
+  SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(const integratorInstance_t *);
   SBML_ODESOLVER_API double *IntegratorInstance_getValues(integratorInstance_t *);
 
   /* SENSITIVITIES INTERFACE */
@@ -190,11 +190,11 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_setFIMweights(integratorInstance_t *, double *, int);
 
   /* AFTER INTEGRATION */
-  SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integratorInstance_t *);
-  SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *);
-  SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *, FILE *); /* stefan */
+  SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(const integratorInstance_t *);
+  SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(const integratorInstance_t *);
+  SBML_ODESOLVER_API void IntegratorInstance_printResults(const integratorInstance_t *, FILE *);
   SBML_ODESOLVER_API int IntegratorInstance_updateModel(integratorInstance_t*);
-  SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API void IntegratorInstance_printStatistics(const integratorInstance_t *, FILE *f);
 
   /* END */
   SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *);

@@ -43,7 +43,7 @@ extern "C" {
 #endif
 
   /* CVODES SOLVER */  
-  SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(const integratorInstance_t *, FILE *f);
   SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorInstance_t *, char *);
   SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstance_t *, char *);
 
