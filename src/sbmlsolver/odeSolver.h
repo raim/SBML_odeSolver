@@ -101,7 +101,7 @@ extern "C" {
   SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *, int);
 
   SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
-  SBML_ODESOLVER_API void VarySettings_free();
+  SBML_ODESOLVER_API void VarySettings_free(varySettings_t *);
 
 
  
