@@ -54,12 +54,10 @@
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
-#include "sbmlsolver/modelSimplify.h"
 
 static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data);

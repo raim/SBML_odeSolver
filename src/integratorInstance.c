@@ -62,9 +62,6 @@
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
-#include "sbmlsolver/modelSimplify.h"
-/* #include "sbmlsolver/daeSolver.h" */ /* !!! not yet working !!! */
-
 
 /* local integratorInstance allocation and initialization */ 
 static int
