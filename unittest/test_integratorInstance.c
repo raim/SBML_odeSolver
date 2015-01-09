@@ -146,6 +146,12 @@ START_TEST(test_IntegratorInstance_printStatistics)
 }
 END_TEST
 
+START_TEST(test_IntegratorInstance_free)
+{
+	IntegratorInstance_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_integratorInstance(void)
 {
@@ -157,6 +163,7 @@ Suite *create_suite_integratorInstance(void)
 	TCase *tc_IntegratorInstance_printResults;
 	TCase *tc_IntegratorInstance_updateModel;
 	TCase *tc_IntegratorInstance_printStatistics;
+	TCase *tc_IntegratorInstance_free;
 
 	s = suite_create("integratorInstance");
 
@@ -208,6 +215,10 @@ Suite *create_suite_integratorInstance(void)
 							  teardown_model);
 	tcase_add_test(tc_IntegratorInstance_printStatistics, test_IntegratorInstance_printStatistics);
 	suite_add_tcase(s, tc_IntegratorInstance_printStatistics);
+
+	tc_IntegratorInstance_free = tcase_create("IntegratorInstance_free");
+	tcase_add_test(tc_IntegratorInstance_free, test_IntegratorInstance_free);
+	suite_add_tcase(s, tc_IntegratorInstance_free);
 
 	return s;
 }

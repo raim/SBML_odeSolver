@@ -1121,7 +1121,8 @@ SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
 SBML_ODESOLVER_API void CvodeSettings_free(cvodeSettings_t *set)
 {
   int i;
-  
+
+  if (!set) return;
   if ( set->TimePoints != NULL ) free(set->TimePoints);
   if ( set->AdjTimePoints != NULL ) free(set->AdjTimePoints);
   if ( set->sensIDs != NULL )    

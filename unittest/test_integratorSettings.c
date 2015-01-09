@@ -14,6 +14,12 @@ START_TEST(test_TimeSettings_create)
 }
 END_TEST
 
+START_TEST(test_TimeSettings_free)
+{
+	TimeSettings_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 START_TEST(test_CvodeSettings_createFromTimeSettings)
 {
 	timeSettings_t *ts;
@@ -50,20 +56,32 @@ START_TEST(test_CvodeSettings_createWithTime)
 }
 END_TEST
 
+START_TEST(test_CvodeSettings_free)
+{
+	CvodeSettings_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_integratorSettings(void)
 {
 	Suite *s;
 	TCase *tc_TimeSettings_create;
+	TCase *tc_TimeSettings_free;
 	TCase *tc_CvodeSettings_createFromTimeSettings;
 	TCase *tc_CvodeSettings_create;
 	TCase *tc_CvodeSettings_createWithTime;
+	TCase *tc_CvodeSettings_free;
 
 	s = suite_create("integratorSettings");
 
 	tc_TimeSettings_create = tcase_create("TimeSettings_create");
 	tcase_add_test(tc_TimeSettings_create, test_TimeSettings_create);
 	suite_add_tcase(s, tc_TimeSettings_create);
+
+	tc_TimeSettings_free = tcase_create("TimeSettings_free");
+	tcase_add_test(tc_TimeSettings_free, test_TimeSettings_free);
+	suite_add_tcase(s, tc_TimeSettings_free);
 
 	tc_CvodeSettings_createFromTimeSettings = tcase_create("CvodeSettings_createFromTimeSettings");
 	tcase_add_test(tc_CvodeSettings_createFromTimeSettings, test_CvodeSettings_createFromTimeSettings);
@@ -76,6 +94,10 @@ Suite *create_suite_integratorSettings(void)
 	tc_CvodeSettings_createWithTime = tcase_create("CvodeSettings_createWithTime");
 	tcase_add_test(tc_CvodeSettings_createWithTime, test_CvodeSettings_createWithTime);
 	suite_add_tcase(s, tc_CvodeSettings_createWithTime);
+
+	tc_CvodeSettings_free = tcase_create("CvodeSettings_free");
+	tcase_add_test(tc_CvodeSettings_free, test_CvodeSettings_free);
+	suite_add_tcase(s, tc_CvodeSettings_free);
 
 	return s;
 }

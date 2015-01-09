@@ -1672,6 +1672,7 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
 
 SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 {
+	if (!engine) return;
   /* solver specific switches */
   if (engine->om->neq) 
     IntegratorInstance_freeCVODESolverStructures(engine);
