@@ -49,6 +49,7 @@ Suite *create_suite_interpol(void);
 Suite *create_suite_modelSimplify(void);
 Suite *create_suite_odeConstruct(void);
 Suite *create_suite_odeModel(void);
+Suite *create_suite_odeSolver(void);
 Suite *create_suite_processAST(void);
 Suite *create_suite_sbml(void);
 Suite *create_suite_sbmlResults(void);

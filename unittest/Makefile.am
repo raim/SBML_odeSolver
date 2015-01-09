@@ -24,6 +24,7 @@ unittest_SOURCES = main.c \
                    test_modelSimplify.c \
                    test_odeConstruct.c \
                    test_odeModel.c \
+                   test_odeSolver.c \
                    test_processAST.c \
                    test_sbml.c \
                    test_sbmlResults.c \
