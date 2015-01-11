@@ -2,6 +2,7 @@
 #include "unittest.h"
 
 #include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/sbml.h>
 
 /* fixtures */
 static SBMLDocument_t *doc = NULL;

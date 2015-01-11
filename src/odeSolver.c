@@ -56,8 +56,15 @@
 
 #include <sbml/SBMLTypes.h>
 
+#include "sbmlsolver/cvodeData.h"
+#include "sbmlsolver/drawGraph.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/processAST.h"
+#include "sbmlsolver/sbml.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/variableIndex.h"
 
 static int globalizeParameter(Model_t *, char *id, char *rid);
 static int localizeParameter(Model_t *, char *id, char *rid);

@@ -37,6 +37,7 @@
 
 #include <sbmlsolver/odeSolver.h>
 #include <sbmlsolver/sensSolver.h>
+#include <sbmlsolver/solverError.h>
 
 
 int

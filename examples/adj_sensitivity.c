@@ -40,6 +40,8 @@
 #include <sbmlsolver/interpol.h>
 #include <sbmlsolver/variableIndex.h>
 #include <sbmlsolver/sensSolver.h>
+#include <sbmlsolver/solverError.h>
+#include <sbmlsolver/util.h>
 
 
 /* --------- --------- --------- --------- --------- --------- --------- */

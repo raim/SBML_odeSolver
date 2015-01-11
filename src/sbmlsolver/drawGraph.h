@@ -5,6 +5,8 @@
 #ifndef SBMLSOLVER_DRAWGRAPH_H_
 #define SBMLSOLVER_DRAWGRAPH_H_
 
+#include <sbml/SBMLTypes.h>
+#include <sbmlsolver/cvodeData.h>
 #include <sbmlsolver/exportdefs.h>
 
 #ifdef __cplusplus

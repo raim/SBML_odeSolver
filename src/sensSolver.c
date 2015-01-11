@@ -65,6 +65,7 @@
 
 #include <sbml/SBMLTypes.h>
 #include "sbmlsolver/ASTIndexNameNode.h"
+#include "sbmlsolver/util.h"
 
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
