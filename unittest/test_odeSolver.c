@@ -13,6 +13,8 @@ static cvodeSettings_t *cs;
 
 static SBMLResults_t *results = NULL;
 
+static varySettings_t *vs = NULL;
+
 static void teardown_doc(void)
 {
 	SBMLDocument_free(doc);
@@ -31,6 +33,11 @@ static void teardown_cs(void)
 static void teardown_results(void)
 {
 	SBMLResults_free(results);
+}
+
+static void teardown_vs(void)
+{
+	VarySettings_free(vs);
 }
 
 /* test cases */
@@ -96,12 +103,29 @@ START_TEST(test_Model_odeSolver_repressilator)
 }
 END_TEST
 
+START_TEST(test_VarySettings_allocate)
+{
+	vs = VarySettings_allocate(7, 77);
+	ck_assert(vs != NULL);
+	ck_assert_int_eq(vs->nrparams, 7);
+	ck_assert_int_eq(vs->nrdesignpoints, 77);
+}
+END_TEST
+
+START_TEST(test_VarySettings_free)
+{
+	VarySettings_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeSolver(void)
 {
 	Suite *s;
 	TCase *tc_SBML_odeSolver;
 	TCase *tc_Model_odeSolver;
+	TCase *tc_VarySettings_allocate;
+	TCase *tc_VarySettings_free;
 
 	s = suite_create("odeSolver");
 
@@ -135,6 +159,17 @@ Suite *create_suite_odeSolver(void)
 	tcase_add_test(tc_Model_odeSolver, test_Model_odeSolver_huang96);
 	tcase_add_test(tc_Model_odeSolver, test_Model_odeSolver_repressilator);
 	suite_add_tcase(s, tc_Model_odeSolver);
+
+	tc_VarySettings_allocate = tcase_create("VarySettings_allocate");
+	tcase_add_checked_fixture(tc_VarySettings_allocate,
+							  NULL,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_allocate, test_VarySettings_allocate);
+	suite_add_tcase(s, tc_VarySettings_allocate);
+
+	tc_VarySettings_free = tcase_create("VarySettings_free");
+	tcase_add_test(tc_VarySettings_free, test_VarySettings_free);
+	suite_add_tcase(s, tc_VarySettings_free);
 
 	return s;
 }

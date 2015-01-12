@@ -949,7 +949,8 @@ SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *vs)
 SBML_ODESOLVER_API void VarySettings_free(varySettings_t *vs)
 {
   int i;
-  
+
+  if (!vs) return;
   for ( i=0; i<vs->nrparams; i++ )
   {
     free(vs->id[i]);
