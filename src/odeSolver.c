@@ -601,7 +601,7 @@ SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdes
 
   vs->nrdesignpoints = nrdesignpoints;
   vs->nrparams = nrparams;
-  /* set conuter to 0, will be used as counter in addDesignPoints */
+  /* set conuter to 0, used in VarySettings_addParameter/VarySettings_addDesignPoint */
   vs->cnt_params = 0;
   vs->cnt_points = 0;
   return(vs);
@@ -646,7 +646,7 @@ SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		SOLVER_ERROR_VARY_SETTINGS,
-		"VarySettings_addDesignPoints:\t"
+		"VarySettings_addDesignPoint:\t"
 		"Allocated design point array already full, #%d design points",
 		vs->cnt_points);
     return 0;
