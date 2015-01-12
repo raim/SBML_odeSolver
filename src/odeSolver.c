@@ -639,7 +639,7 @@ SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, c
     or 0 for failure, please check SolverError for errors.
 */
 SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
-						   double *params)
+												   const double *params)
 {
   int i;
   if ( vs->cnt_points >= vs->nrdesignpoints )
@@ -655,7 +655,7 @@ SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
   for ( i=0; i<vs->nrparams; i++ )
     vs->params[vs->cnt_points][i] = params[i];
   
-  return (vs->cnt_points++);
+  return ++vs->cnt_points;
 }
 
 

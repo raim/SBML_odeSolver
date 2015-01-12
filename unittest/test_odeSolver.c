@@ -35,6 +35,11 @@ static void teardown_results(void)
 	SBMLResults_free(results);
 }
 
+static void setup_vs(void)
+{
+	vs = VarySettings_allocate(3, 4);
+}
+
 static void teardown_vs(void)
 {
 	VarySettings_free(vs);
@@ -118,6 +123,27 @@ START_TEST(test_VarySettings_free)
 }
 END_TEST
 
+START_TEST(test_VarySettings_addDesignPoint)
+{
+	static const double params0[] = {0.0, 2.5, 4.0};
+	static const double params1[] = {0.1, -0.1, 4.2};
+	static const double params2[] = {0.2, -1.4, 5.9};
+	static const double params3[] = {0.3, -2.9, 5.1};
+	static const double params4[] = {0.4, -5.0, 4.1};
+	int r;
+	r = VarySettings_addDesignPoint(vs, params0);
+	ck_assert_int_eq(r, 1);
+	r = VarySettings_addDesignPoint(vs, params1);
+	ck_assert_int_eq(r, 2);
+	r = VarySettings_addDesignPoint(vs, params2);
+	ck_assert_int_eq(r, 3);
+	r = VarySettings_addDesignPoint(vs, params3);
+	ck_assert_int_eq(r, 4);
+	r = VarySettings_addDesignPoint(vs, params4);
+	ck_assert_int_eq(r, 0);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeSolver(void)
 {
@@ -126,6 +152,7 @@ Suite *create_suite_odeSolver(void)
 	TCase *tc_Model_odeSolver;
 	TCase *tc_VarySettings_allocate;
 	TCase *tc_VarySettings_free;
+	TCase *tc_VarySettings_addDesignPoint;
 
 	s = suite_create("odeSolver");
 
@@ -170,6 +197,13 @@ Suite *create_suite_odeSolver(void)
 	tc_VarySettings_free = tcase_create("VarySettings_free");
 	tcase_add_test(tc_VarySettings_free, test_VarySettings_free);
 	suite_add_tcase(s, tc_VarySettings_free);
+
+	tc_VarySettings_addDesignPoint = tcase_create("VarySettings_addDesignPoint");
+	tcase_add_checked_fixture(tc_VarySettings_addDesignPoint,
+							  setup_vs,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_addDesignPoint, test_VarySettings_addDesignPoint);
+	suite_add_tcase(s, tc_VarySettings_addDesignPoint);
 
 	return s;
 }

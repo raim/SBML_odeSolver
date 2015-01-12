@@ -77,7 +77,7 @@ extern "C" {
 
   /* settings for parameter variation batch runs */
   SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints);
-  SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *, double *);
+  SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *, const double *);
   SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *, char *);
   SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *, int, char *, char *);
   SBML_ODESOLVER_API int VarySettings_setValue(varySettings_t *, int, int, double);
