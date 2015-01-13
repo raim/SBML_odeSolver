@@ -164,6 +164,26 @@ START_TEST(test_VarySettings_addParameter)
 }
 END_TEST
 
+START_TEST(test_VarySettings_setName)
+{
+	int r;
+	r = VarySettings_setName(vs, 0, "foo", NULL); /* global */
+	ck_assert_int_eq(r, 1);
+	r = VarySettings_setName(vs, 1, "foo", "local");
+	ck_assert_int_eq(r, 1);
+	r = VarySettings_setName(vs, 2, "bar", "local");
+	ck_assert_int_eq(r, 1);
+	r = VarySettings_setName(vs, 3, "failure", "fencepost");
+	ck_assert_int_eq(r, 0);
+	ck_assert_str_eq(vs->id[0], "foo");
+	ck_assert(vs->rid[0] == NULL);
+	ck_assert_str_eq(vs->id[1], "foo");
+	ck_assert_str_eq(vs->rid[1], "local");
+	ck_assert_str_eq(vs->id[2], "bar");
+	ck_assert_str_eq(vs->rid[2], "local");
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeSolver(void)
 {
@@ -174,6 +194,7 @@ Suite *create_suite_odeSolver(void)
 	TCase *tc_VarySettings_free;
 	TCase *tc_VarySettings_addDesignPoint;
 	TCase *tc_VarySettings_addParameter;
+	TCase *tc_VarySettings_setName;
 
 	s = suite_create("odeSolver");
 
@@ -232,6 +253,13 @@ Suite *create_suite_odeSolver(void)
 							  teardown_vs);
 	tcase_add_test(tc_VarySettings_addParameter, test_VarySettings_addParameter);
 	suite_add_tcase(s, tc_VarySettings_addParameter);
+
+	tc_VarySettings_setName = tcase_create("VarySettings_setName");
+	tcase_add_checked_fixture(tc_VarySettings_setName,
+							  setup_vs,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_setName, test_VarySettings_setName);
+	suite_add_tcase(s, tc_VarySettings_setName);
 
 	return s;
 }
