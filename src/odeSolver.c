@@ -616,7 +616,8 @@ SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdes
 
 */
 
-SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid)
+SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs,
+												 const char *id, const char *rid)
 {
   if ( vs->cnt_params >= vs->nrparams )
   {
@@ -722,7 +723,8 @@ SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, 
     be varied. For global parameters rid must be passed as NULL.
 */
 
-SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *vs, int i, char *id, char *rid)
+SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *vs, int i,
+											const char *id, const char *rid)
 {
 
   if ( i >= vs->nrparams )
