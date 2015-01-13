@@ -144,6 +144,26 @@ START_TEST(test_VarySettings_addDesignPoint)
 }
 END_TEST
 
+START_TEST(test_VarySettings_addParameter)
+{
+	int r;
+	r = VarySettings_addParameter(vs, "foo", NULL); /* global */
+	ck_assert_int_eq(r, 1);
+	ck_assert_str_eq(vs->id[0], "foo");
+	ck_assert(vs->rid[0] == NULL);
+	r = VarySettings_addParameter(vs, "foo", "local");
+	ck_assert_int_eq(r, 2);
+	ck_assert_str_eq(vs->id[1], "foo");
+	ck_assert_str_eq(vs->rid[1], "local");
+	r = VarySettings_addParameter(vs, "bar", "local");
+	ck_assert_int_eq(r, 3);
+	ck_assert_str_eq(vs->id[2], "bar");
+	ck_assert_str_eq(vs->rid[2], "local");
+	r = VarySettings_addParameter(vs, "failure", "full");
+	ck_assert_int_eq(r, 0);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeSolver(void)
 {
@@ -153,6 +173,7 @@ Suite *create_suite_odeSolver(void)
 	TCase *tc_VarySettings_allocate;
 	TCase *tc_VarySettings_free;
 	TCase *tc_VarySettings_addDesignPoint;
+	TCase *tc_VarySettings_addParameter;
 
 	s = suite_create("odeSolver");
 
@@ -204,6 +225,13 @@ Suite *create_suite_odeSolver(void)
 							  teardown_vs);
 	tcase_add_test(tc_VarySettings_addDesignPoint, test_VarySettings_addDesignPoint);
 	suite_add_tcase(s, tc_VarySettings_addDesignPoint);
+
+	tc_VarySettings_addParameter = tcase_create("VarySettings_addParameter");
+	tcase_add_checked_fixture(tc_VarySettings_addParameter,
+							  setup_vs,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_addParameter, test_VarySettings_addParameter);
+	suite_add_tcase(s, tc_VarySettings_addParameter);
 
 	return s;
 }

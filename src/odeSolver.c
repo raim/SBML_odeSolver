@@ -630,7 +630,7 @@ SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, c
 
   VarySettings_setName(vs, vs->cnt_params, id, rid);
   /* count and return already filled parametervalues */
-  return(vs->cnt_params++);  
+  return ++vs->cnt_params;
 }
 
 /** Adds values for all parameters to be varied
