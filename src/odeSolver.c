@@ -784,7 +784,7 @@ SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *vs, int i, int j
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_ERROR_VARY_SETTINGS,
-		      "VarySettings_setValue:\t"
+		      "VarySettings_getValue:\t"
 		      "Requested value #%d not found in varySettings"
 		      " # parameters: %d",
 		      i, vs->nrparams);
