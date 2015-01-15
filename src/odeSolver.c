@@ -840,7 +840,8 @@ SBML_ODESOLVER_API int VarySettings_setValue(varySettings_t *vs, int i, int j, d
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, char *id, char *rid)
+SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i,
+													const char *id, const char *rid)
 {
   int j;
   if ( i >= vs->nrdesignpoints )
@@ -887,7 +888,9 @@ SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, c
     rid: SBML ID of reaction for local parameters\n
 */
 
-SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *vs, int i, char *id, char *rid, double value)
+SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *vs, int i,
+												 const char *id, const char *rid,
+												 double value)
 {
   int j;
   if ( i >= vs->nrdesignpoints )
