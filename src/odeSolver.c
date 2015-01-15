@@ -856,8 +856,13 @@ SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, c
   
   for ( j=0; j<vs->nrparams; j++ )
   {
-    if ( !strcmp(id, vs->id[j]) && !strcmp(rid, vs->rid[j]) )
-      break;
+	  if (strcmp(id, vs->id[j]) == 0) {
+		  if (rid == NULL) {
+			  if (vs->rid[j] == NULL) break;
+		  } else {
+			  if (vs->rid[j] != NULL && strcmp(rid, vs->rid[j]) == 0) break;
+		  }
+	  }
   }
   if ( j == vs->nrparams )
   {
