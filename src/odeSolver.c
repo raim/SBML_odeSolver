@@ -675,7 +675,7 @@ SBML_ODESOLVER_API const char *VarySettings_getName(const varySettings_t *vs, in
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		SOLVER_ERROR_VARY_SETTINGS,
-		"VarySettings_getReactionName:\t"
+		"VarySettings_getName:\t"
 		"Requested Value %d not found in varySettings"
 		" # parameters: %d",
 		i, vs->nrparams);
