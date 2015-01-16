@@ -84,8 +84,8 @@ extern "C" {
   SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *, int, int);
   SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *, int, const char *, const char*, double);
   SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *, int, const char *, const char*);
-  SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *, int);
-  SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *, int);
+  SBML_ODESOLVER_API const char *VarySettings_getName(const varySettings_t *, int);
+  SBML_ODESOLVER_API const char *VarySettings_getReactionName(const varySettings_t *, int);
 
   SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
   SBML_ODESOLVER_API void VarySettings_free(varySettings_t *);

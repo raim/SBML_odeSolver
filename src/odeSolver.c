@@ -669,7 +669,7 @@ SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getName(const varySettings_t *vs, int i)
 {   
   if ( i >= vs->nrparams )
   {
@@ -695,7 +695,7 @@ SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *vs, int i)
     Returns NULL, if the parameter is global.
 */
 
-SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getReactionName(const varySettings_t *vs, int i)
 {   
   if ( i >= vs->nrparams )
   {
