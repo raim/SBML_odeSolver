@@ -259,6 +259,40 @@ START_TEST(test_VarySettings_getValueByID)
 }
 END_TEST
 
+START_TEST(test_VarySettings_getName)
+{
+	const char *name;
+	VarySettings_setName(vs, 0, "foo", NULL); /* global */
+	VarySettings_setName(vs, 1, "foo", "local");
+	VarySettings_setName(vs, 2, "bar", "local");
+	name = VarySettings_getName(vs, 0);
+	ck_assert_str_eq(name, "foo");
+	name = VarySettings_getName(vs, 1);
+	ck_assert_str_eq(name, "foo");
+	name = VarySettings_getName(vs, 2);
+	ck_assert_str_eq(name, "bar");
+	name = VarySettings_getName(vs, 3);
+	ck_assert(name == NULL);
+}
+END_TEST
+
+START_TEST(test_VarySettings_getReactionName)
+{
+	const char *name;
+	VarySettings_setName(vs, 0, "foo", NULL); /* global */
+	VarySettings_setName(vs, 1, "foo", "local");
+	VarySettings_setName(vs, 2, "bar", "local");
+	name = VarySettings_getReactionName(vs, 0);
+	ck_assert(name == NULL);
+	name = VarySettings_getReactionName(vs, 1);
+	ck_assert_str_eq(name, "local");
+	name = VarySettings_getReactionName(vs, 2);
+	ck_assert_str_eq(name, "local");
+	name = VarySettings_getReactionName(vs, 3);
+	ck_assert(name == NULL);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeSolver(void)
 {
@@ -274,6 +308,8 @@ Suite *create_suite_odeSolver(void)
 	TCase *tc_VarySettings_getValue;
 	TCase *tc_VarySettings_setValueByID;
 	TCase *tc_VarySettings_getValueByID;
+	TCase *tc_VarySettings_getName;
+	TCase *tc_VarySettings_getReactionName;
 
 	s = suite_create("odeSolver");
 
@@ -367,6 +403,20 @@ Suite *create_suite_odeSolver(void)
 							  teardown_vs);
 	tcase_add_test(tc_VarySettings_getValueByID, test_VarySettings_getValueByID);
 	suite_add_tcase(s, tc_VarySettings_getValueByID);
+
+	tc_VarySettings_getName = tcase_create("VarySettings_getName");
+	tcase_add_checked_fixture(tc_VarySettings_getName,
+							  setup_vs,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_getName, test_VarySettings_getName);
+	suite_add_tcase(s, tc_VarySettings_getName);
+
+	tc_VarySettings_getReactionName = tcase_create("VarySettings_getReactionName");
+	tcase_add_checked_fixture(tc_VarySettings_getReactionName,
+							  setup_vs,
+							  teardown_vs);
+	tcase_add_test(tc_VarySettings_getReactionName, test_VarySettings_getReactionName);
+	suite_add_tcase(s, tc_VarySettings_getReactionName);
 
 	return s;
 }
