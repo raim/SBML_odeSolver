@@ -201,7 +201,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
    return 0 => failure
 */
 int
-IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
+IntegratorInstance_createIDASolverStructures(integratorInstance_t *engine)
 {
   int i, flag, neq, nalg;
   realtype *ydata, *abstoldata, *dydata;
