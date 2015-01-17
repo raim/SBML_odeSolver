@@ -37,6 +37,7 @@
 #define SBMLSOLVER_CVODESOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorInstance.h>
 
 #ifdef __cplusplus
 extern "C" {

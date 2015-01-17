@@ -55,7 +55,6 @@
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
 
