@@ -17,6 +17,7 @@ int main(void)
 	srunner_add_suite(sr, create_suite_ASTIndexNameNode());
 	srunner_add_suite(sr, create_suite_charBuffer());
 	srunner_add_suite(sr, create_suite_cvodeData());
+	srunner_add_suite(sr, create_suite_cvodeSolver());
 	srunner_add_suite(sr, create_suite_integratorInstance());
 	srunner_add_suite(sr, create_suite_integratorSettings());
 	srunner_add_suite(sr, create_suite_interpol());

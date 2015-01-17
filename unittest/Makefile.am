@@ -18,6 +18,7 @@ unittest_SOURCES = main.c \
                    test_ASTIndexNameNode.c \
                    test_charBuffer.c \
                    test_cvodeData.c \
+                   test_cvodeSolver.c \
                    test_integratorInstance.c \
                    test_integratorSettings.c \
                    test_interpol.c \
