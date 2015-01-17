@@ -39,8 +39,6 @@
 
 #include <sbmlsolver/exportdefs.h>
 
-extern void nrerror(const char message[]);
-
 #ifdef WITH_DMALLOC
 /* use dmalloc library to check for memory management bugs */
 #include <dmalloc.h>

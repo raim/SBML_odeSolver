@@ -45,7 +45,7 @@
 #include "sbmlsolver/util.h"
 
 /*-------------------------------------------------------------------------*/
-void nrerror(const char message[])
+static void nrerror(const char message[])
 {
   fprintf(stderr, "\n%s\n", message);
   exit(EXIT_FAILURE);
