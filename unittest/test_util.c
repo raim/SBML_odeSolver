@@ -9,10 +9,7 @@ START_TEST(test_get_line)
 	FILE *fp, *rfp;
 	char *line;
 
-	fp = tmpfile();
-	if (!fp) {
-		ck_abort_msg("could not open a temporary file");
-	}
+	OPEN_TMPFILE_OR_ABORT(fp);
 	fprintf(fp, "abc\n");
 	fprintf(fp, "xyz\r\n");
 	fprintf(fp, "\n");

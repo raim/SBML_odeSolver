@@ -94,10 +94,7 @@ START_TEST(test_IntegratorInstance_printResults)
 	ii = IntegratorInstance_create(model, cs);
 	r = IntegratorInstance_integrate(ii);
 	ck_assert_int_eq(r, 1);
-	fp = tmpfile();
-	if (!fp) {
-		ck_abort_msg("could not open a temporary file");
-	}
+	OPEN_TMPFILE_OR_ABORT(fp);
 	IntegratorInstance_printResults(ii, fp);
 	/* TODO: check the printed text */
 	fclose(fp);
@@ -134,10 +131,7 @@ START_TEST(test_IntegratorInstance_printStatistics)
 	ii = IntegratorInstance_create(model, cs);
 	r = IntegratorInstance_integrate(ii);
 	ck_assert_int_eq(r, 1);
-	fp = tmpfile();
-	if (!fp) {
-		ck_abort_msg("could not open a temporary file");
-	}
+	OPEN_TMPFILE_OR_ABORT(fp);
 	IntegratorInstance_printStatistics(ii, fp);
 	/* TODO: check the printed text */
 	fclose(fp);

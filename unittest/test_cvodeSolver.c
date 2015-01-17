@@ -73,10 +73,7 @@ START_TEST(test_IntegratorInstance_printCVODEStatistics)
 	FILE *fp;
 	int r;
 	IntegratorInstance_cvodeOneStep(ii);
-	fp = tmpfile();
-	if (!fp) {
-		ck_abort_msg("could not open a temporary file");
-	}
+	OPEN_TMPFILE_OR_ABORT(fp);
 	r = IntegratorInstance_printCVODEStatistics(ii, fp);
 	ck_assert_int_eq(r, 1);
 	/* TODO: check the printed text */

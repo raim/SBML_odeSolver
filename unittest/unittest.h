@@ -40,6 +40,11 @@
 
 #define CHECK_DOUBLE_WITH_TOLERANCE(d, expected) ck_assert(fabs((d) - (expected)) <= DBL_EPSILON)
 
+#define OPEN_TMPFILE_OR_ABORT(fp) do {								\
+		(fp) = tmpfile();											\
+		if (!(fp)) ck_abort_msg("could not open a temporary file");	\
+	} while (0)
+
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
 Suite *create_suite_cvodeData(void);
