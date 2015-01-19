@@ -10,14 +10,14 @@ static cvodeSettings_t *cs = NULL;
 
 static integratorInstance_t *ii = NULL;
 
-void setup_integratorInstance(void)
+static void setup_integratorInstance(void)
 {
 	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
 	cs = CvodeSettings_create();
 	ii = IntegratorInstance_create(model, cs);
 }
 
-void teardown_integratorInstance(void)
+static void teardown_integratorInstance(void)
 {
 	IntegratorInstance_free(ii);
 	CvodeSettings_free(cs);
