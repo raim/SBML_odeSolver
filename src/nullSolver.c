@@ -84,17 +84,14 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
   odeModel_t *om = engine->om;
 
   /* IntegratorInstance_freeCVODESolverStructures(engine); */
-  printf("HALLO NULLSTELLE\n");
   if (!IntegratorInstance_createKINSolverStructures(engine))
     return 0;
-  printf("HALLO KINSOL\n");
     
   /* !!!! calling KINSOL !!!! */
   flag = KINSol(solver->cvode_mem, solver->y, KIN_LINESEARCH, 
 		solver->abstol, solver->abstol);
   /* !!! should use different scalings, first is D*y second
      is D*f(y) !!!*/
-  printf("THX KINSOL\n");
 
   if ( flag != KIN_SUCCESS )
   {
