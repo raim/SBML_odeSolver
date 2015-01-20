@@ -50,10 +50,10 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "kinsol/kinsol.h"
-#include "kinsol/kinsol_spgmr.h"
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <kinsol/kinsol.h>
+#include <kinsol/kinsol_spgmr.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"

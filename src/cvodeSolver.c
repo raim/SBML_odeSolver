@@ -47,9 +47,9 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "cvodes/cvodes.h"    
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"

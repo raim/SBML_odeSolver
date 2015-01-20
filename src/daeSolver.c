@@ -52,10 +52,10 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "ida/ida.h"    
-#include "ida/ida_dense.h"
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <ida/ida.h>
+#include <ida/ida_dense.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
