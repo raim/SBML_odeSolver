@@ -108,9 +108,11 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
   for ( i=0; i<om->neq; i++ )
   {
     data->value[i] = ydata[i];
+#ifdef VERBOSE
     printf("%s = %g,  f(%s): %g\n",
 	   om->names[i], data->value[i], om->names[i],
 	   evaluateAST(data->model->ode[i], data));
+#endif
   }
   /* IntegratorInstance_freeKINSolverStructures(engine); */
   /* update data? */
@@ -217,8 +219,10 @@ int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
   flag = KINMalloc(solver->cvode_mem, func, solver->y);
   CVODE_HANDLE_ERROR(&flag, "KINMalloc", 1);
 
+#ifdef VERBOSE
   /* for debugging */
   KINSetPrintLevel(solver->cvode_mem, 1);
+#endif
 
   /* set constraints for solutions */
   flag = KINSetConstraints(solver->cvode_mem, constraints);
