@@ -23,6 +23,7 @@ int main(void)
 	srunner_add_suite(sr, create_suite_integratorSettings());
 	srunner_add_suite(sr, create_suite_interpol());
 	srunner_add_suite(sr, create_suite_modelSimplify());
+	srunner_add_suite(sr, create_suite_nullSolver());
 	srunner_add_suite(sr, create_suite_odeConstruct());
 	srunner_add_suite(sr, create_suite_odeModel());
 	srunner_add_suite(sr, create_suite_odeSolver());

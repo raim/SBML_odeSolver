@@ -24,6 +24,7 @@ unittest_SOURCES = main.c \
                    test_integratorSettings.c \
                    test_interpol.c \
                    test_modelSimplify.c \
+                   test_nullSolver.c \
                    test_odeConstruct.c \
                    test_odeModel.c \
                    test_odeSolver.c \

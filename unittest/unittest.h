@@ -54,6 +54,7 @@ Suite *create_suite_integratorInstance(void);
 Suite *create_suite_integratorSettings(void);
 Suite *create_suite_interpol(void);
 Suite *create_suite_modelSimplify(void);
+Suite *create_suite_nullSolver(void);
 Suite *create_suite_odeConstruct(void);
 Suite *create_suite_odeModel(void);
 Suite *create_suite_odeSolver(void);
