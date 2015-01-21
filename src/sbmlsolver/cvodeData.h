@@ -40,13 +40,13 @@
 typedef struct cvodeData cvodeData_t ;
 typedef struct cvodeResults cvodeResults_t ;
 
-/* Header Files for CVODE: required only for realtype *p  */
-#include <nvector/nvector_serial.h>
-
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/odeModel.h>
 #include <sbmlsolver/variableIndex.h>
+
+/* required for realtype */
+#include <sundials/sundials_types.h>
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel

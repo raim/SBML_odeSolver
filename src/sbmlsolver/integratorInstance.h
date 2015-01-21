@@ -36,9 +36,6 @@
 #ifndef SBMLSOLVER_INTEGRATORINSTANCE_H_
 #define SBMLSOLVER_INTEGRATORINSTANCE_H_
 
-#include <time.h>
-#include <nvector/nvector_serial.h>
-
 typedef struct cvodeSolver cvodeSolver_t;
 typedef struct integratorInstance integratorInstance_t ;
 
@@ -46,6 +43,9 @@ typedef struct integratorInstance integratorInstance_t ;
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/odeModel.h>
 #include <sbmlsolver/cvodeData.h>
+
+#include <time.h>
+#include <sundials/sundials_types.h>
 
 /** Solver State Information */
 struct cvodeSolver
