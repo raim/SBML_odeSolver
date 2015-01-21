@@ -31,5 +31,6 @@ unittest_SOURCES = main.c \
                    test_processAST.c \
                    test_sbml.c \
                    test_sbmlResults.c \
+                   test_sensSolver.c \
                    test_solverError.c \
                    test_util.c

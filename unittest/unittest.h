@@ -61,6 +61,7 @@ Suite *create_suite_odeSolver(void);
 Suite *create_suite_processAST(void);
 Suite *create_suite_sbml(void);
 Suite *create_suite_sbmlResults(void);
+Suite *create_suite_sensSolver(void);
 Suite *create_suite_solverError(void);
 Suite *create_suite_util(void);
 
