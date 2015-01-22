@@ -47,7 +47,7 @@
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
 
-void storeSBMLError(errorType_t type, const SBMLError_t *error )
+static void storeSBMLError(errorType_t type, const SBMLError_t *error)
 {  
   SolverError_error(type, XMLError_getErrorId((const XMLError_t *)error),
 		    "libSBML ERROR\n\t\t\tSEVERITY: %d\n\t\t\tMESSAGE:  %s\n",
