@@ -117,7 +117,7 @@ char *get_line(FILE *fp)
 /*-------------------------------------------------------------------------*/
 
 char*
-concat (char *a, char *b)
+concat(const char *a, const char *b)
 {
   size_t alen, blen;
   char *tmp;
@@ -131,7 +131,7 @@ concat (char *a, char *b)
   return (tmp);
 }
 
-void fatal (FILE *hdl, char *fmt, ...)
+void fatal(FILE *hdl, const char *fmt, ...)
 {
   va_list args;
   if ( hdl == NULL ) hdl = stderr;
@@ -146,7 +146,7 @@ void fatal (FILE *hdl, char *fmt, ...)
   exit(EXIT_FAILURE);
 }
                                                                                
-void Warn (FILE *hdl, char *fmt, ...)
+void Warn(FILE *hdl, const char *fmt, ...)
 {
   va_list args;
   if ( hdl == NULL ) hdl = stderr;

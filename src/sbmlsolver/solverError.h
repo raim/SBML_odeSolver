@@ -197,7 +197,7 @@ extern "C" {
   SBML_ODESOLVER_API void SolverError_clear();
 
   /* create an error */
-  SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, char *format, ...);
+  SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, const char *format, ...);
 
 #ifdef WIN32
   /* create an error from the last windows error */

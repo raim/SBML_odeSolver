@@ -58,7 +58,7 @@ extern "C" {
   void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *);
   void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *);
-  int check_flag(void *flagvalue, char *funcname, int opt);
+  int check_flag(void *flagvalue, const char *funcname, int opt);
   
 #ifdef __cplusplus
 }

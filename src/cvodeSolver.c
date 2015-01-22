@@ -884,7 +884,7 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(const integratorI
 /*
  * check return values of SUNDIALS functions
  */
-int check_flag(void *flagvalue, char *funcname, int opt)
+int check_flag(void *flagvalue, const char *funcname, int opt)
 {
 
   int *errflag;

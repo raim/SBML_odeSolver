@@ -152,7 +152,8 @@ SBML_ODESOLVER_API void SolverError_dumpAndClearErrors()
 
 
 /** create an error */
-SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
+SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode,
+										  const char *fmt, ...)
 {
   List_t *errors = solverErrors[type];
   char buffer[2000], *variableLengthBuffer;
@@ -304,7 +305,7 @@ static int SolverError_dumpHelper(char *s)
 {
   int result = 1;
 
-  static char *solverErrorTypeString[] =
+  static const char *solverErrorTypeString[] =
     { "Fatal Error",
       "      Error",
       "    Warning",

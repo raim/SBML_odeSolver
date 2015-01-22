@@ -55,10 +55,10 @@ extern "C" {
   /** get values from cvodeResults */
   SBML_ODESOLVER_API char *get_line(FILE *fp);
                                                                                
-  SBML_ODESOLVER_API char *concat (char *a, char *b);
+  SBML_ODESOLVER_API char *concat(const char *a, const char *b);
 
-  SBML_ODESOLVER_API void fatal (FILE *hdl, char *fmt, ...);
-  SBML_ODESOLVER_API void Warn  (FILE *hdl, char *fmt, ...);
+  SBML_ODESOLVER_API void fatal(FILE *hdl, const char *fmt, ...);
+  SBML_ODESOLVER_API void Warn(FILE *hdl, const char *fmt, ...);
 
   SBML_ODESOLVER_API void *xalloc (size_t nmemb, size_t size);
   SBML_ODESOLVER_API void xfree (void *ptr);
