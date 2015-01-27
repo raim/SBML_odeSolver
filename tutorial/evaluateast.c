@@ -65,6 +65,7 @@ int main (void)
   SolverError_dump();
   IntegratorInstance_free(ii);
   ODEModel_free(odemodel);
+  CvodeSettings_free(options);
   ASTNode_free(f);
   ASTNode_free(f2);
   ASTNode_free(f3);
