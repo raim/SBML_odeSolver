@@ -44,7 +44,7 @@ int main (void)
   
   const ASTNode_t *ode = ODEModel_getOde(odemodel, vi);
   char *equation = SBML_formulaToString(ode); 
-  printf ("%s/dt = %s\n", ODEModel_getVariableName(odemodel, vi), equation);
+  printf("d(%s)/dt = %s\n", ODEModel_getVariableName(odemodel, vi), equation);
 
   ODEModel_free(odemodel);
   VariableIndex_free(vi);
