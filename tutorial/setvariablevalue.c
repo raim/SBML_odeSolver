@@ -74,11 +74,13 @@ int main (void)
   }
   
   SolverError_dump();
-  ODEModel_free(odemodel);
   VariableIndex_free(vi1);
   VariableIndex_free(vi2);
+  VariableIndex_free(vi3);
   IntegratorInstance_free(ii_1);
   IntegratorInstance_free(ii_2);  
+  ODEModel_free(odemodel);
+  CvodeSettings_free(options);
   return (EXIT_SUCCESS);  
 }
 
