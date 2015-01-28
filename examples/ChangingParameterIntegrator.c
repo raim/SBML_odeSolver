@@ -110,7 +110,7 @@ int doit(void)
     return 0;
 }
 
-int main (int argc, char *argv[])
+int main(void)
 {
     int result = doit();
     char *errors = SolverError_dumpToString();

@@ -38,7 +38,7 @@ LDADD = ../src/libODES.la \
     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
 
 noinst_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
-               simpleIntInst changeIntInst ASTIndexTest ASTgetIndexTest\
+               simpleIntInst changeIntInst changeParamInt ASTIndexTest ASTgetIndexTest\
                ParameterScanner Sense \
                printODEs analyzeJacobian analyzeSens \
 	       root senstest FIMtest adjsenstest integrateODEs compilerTest \
@@ -55,6 +55,7 @@ adj_sensitivity_SOURCES = adj_sensitivity.c
 batchIntegrate_SOURCES = batch_integrate.c
 simpleIntInst_SOURCES  = simpleIntegratorInstance.c
 changeIntInst_SOURCES  = ChangingIntegratorInstance.c
+changeParamInt_SOURCES = ChangingParameterIntegrator.c
 ASTIndexTest_SOURCES = ASTIndexTest.c
 ASTgetIndexTest_SOURCES = ASTgetIndexTest.c
 analyzeJacobian_SOURCES = analyzeJacobian.c
