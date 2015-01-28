@@ -35,9 +35,9 @@
 
 #include <stdio.h>
 
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpState(
     integratorInstance_t *iia,

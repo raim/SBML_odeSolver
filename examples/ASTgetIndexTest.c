@@ -35,10 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sbml/math/FormulaParser.h"
-#include "sbml/math/FormulaFormatter.h"
-#include "sbmlsolver/ASTIndexNameNode.h"
-#include "sbmlsolver/processAST.h"
+#include <sbml/math/FormulaParser.h>
+#include <sbml/math/FormulaFormatter.h>
+#include <sbmlsolver/ASTIndexNameNode.h>
+#include <sbmlsolver/processAST.h>
 
 void printIndex(ASTNode_t *f)
 {

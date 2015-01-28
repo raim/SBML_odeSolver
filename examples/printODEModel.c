@@ -36,10 +36,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sbml/SBMLTypes.h"
-#include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/solverError.h"
+#include <sbml/SBMLTypes.h>
+#include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/solverError.h>
 
 int main(void)
 {

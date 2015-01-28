@@ -35,8 +35,8 @@
 
 #include <stdio.h>
 
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 int doIt(void)
 {
