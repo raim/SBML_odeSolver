@@ -113,9 +113,5 @@ int main(void)
     ASTNode_free(new);    
     free(indexBool);
 
-    odeModel_t *om = ODEModel_createFromFile("../ruleorder/rules.xml");
-/*     ODEModel_topologicalRuleSort(om); */
-    ODEModel_free(om);
-
     return(EXIT_SUCCESS);
 }
