@@ -422,7 +422,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /* 1: if an objective function is initialized OR */
     if ( om->ObjectiveFunction )
     {
-      /* 1.a: if a sensitivity quadrature with size other then 1 exists ... */
+      /* 1.a: if a sensitivity quadrature with size other than 1 exists ... */
       if ( solver->qS )
 	if ( NV_LENGTH_S(solver->qS) != 1 )
 	  quadReinit = 1;
@@ -433,7 +433,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* 2.a: if a forward quadrature exists and nsens is NOT 1 ... */
       if ( solver->q && os->nsens != 1 )
 	quadReinit = 1;
-      /* 2.b: if a sensitive quadrature has a different size then nsens  ... */
+      /* 2.b: if a sensitive quadrature has a different size from nsens  ... */
       if ( solver->qS )
 	if ( NV_LENGTH_S(solver->qS) != os->nsens )
 	  quadReinit = 1;

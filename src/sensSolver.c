@@ -253,7 +253,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /* remember: if yS had to be reconstructed, then also
        the sense solver structure CVodeSens needs reconstruction
-       rather then mere re-initiation */
+       rather than mere re-initiation */
     reinit = 1;
     if ( solver->yS == NULL )
     {

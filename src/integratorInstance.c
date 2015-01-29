@@ -515,7 +515,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *e
 		      SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME,
 		      "Requested intial time (%f) is not possible! "\
 		      "Reset integrator first, and make sure that the first "\
-		      "output time (%f) is smaller then the requested "\
+		      "output time (%f) is smaller than the requested "\
 		      "initial time! New setting ignored!", initialtime,
 		      engine->solver->tout);
   return 0;
@@ -527,7 +527,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *e
     (CvodeSettings_setIndefinite(set, 1)).
     Returns 1 if successful and 0 otherwise.
 
-    WARNING: the next output time must always be bigger then the previous.
+    WARNING: the next output time must always be bigger than the previous.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *engine, double nexttime)
@@ -588,7 +588,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
     Fisher Information Matrix (FIM),
 
     issues error message and returns 0 if FIM doesn't exist or if
-    the passed integers are larger then FIM dimension */
+    the passed integers are larger than FIM dimension */
 /*!!! TODO : make additional interface via variableIndex */
 
 SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *ii, int i, int j)
@@ -601,7 +601,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *ii, in
   }
   if ( i >= ii->os->nsens || j >= ii->os->nsens )
   {
-    fprintf(stderr, "WARNING: FIM is smaller then requested indices.\n");
+    fprintf(stderr, "WARNING: FIM is smaller than requested indices.\n");
     return 0.0;
   }
   return ii->data->FIM[i][j];

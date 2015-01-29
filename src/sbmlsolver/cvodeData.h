@@ -135,7 +135,7 @@ struct cvodeData {
     to the respective values in cvodeData */
 struct cvodeResults {
    /** counter for calculated time steps (without initial conditions),
-       this number can be lower then the same variable in cvodeData,
+       this number can be lower than the same variable in cvodeData,
        in case the integration is prematurely stopped. */
   int nout;
   /** contains the specific time steps for an integration */

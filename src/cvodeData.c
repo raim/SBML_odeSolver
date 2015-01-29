@@ -321,7 +321,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
    separated into two functions to further support modularity and
    independence of data structures */
 /*!!! TODO : clarify if this function can be called when the solver time
-  is other then 0, and how it relates to CvodeData_initializeValues
+  is other than 0, and how it relates to CvodeData_initializeValues
   -> handling of initialAssignments !!!*/
 int
 CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om, int keepValues)

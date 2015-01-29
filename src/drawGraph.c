@@ -341,7 +341,7 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
     As this graph is usually of very high or full connectivity, i.e.
     no variable is completely independent of some parameter of the
     system, the function takes a threshold between 0 and 1 as an
-    additional input. Only edges for entries greater then the
+    additional input. Only edges for entries greater than the
     threshold multiplied by the maximum entry for species x will be
     drawn.
 
