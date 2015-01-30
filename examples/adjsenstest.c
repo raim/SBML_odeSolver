@@ -39,8 +39,6 @@
 #include <sbmlsolver/sensSolver.h>
 #include <sbml/SBMLTypes.h>
 
-void create_simple_v_file(char *v_file, int n_var, char **var);
-
 int
 main(void)
 {
@@ -179,23 +177,3 @@ main(void)
 
   return (EXIT_SUCCESS);  
 }
-
-
-/* --------- --------- --------- --------- --------- --------- --------- */
-void create_simple_v_file(char *v_file, int n_var, char **var){
-
-  FILE *fp;
-  int i;
-  
-  fp = fopen(v_file, "w");
-    
-  for(i=0; i<n_var; i++){
-    fprintf(fp, "%s ", var[i]); 
-    fprintf(fp, "%s \n", var[i]);
-  }
-
-  fclose(fp);
-
-}
-
-/* End of file */
