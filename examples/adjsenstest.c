@@ -85,8 +85,8 @@ main(void)
   sensIDTest[3] = "Ki";
   CvodeSettings_setSensParams(set, sensIDTest, 4);
 
-  fprintf(stdout, "\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
-  fprintf(stdout, "Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
+  printf("\n\nReading in linear objective function from: 'MAPK.linobjfun'\n");
+  printf("Demonstration of forward/adjoint sensitivity (near) equivalence. \n\n");
 
   /* Initially, only linear objective is present */
   flag = IntegratorInstance_setLinearObjectiveFunction(ii, "MAPK.linobjfun");
@@ -106,7 +106,7 @@ main(void)
     /* Set nonlinear objective function after 2 loops  */
     if ( i == 2)
     {
-      fprintf(stdout, "\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
+      printf("\nReading in nonlinear objective now: 'MAPK.objfun'\n\n");
       flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK.objfun");
       if (flag!=1)
 	return(EXIT_FAILURE);
@@ -130,9 +130,9 @@ main(void)
 	return(EXIT_FAILURE);
 
     if ( i < 2)
-      fprintf(stdout, "\n### Printing Forward Sensitivities\n");
+      printf("\n### Printing Forward Sensitivities\n");
     else
-      fprintf(stdout, "\n### Printing Objective Function (since nonlinear objective is present)\n");  
+      printf("\n### Printing Objective Function (since nonlinear objective is present)\n");  
 
      
     flag = IntegratorInstance_printQuad(ii, stdout);
@@ -158,13 +158,13 @@ main(void)
      if (flag!=1) 
       return(EXIT_FAILURE);
 
-    fprintf(stdout, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt\n");
+    printf("\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt\n");
     flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE); 
 
 
-    fprintf(stdout, "\n############# DONE RUN NUMBER %d  #############\n", i); 
+    printf("\n############# DONE RUN NUMBER %d  #############\n", i); 
     i++;
   }
   
