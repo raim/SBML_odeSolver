@@ -40,7 +40,7 @@ LDADD = ../src/libODES.la \
 noinst_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
                simpleIntInst changeIntInst changeParamInt ASTIndexTest ASTgetIndexTest\
                ParameterScanner Sense \
-               sharingIntInst \
+               sharingIntInst twinIntInst \
                printODEs analyzeJacobian analyzeSens \
 	       root senstest FIMtest adjsenstest integrateODEs compilerTest \
 	       adjsenstest_ContDiscData bistability
@@ -64,6 +64,7 @@ analyzeSens_SOURCES = analyzeSensitivity.c
 ParameterScanner_SOURCES = ParameterScanner.c
 Sense_SOURCES = Sense.c
 sharingIntInst_SOURCES = SharingIntegratorInstance.c
+twinIntInst_SOURCES = TwinIntegratorInstance.c
 root_SOURCES = findRoot.c
 integrateODEs_SOURCES = integrateODEs.c
 compilerTest_SOURCES = testCompiler.c
