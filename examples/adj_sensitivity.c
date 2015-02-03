@@ -167,7 +167,7 @@ main (int argc, char *argv[]){
 
   CvodeResults_computeDirectional(results, dp);
   
-  for(j=0; j<CvodeResults_getNout(results)+1; j++)
+  for(j=0; j<CvodeResults_getNout(results); j++)
   { 
     printf("%g  ",CvodeResults_getTime(results,j) );
     
