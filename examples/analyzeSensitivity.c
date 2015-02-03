@@ -151,7 +151,7 @@ int main(void)
       
     ODESense_free(os);
     ODEModel_free(odeModel);
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 

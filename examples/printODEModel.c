@@ -91,7 +91,7 @@ int main(void)
 
     
     ODEModel_free(model);
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 /* End of file */

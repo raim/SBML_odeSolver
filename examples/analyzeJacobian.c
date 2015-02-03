@@ -167,7 +167,7 @@ int main(void)
       
     
     ODEModel_free(odeModel);
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 
