@@ -57,7 +57,7 @@ http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 ARCHITECTURE
 
 Currently, the SOSlib has been tested on Fedora Linux, 
-MasOS X/Darwin and Windows. It is written in pure ISO C and
+Mac OS X/Darwin and Windows. It is written in pure ISO C and
 should thus also run on other systems. 
 We would highly appreciate any reports! 
 
