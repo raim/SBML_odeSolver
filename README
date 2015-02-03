@@ -67,9 +67,6 @@ http://www.tbi.univie.ac.at/~raim/odeSolver/support/
 
 BASIC FUNCTIONALITY
 
-Please start the program with option -h/--help for more information on
-program and output control via command-line options.
-
 The SOSlib takes a SBML file of level 1 or level 2 (see
 http://sbml.org/documents/) as an input. A SBML file describes networks of 
 chemical reactions and initial amounts/concentrations of the participating 
@@ -115,9 +112,6 @@ graphical output. The dependecies of rates on species concentrations
 as given by the Jacobian matrix (if defined), can also be drawn as a graph.
 This can sometime be useful to get a quick impression of relevant 
 interactions, e.g. feedback loops, in the system.
-
-Please start the program with option -h/--help for more information on
-program and output control via command-line options.
 
 Please await the (upcoming) detailed documentation in the `doc' 
 directory of one of the next versions of this distribution, 
