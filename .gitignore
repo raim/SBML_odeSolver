@@ -13,4 +13,4 @@ configure
 examples/Makefile.in
 odeSolver/Makefile.in
 src/Makefile.in
-src/sbmlsolver/config.h.in
+src/config.h.in

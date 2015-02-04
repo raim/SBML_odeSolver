@@ -47,7 +47,6 @@ extern "C" {
 #endif
   
 #ifndef WIN32
-#include "config.h"
 #define MAX_PATH 256
 #endif
 

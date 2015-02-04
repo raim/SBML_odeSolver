@@ -90,7 +90,6 @@ Information is ordered by include header files of the libSOS.
 @menu
 * ASTIndexNameNode.h::
 * commandLine.h::
-* config.h::
 * cvodedata.h::
 * cvodedatatype.h::
 * drawGraph.h::
@@ -150,21 +149,14 @@ Flag to indicate if object field @code{index} is set.
 
 @c +---------------+
 @c | commandLine.h |
-@node commandLine.h, config.h, ASTIndexNameNode.h, API Reference
+@node commandLine.h, cvodedata.h, ASTIndexNameNode.h, API Reference
 @section @file{commandLine.h}
 @c | commandLine.h |
 @c +---------------+
 
-@c +----------+
-@c | config.h |
-@node config.h, cvodedata.h, commandLine.h, API Reference
-@section @file{config.h}
-@c | config.h |
-@c +----------+
-
 @c +-------------+
 @c | cvodedata.h |
-@node cvodedata.h, cvodedatatype.h, config.h, API Reference
+@node cvodedata.h, cvodedatatype.h, commandLine.h, API Reference
 @section @file{cvodedata.h}
 @deftp {Data type} cvodeData_t {}
 @example

@@ -70,7 +70,6 @@ pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
                      sbmlsolver/arithmeticCompiler.h \
                      sbmlsolver/charBuffer.h \
                      sbmlsolver/compiler.h \
-                     sbmlsolver/config.h \
                      sbmlsolver/cvodeData.h \
                      sbmlsolver/cvodeSolver.h \
                      sbmlsolver/daeSolver.h \

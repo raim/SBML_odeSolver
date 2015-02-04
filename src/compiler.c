@@ -45,7 +45,7 @@
 
 #else /* default linux */
 
-#include "sbmlsolver/config.h"
+#include "config.h"
 #include "sbmlsolver/util.h"
 #include <dlfcn.h>
 #include <errno.h>

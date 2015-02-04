@@ -19,7 +19,7 @@ m4_include([config/sundials.m4])
 dnl m4_include([config/tcc.m4])
 
 AC_CONFIG_SRCDIR(src/util.c)
-AC_CONFIG_HEADERS(src/sbmlsolver/config.h)
+AC_CONFIG_HEADERS(src/config.h)
 
 AM_INIT_AUTOMAKE
 
