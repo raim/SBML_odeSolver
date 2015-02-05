@@ -44,6 +44,7 @@
 */
 /*@{*/
 
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -1507,6 +1508,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
+	assert(vi);
   IntegratorInstance_setVariableValueByIndex(engine, vi->index, value);
 }
 
