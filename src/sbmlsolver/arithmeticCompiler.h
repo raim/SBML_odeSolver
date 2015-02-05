@@ -58,7 +58,15 @@ struct directCode
   long long *temp;
 } ;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void generateFunction(directCode_t *, ASTNode_t *);
 void destructFunction(directCode_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
