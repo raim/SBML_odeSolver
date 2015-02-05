@@ -43,8 +43,6 @@
 int
 main (int argc, char *argv[]){
 
-  char model[256];
-  
   SBMLDocument_t *d;
   SBMLReader_t *sr;
   Model_t *m;
@@ -57,11 +55,10 @@ main (int argc, char *argv[]){
     fprintf(stderr, "Give me a filename as argument\n");
     return EXIT_FAILURE;
   }
-  sscanf(argv[1], "%s", model);
 
   /* parsing the SBML model with libSBML */
   sr = SBMLReader_create();
-  d = SBMLReader_readSBML(sr, model);
+  d = SBMLReader_readSBML(sr, argv[1]);
   SBMLReader_free(sr);
   m = SBMLDocument_getModel(d);
 
