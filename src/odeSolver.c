@@ -304,7 +304,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     else
       vi[j] = ODEModel_getVariableIndex(om, vs->id[j]);
 
-    /* if ( vi[j] == NULL ) return NULL; */ /*!!! TODO : handle NULL */
+    if ( vi[j] == NULL ) return NULL; /*!!! TODO : handle NULL */
   }
       
   /** now, work through the passed designpoints in varySettings */
