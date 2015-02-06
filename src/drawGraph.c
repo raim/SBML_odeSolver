@@ -277,6 +277,10 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
 
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
   fprintf(f ,"digraph jacoby {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(data->model->m) )
@@ -321,6 +325,7 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
 	    data->model->names[i]);
   }   
   fprintf(f, "}\n");
+  fclose(f);
   return 1;
 }
 
@@ -565,6 +570,10 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
   
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
   fprintf(f ,"digraph sensitivity {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(om->m) )
@@ -627,6 +636,7 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
 	    om->names[os->index_sens[i]]);
 
   fprintf(f, "}\n");
+  fclose(f);
   free(highest);
   free(lowest);
   return 1;
@@ -948,7 +958,10 @@ static int drawModelTxt(Model_t *m, char *file)
   
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
-
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
   fprintf(f ,"digraph reactionnetwork {\n");
   fprintf(f ,"label=\"%s\";\n",
 	  Model_isSetName(m) ?
@@ -1033,6 +1046,7 @@ static int drawModelTxt(Model_t *m, char *file)
 	    Species_isSetName(s) ? Species_getName(s) : Species_getId(s));
   }  
   fprintf(f ,"}\n");
+  fclose(f);
   return 1;
 }
 
