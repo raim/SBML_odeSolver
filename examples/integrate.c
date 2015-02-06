@@ -78,7 +78,7 @@ main (int argc, char *argv[])
   results = SBML_odeSolver(d, set);
   
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
-    printf("Integration not sucessful!\n");
+    fprintf(stderr, "Integration not sucessful!\n");
     SolverError_dumpAndClearErrors();
     return(EXIT_FAILURE);
   }
