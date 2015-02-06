@@ -565,7 +565,7 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
   
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
-  fprintf(f ,"digraph jacoby {\n");
+  fprintf(f ,"digraph sensitivity {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(om->m) )
     fprintf(f ,"label=\"%s at time %g\";\n", Model_getName(om->m),
