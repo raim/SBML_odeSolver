@@ -168,7 +168,7 @@ main (void){
   CvodeSettings_free(set);
   CvodeResults_free(results);
   ODEModel_free(om);
-
+  SolverError_dumpAndClearErrors();
   return (EXIT_SUCCESS);  
 }
 
