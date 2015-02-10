@@ -306,8 +306,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
       }
       else
       {
-        flag = CVodeSensInit(solver->cvode_mem, sensMethod,
-                             os->nsens, NULL, solver->yS);
+        flag = CVodeSensInit(solver->cvode_mem, os->nsens,
+                             sensMethod, NULL, solver->yS);
         CVODE_HANDLE_ERROR(&flag, "CVodeSensInit NULL", 1);
 
         data->use_p = 1; /* use data->p, as fS is not available */
