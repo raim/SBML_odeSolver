@@ -298,8 +298,8 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
         there is no matrix */
       if ( os->sensitivity && om->jacobian )
       {
-        flag = CVodeSensInit1(solver->cvode_mem, sensMethod,
-                              os->nsens, sensRhsFunction, solver->yS);
+        flag = CVodeSensInit1(solver->cvode_mem, os->nsens,
+                              sensMethod, sensRhsFunction, solver->yS);
         CVODE_HANDLE_ERROR(&flag, "CVodeSensInit1", 1);
 
         data->use_p = 0; /* don't use data->p */
