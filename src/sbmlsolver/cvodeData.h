@@ -34,22 +34,19 @@
  *     
  */
 
-#ifndef _CVODEDATA_H_
-#define _CVODEDATA_H_
+#ifndef SBMLSOLVER_CVODEDATA_H_
+#define SBMLSOLVER_CVODEDATA_H_
 
 typedef struct cvodeData cvodeData_t ;
 typedef struct cvodeResults cvodeResults_t ;
-
-/* Header Files for CVODE: required only for realtype *p  */
-#include "nvector/nvector_serial.h"
-
-#include <stdio.h>
-#include <sbml/SBMLTypes.h>
 
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/odeModel.h>
 #include <sbmlsolver/variableIndex.h>
+
+/* required for realtype */
+#include <sundials/sundials_types.h>
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel
@@ -138,7 +135,7 @@ struct cvodeData {
     to the respective values in cvodeData */
 struct cvodeResults {
    /** counter for calculated time steps (without initial conditions),
-       this number can be lower then the same variable in cvodeData,
+       this number can be lower than the same variable in cvodeData,
        in case the integration is prematurely stopped. */
   int nout;
   /** contains the specific time steps for an integration */
@@ -181,17 +178,17 @@ extern "C" {
   SBML_ODESOLVER_API int CvodeData_initialize(cvodeData_t *, cvodeSettings_t *, odeModel_t *, int keepValues);
   
   /* get values from cvodeResults */
-  SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *, int);
+  SBML_ODESOLVER_API double CvodeResults_getTime(const cvodeResults_t *, int);
   SBML_ODESOLVER_API double CvodeResults_getValue(cvodeResults_t *, variableIndex_t *, int);
-  SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *);
+  SBML_ODESOLVER_API int CvodeResults_getNout(const cvodeResults_t *);
   SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
   SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
   SBML_ODESOLVER_API double** CvodeResults_getFisherInformationMatrix(cvodeResults_t *results); /* FIM */
-  SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, double *dp);
+  SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, const double *dp);
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 
@@ -200,8 +197,6 @@ cvodeResults_t *CvodeResults_create(cvodeData_t *, int);
 int CvodeResults_allocateSens(cvodeResults_t *, int neq, int nsens, int nout);
 int CvodeData_initializeSensitivities(cvodeData_t *,cvodeSettings_t *,
 				      odeModel_t *, odeSense_t *);
-/* Adjoint specific internal functions used by integratorInstance.c */
-int CvodeResults_allocateAdjSens(cvodeResults_t *, int neq, int nadjsens, int nout);
 
 #endif
 

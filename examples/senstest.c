@@ -36,6 +36,7 @@
 #include <stdlib.h>
 
 #include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/solverError.h>
 
 
 int

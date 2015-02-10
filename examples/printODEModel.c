@@ -36,10 +36,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sbml/SBMLTypes.h"
-#include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/solverError.h"
+#include <sbml/SBMLTypes.h>
+#include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/solverError.h>
 
 int main(void)
 {
@@ -91,7 +91,7 @@ int main(void)
 
     
     ODEModel_free(model);
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 /* End of file */

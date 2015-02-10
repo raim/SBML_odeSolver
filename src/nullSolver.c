@@ -50,17 +50,16 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "kinsol/kinsol.h"
-#include "kinsol/kinsol_spgmr.h"
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <kinsol/kinsol.h>
+#include <kinsol/kinsol_spgmr.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/nullSolver.h"
 
@@ -85,17 +84,14 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
   odeModel_t *om = engine->om;
 
   /* IntegratorInstance_freeCVODESolverStructures(engine); */
-  printf("HALLO NULLSTELLE\n");
   if (!IntegratorInstance_createKINSolverStructures(engine))
     return 0;
-  printf("HALLO KINSOL\n");
     
   /* !!!! calling KINSOL !!!! */
   flag = KINSol(solver->cvode_mem, solver->y, KIN_LINESEARCH, 
 		solver->abstol, solver->abstol);
   /* !!! should use different scalings, first is D*y second
      is D*f(y) !!!*/
-  printf("THX KINSOL\n");
 
   if ( flag != KIN_SUCCESS )
   {
@@ -112,9 +108,11 @@ SBML_ODESOLVER_API int IntegratorInstance_nullSolver(integratorInstance_t *engin
   for ( i=0; i<om->neq; i++ )
   {
     data->value[i] = ydata[i];
+#ifdef VERBOSE
     printf("%s = %g,  f(%s): %g\n",
 	   om->names[i], data->value[i], om->names[i],
 	   evaluateAST(data->model->ode[i], data));
+#endif
   }
   /* IntegratorInstance_freeKINSolverStructures(engine); */
   /* update data? */
@@ -221,8 +219,10 @@ int IntegratorInstance_createKINSolverStructures(integratorInstance_t *engine)
   flag = KINInit(solver->cvode_mem, func, solver->y);
   CVODE_HANDLE_ERROR(&flag, "KINInit", 1);
 
+#ifdef VERBOSE
   /* for debugging */
   KINSetPrintLevel(solver->cvode_mem, 1);
+#endif
 
   /* set constraints for solutions */
   flag = KINSetConstraints(solver->cvode_mem, constraints);

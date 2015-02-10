@@ -2406,7 +2406,7 @@ SBML_ODESOLVER_API variableIndex_t *ODEModel_getVariableIndexByNum(const odeMode
   {
     SolverError_error(WARNING_ERROR_TYPE, SOLVER_ERROR_SYMBOL_IS_NOT_IN_MODEL,
 		      "Requested variable is not in the model. "
-		      "Index larger then number of variables and "
+		      "Index larger than number of variables and "
 		      "paramaters");
     return NULL;
   }

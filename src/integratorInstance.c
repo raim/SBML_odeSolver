@@ -44,6 +44,7 @@
 */
 /*@{*/
 
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -62,9 +63,6 @@
 #include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
-#include "sbmlsolver/modelSimplify.h"
-/* #include "sbmlsolver/daeSolver.h" */ /* !!! not yet working !!! */
-
 
 /* local integratorInstance allocation and initialization */ 
 static int
@@ -491,7 +489,7 @@ SBML_ODESOLVER_API void IntegratorInstance_copyVariableState(integratorInstance_
 
 /**  Returns the current time of an integration */
 
-SBML_ODESOLVER_API double IntegratorInstance_getTime(integratorInstance_t *engine)
+SBML_ODESOLVER_API double IntegratorInstance_getTime(const integratorInstance_t *engine)
 {
   return engine->solver->t;
 }
@@ -518,7 +516,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *e
 		      SOLVER_ERROR_ATTEMPTING_TO_SET_IMPOSSIBLE_INITIAL_TIME,
 		      "Requested intial time (%f) is not possible! "\
 		      "Reset integrator first, and make sure that the first "\
-		      "output time (%f) is smaller then the requested "\
+		      "output time (%f) is smaller than the requested "\
 		      "initial time! New setting ignored!", initialtime,
 		      engine->solver->tout);
   return 0;
@@ -530,7 +528,7 @@ SBML_ODESOLVER_API int IntegratorInstance_setInitialTime(integratorInstance_t *e
     (CvodeSettings_setIndefinite(set, 1)).
     Returns 1 if successful and 0 otherwise.
 
-    WARNING: the next output time must always be bigger then the previous.
+    WARNING: the next output time must always be bigger than the previous.
 */
 
 SBML_ODESOLVER_API int IntegratorInstance_setNextTimeStep(integratorInstance_t *engine, double nexttime)
@@ -591,7 +589,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getVariableValue(integratorInstance
     Fisher Information Matrix (FIM),
 
     issues error message and returns 0 if FIM doesn't exist or if
-    the passed integers are larger then FIM dimension */
+    the passed integers are larger than FIM dimension */
 /*!!! TODO : make additional interface via variableIndex */
 
 SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *ii, int i, int j)
@@ -604,7 +602,7 @@ SBML_ODESOLVER_API double IntegratorInstance_getFIM(integratorInstance_t *ii, in
   }
   if ( i >= ii->os->nsens || j >= ii->os->nsens )
   {
-    fprintf(stderr, "WARNING: FIM is smaller then requested indices.\n");
+    fprintf(stderr, "WARNING: FIM is smaller than requested indices.\n");
     return 0.0;
   }
   return ii->data->FIM[i][j];
@@ -867,7 +865,7 @@ SBML_ODESOLVER_API int IntegratorInstance_integrate(integratorInstance_t *engine
     for the passed integratorInstance
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance_t *engine)
+SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(const integratorInstance_t *engine)
 {
  
   return engine->solver->iout > engine->solver->nout &&
@@ -880,7 +878,7 @@ SBML_ODESOLVER_API int IntegratorInstance_timeCourseCompleted(integratorInstance
      The results must NOT be freed by the caller.
 */
 
-SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integratorInstance_t *engine)
+SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(const integratorInstance_t *engine)
 {
   return engine->results; 
 }
@@ -892,7 +890,7 @@ SBML_ODESOLVER_API const cvodeResults_t *IntegratorInstance_getResults(integrato
      CvodeResults_free(results)!
 */
 
-SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorInstance_t *engine)
+SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(const integratorInstance_t *engine)
 {
   int i, j, k;
   cvodeResults_t *results;
@@ -934,14 +932,11 @@ SBML_ODESOLVER_API cvodeResults_t *IntegratorInstance_createResults(integratorIn
 
 /** Writes results to file
  */
-SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *ii, FILE *fp)
+SBML_ODESOLVER_API void IntegratorInstance_printResults(const integratorInstance_t *ii, FILE *fp)
 {
   int n, j;
-  cvodeResults_t *results;
   variableIndex_t *vi;
   
-  results = IntegratorInstance_createResults(ii);
-
   fprintf(fp, "#t ");
   for (j=0; j<ii->om->neq; j++){
     vi = ODEModel_getOdeVariableIndex(ii->om, j);
@@ -950,18 +945,15 @@ SBML_ODESOLVER_API void IntegratorInstance_printResults(integratorInstance_t *ii
   }
   fprintf(fp, "\n");
   
-  for (n=0; n<CvodeResults_getNout(results); n++){
-    fprintf(fp, "%g ", CvodeResults_getTime(results, n));
+  for (n=0; n<CvodeResults_getNout(ii->results); n++){
+    fprintf(fp, "%g ", CvodeResults_getTime(ii->results, n));
     for (j=0; j<ii->om->neq; j++){
       vi = ODEModel_getOdeVariableIndex(ii->om, j);
-      fprintf(fp, "%g ", CvodeResults_getValue(results, vi, n));
+      fprintf(fp, "%g ", CvodeResults_getValue(ii->results, vi, n));
       VariableIndex_free(vi);
     }
     fprintf(fp, "\n");
   }
-  
-  CvodeResults_free(results);
-  
 }
 
 /**  Writes current simulation data to the original model.
@@ -1522,6 +1514,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
 
 SBML_ODESOLVER_API void IntegratorInstance_setVariableValue(integratorInstance_t *engine, variableIndex_t *vi, double value)
 {
+	assert(vi);
   IntegratorInstance_setVariableValueByIndex(engine, vi->index, value);
 }
 
@@ -1687,8 +1680,9 @@ SBML_ODESOLVER_API void IntegratorInstance_dumpSolver(integratorInstance_t *engi
 
 SBML_ODESOLVER_API void IntegratorInstance_free(integratorInstance_t *engine)
 {
+	if (!engine) return;
   /* solver specific switches */
-  if (engine->om->neq) 
+  if (engine->om && engine->om->neq)
     IntegratorInstance_freeCVODESolverStructures(engine);
 
   /* if (om->algebraic) ?? */
@@ -1752,7 +1746,7 @@ SBML_ODESOLVER_API int IntegratorInstance_handleError(integratorInstance_t *engi
 /**  Prints some final statistics of the solver
  */
 
-SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API void IntegratorInstance_printStatistics(const integratorInstance_t *engine, FILE *f)
 {
   odeModel_t *om = engine->om;
 
@@ -1766,7 +1760,7 @@ SBML_ODESOLVER_API void IntegratorInstance_printStatistics(integratorInstance_t 
 
 /** returns the time elapsed in seconds since the start of integration
  */
-SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(integratorInstance_t *engine)
+SBML_ODESOLVER_API double IntegratorInstance_getIntegrationTime(const integratorInstance_t *engine)
 {
   if (engine->clockStarted)
     return ((double)(clock() - engine->startTime)) / CLOCKS_PER_SEC; 

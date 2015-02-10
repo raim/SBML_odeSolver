@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _ODECONSTRUCT_H_
-#define _ODECONSTRUCT_H_
+#ifndef SBMLSOLVER_ODECONSTRUCT_H_
+#define SBMLSOLVER_ODECONSTRUCT_H_
 
 #include <sbml/SBMLTypes.h>
 
@@ -50,7 +50,7 @@ extern "C" {
   SBML_ODESOLVER_API ASTNode_t *Species_odeFromReactions(Species_t *, Model_t *);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

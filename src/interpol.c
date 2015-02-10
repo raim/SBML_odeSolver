@@ -38,9 +38,11 @@ void free_data(time_series_t* ts)
     free(ts->data2);
     
     /* free warnings */
+	if (ts->warn) {
     for ( i=0; i<2; i++ )
 	if ( ts->warn[i] != 0 ) /* ??? use SolverError here ??? */
 	    Warn(stderr, "call(): %s: %d times\n", ts->mess[i], ts->warn[i]);
+	}
   
     free(ts->mess);
     free(ts->warn); 
@@ -137,7 +139,7 @@ void test_interpol(time_series_t* ts)
     the second derivatives for spline interpolation, and returns a
     pointer to the created data structure. */
 
-time_series_t *read_data(char *file, int n_var, char **var)
+time_series_t *read_data(const char *file, int n_var, char **var)
 {
     int i;
     char *name;
@@ -230,7 +232,7 @@ time_series_t *read_data(char *file, int n_var, char **var)
 /* and returns the list of found columns (their indices) */
 /* and the corresponding variables (their indices). */
 
-int read_header_line(char *file, int n_var, char **var,
+int read_header_line(const char *file, int n_var, char **var,
 		     int *col, int *index)
 {    
     FILE *fp;
@@ -310,7 +312,7 @@ int read_header_line(char *file, int n_var, char **var,
 /* and returns the number of read lines. */
 /* (or only counts the number of lines, if the pointer is NULL.) */
 
-int read_columns(char *file, int n_col, int *col, int *index,
+int read_columns(const char *file, int n_col, int *col, int *index,
 		 time_series_t *ts)
 {    
     FILE *fp;
@@ -435,7 +437,7 @@ double call(int i, double x, time_series_t *ts)
 /* spline returns y2[0..n-1] */
 /* containing the second derivatives of the cubic-spline interpolation */
 
-int spline(int n, double *x, double *y, double *y2)
+int spline(int n, const double *x, const double *y, double *y2)
 {    
     int i;
     double p, sig, *u;
@@ -470,7 +472,7 @@ int spline(int n, double *x, double *y, double *y2)
 /* spline returns the interpolated value y_ = f(x_) */
 /* and the left interval boundary j, i.e. x[j] <= x_ < x[j+1] */
 
-void splint(int n, double *x, double *y, double *y2,
+void splint(int n, const double *x, const double *y, const double *y2,
 	    double x_, double *y_, int *j)
 {
 
@@ -488,7 +490,8 @@ void splint(int n, double *x, double *y, double *y2,
 
 /* ------------------------------------------------------------------------ */
 
-void linint(int n, double *x, double *y, double x_, double *y_, int *j)
+void linint(int n, const double *x, const double *y, double x_,
+			double *y_, int *j)
 {
     double h, b, a;
 
@@ -508,7 +511,7 @@ void linint(int n, double *x, double *y, double x_, double *y_, int *j)
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-int bisection(int n, double *x, double x_)
+int bisection(int n, const double *x, double x_)
 {
     int low, high, med;
 
@@ -533,13 +536,14 @@ int bisection(int n, double *x, double x_)
 /* such that x_ is in the interval [x[low], x[low+1]). */
 /* low = -1 or low = n-1 indicates that x_ is out of range. */
 
-void hunt(int n, double *x, double x_, int *low)
+void hunt(int n, const double *x, double x_, int *low)
 {
     int high, med, inc;
 
     inc = 1;
     if ( x_ >= x[*low] )
 	{
+		if (*low == n-1) return;
 	    /* hunt up */
 	    high = *low + inc;
 	    while ( x_ >= x[high] )
@@ -560,6 +564,7 @@ void hunt(int n, double *x, double x_, int *low)
 	    /* hunt down */
 	    high = *low;
 	    *low -= inc;
+		if (*low == -1) return;
 	    while ( x_ < x[*low] )
 		{
 		    inc <<= 1;

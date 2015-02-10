@@ -33,8 +33,8 @@
  */
 #include <stdio.h>
 
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpState(
     integratorInstance_t *iia,
@@ -110,7 +110,7 @@ int doit(void)
     return 0;
 }
 
-int main (int argc, char *argv[])
+int main(void)
 {
     int result = doit();
     char *errors = SolverError_dumpToString();

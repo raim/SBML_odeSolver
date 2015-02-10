@@ -88,7 +88,7 @@ SBML_ODESOLVER_API solverErrorMessage_t *SolverError_getError(errorType_t type, 
   List_t *errors = solverErrors[type];
 
   if ( type == FATAL_ERROR_TYPE && memoryExhaustion &&
-       errorNum == (errors ? List_size(errors) : 0) )
+       errorNum == (errors ? (int)List_size(errors) : 0) )
     return &memoryExhaustionFixedMessage ;
 
   if ( !errors )
@@ -152,7 +152,8 @@ SBML_ODESOLVER_API void SolverError_dumpAndClearErrors()
 
 
 /** create an error */
-SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode, char *fmt, ...)
+SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode,
+										  const char *fmt, ...)
 {
   List_t *errors = solverErrors[type];
   char buffer[2000], *variableLengthBuffer;
@@ -299,49 +300,12 @@ void SolverError_storeLastWin32Error(const char *context)
 #endif
 
 /** @} */
-/* our portable clone of itoa */
-char* SolverError_itoa( int value, char* result, int base )
-{
-  char *out = result, *reverseSource, *reverseTarget;
-  int quotient = value;
-
-  /* check that the base if valid */
-  if ( base < 2 || base > 16 ) { *result = 0; return result; }
-
-  do
-  {
-    *out = "0123456789abcdef"[ abs( quotient % base ) ];
-    ++out;
-    quotient /= base;
-  }
-  while ( quotient );
-
-  if ( value < 0 ) *out++ = '-';
-
-  reverseTarget = result ;
-  reverseSource = out;
-
-  while ( reverseSource > reverseTarget )
-  {
-    char temp;
-
-    reverseSource--;
-    temp = *reverseSource ;
-    *reverseSource = *reverseTarget;
-    *reverseTarget = temp ;
-    reverseTarget++;
-  }
-
-  *out = 0;
-  return result;
-}
-
 
 static int SolverError_dumpHelper(char *s)
 {
   int result = 1;
 
-  static char *solverErrorTypeString[] =
+  static const char *solverErrorTypeString[] =
     { "Fatal Error",
       "      Error",
       "    Warning",
@@ -361,8 +325,8 @@ static int SolverError_dumpHelper(char *s)
 	char errorCodeString[35] ;
 	solverErrorMessage_t *error = List_get(errors, j);
 
-	SolverError_itoa(error->errorCode, errorCodeString, 10);
-                    
+	sprintf(errorCodeString, "%d", error->errorCode);
+
 	if ( s )
 	{
 	  result = sprintf(s, "%s\t%s\t%s\n",

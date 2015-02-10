@@ -32,6 +32,9 @@
  * Contributor(s):
  */
 
+#ifndef SBMLSOLVER_EXPORTDEFS_H_
+#define SBMLSOLVER_EXPORTDEFS_H_
+
 /* The following ifdef block is the standard way of creating macros
 which make exporting from a DLL simpler. All files within this DLL are
 compiled with the SBML_ODESOLVER_EXPORTS symbol defined on the command
@@ -64,3 +67,4 @@ SBML_ODESOLVER_API int fnSBML_odeSolver(void);
 
 */
 
+#endif

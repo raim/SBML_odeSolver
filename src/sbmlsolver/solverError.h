@@ -33,8 +33,8 @@
  *     Rainer Machne
  */
 
-#ifndef _SOLVERERROR_H_
-#define _SOLVERERROR_H_
+#ifndef SBMLSOLVER_SOLVERERROR_H_
+#define SBMLSOLVER_SOLVERERROR_H_
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -197,7 +197,7 @@ extern "C" {
   SBML_ODESOLVER_API void SolverError_clear();
 
   /* create an error */
-  SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, char *format, ...);
+  SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, const char *format, ...);
 
 #ifdef WIN32
   /* create an error from the last windows error */
@@ -229,6 +229,4 @@ extern "C" {
 }
 #endif
 
-#endif 
-/* _SOLVERERROR_H_ */
-
+#endif

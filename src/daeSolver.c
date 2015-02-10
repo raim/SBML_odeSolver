@@ -52,17 +52,16 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "ida/ida.h"    
-#include "ida/ida_dense.h"
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <ida/ida.h>
+#include <ida/ida_dense.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/daeSolver.h"
 
@@ -201,7 +200,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
    return 0 => failure
 */
 int
-IntegratorInstance_createIdaSolverStructures(integratorInstance_t *engine)
+IntegratorInstance_createIDASolverStructures(integratorInstance_t *engine)
 {
   int i, flag, neq, nalg;
   realtype *ydata, *abstoldata, *dydata;

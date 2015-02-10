@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _ODESOLVER_H_
-#define _ODESOLVER_H_
+#ifndef SBMLSOLVER_ODESOLVER_H_
+#define SBMLSOLVER_ODESOLVER_H_
 
 typedef struct varySettings varySettings_t;
 
@@ -42,23 +42,10 @@ typedef struct varySettings varySettings_t;
 #include <sbml/SBMLTypes.h>
 
 /* own header files */
-#include <sbmlsolver/util.h>
-#include <sbmlsolver/sbml.h>
-#include <sbmlsolver/modelSimplify.h>
-#include <sbmlsolver/cvodeData.h>
-#include <sbmlsolver/odeConstruct.h>
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/integratorInstance.h>
-#include <sbmlsolver/solverError.h>
-#include <sbmlsolver/drawGraph.h>
-#include <sbmlsolver/processAST.h>
 #include <sbmlsolver/sbmlResults.h>
 #include <sbmlsolver/exportdefs.h>
-
-/* needed by sm */
-#include <sbmlsolver/ASTIndexNameNode.h>
-#include <sbmlsolver/variableIndex.h>
-#include <sbmlsolver/odeModel.h>
 
 
   /** Settings for batch integration with parameter variation */
@@ -90,23 +77,23 @@ extern "C" {
 
   /* settings for parameter variation batch runs */
   SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdesignpoints);
-  SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *, double *);
-  SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, char *, char *);
-  SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *, int, char *, char *);
+  SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *, const double *);
+  SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *, const char *, const char *);
+  SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *, int, const char *, const char *);
   SBML_ODESOLVER_API int VarySettings_setValue(varySettings_t *, int, int, double);
   SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *, int, int);
-  SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *, int, char *, char*, double);
-  SBML_ODESOLVER_API double VarySettings_getValueID(varySettings_t *, int, char *, char*);
-  SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *, int);
-  SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *, int);
+  SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *, int, const char *, const char*, double);
+  SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *, int, const char *, const char*);
+  SBML_ODESOLVER_API const char *VarySettings_getName(const varySettings_t *, int);
+  SBML_ODESOLVER_API const char *VarySettings_getReactionName(const varySettings_t *, int);
 
   SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *);
-  SBML_ODESOLVER_API void VarySettings_free();
+  SBML_ODESOLVER_API void VarySettings_free(varySettings_t *);
 
 
  
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

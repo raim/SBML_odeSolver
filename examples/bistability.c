@@ -35,8 +35,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpState(
 	       integratorInstance_t *ii, variableIndex_t *s,  variableIndex_t *u, variableIndex_t *a)

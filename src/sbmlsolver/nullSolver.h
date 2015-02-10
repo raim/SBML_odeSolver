@@ -33,10 +33,11 @@
  *
  */
 
-#ifndef _NULLSOLVER_H_
-#define _NULLSOLVER_H_
+#ifndef SBMLSOLVER_NULLSOLVER_H_
+#define SBMLSOLVER_NULLSOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorInstance.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +48,7 @@ extern "C" {
   SBML_ODESOLVER_API void IntegratorInstance_printKINSOLStatistics(integratorInstance_t *, FILE *f);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 /* internal functions that are not part of the API (yet?) */

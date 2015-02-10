@@ -33,17 +33,18 @@
  *     Andrew Finney
  */
 
-#ifndef _SENSSOLVER_H_
-#define _SENSSOLVER_H_
+#ifndef SBMLSOLVER_SENSSOLVER_H_
+#define SBMLSOLVER_SENSSOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorInstance.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
   /* CVODES SOLVER */  
-  SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(const integratorInstance_t *, FILE *f);
   SBML_ODESOLVER_API int IntegratorInstance_setLinearObjectiveFunction(integratorInstance_t *, char *);
   SBML_ODESOLVER_API int IntegratorInstance_setObjectiveFunction(integratorInstance_t *, char *);
 

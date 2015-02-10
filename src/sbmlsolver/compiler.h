@@ -33,8 +33,8 @@
  *    Christoph Flamm, Rainer Machne
  */
 
-#ifndef _COMPILER_H_
-#define _COMPILER_H_
+#ifndef SBMLSOLVER_COMPILER_H_
+#define SBMLSOLVER_COMPILER_H_
 
 #ifdef WIN32
 #include <windows.h>
@@ -47,7 +47,6 @@ extern "C" {
 #endif
   
 #ifndef WIN32
-#include "config.h"
 #define MAX_PATH 256
 #endif
 
@@ -107,7 +106,7 @@ extern "C" {
   SBML_ODESOLVER_API void CompiledCode_free(compiled_code_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

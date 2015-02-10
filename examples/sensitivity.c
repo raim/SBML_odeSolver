@@ -35,7 +35,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sbmlsolver/drawGraph.h>
 #include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/solverError.h>
 
 
 int
@@ -166,7 +168,7 @@ main (void){
   CvodeSettings_free(set);
   CvodeResults_free(results);
   ODEModel_free(om);
-
+  SolverError_dumpAndClearErrors();
   return (EXIT_SUCCESS);  
 }
 

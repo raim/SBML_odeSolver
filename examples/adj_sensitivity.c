@@ -40,6 +40,8 @@
 #include <sbmlsolver/interpol.h>
 #include <sbmlsolver/variableIndex.h>
 #include <sbmlsolver/sensSolver.h>
+#include <sbmlsolver/solverError.h>
+#include <sbmlsolver/util.h>
 
 
 /* --------- --------- --------- --------- --------- --------- --------- */
@@ -51,7 +53,7 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
-  cvodeResults_t *results;
+  const cvodeResults_t *results;
   variableIndex_t *p;
   char *sbml_file, *objfun_file, *data_file; 
   int flag;
@@ -71,8 +73,8 @@ main (int argc, char *argv[]){
     data_file      = argv[3];
   }
   
-  fprintf(stdout, "\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
-  fprintf(stdout, "J(x) = int_0^T | x - x_data |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
+  printf("\nThis example performs forward and adjoint sensitivity analysis for data mis-match functional\n");
+  printf("J(x) = int_0^T | x - x_data |^2 dt. The two methods should give (up-to-numerics) equivalent results. \n");
 
   /* creating the odeModel */
   om = ODEModel_createFromFile(sbml_file);
@@ -142,7 +144,7 @@ main (int argc, char *argv[]){
   if (flag!=1)
     return(EXIT_FAILURE);
 
-  fprintf(stdout, "\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
+  printf("\n### Printing Forward Sensitivities: int_0^T <x-x_delta, x_sens> dt \n");
   flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE); 
@@ -153,10 +155,10 @@ main (int argc, char *argv[]){
     dp[i] = 0.0;
   dp[IntegratorInstance_getNsens(ii)-1] = 1.0; /* the last parameter */
 
-  fprintf(stdout, "### Now computing and printing out directional sensitivities \nwith ");
+  printf("### Now computing and printing out directional sensitivities \nwith ");
   for(i=0; i<IntegratorInstance_getNsens(ii); i++)
-    fprintf(stdout," dp[%d] = %.2g ", i, dp[i]);
-   fprintf(stdout, "\n");
+    printf(" dp[%d] = %.2g ", i, dp[i]);
+   printf("\n");
 
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
@@ -165,13 +167,13 @@ main (int argc, char *argv[]){
 
   CvodeResults_computeDirectional(results, dp);
   
-  for(j=0; j<CvodeResults_getNout(results)+1; j++)
+  for(j=0; j<CvodeResults_getNout(results); j++)
   { 
-    fprintf(stdout, "%g  ",CvodeResults_getTime(results,j) );
+    printf("%g  ",CvodeResults_getTime(results,j) );
     
     for(i=0; i<ODEModel_getNeq(om); i++)
-      fprintf(stdout, " %.8g ", ii->results->directional[i][j]);
-    fprintf(stdout, "\n");
+      printf(" %.8g ", ii->results->directional[i][j]);
+    printf("\n");
   }
 
   if ( SolverError_getNum(FATAL_ERROR_TYPE) ) {
@@ -183,7 +185,7 @@ main (int argc, char *argv[]){
 
   
   /* Adjoint Integration */
-  fprintf(stdout, "\n### Commencing adjoint integration:\n");
+  printf("\n### Commencing adjoint integration:\n");
  
   IntegratorInstance_resetAdjPhase(ii);
 
@@ -204,7 +206,7 @@ main (int argc, char *argv[]){
   flag = IntegratorInstance_CVODEQuad(ii);
   if (flag!=1) return(EXIT_FAILURE);
   
-  fprintf(stdout, "\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
+  printf("\n### Printing Adjoint Sensitivities: int_0^T <df/dp, psi> dt   \n");
   flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
 	return(EXIT_FAILURE);

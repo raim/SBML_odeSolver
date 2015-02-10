@@ -45,7 +45,7 @@
 /* System specific definitions,
    created by configure script */
 #ifndef WIN32
-#include "../src/sbmlsolver/config.h"
+#include "../src/config.h"
 #endif
 
 /* Own Header Files */

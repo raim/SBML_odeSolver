@@ -32,8 +32,8 @@
  * Contributor(s):
  */
 
-#ifndef _CHARBUFFER_
-#define _CHARBUFFER_
+#ifndef SBMLSOLVER_CHARBUFFER_H_
+#define SBMLSOLVER_CHARBUFFER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +49,7 @@ extern "C" {
   const char *CharBuffer_getBuffer(charBuffer_t *);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

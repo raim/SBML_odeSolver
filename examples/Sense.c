@@ -37,8 +37,8 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpErrors()
 {

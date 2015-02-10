@@ -36,10 +36,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sbml/SBMLTypes.h"
-#include "sbmlsolver/odeSolver.h"
-#include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/solverError.h"
+#include <sbml/SBMLTypes.h>
+#include <sbmlsolver/drawGraph.h>
+#include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/odeModel.h>
+#include <sbmlsolver/processAST.h>
+#include <sbmlsolver/solverError.h>
 
 
 static void printSensiMatrix(odeSense_t *os, cvodeData_t *data)
@@ -149,7 +151,7 @@ int main(void)
       
     ODESense_free(os);
     ODEModel_free(odeModel);
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 

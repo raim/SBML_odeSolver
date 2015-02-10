@@ -36,6 +36,7 @@
 #include <stdlib.h>
 
 #include <sbmlsolver/odeSolver.h>
+#include <sbmlsolver/solverError.h>
 
 int main (void)
 {
@@ -54,10 +55,11 @@ int main (void)
     else
       break;
   SolverError_dump();
-  ODEModel_free(odemodel);
   VariableIndex_free(vi);
   IntegratorInstance_free(ii);
-  
+  ODEModel_free(odemodel);
+  CvodeSettings_free(options);
+
   return (EXIT_SUCCESS);  
 }
 

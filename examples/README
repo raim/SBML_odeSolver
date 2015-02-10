@@ -18,7 +18,7 @@ of the available interface functions.
   http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 
   
-./integrate MAPK.xml 1000 10
+./integrate MAPK.xml 1000 100
 
 will integrate the SBML model ../Test/MAPK.xml from time 0 to time
 1000 in 100 steps, and will print out the time course of species

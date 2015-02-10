@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef _SBMLRESULTS_H_
-#define _SBMLRESULTS_H_
+#ifndef SBMLSOLVER_SBMLRESULTS_H_
+#define SBMLSOLVER_SBMLRESULTS_H_
 
 #include <sbml/SBMLTypes.h>
 

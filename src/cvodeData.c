@@ -204,7 +204,7 @@ SBML_ODESOLVER_API void CvodeData_free(cvodeData_t * data)
 /** Returns the number of time points for which results exist
  */
 
-SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *results)     
+SBML_ODESOLVER_API int CvodeResults_getNout(const cvodeResults_t *results)
 {
   return results->nout + 1;
 }
@@ -212,7 +212,7 @@ SBML_ODESOLVER_API int CvodeResults_getNout(cvodeResults_t *results)
 /** Returns the time point number n, where 0 <= n < CvodeResults_getNout
  */
 
-SBML_ODESOLVER_API double CvodeResults_getTime(cvodeResults_t *results, int n)
+SBML_ODESOLVER_API double CvodeResults_getTime(const cvodeResults_t *results, int n)
 {
   return results->time[n];
 }
@@ -271,7 +271,7 @@ SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *results,  
     Must not be called, if sensitivity wasn't calculated!
 */
 
-SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, double *dp)
+SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, const double *dp)
 {
   int i, j, k;
   for(i=0; i<results->neq; i++)
@@ -321,7 +321,7 @@ SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *results)
    separated into two functions to further support modularity and
    independence of data structures */
 /*!!! TODO : clarify if this function can be called when the solver time
-  is other then 0, and how it relates to CvodeData_initializeValues
+  is other than 0, and how it relates to CvodeData_initializeValues
   -> handling of initialAssignments !!!*/
 int
 CvodeData_initialize(cvodeData_t *data, cvodeSettings_t *opt, odeModel_t *om, int keepValues)

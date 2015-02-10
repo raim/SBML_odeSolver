@@ -43,7 +43,11 @@
 #include <sbml/util/util.h> /* only for util_trim */
 
 /* own header files */
-#include "../src/sbmlsolver/odeSolver.h"
+#include "sbmlsolver/cvodeData.h"
+#include "sbmlsolver/drawGraph.h"
+#include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/solverError.h"
+#include "sbmlsolver/util.h"
 
 #include "interactive.h"
 #include "options.h"

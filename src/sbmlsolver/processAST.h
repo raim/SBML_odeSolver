@@ -33,8 +33,8 @@
  *     Stefan Müller
  */
 
-#ifndef _PROCESSAST_H_
-#define _PROCESSAST_H_
+#ifndef SBMLSOLVER_PROCESSAST_H_
+#define SBMLSOLVER_PROCESSAST_H_
 
 /* libSBML header files */
 #include <sbml/SBMLTypes.h>
@@ -73,7 +73,7 @@ extern "C" {
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

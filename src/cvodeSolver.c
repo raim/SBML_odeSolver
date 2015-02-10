@@ -47,19 +47,16 @@
 #include <stdlib.h>
 
 /* Header Files for CVODE */
-#include "cvodes/cvodes.h"    
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
-#include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
-#include "sbmlsolver/modelSimplify.h"
 
 static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
@@ -431,7 +428,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
     /* 1: if an objective function is initialized OR */
     if ( om->ObjectiveFunction )
     {
-      /* 1.a: if a sensitivity quadrature with size other then 1 exists ... */
+      /* 1.a: if a sensitivity quadrature with size other than 1 exists ... */
       if ( solver->qS )
 	if ( NV_LENGTH_S(solver->qS) != 1 )
 	  quadReinit = 1;
@@ -442,7 +439,7 @@ IntegratorInstance_createCVODESolverStructures(integratorInstance_t *engine)
       /* 2.a: if a forward quadrature exists and nsens is NOT 1 ... */
       if ( solver->q && os->nsens != 1 )
 	quadReinit = 1;
-      /* 2.b: if a sensitive quadrature has a different size then nsens  ... */
+      /* 2.b: if a sensitive quadrature has a different size from nsens  ... */
       if ( solver->qS )
 	if ( NV_LENGTH_S(solver->qS) != os->nsens )
 	  quadReinit = 1;
@@ -839,7 +836,7 @@ void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *engine)
     are located in CVODE's iopt array.
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(const integratorInstance_t *engine, FILE *f)
 {
   int flag;
   long int nst, nfe, nsetups, nje, nni, ncfn, netf;
@@ -884,7 +881,7 @@ SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstanc
 /*
  * check return values of SUNDIALS functions
  */
-int check_flag(void *flagvalue, char *funcname, int opt)
+int check_flag(void *flagvalue, const char *funcname, int opt)
 {
 
   int *errflag;

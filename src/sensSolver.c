@@ -47,16 +47,15 @@
 #include <math.h>
 
 /* Header Files for CVODE */
-#include "cvodes/cvodes.h"    
-#include "cvodes/cvodes_dense.h"
-#include "nvector/nvector_serial.h"  
+#include <cvodes/cvodes.h>
+#include <cvodes/cvodes_dense.h>
+#include <nvector/nvector_serial.h>
 
 #include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/processAST.h"
 #include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/variableIndex.h"
 #include "sbmlsolver/solverError.h"
-#include "sbmlsolver/integratorInstance.h"
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
 #include "sbmlsolver/odeSolver.h"
@@ -65,6 +64,7 @@
 
 #include <sbml/SBMLTypes.h>
 #include "sbmlsolver/ASTIndexNameNode.h"
+#include "sbmlsolver/util.h"
 
 /* 
  * fS routine. Compute sensitivity r.h.s. for param[iS]
@@ -253,7 +253,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
 
     /* remember: if yS had to be reconstructed, then also
        the sense solver structure CVodeSens needs reconstruction
-       rather then mere re-initiation */
+       rather than mere re-initiation */
     reinit = 1;
     if ( solver->yS == NULL )
     {
@@ -674,7 +674,7 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     forward and adjoint sensitivity analysis routines
 */
 
-SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(integratorInstance_t *engine, FILE *f)
+SBML_ODESOLVER_API int IntegratorInstance_printCVODESStatistics(const integratorInstance_t *engine, FILE *f)
 {
   int flag;
   long int nfSe, nfeS, nsetupsS, nniS, ncfnS, netfS;

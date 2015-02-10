@@ -16,12 +16,21 @@ int main(void)
 
 	srunner_add_suite(sr, create_suite_ASTIndexNameNode());
 	srunner_add_suite(sr, create_suite_charBuffer());
+	srunner_add_suite(sr, create_suite_cvodeData());
+	srunner_add_suite(sr, create_suite_cvodeSolver());
+	srunner_add_suite(sr, create_suite_daeSolver());
+	srunner_add_suite(sr, create_suite_integratorInstance());
+	srunner_add_suite(sr, create_suite_integratorSettings());
+	srunner_add_suite(sr, create_suite_interpol());
 	srunner_add_suite(sr, create_suite_modelSimplify());
+	srunner_add_suite(sr, create_suite_nullSolver());
 	srunner_add_suite(sr, create_suite_odeConstruct());
 	srunner_add_suite(sr, create_suite_odeModel());
+	srunner_add_suite(sr, create_suite_odeSolver());
 	srunner_add_suite(sr, create_suite_processAST());
 	srunner_add_suite(sr, create_suite_sbml());
 	srunner_add_suite(sr, create_suite_sbmlResults());
+	srunner_add_suite(sr, create_suite_sensSolver());
 	srunner_add_suite(sr, create_suite_solverError());
 	srunner_add_suite(sr, create_suite_util());
 

@@ -35,10 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sbml/math/FormulaParser.h"
-#include "sbml/math/FormulaFormatter.h"
-#include "sbmlsolver/ASTIndexNameNode.h"
-#include "sbmlsolver/processAST.h"
+#include <sbml/math/FormulaParser.h>
+#include <sbml/math/FormulaFormatter.h>
+#include <sbmlsolver/ASTIndexNameNode.h>
+#include <sbmlsolver/processAST.h>
 
 void printIndex(ASTNode_t *f)
 {
@@ -63,6 +63,7 @@ int main(void)
     ASTNode_t *old = SBML_parseFormula("(A * B )+ 1/(C+D)^2");
     ASTNode_t *new;
     int nvalues = 6;
+	int n;
     char *names[nvalues];
     names[0] = "A";
     names[1] = "x";
@@ -102,19 +103,15 @@ int main(void)
 
     int *indexBool = ASTNode_getIndexArray(new, nvalues);
 
-    for ( i=0; i<nvalues; i++ )
+    for ( n=0; n<nvalues; n++ )
     {
       printf("symbol %s occurs in equation? %s\n",
-	     names[i], indexBool[i] ? "yes" : "no"); 
+	     names[n], indexBool[n] ? "yes" : "no"); 
     }
     
     ASTNode_free(old);
     ASTNode_free(new);    
     free(indexBool);
-
-    odeModel_t *om = ODEModel_createFromFile("../ruleorder/rules.xml");
-/*     ODEModel_topologicalRuleSort(om); */
-    ODEModel_free(om);
 
     return(EXIT_SUCCESS);
 }

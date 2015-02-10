@@ -56,8 +56,15 @@
 
 #include <sbml/SBMLTypes.h>
 
+#include "sbmlsolver/cvodeData.h"
+#include "sbmlsolver/drawGraph.h"
+#include "sbmlsolver/modelSimplify.h"
+#include "sbmlsolver/odeModel.h"
 #include "sbmlsolver/odeSolver.h"
+#include "sbmlsolver/processAST.h"
+#include "sbmlsolver/sbml.h"
 #include "sbmlsolver/solverError.h"
+#include "sbmlsolver/variableIndex.h"
 
 static int globalizeParameter(Model_t *, char *id, char *rid);
 static int localizeParameter(Model_t *, char *id, char *rid);
@@ -297,7 +304,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     else
       vi[j] = ODEModel_getVariableIndex(om, vs->id[j]);
 
-    /* if ( vi[j] == NULL ) return NULL; */ /*!!! TODO : handle NULL */
+    if ( vi[j] == NULL ) return NULL; /*!!! TODO : handle NULL */
   }
       
   /** now, work through the passed designpoints in varySettings */
@@ -594,7 +601,7 @@ SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdes
 
   vs->nrdesignpoints = nrdesignpoints;
   vs->nrparams = nrparams;
-  /* set conuter to 0, will be used as counter in addDesignPoints */
+  /* set conuter to 0, used in VarySettings_addParameter/VarySettings_addDesignPoint */
   vs->cnt_params = 0;
   vs->cnt_points = 0;
   return(vs);
@@ -609,7 +616,8 @@ SBML_ODESOLVER_API varySettings_t *VarySettings_allocate(int nrparams, int nrdes
 
 */
 
-SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, char *rid)
+SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs,
+												 const char *id, const char *rid)
 {
   if ( vs->cnt_params >= vs->nrparams )
   {
@@ -623,7 +631,7 @@ SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, c
 
   VarySettings_setName(vs, vs->cnt_params, id, rid);
   /* count and return already filled parametervalues */
-  return(vs->cnt_params++);  
+  return ++vs->cnt_params;
 }
 
 /** Adds values for all parameters to be varied
@@ -632,14 +640,14 @@ SBML_ODESOLVER_API int VarySettings_addParameter(varySettings_t *vs, char *id, c
     or 0 for failure, please check SolverError for errors.
 */
 SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
-						   double *params)
+												   const double *params)
 {
   int i;
   if ( vs->cnt_points >= vs->nrdesignpoints )
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		SOLVER_ERROR_VARY_SETTINGS,
-		"VarySettings_addDesignPoints:\t"
+		"VarySettings_addDesignPoint:\t"
 		"Allocated design point array already full, #%d design points",
 		vs->cnt_points);
     return 0;
@@ -648,7 +656,7 @@ SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
   for ( i=0; i<vs->nrparams; i++ )
     vs->params[vs->cnt_points][i] = params[i];
   
-  return (vs->cnt_points++);
+  return ++vs->cnt_points;
 }
 
 
@@ -661,13 +669,13 @@ SBML_ODESOLVER_API int VarySettings_addDesignPoint(varySettings_t *vs,
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getName(const varySettings_t *vs, int i)
 {   
   if ( i >= vs->nrparams )
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		SOLVER_ERROR_VARY_SETTINGS,
-		"VarySettings_getReactionName:\t"
+		"VarySettings_getName:\t"
 		"Requested Value %d not found in varySettings"
 		" # parameters: %d",
 		i, vs->nrparams);
@@ -687,7 +695,7 @@ SBML_ODESOLVER_API const char *VarySettings_getName(varySettings_t *vs, int i)
     Returns NULL, if the parameter is global.
 */
 
-SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, int i)
+SBML_ODESOLVER_API const char *VarySettings_getReactionName(const varySettings_t *vs, int i)
 {   
   if ( i >= vs->nrparams )
   {
@@ -715,7 +723,8 @@ SBML_ODESOLVER_API const char *VarySettings_getReactionName(varySettings_t *vs, 
     be varied. For global parameters rid must be passed as NULL.
 */
 
-SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *vs, int i, char *id, char *rid)
+SBML_ODESOLVER_API int VarySettings_setName(varySettings_t *vs, int i,
+											const char *id, const char *rid)
 {
 
   if ( i >= vs->nrparams )
@@ -775,7 +784,7 @@ SBML_ODESOLVER_API double VarySettings_getValue(varySettings_t *vs, int i, int j
   {
     SolverError_error(WARNING_ERROR_TYPE,
 		      SOLVER_ERROR_VARY_SETTINGS,
-		      "VarySettings_setValue:\t"
+		      "VarySettings_getValue:\t"
 		      "Requested value #%d not found in varySettings"
 		      " # parameters: %d",
 		      i, vs->nrparams);
@@ -831,7 +840,8 @@ SBML_ODESOLVER_API int VarySettings_setValue(varySettings_t *vs, int i, int j, d
     as used for varySettings_allocate
 */
 
-SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, char *id, char *rid)
+SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i,
+													const char *id, const char *rid)
 {
   int j;
   if ( i >= vs->nrdesignpoints )
@@ -847,8 +857,13 @@ SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, c
   
   for ( j=0; j<vs->nrparams; j++ )
   {
-    if ( !strcmp(id, vs->id[j]) && !strcmp(rid, vs->rid[j]) )
-      break;
+	  if (strcmp(id, vs->id[j]) == 0) {
+		  if (rid == NULL) {
+			  if (vs->rid[j] == NULL) break;
+		  } else {
+			  if (vs->rid[j] != NULL && strcmp(rid, vs->rid[j]) == 0) break;
+		  }
+	  }
   }
   if ( j == vs->nrparams )
   {
@@ -873,7 +888,9 @@ SBML_ODESOLVER_API double VarySettings_getValueByID(varySettings_t *vs, int i, c
     rid: SBML ID of reaction for local parameters\n
 */
 
-SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *vs, int i, char *id, char *rid, double value)
+SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *vs, int i,
+												 const char *id, const char *rid,
+												 double value)
 {
   int j;
   if ( i >= vs->nrdesignpoints )
@@ -889,8 +906,13 @@ SBML_ODESOLVER_API int VarySettings_setValueByID(varySettings_t *vs, int i, char
   
   for ( j=0; j<vs->nrparams; j++ )
   {
-    if ( !strcmp(id, vs->id[j]) && !strcmp(rid, vs->rid[j]) )
-      break;
+	  if (strcmp(id, vs->id[j]) == 0) {
+		  if (rid == NULL) {
+			  if (vs->rid[j] == NULL) break;
+		  } else {
+			  if (vs->rid[j] != NULL && strcmp(rid, vs->rid[j]) == 0) break;
+		  }
+	  }
   }
   if ( j == vs->nrparams )
   {
@@ -942,7 +964,8 @@ SBML_ODESOLVER_API void VarySettings_dump(varySettings_t *vs)
 SBML_ODESOLVER_API void VarySettings_free(varySettings_t *vs)
 {
   int i;
-  
+
+  if (!vs) return;
   for ( i=0; i<vs->nrparams; i++ )
   {
     free(vs->id[i]);

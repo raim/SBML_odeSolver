@@ -34,8 +34,8 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "sbmlsolver/integratorInstance.h"
-#include "sbmlsolver/solverError.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpState(
     integratorInstance_t *iia,
@@ -90,7 +90,7 @@ int doit(void)
        the passed values */
     CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
 
-    //CvodeSettings_setCompileFunctions(settings, 1);
+    /* CvodeSettings_setCompileFunctions(settings, 1); */
 
     integratorInstanceA = IntegratorInstance_create(model, settings);
     RETURN_ON_ERRORS_WITH(1);
@@ -122,11 +122,12 @@ int doit(void)
     return 0;
 }
 
-int main (int argc, char *argv[])
+int main(void)
 {
     int result = doit();
 
     SolverError_dump();
+    SolverError_clear();
 
     return result;
 }

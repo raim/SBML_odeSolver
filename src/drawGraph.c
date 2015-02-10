@@ -277,6 +277,10 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
 
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
   fprintf(f ,"digraph jacoby {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(data->model->m) )
@@ -321,6 +325,7 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
 	    data->model->names[i]);
   }   
   fprintf(f, "}\n");
+  fclose(f);
   return 1;
 }
 
@@ -341,7 +346,7 @@ static int drawJacobyTxt(cvodeData_t *data, char *file)
     As this graph is usually of very high or full connectivity, i.e.
     no variable is completely independent of some parameter of the
     system, the function takes a threshold between 0 and 1 as an
-    additional input. Only edges for entries greater then the
+    additional input. Only edges for entries greater than the
     threshold multiplied by the maximum entry for species x will be
     drawn.
 
@@ -565,7 +570,11 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
   
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
-  fprintf(f ,"digraph jacoby {\n");
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
+  fprintf(f ,"digraph sensitivity {\n");
   fprintf(f ,"overlap=scale;\n");
   if ( Model_isSetName(om->m) )
     fprintf(f ,"label=\"%s at time %g\";\n", Model_getName(om->m),
@@ -627,6 +636,7 @@ static int drawSensitivityTxt(cvodeData_t *data, char *file, double threshold)
 	    om->names[os->index_sens[i]]);
 
   fprintf(f, "}\n");
+  fclose(f);
   free(highest);
   free(lowest);
   return 1;
@@ -948,7 +958,10 @@ static int drawModelTxt(Model_t *m, char *file)
   
   sprintf(filename, "%s.dot", file);
   f = fopen(filename, "w");
-
+  if (!f) {
+	  /* TODO: logging the error */
+	  return 0;
+  }
   fprintf(f ,"digraph reactionnetwork {\n");
   fprintf(f ,"label=\"%s\";\n",
 	  Model_isSetName(m) ?
@@ -1033,6 +1046,7 @@ static int drawModelTxt(Model_t *m, char *file)
 	    Species_isSetName(s) ? Species_getName(s) : Species_getId(s));
   }  
   fprintf(f ,"}\n");
+  fclose(f);
   return 1;
 }
 

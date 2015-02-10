@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-#include <time.h>
-
 
 /* own header files */
 #include <sbmlsolver/util.h>

@@ -33,10 +33,11 @@
  *     Andrew Finney
  */
 
-#ifndef _CVODESOLVER_H_
-#define _CVODESOLVER_H_
+#ifndef SBMLSOLVER_CVODESOLVER_H_
+#define SBMLSOLVER_CVODESOLVER_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <sbmlsolver/integratorInstance.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,17 +51,17 @@ extern "C" {
   
   /* CVODE SOLVER */
   SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *);
-  SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(integratorInstance_t *, FILE *f);
+  SBML_ODESOLVER_API int IntegratorInstance_printCVODEStatistics(const integratorInstance_t *, FILE *f);
 
   /* internal functions that are not part of the API (yet?) */
   int IntegratorInstance_createCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeCVODESolverStructures(integratorInstance_t *);
   void IntegratorInstance_freeForwardSensitivity(integratorInstance_t *);
   void IntegratorInstance_freeAdjointSensitivity(integratorInstance_t *);
-  int check_flag(void *flagvalue, char *funcname, int opt);
+  int check_flag(void *flagvalue, const char *funcname, int opt);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

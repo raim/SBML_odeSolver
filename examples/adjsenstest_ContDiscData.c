@@ -100,7 +100,7 @@ main(void)
 
   for (RunIndexOuter=0; RunIndexOuter<NRuns*2; RunIndexOuter++)
   {
-    fprintf(stdout, "\n\n");
+    printf("\n\n");
 
     if (RunIndexOuter >=NRuns )
     {   
@@ -126,20 +126,20 @@ main(void)
    
     if (CvodeSettings_getObservationDataType(set) == 1)
     { /* discrete observation */
-      fprintf(stdout, "Reading in objective '%s' ... ",    ObjFuncFileNames[RunIndex]);
+      printf("Reading in objective '%s' ... ",    ObjFuncFileNames[RunIndex]);
       flag = IntegratorInstance_setObjectiveFunction(ii,   ObjFuncFileNames[RunIndex]);
       if (flag!=1)
 	return(EXIT_FAILURE);
     }
     else
     {  /* continuous observation */
-      fprintf(stdout, "Reading in objective '%s' ... ",  "MAPK_withData.objfun");
+      printf("Reading in objective '%s' ... ",  "MAPK_withData.objfun");
       flag = IntegratorInstance_setObjectiveFunction(ii, "MAPK_withData.objfun");
       if (flag!=1)
 	return(EXIT_FAILURE);
     }
 
-    fprintf(stdout, "and data '%s'\n", DataFileNames[RunIndex] );
+    printf("and data '%s'\n", DataFileNames[RunIndex] );
 
     flag = IntegratorInstance_readTimeSeriesData(ii, DataFileNames[RunIndex]);
 
@@ -161,7 +161,7 @@ main(void)
 	   IntegratorInstance_getIntegrationTime(ii));
 
     
-    fprintf(stdout, "### Printing Objective Value:\n"); 
+    printf("### Printing Objective Value:\n"); 
     flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
       return(EXIT_FAILURE);
@@ -191,7 +191,7 @@ main(void)
     
     printf("\nAdjoint integration time was %g\n", IntegratorInstance_getIntegrationTime(ii));
     
-    fprintf(stdout, "### Printing Adjoint Sensitivities:\n");
+    printf("### Printing Adjoint Sensitivities:\n");
     flag = IntegratorInstance_printQuad(ii, stdout);
     if (flag!=1)
       return(EXIT_FAILURE);     

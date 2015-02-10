@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _INTERPOL_H_
-#define _INTERPOL_H_
+#ifndef SBMLSOLVER_INTERPOL_H_
+#define SBMLSOLVER_INTERPOL_H_
 
 typedef struct ts time_series_t;
 
@@ -62,31 +62,31 @@ typedef struct ts time_series_t;
 extern "C" {
 #endif
 
-  int read_header_line(char *file, int n_var, char **var,
+  int read_header_line(const char *file, int n_var, char **var,
 			    int *col, int *index);
-  int read_columns(char *file, int n_col, int *col, int *index,
+  int read_columns(const char *file, int n_col, int *col, int *index,
 			time_series_t *ts);
 
   void free_data(time_series_t *ts);
   void print_data(time_series_t *ts);
   void test_interpol(time_series_t *ts);
 
-  time_series_t *read_data(char *file, int num, char **var);
+  time_series_t *read_data(const char *file, int num, char **var);
 
   double call(int i, double x, time_series_t *ts);
 
-  int spline(int n, double *x, double *y, double *y2);
-  void splint(int n, double *x, double *y, double *y2,
+  int spline(int n, const double *x, const double *y, double *y2);
+  void splint(int n, const double *x, const double *y, const double *y2,
 	      double x_, double *y_, int *j);
 
-  void linint(int n, double *x, double *y,
+  void linint(int n, const double *x, const double *y,
 	      double x_, double *y_, int *j);
 	    
-  int  bisection(int n, double *x, double x_);
-  void hunt(int n, double *x, double x_, int *low);
+  int  bisection(int n, const double *x, double x_);
+  void hunt(int n, const double *x, double x_, int *low);
   
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

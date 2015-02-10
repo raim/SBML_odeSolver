@@ -1,7 +1,10 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: t; c-basic-offset: 4 -*- */
-#ifndef _UNITTEST_UNITTEST_H_
-#define _UNITTEST_UNITTEST_H_
+#ifndef UNITTEST_UNITTEST_H_
+#define UNITTEST_UNITTEST_H_
 
+#include <assert.h>
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,14 +38,30 @@
 		ck_assert_str_eq(Rule_getFormula(r), (expected));	\
 	} while (0)
 
+#define CHECK_DOUBLE_WITH_TOLERANCE(d, expected) ck_assert(fabs((d) - (expected)) <= DBL_EPSILON)
+
+#define OPEN_TMPFILE_OR_ABORT(fp) do {								\
+		(fp) = tmpfile();											\
+		if (!(fp)) ck_abort_msg("could not open a temporary file");	\
+	} while (0)
+
 Suite *create_suite_ASTIndexNameNode(void);
 Suite *create_suite_charBuffer(void);
+Suite *create_suite_cvodeData(void);
+Suite *create_suite_cvodeSolver(void);
+Suite *create_suite_daeSolver(void);
+Suite *create_suite_integratorInstance(void);
+Suite *create_suite_integratorSettings(void);
+Suite *create_suite_interpol(void);
 Suite *create_suite_modelSimplify(void);
+Suite *create_suite_nullSolver(void);
 Suite *create_suite_odeConstruct(void);
 Suite *create_suite_odeModel(void);
+Suite *create_suite_odeSolver(void);
 Suite *create_suite_processAST(void);
 Suite *create_suite_sbml(void);
 Suite *create_suite_sbmlResults(void);
+Suite *create_suite_sensSolver(void);
 Suite *create_suite_solverError(void);
 Suite *create_suite_util(void);
 

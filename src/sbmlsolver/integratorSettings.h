@@ -33,8 +33,8 @@
  *     
  */
 
-#ifndef _CVODESETTINGS_H_
-#define _CVODESETTINGS_H_
+#ifndef SBMLSOLVER_INTEGRATORSETTINGS_H_
+#define SBMLSOLVER_INTEGRATORSETTINGS_H_
 
 /* structures */
 typedef struct timeSettings timeSettings_t;
@@ -245,8 +245,8 @@ extern "C" {
 
   
 #ifdef __cplusplus
-};
+}
 #endif
 
-#endif /* _CVODESETTINGS_H_ */
+#endif /* _INTEGRATORSETTINGS_H_ */
 

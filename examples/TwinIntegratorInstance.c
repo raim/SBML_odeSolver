@@ -33,7 +33,8 @@
  */
 #include <stdio.h>
 
-#include "sbmlsolver/integratorInstance.h"
+#include <sbmlsolver/integratorInstance.h>
+#include <sbmlsolver/solverError.h>
 
 void DumpState(
     integratorInstance_t *iia,
@@ -50,7 +51,7 @@ void DumpState(
         IntegratorInstance_getVariableValue(iib, v4));
 }
 
-int main (int argc, char *argv[])
+int main(void)
 {
     int i ;
     odeModel_t *modelA = ODEModel_createFromFile("events-2-events-1-assignment-l2.xml");
@@ -84,7 +85,7 @@ int main (int argc, char *argv[])
        the passed values */
     CvodeSettings_setSwitches(settings, 1, 1, 0, 0, 0, 0, 0);
 
-    CvodeSettings_setCompileFunctions(settings, 1);
+    /* CvodeSettings_setCompileFunctions(settings, 1); */
 
     integratorInstanceA = IntegratorInstance_create(modelA, settings);
     integratorInstanceB = IntegratorInstance_create(modelB, settings);
@@ -111,6 +112,8 @@ int main (int argc, char *argv[])
     ODEModel_free(modelA);
     ODEModel_free(modelB);
     CvodeSettings_free(settings);
+
+    SolverError_clear();
 
     return 0;
 }
