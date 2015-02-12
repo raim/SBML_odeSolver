@@ -82,7 +82,7 @@ odeSolver (int argc, char *argv[])
   SBMLDocument_t *d   = NULL;
   Model_t        *m   = NULL;
   Model_t        *ode = NULL;
-  char *filename;
+  char *filename = NULL;
   FILE *outfile;
   ASTNode_t *det;
   odeModel_t *om;
@@ -183,6 +183,9 @@ odeSolver (int argc, char *argv[])
 				 strlen(Opt.ModelFile)+5, sizeof(char));
       sprintf(filename, "%s%s.dat", Opt.ModelPath, Opt.ModelFile);
       outfile = fopen(filename, "w");
+	  if (!outfile) {
+		  fatal(stderr, "could not open file %s to write", filename);
+	  }
     }
     else if ( Opt.PrintSBML )
     {
@@ -190,10 +193,12 @@ odeSolver (int argc, char *argv[])
 				 strlen(Opt.ModelFile)+12, sizeof(char));
       sprintf(filename, "%s%s.soslib.xml", Opt.ModelPath, Opt.ModelFile);
       outfile = fopen(filename, "w");
+	  if (!outfile) {
+		  fatal(stderr, "could not open file %s to write", filename);
+	  }
     }
     else
     {
-      filename = "";
       outfile = stdout;
     }
     /** -d + -e, -de: Print Determinant of the Jacobian Matrix
@@ -472,7 +477,7 @@ odeSolver (int argc, char *argv[])
     
     /* thx and good bye. */
     /* save and close results file */
-    if ( Opt.Write && !Opt.Xmgrace )
+    if ( filename )
     {
       fclose(outfile);
       fprintf(stderr, "Saved results to file %s.\n\n", filename);
