@@ -41,7 +41,7 @@ extern "C" {
 
   typedef struct charBuffer charBuffer_t;
 
-  charBuffer_t *CharBuffer_create();
+  charBuffer_t *CharBuffer_create(void);
   void CharBuffer_free(charBuffer_t *);
   void CharBuffer_append(charBuffer_t *, const char *);
   void CharBuffer_appendInt(charBuffer_t *, int);

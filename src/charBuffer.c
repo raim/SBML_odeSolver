@@ -1,7 +1,3 @@
-/*
-  Last changed Time-stamp: <2005-10-26 17:24:50 raim>
-  $Id: charBuffer.cpp,v 1.2 2006/03/17 17:43:29 afinney Exp $
-*/
 /* 
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -25,59 +21,110 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  *
- * The original code contained here was initially developed by:
- *
- *     Andrew Finney
- *
- * Contributor(s):
  */
 
 #include "sbmlsolver/charBuffer.h"
 
-#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /** a buffer of unbounded length */
 struct charBuffer
 {
-    std::ostringstream stream ;
-    std::string string ;
+	char *s;
+	char *p;
+	size_t length;
 };
 
 /** create an unbounded buffer */
-charBuffer_t *CharBuffer_create()
+charBuffer_t *CharBuffer_create(void)
 {
-    return new charBuffer ;
+	charBuffer_t *buf;
+
+	buf = calloc(1, sizeof(*buf));
+	if (!buf) {
+		/* TODO: reporting error */
+	}
+	return buf;
 }
 
 /** free an unbounded buffer */
 void CharBuffer_free(charBuffer_t *buffer)
 {
-    delete buffer;
+	if (!buffer) return;
+	free(buffer->s);
+	free(buffer->p);
+	free(buffer);
 }
 
 /** add the given string to the end of the unbounded buffer */
 void CharBuffer_append(charBuffer_t *buffer, const char *s)
 {
-    buffer->stream << s ;
+	size_t len;
+	char *p;
+
+	if (!s) {
+		/* TODO: reporting error */
+		return;
+	}
+	len = strlen(s);
+	if (len == 0) return;
+	p = realloc(buffer->p, buffer->length + len);
+	if (!p) {
+		/* TODO: reporting error */
+		return;
+	}
+	strncpy(p + buffer->length, s, len);
+	buffer->p = p;
+	buffer->length += len;
 }
 
 /** add the given integer in decimal string form to the end of the given unbounded buffer */
 void CharBuffer_appendInt(charBuffer_t *buffer, int i)
 {
-    buffer->stream << i ;
+	int len;
+	char *p;
+
+	p = realloc(buffer->p, buffer->length + 32);
+	if (!p) {
+		/* TODO: reporting error */
+		return;
+	}
+	len = sprintf(p + buffer->length, "%d", i);
+	buffer->p = p;
+	buffer->length += len;
 }
 
 /** add the given integer in scientific string form to the end of the given unbounded buffer */
 void CharBuffer_appendDouble(charBuffer_t *buffer, double f)
 {
-    buffer->stream << f ;
+	int len;
+	char *p;
+
+	p = realloc(buffer->p, buffer->length + 32);
+	if (!p) {
+		/* TODO: reporting error */
+		return;
+	}
+	len = sprintf(p + buffer->length, "%g", f);
+	buffer->p = p;
+	buffer->length += len;
 }
 
 /** return the string contained in the buffer.  This string must not be freed */
 const char *CharBuffer_getBuffer(charBuffer_t *buffer)
 {
-    buffer->string = buffer->stream.str();
-    
-    return buffer->string.c_str();
-}
+	char *s;
 
+	if (!buffer->p) return "";
+	s = realloc(buffer->s, buffer->length + 1);
+	if (!s) {
+		/* TODO: reporting error */
+		return NULL;
+	}
+	memcpy(s, buffer->p, buffer->length);
+	s[buffer->length] = '\0';
+	buffer->s = s;
+	return buffer->s;
+}

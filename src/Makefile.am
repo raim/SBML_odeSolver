@@ -46,7 +46,7 @@ libODES_la_LIBADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@
 libODES_la_SOURCES = ASTIndexNameNode.cpp \
                     arithmeticCompiler.c \
-                    charBuffer.cpp \
+                    charBuffer.c \
                     compiler.c \
                     cvodeData.c \
                     cvodeSolver.c \
