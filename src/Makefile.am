@@ -44,7 +44,7 @@ libODES_la_LIBADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@
-libODES_la_SOURCES = ASTIndexNameNode.cpp \
+libODES_la_SOURCES = ASTIndexNameNode.c \
                     arithmeticCompiler.c \
                     charBuffer.c \
                     compiler.c \
