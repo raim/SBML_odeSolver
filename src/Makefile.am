@@ -37,7 +37,6 @@ AM_CPPFLAGS = @SUNDIALS_CPPFLAGS@ \
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
 AM_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
-AM_CXXFLAGS = -Wno-unknown-pragmas -Wall -Wextra
 lib_LTLIBRARIES = libODES.la
 
 libODES_la_LIBADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
