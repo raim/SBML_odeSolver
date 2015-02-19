@@ -106,7 +106,7 @@ dnl !!! -m32 is required for tcc on x86_64 but in conflict with all others
   CPPFLAGS=$tcc_save_CPPFLAGS
   LDFLAGS=$tcc_save_LDFLAGS
   LIBS=$tcc_save_LIBS
-  AC_LANG_POP
+  AC_LANG_POP(C)
   if test "$tcc_functional" = yes; then
     dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
     AC_DEFINE_UNQUOTED([TCC_CPPFLAGS], "${with_libtcc}/include",

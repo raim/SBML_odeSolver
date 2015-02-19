@@ -111,7 +111,7 @@ AC_DEFUN([CONFIG_LIB_GRACE],
     CPPFLAGS=$grace_save_CPPFLAGS
     LDFLAGS=$grace_save_LDFLAGS
     LIBS=$grace_save_LIBS
-    AC_LANG_POP
+    AC_LANG_POP(C)
   fi
 
   if test "$grace_functional" = yes; then

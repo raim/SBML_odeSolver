@@ -90,7 +90,7 @@ AC_DEFUN([CONFIG_LIB_CVODE],
   CFLAGS=$cvode_save_CFLAGS
   LDFLAGS=$cvode_save_LDFLAGS
   LIBS=$cvode_save_LIBS
-  AC_LANG_POP
+  AC_LANG_POP(C)
 
   AC_DEFINE([USE_CVODE], 1, [Define to 1 to use the CVODE Library])
   AC_SUBST(USE_CVODE, 1)
