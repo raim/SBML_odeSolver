@@ -155,50 +155,13 @@ void AST_dump(const char *context, ASTNode_t *node)
 
 /** Copies the passed AST, including potential SOSlib ASTNodeIndex, and
     returns the copy.
+    Now this function is equivalent to ASTNode_deepCopy() because
+    the index is stored as its user data.
 */
 
 SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f)
 {
-  unsigned int i;
-  ASTNode_t *copy;
-
-  copy = ASTNode_create();
-
-  /* DISTINCTION OF CASES */
-
-  /* integers, reals */
-  if ( ASTNode_isInteger(f) ) 
-    ASTNode_setInteger(copy, ASTNode_getInteger(f));
-  else if ( ASTNode_isReal(f) ) 
-    ASTNode_setReal(copy, ASTNode_getReal(f));
-  /* variables */
-  else if ( ASTNode_isName(f) )
-  {
-    if ( ASTNode_isSetIndex((ASTNode_t *)f) )
-    {
-      ASTNode_free(copy);
-      copy = ASTNode_createIndexName();
-      ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
-    }
-    ASTNode_setName(copy, ASTNode_getName(f));
-    /* time and delay nodes */
-    ASTNode_setType(copy, ASTNode_getType(f)); 
-    
-    if ( ASTNode_isSetData((ASTNode_t *)f) )
-      ASTNode_setData(copy);
-  }
-  /* constants, functions, operators */
-  else
-  {
-    ASTNode_setType(copy, ASTNode_getType(f));
-    /* user-defined functions: name must be set */
-    if ( ASTNode_getType(f) == AST_FUNCTION ) 
-      ASTNode_setName(copy, ASTNode_getName(f));
-    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) 
-      ASTNode_addChild(copy, copyAST(ASTNode_getChild(f,i)));
-  }
-
-  return copy;
+	return ASTNode_deepCopy(f);
 }
 
 
