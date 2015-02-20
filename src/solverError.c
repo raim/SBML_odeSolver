@@ -137,8 +137,9 @@ SBML_ODESOLVER_API void SolverError_clear()
 	free(m);
 	List_remove(l, 0);
       }      
+	  List_free(l);
+	  solverErrors[i] = NULL;
     }
-    /* List_free(l); */ /* RM: removed again, causes seg.fault should be done elsewwhere ?*/
   }
 
   memoryExhaustion = 0;
