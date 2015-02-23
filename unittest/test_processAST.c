@@ -2,8 +2,36 @@
 #include "unittest.h"
 
 #include <sbmlsolver/processAST.h>
+#include <sbmlsolver/cvodeData.h>
+#include <sbmlsolver/odeModel.h>
+
+/* fixtures */
+static odeModel_t *model;
+static cvodeData_t *data;
+
+static void setup_data(void)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	data = CvodeData_create(model);
+}
+
+static void teardown_data(void)
+{
+	CvodeData_free(data);
+	ODEModel_free(model);
+}
 
 /* helpers */
+#define CHECK_EVAL(input, expected) do {			\
+		ASTNode_t *node;							\
+		double v;									\
+		node = SBML_parseFormula(input);			\
+		ck_assert(node != NULL);					\
+		v = evaluateAST(node, data);				\
+		CHECK_DOUBLE_WITH_TOLERANCE(v, (expected));	\
+		ASTNode_free(node);							\
+	} while (0)
+
 #define CHECK_GEN(input, expected) do {								\
 		ASTNode_t *node;											\
 		charBuffer_t *buf;											\
@@ -125,6 +153,12 @@ static ASTNode_t *prepare_node(void)
 }
 
 /* test cases */
+START_TEST(test_evaluateAST)
+{
+	CHECK_EVAL("arccoth(2)", log(3)/2);
+}
+END_TEST
+
 START_TEST(test_generateAST)
 {
 	CHECK_GEN("1 + (x * x)", "((realtype)1) + (0.0 * 0.0)");
@@ -400,6 +434,7 @@ END_TEST
 Suite *create_suite_processAST(void)
 {
 	Suite *s;
+	TCase *tc_evaluateAST;
 	TCase *tc_generateAST;
 	TCase *tc_differentiateAST;
 	TCase *tc_copyAST;
@@ -412,6 +447,13 @@ Suite *create_suite_processAST(void)
 	TCase *tc_ASTNode_getIndexArray;
 
 	s = suite_create("processAST");
+
+	tc_evaluateAST = tcase_create("evaluateAST");
+	tcase_add_checked_fixture(tc_evaluateAST,
+							  setup_data,
+							  teardown_data);
+	tcase_add_test(tc_evaluateAST, test_evaluateAST);
+	suite_add_tcase(s, tc_evaluateAST);
 
 	tc_generateAST = tcase_create("generateAST");
 	tcase_add_test(tc_generateAST, test_generateAST);

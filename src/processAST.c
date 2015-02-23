@@ -199,6 +199,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   ASTNodeType_t type;
   /* ASTNode_t **child; */
 
+  /* value* are for intermediate values. */
   double value1, value2, value3, result;
 
   if ( n == NULL )
@@ -411,8 +412,8 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_FUNCTION_ARCCOTH:
     /** arccoth x = 1/2 * ln((x+1)/(x-1)) */
-    result = ((1./2.)*log((evaluateAST(child(n,0),data)+1.) /
-			  (evaluateAST(child(n,0),data)-1.)) );
+    value1 = evaluateAST(child(n,0),data);
+    result = log((value1 + 1) / (value1 - 1))/2;
     break;
   case AST_FUNCTION_ARCCSC:
     /** arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
