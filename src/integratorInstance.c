@@ -1462,7 +1462,7 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
     dy_var += MySQR(evaluateAST(om->ode[i],data) - dy_mean);
 
   dy_var = dy_var / (om->neq -1);
-  dy_std = MySQRT(dy_var);
+  dy_std = sqrt(dy_var);
 
   /* stop integrator if mean + std of rates of change are lower than
      1e-11/ steady state threshold */

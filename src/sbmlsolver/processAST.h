@@ -46,7 +46,6 @@
 #include <sbmlsolver/charBuffer.h>
 
 #define MySQR(x) ((x)*(x))
-#define MySQRT(x) pow((x),(.5))
 #define child(x,y)  ASTNode_getChild(x,y)
 
 #ifdef __cplusplus
