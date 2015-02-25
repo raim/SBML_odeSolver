@@ -1458,8 +1458,11 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
     dy_mean += fabs(evaluateAST(om->ode[i],data));
 
   dy_mean = dy_mean / om->neq;
-  for ( i=0; i<om->neq; i++ ) 
-    dy_var += MySQR(evaluateAST(om->ode[i],data) - dy_mean);
+  for ( i=0; i<om->neq; i++ )
+  {
+    double d = evaluateAST(om->ode[i],data) - dy_mean;
+    dy_var += d*d;
+  }
 
   dy_var = dy_var / (om->neq -1);
   dy_std = sqrt(dy_var);

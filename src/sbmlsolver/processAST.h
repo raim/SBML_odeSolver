@@ -45,7 +45,6 @@
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/charBuffer.h>
 
-#define MySQR(x) ((x)*(x))
 #define child(x,y)  ASTNode_getChild(x,y)
 
 #ifdef __cplusplus

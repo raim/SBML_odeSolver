@@ -422,8 +422,8 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_FUNCTION_ARCCSCH:
     /** arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
-    result = log((1.+sqrt((1+MySQR(evaluateAST(child(n,0),data))))) /
-		 evaluateAST(child(n,0),data));
+    value1 = evaluateAST(child(n,0),data);
+    result = log((1.+sqrt(1+value1*value1)) / value1);
     break;
   case AST_FUNCTION_ARCSEC:
     /** arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
@@ -433,9 +433,6 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_FUNCTION_ARCSECH:
     /* arcsech(x) = arccosh(1/x) */
     result = aCosh( 1. /  evaluateAST(child(n,0),data));
-    /** arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
-    /* result = log( (1.+ sqrt(1- MySQR( evaluateAST(child(n,0),data) ) ) )/ */
-/* 		 evaluateAST(child(n,0),data) );    */   
     break;
   case AST_FUNCTION_ARCSIN:
     result = asin(evaluateAST(child(n,0),data));
@@ -2541,14 +2538,13 @@ static void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t
 SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer)
 {
   /* was using
-     "#define asech(x) log((1.0 + sqrt(1.0 - MySQR(x))) / (x))\n"\ */
+     "#define asech(x) log((1.0 + sqrt(1.0 - (x)*(x))) / (x))\n"\ */
 
   CharBuffer_append(buffer, 
-		    "#define MySQR(x) ((x)*(x))\n"\
 		    "#define acot(x) atan(1.0/(x))\n"\
 		    "#define acoth(x) (0.5*log(((x)+1.0)/((x)-1.0)))\n"\
 		    "#define acsc(x) atan(1.0/sqrt(((x)-1.0)*((x)+1.0)))\n"\
-		    "#define acsch(x) log((1.0+sqrt(1.0 + MySQR(x)))/(x))\n"\
+		    "#define acsch(x) log((1.0+sqrt(1.0 + (x)*(x)))/(x))\n"\
 		    "#define asec(x) atan(sqrt(((x) - 1.0)*((x) + 1.0)))\n"\
 		    "#define asech(x) acosh(1.0/(x))\n"\
 		    "#define cot(x) (1.0 / tan(x))\n"\
