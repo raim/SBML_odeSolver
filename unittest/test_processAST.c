@@ -157,6 +157,8 @@ START_TEST(test_evaluateAST)
 {
 	CHECK_EVAL("arccoth(2)", log(3)/2);
 	CHECK_EVAL("arccoth(-2)", log(1./3)/2);
+	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));
+	CHECK_EVAL("arccsch(-1)", log(-1+sqrt(2)));
 }
 END_TEST
 
