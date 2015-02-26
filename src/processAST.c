@@ -402,7 +402,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     }
     break;
   case AST_FUNCTION_ABS:
-    result = (double) fabs(evaluateAST(child(n,0),data));
+    result = fabs(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCCOS:
     result = acos(evaluateAST(child(n,0),data)) ;
