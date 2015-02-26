@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-09-07 13:18:03 raim>
   $Id: interpol.c,v 1.10 2007/12/18 14:05:34 stefan_tbi Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <02-Sep-2010 19:40:39 raim>
   $Id: commandLine.c,v 1.30 2010/09/02 17:48:12 raimc Exp $

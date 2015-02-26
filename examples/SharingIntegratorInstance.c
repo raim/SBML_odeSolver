@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-10-27 16:22:14 raim>
   $Id: SharingIntegratorInstance.c,v 1.7 2006/03/09 17:23:49 afinney Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <01-Feb-2011 14:08:56 raim>
   $Id: cvodeData.h,v 1.17 2011/03/06 09:58:11 raimc Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-16 19:11:11 raim>
   $Id: solverError.c,v 1.24 2008/11/07 09:15:46 raimc Exp $ 

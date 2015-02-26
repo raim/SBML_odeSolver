@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-13 16:21:41 raim>
   $Id: processAST.c,v 1.65 2008/10/16 17:25:40 raimc Exp $
@@ -356,7 +357,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_TIMES:
     result = 1.0;
-    for ( i=0; i<childnum; i++) 
+    for ( i=0; i<childnum; i++)
       result *= evaluateAST(child(n,i),data);
     break;
   case AST_DIVIDE:

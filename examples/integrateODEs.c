@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2006-10-14 07:07:07 raim>
   $Id: integrateODEs.c,v 1.2 2006/10/14 05:10:27 raimc Exp $

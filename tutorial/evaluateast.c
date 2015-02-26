@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-09-28 15:27:26 raim>
   $Id: evaluateast.c,v 1.1 2007/09/28 13:29:25 raimc Exp $

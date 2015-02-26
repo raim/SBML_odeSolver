@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2009-02-12 15:24:24 raim>
   $Id: sensSolver.c,v 1.80 2009/02/12 06:24:04 raimc Exp $

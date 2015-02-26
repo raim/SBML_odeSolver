@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <01-Feb-2011 14:20:56 raim>
   $Id: interactive.c,v 1.7 2011/03/06 09:58:11 raimc Exp $

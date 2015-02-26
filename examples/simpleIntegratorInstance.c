@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-12 22:28:43 raim>
   $Id: simpleIntegratorInstance.c,v 1.18 2008/09/22 10:30:26 raimc Exp $

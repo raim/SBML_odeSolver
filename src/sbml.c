@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-16 16:52:50 raim>
   $Id: sbml.c,v 1.18 2008/10/16 17:27:50 raimc Exp $

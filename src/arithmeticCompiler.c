@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-08 14:26:04 raim>
   $Id: arithmeticCompiler.c,v 1.26 2008/10/08 17:07:16 raimc Exp $

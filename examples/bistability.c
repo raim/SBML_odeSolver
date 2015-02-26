@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-06-26 14:34:51 raim>
   $Id: bistability.c,v 1.4 2008/09/08 12:59:19 raimc Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-16 17:55:16 raim>
   $Id: compiler.c,v 1.32 2009/03/27 15:54:55 fbergmann Exp $

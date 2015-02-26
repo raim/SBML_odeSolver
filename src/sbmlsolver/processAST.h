@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-24 12:18:17 raim>
   $Id: processAST.h,v 1.24 2009/03/27 15:55:03 fbergmann Exp $

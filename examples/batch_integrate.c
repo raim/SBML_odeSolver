@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2009-02-12 18:19:45 raim>
   $Id: batch_integrate.c,v 1.24 2009/02/12 09:31:12 raimc Exp $

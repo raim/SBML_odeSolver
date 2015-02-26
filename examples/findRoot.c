@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2006-03-07 16:52:51 raim>
   $Id: findRoot.c,v 1.3 2006/03/07 15:58:35 raimc Exp $

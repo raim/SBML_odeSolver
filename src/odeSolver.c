@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-16 18:48:01 raim>
   $Id: odeSolver.c,v 1.48 2008/10/16 17:27:50 raimc Exp $

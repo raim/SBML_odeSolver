@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-16 18:00:39 raim>
   $Id: cvodeSolver.h,v 1.12 2009/03/27 15:55:03 fbergmann Exp $

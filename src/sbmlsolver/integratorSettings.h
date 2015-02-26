@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2010-04-12 10:24:41 raim>
   $Id: integratorSettings.h,v 1.41 2010/04/12 08:30:28 raimc Exp $ 

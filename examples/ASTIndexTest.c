@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-10-26 17:52:40 raim>
   $Id: ASTIndexTest.c,v 1.4 2005/10/26 15:53:16 raimc Exp $

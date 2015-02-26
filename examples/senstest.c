@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-19 15:05:31 raim>
   $Id: senstest.c,v 1.6 2008/09/22 10:30:26 raimc Exp $

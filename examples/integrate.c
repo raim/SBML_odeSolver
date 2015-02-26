@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-09 13:15:58 raim>
   $Id: integrate.c,v 1.14 2008/09/22 10:30:26 raimc Exp $

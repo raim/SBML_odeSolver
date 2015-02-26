@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-08 13:58:51 raim>
   $Id: analyzeJacobian.c,v 1.7 2008/10/08 17:08:17 raimc Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-09-29 20:54:18 raim>
   $Id: odemodel.c,v 1.3 2007/09/29 18:57:31 raimc Exp $

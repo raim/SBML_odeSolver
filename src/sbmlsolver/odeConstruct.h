@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2006-06-13 14:09:24 raim>
   $Id: odeConstruct.h,v 1.11 2009/03/27 15:55:03 fbergmann Exp $
