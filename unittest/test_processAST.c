@@ -155,6 +155,8 @@ static ASTNode_t *prepare_node(void)
 /* test cases */
 START_TEST(test_evaluateAST)
 {
+  CHECK_EVAL("1 * -2 * -3", 6);
+  CHECK_EVAL("1 * 0 * -3", 0);
 	CHECK_EVAL("arccoth(2)", log(3)/2);
 	CHECK_EVAL("arccoth(-2)", log(1./3)/2);
 	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));

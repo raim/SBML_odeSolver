@@ -358,7 +358,10 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_TIMES:
     result = 1.0;
     for ( i=0; i<childnum; i++)
+    {
       result *= evaluateAST(child(n,i),data);
+      if (result == 0.0) break; /* small optimization by skipping the rest of children */
+    }
     break;
   case AST_DIVIDE:
     result = evaluateAST(child(n,0),data) / evaluateAST(child(n,1),data);
