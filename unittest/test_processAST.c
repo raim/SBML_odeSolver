@@ -5,6 +5,10 @@
 #include <sbmlsolver/cvodeData.h>
 #include <sbmlsolver/odeModel.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /* fixtures */
 static odeModel_t *model;
 static cvodeData_t *data;
@@ -163,6 +167,8 @@ START_TEST(test_evaluateAST)
   CHECK_EVAL("arccosh(2)", log(2+sqrt(3)));
 	CHECK_EVAL("arccoth(2)", log(3)/2);
 	CHECK_EVAL("arccoth(-2)", log(1./3)/2);
+	CHECK_EVAL("arccsc(1)", M_PI/2);
+	CHECK_EVAL("arccsc(-1)", -M_PI/2);
 	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));
 	CHECK_EVAL("arccsch(-1)", log(-1+sqrt(2)));
 }
