@@ -159,6 +159,8 @@ START_TEST(test_evaluateAST)
   CHECK_EVAL("1 * 0 * -3", 0);
   CHECK_EVAL("abs(1)", 1);
   CHECK_EVAL("abs(-2)", 2);
+  CHECK_EVAL("arccosh(1)", 0);
+  CHECK_EVAL("arccosh(2)", log(2+sqrt(3)));
 	CHECK_EVAL("arccoth(2)", log(3)/2);
 	CHECK_EVAL("arccoth(-2)", log(1./3)/2);
 	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));
