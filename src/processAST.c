@@ -430,9 +430,8 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     result = log(1/value1 + sqrt(1/(value1*value1)+1));
     break;
   case AST_FUNCTION_ARCSEC:
-    /** arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
-    result = atan( sqrt( (evaluateAST(child(n,0),data)-1.) *
-			   (evaluateAST(child(n,0),data)+1.) ) );
+    /** arcsec(x) = arccos(1/x) */
+    result = acos(1/evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCSECH:
     /* arcsech(x) = arccosh(1/x) */

@@ -171,6 +171,8 @@ START_TEST(test_evaluateAST)
 	CHECK_EVAL("arccsc(-1)", -M_PI/2);
 	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));
 	CHECK_EVAL("arccsch(-1)", log(-1+sqrt(2)));
+	CHECK_EVAL("arcsec(1)", 0);
+	CHECK_EVAL("arcsec(-1)", M_PI);
 }
 END_TEST
 
