@@ -173,6 +173,8 @@ START_TEST(test_evaluateAST)
 	CHECK_EVAL("arccsch(-1)", log(-1+sqrt(2)));
 	CHECK_EVAL("arcsec(1)", 0);
 	CHECK_EVAL("arcsec(-1)", M_PI);
+  CHECK_EVAL("coth(1)", cosh(1)/sinh(1));
+  CHECK_EVAL("coth(-1)", cosh(-1)/sinh(-1));
 }
 END_TEST
 

@@ -464,8 +464,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_FUNCTION_COTH:
     /** coth x = cosh x / sinh x */
-    result = cosh(evaluateAST(child(n,0),data)) /
-      sinh(evaluateAST(child(n,0),data));
+    result = 1/tanh(evaluateAST(child(n,0),data));
     break;  
   case AST_FUNCTION_CSC:
     /** csc x = 1 / sin x */
