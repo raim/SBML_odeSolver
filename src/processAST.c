@@ -480,8 +480,9 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_FUNCTION_FACTORIAL:
     {
       int j;
-      j = floor(evaluateAST(child(n,0),data));
-      if ( evaluateAST(child(n,0),data) != j )      
+      value1 = evaluateAST(child(n,0),data);
+      j = floor(value1);
+      if ( value1 != j )
 	SolverError_error(FATAL_ERROR_TYPE,
 			  SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL,
 			  "The factorial is only implemented."

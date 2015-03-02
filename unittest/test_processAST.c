@@ -175,6 +175,8 @@ START_TEST(test_evaluateAST)
 	CHECK_EVAL("arcsec(-1)", M_PI);
   CHECK_EVAL("coth(1)", cosh(1)/sinh(1));
   CHECK_EVAL("coth(-1)", cosh(-1)/sinh(-1));
+  CHECK_EVAL("factorial(0)", 1);
+  CHECK_EVAL("factorial(10)", 3628800);
 }
 END_TEST
 
