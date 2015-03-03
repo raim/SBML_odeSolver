@@ -634,6 +634,9 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	result = 0.0;
     break;
   default:
+    SolverError_error(FATAL_ERROR_TYPE,
+                      SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
+                      "evaluateAST: unknown ASTNode type: %d", type);
     result = 0;
     break;
   }
