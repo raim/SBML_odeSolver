@@ -627,7 +627,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 	result = 0.0;
     break;
   case AST_RELATIONAL_LT :
-    /* n-ary: each child must be lower the following */
+    /* n-ary: each child must be lower than the following */
     result = 1.0;
     for ( i=0; i<childnum-1; i++ ) 
       if ( (evaluateAST(child(n,i),data)) >= (evaluateAST(child(n,i+1),data)) )
