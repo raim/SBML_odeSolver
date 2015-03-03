@@ -601,37 +601,78 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_RELATIONAL_EQ:
     /** n-ary: all children must be equal */
     result = 1.0;
-    for ( i=1; i<childnum; i++ ) 
-      if ( (evaluateAST(child(n,0),data)) != (evaluateAST(child(n,i),data)) ) 
-	result = 0.0;      
+    if (childnum <= 1) break;
+    value1 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+      if ( value1 != evaluateAST(child(n,i),data) )
+      {
+        result = 0.0;
+        break;
+      }
     break;
   case AST_RELATIONAL_GEQ:
     /** n-ary: each child must be greater than or equal to the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) < (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 < value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_GT:
     /** n-ary: each child must be greater than the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) <= (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 <= value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_LEQ:
     /** n-ary: each child must be lower than or equal to the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) > (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 > value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_LT :
     /* n-ary: each child must be lower than the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) >= (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 >= value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   default:
     SolverError_error(FATAL_ERROR_TYPE,

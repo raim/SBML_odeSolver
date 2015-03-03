@@ -177,6 +177,36 @@ START_TEST(test_evaluateAST)
   CHECK_EVAL("coth(-1)", cosh(-1)/sinh(-1));
   CHECK_EVAL("factorial(0)", 1);
   CHECK_EVAL("factorial(10)", 3628800);
+  CHECK_EVAL("eq(1)", 1);
+  CHECK_EVAL("eq(1, 2)", 0);
+  CHECK_EVAL("eq(1, 1)", 1);
+  CHECK_EVAL("eq(1, 0, 1)", 0);
+  CHECK_EVAL("eq(1, 1, 0)", 0);
+  CHECK_EVAL("eq(1, 1, 1, 1)", 1);
+  CHECK_EVAL("geq(1)", 1);
+  CHECK_EVAL("geq(1, 2)", 0);
+  CHECK_EVAL("geq(1, 1)", 1);
+  CHECK_EVAL("geq(1, 0, 1)", 0);
+  CHECK_EVAL("geq(1, 1, 0)", 1);
+  CHECK_EVAL("geq(2, 1, 0, 1)", 0);
+  CHECK_EVAL("gt(1)", 1);
+  CHECK_EVAL("gt(1, 2)", 0);
+  CHECK_EVAL("gt(1, 1)", 0);
+  CHECK_EVAL("gt(1, 0, -1)", 1);
+  CHECK_EVAL("gt(2, 1, 0)", 1);
+  CHECK_EVAL("gt(2, 1, 0, 0)", 0);
+  CHECK_EVAL("leq(1)", 1);
+  CHECK_EVAL("leq(1, 2)", 1);
+  CHECK_EVAL("leq(1, 1)", 1);
+  CHECK_EVAL("leq(1, 0, 1)", 0);
+  CHECK_EVAL("leq(0, 1, 2)", 1);
+  CHECK_EVAL("leq(0, 1, 2, -1)", 0);
+  CHECK_EVAL("lt(1)", 1);
+  CHECK_EVAL("lt(1, 2)", 1);
+  CHECK_EVAL("lt(1, 1)", 0);
+  CHECK_EVAL("lt(1, 0, 1)", 0);
+  CHECK_EVAL("lt(0, 1, 2)", 1);
+  CHECK_EVAL("lt(0, 1, 2, -1)", 0);
 }
 END_TEST
 
