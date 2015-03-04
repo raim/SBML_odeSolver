@@ -207,6 +207,8 @@ START_TEST(test_evaluateAST)
   CHECK_EVAL("lt(1, 0, 1)", 0);
   CHECK_EVAL("lt(0, 1, 2)", 1);
   CHECK_EVAL("lt(0, 1, 2, -1)", 0);
+  CHECK_EVAL("neq(0, -1)", 1);
+  CHECK_EVAL("neq(1, 1)", 0);
 }
 END_TEST
 

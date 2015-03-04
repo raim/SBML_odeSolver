@@ -674,6 +674,10 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
       }
     }
     break;
+  case AST_RELATIONAL_NEQ:
+    /* binary "not equal" */
+    result = (evaluateAST(child(n, 0), data) != evaluateAST(child(n, 1), data));
+    break;
   default:
     SolverError_error(FATAL_ERROR_TYPE,
                       SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
