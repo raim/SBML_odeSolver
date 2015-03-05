@@ -195,7 +195,7 @@ extern "C" {
   SBML_ODESOLVER_API errorCode_t SolverError_getLastCode(errorType_t);
 
   /* empty error store */
-  SBML_ODESOLVER_API void SolverError_clear();
+  SBML_ODESOLVER_API void SolverError_clear(void);
 
   /* create an error */
   SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, const char *format, ...);
@@ -206,25 +206,25 @@ extern "C" {
 #endif
 
   /* exit the program if errors or fatals have been created. */
-  SBML_ODESOLVER_API void SolverError_haltOnErrors();
+  SBML_ODESOLVER_API void SolverError_haltOnErrors(void);
 
   /* write all errors and warnings to standard error */
-  SBML_ODESOLVER_API void SolverError_dump();
+  SBML_ODESOLVER_API void SolverError_dump(void);
 
   /* write all errors and warnings to a string (owned by caller unless SolverError_isMemoryExhausted()) */
-  SBML_ODESOLVER_API char *SolverError_dumpToString();
+  SBML_ODESOLVER_API char *SolverError_dumpToString(void);
 
   /* free string returned by SolverError_dumpToString */
   SBML_ODESOLVER_API void SolverError_freeDumpString(char *);
 
   /* write all errors and warnings to standard error and then empty error store*/
-  SBML_ODESOLVER_API void SolverError_dumpAndClearErrors();
+  SBML_ODESOLVER_API void SolverError_dumpAndClearErrors(void);
 
   /* allocated memory and sets error if it fails */
   SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size);
 
   /* returns 1 if memory has been exhausted 0 otherwise */
-  SBML_ODESOLVER_API int SolverError_isMemoryExhausted();
+  SBML_ODESOLVER_API int SolverError_isMemoryExhausted(void);
 
 #ifdef __cplusplus
 }

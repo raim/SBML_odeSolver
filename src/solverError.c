@@ -120,7 +120,7 @@ SBML_ODESOLVER_API errorCode_t SolverError_getLastCode(errorType_t type)
 }
 
 /** empty error store */
-SBML_ODESOLVER_API void SolverError_clear()
+SBML_ODESOLVER_API void SolverError_clear(void)
 {
   int i ;
 
@@ -146,7 +146,7 @@ SBML_ODESOLVER_API void SolverError_clear()
   memoryExhaustion = 0;
 }
 
-SBML_ODESOLVER_API void SolverError_dumpAndClearErrors()
+SBML_ODESOLVER_API void SolverError_dumpAndClearErrors(void)
 {
   SolverError_dump();
   SolverError_clear();
@@ -189,7 +189,7 @@ SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCod
 }
 
 /** exit the program if errors or fatals have been created. */
-SBML_ODESOLVER_API void SolverError_haltOnErrors()
+SBML_ODESOLVER_API void SolverError_haltOnErrors(void)
 {
   if ( SolverError_getNum(ERROR_ERROR_TYPE) ||
        SolverError_getNum(FATAL_ERROR_TYPE) )
@@ -199,7 +199,7 @@ SBML_ODESOLVER_API void SolverError_haltOnErrors()
 
 /** write all errors and warnings to a string (owned by caller
     unless memoryExhaustion) */
-SBML_ODESOLVER_API char *SolverError_dumpToString()
+SBML_ODESOLVER_API char *SolverError_dumpToString(void)
 {
   char *result;
 
@@ -232,7 +232,7 @@ SBML_ODESOLVER_API void SolverError_freeDumpString(char *message)
 }
 
 /* write all errors and warnings to standard error */
-SBML_ODESOLVER_API void SolverError_dump()
+SBML_ODESOLVER_API void SolverError_dump(void)
 {
   char *message = SolverError_dumpToString();
 
@@ -241,7 +241,7 @@ SBML_ODESOLVER_API void SolverError_dump()
 }
 
 /* returns 1 if memory has been exhausted 0 otherwise */
-SBML_ODESOLVER_API int SolverError_isMemoryExhausted()
+SBML_ODESOLVER_API int SolverError_isMemoryExhausted(void)
 {
   return memoryExhaustion;
 }
