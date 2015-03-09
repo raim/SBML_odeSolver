@@ -140,7 +140,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
     /*  if ( flag != CV_SUCCESS ) */
     if ( flag < CV_SUCCESS )
     {
-      char *message[] =
+      static const char *message[] =
 	{
 	  /*  0 CV_SUCCESS */
 	  "Success",
@@ -251,7 +251,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
     if ( flag <CV_SUCCESS  )
     {   
-      char *message[] =
+      static const char *message[] =
 	{
 	  /*  0 CV_SUCCESS */
 	  "Success",
@@ -322,7 +322,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	  "Forward sensitivity integration not achieved"
 	};
     
-	char *message2[] =
+      static const char *message2[] =
 	  { "",
             "Cvadj_mem full", 
             "", 

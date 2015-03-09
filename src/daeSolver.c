@@ -100,7 +100,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 
     if ( flag != IDA_SUCCESS )
       {
-	char *message[] =
+        static const char *message[] =
 	  {
 	    /*  0 IDA_SUCCESS */
 	    "Success",
