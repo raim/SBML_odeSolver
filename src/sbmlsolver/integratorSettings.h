@@ -242,7 +242,7 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeSettings_getSteadyStateThreshold(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *);
-  SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API const char *CvodeSettings_getSensMethod(const cvodeSettings_t *);
 
   
 #ifdef __cplusplus

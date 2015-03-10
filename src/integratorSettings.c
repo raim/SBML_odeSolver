@@ -1106,12 +1106,13 @@ SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *set)
 /** Get sensitivity method `simultaneous', `staggered'  or `staggered1'
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getSensMethod(const cvodeSettings_t *set)
 {
-  char *meth[3];
-  meth[0] = "simultaneous";
-  meth[1] = "staggered";
-  meth[2] = "staggered1";
+  static const char *meth[] = {
+    "simultaneous",
+    "staggered",
+    "staggered1"
+  };
   return meth[set->SensMethod];
 }
 
