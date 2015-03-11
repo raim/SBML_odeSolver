@@ -230,7 +230,7 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeSettings_getRError(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *);
   SBML_ODESOLVER_API const char *CvodeSettings_getMethod(const cvodeSettings_t *);
-  SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API const char *CvodeSettings_getIterMethod(const cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getCompileFunctions(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *);

@@ -1023,11 +1023,12 @@ SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *set)
 /** Get non-linear solver iteration type (NEWTON or FUNCTIONAL)
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getIterMethod(const cvodeSettings_t *set)
 {
-  char *meth[2];
-  meth[0] = "NEWTON";
-  meth[1] = "FUNCTIONAL";
+  static const char *meth[] = {
+    "NEWTON",
+    "FUNCTIONAL"
+  };
   return meth[set->IterMethod];
 }
 
