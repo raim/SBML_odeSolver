@@ -62,6 +62,15 @@ START_TEST(test_CvodeSettings_free)
 }
 END_TEST
 
+START_TEST(test_CvodeSettings_getMethod)
+{
+  cvodeSettings_t *cs;
+  cs = CvodeSettings_create();
+  ck_assert_str_eq(CvodeSettings_getMethod(cs), "BDF");
+  CvodeSettings_free(cs);
+}
+END_TEST
+
 START_TEST(test_CvodeSettings_getSensMethod)
 {
   cvodeSettings_t *cs;
@@ -81,6 +90,7 @@ Suite *create_suite_integratorSettings(void)
 	TCase *tc_CvodeSettings_create;
 	TCase *tc_CvodeSettings_createWithTime;
 	TCase *tc_CvodeSettings_free;
+  TCase *tc_CvodeSettings_getMethod;
   TCase *tc_CvodeSettings_getSensMethod;
 
 	s = suite_create("integratorSettings");
@@ -108,6 +118,10 @@ Suite *create_suite_integratorSettings(void)
 	tc_CvodeSettings_free = tcase_create("CvodeSettings_free");
 	tcase_add_test(tc_CvodeSettings_free, test_CvodeSettings_free);
 	suite_add_tcase(s, tc_CvodeSettings_free);
+
+  tc_CvodeSettings_getMethod = tcase_create("CvodeSettings_getMethod");
+  tcase_add_test(tc_CvodeSettings_getMethod, test_CvodeSettings_getMethod);
+  suite_add_tcase(s, tc_CvodeSettings_getMethod);
 
   tc_CvodeSettings_getSensMethod = tcase_create("CvodeSettings_getSensMethod");
   tcase_add_test(tc_CvodeSettings_getSensMethod, test_CvodeSettings_getSensMethod);

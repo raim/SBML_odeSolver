@@ -1003,11 +1003,12 @@ SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *set)
 /** Get non-linear solver method (BDF or ADAMS-MOULTON)
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getMethod(const cvodeSettings_t *set)
 {
-  char *meth[2];
-  meth[0] = "BDF";
-  meth[1] = "ADAMS-MOULTON";
+  static const char *meth[] = {
+    "BDF",
+    "ADAMS-MOULTON"
+  };
   return meth[set->CvodeMethod];
 }
 
