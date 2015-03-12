@@ -39,6 +39,7 @@
 #define SBMLSOLVER_UTIL_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <stdio.h>
 
 #ifdef WITH_DMALLOC
 /* use dmalloc library to check for memory management bugs */

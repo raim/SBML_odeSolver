@@ -50,7 +50,7 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/interpol.h"
 #include "sbmlsolver/util.h"
-
+#include "private/data.h"
 
 /** Creates a settings structure with default values
 */
@@ -558,7 +558,7 @@ static int read_time(char *file, double *timepoints)
       i--;
       continue;
     }
-    sscanf(token, "%lf",  &(timepoints[i]));  
+    timepoints[i] = scan_double(token);
     free(line);
   }
 

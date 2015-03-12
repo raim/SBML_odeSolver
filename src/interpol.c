@@ -12,6 +12,7 @@
 #include <string.h>
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
+#include "private/data.h"
 
 #undef VERBOSE
 /* #define VERBOSE */
@@ -345,7 +346,7 @@ int read_columns(const char *file, int n_col, int *col, int *index,
 	}
 	
 	/* read value from column 0 into ts->time[i] */
-	sscanf(token, "%lf", ts->time+i);
+  ts->time[i] = scan_double(token);
 	
 	/* read other columns */
 	curr = 1;
@@ -354,7 +355,7 @@ int read_columns(const char *file, int n_col, int *col, int *index,
 		token = strtok(NULL, " ");
 	    
 	    /* read value from column col[j] into ts->data[index[j]][i] */
-	    sscanf(token, "%lf", ts->data[index[j]]+i);
+      ts->data[index[j]][i] = scan_double(token);
 	    curr = k;
 	}
 	free(line);
