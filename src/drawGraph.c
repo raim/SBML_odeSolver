@@ -52,7 +52,7 @@
 
 /* System specific definitions,
    created by configure script */
-#ifndef WIN32
+#ifndef _WIN32
 #include "config.h"
 #endif
 

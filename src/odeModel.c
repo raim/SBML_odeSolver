@@ -36,7 +36,7 @@
 
 /* System specific definitions,
    created by configure script */
-#ifndef WIN32
+#ifndef _WIN32
 #include "config.h"
 #endif
 
@@ -3231,7 +3231,7 @@ int ODEModel_compileCVODEFunctions(odeModel_t *om)
     om->compiledCVODEFunctionCode = NULL;
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   CharBuffer_append(buffer,
 		    "#include <windows.h>\n"\
 		    "#include <math.h>\n"\
@@ -3331,7 +3331,7 @@ int ODESense_compileCVODESenseFunctions(odeSense_t *os)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
-#ifdef WIN32
+#ifdef _WIN32
   CharBuffer_append(buffer,
 		    "#include <windows.h>\n"\
 		    "#include <math.h>\n"\

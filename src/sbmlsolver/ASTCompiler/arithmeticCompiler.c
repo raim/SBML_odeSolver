@@ -7,9 +7,9 @@
 /*#include "interfaceSimulation.c"*/
 
 /* WIN TEST */
-/* #define WIN32 */
+/* #define _WIN32 */
 
-#ifndef WIN32
+#ifndef _WIN32
 /*!!! __USE_MISC required for MAP_ANONYMOUS: why and what is it good for?*/
 #define __USE_MISC
 #include <sys/mman.h> /* LINUX ONLY! */
@@ -117,7 +117,7 @@ void initCode (directCode_t *code, ASTNode_t *AST) {
 	code->FPUstackSize = length;
 	code->FPUstackPosition = 0;
 	
-#ifndef WIN32 /* LINUX */
+#ifndef _WIN32 /* LINUX */
 	code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
 #else /* WINDOWS */
 	code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
@@ -146,7 +146,7 @@ void initCode64 (directCode_t *code, ASTNode_t *AST) {
 	code->FPUstackSize = length;
 	code->FPUstackPosition = 0;
 
-#ifndef WIN32 /* LINUX */
+#ifndef _WIN32 /* LINUX */
 code->prog = (unsigned char *)mmap(NULL,code->codeSize,(PROT_EXEC|PROT_READ|PROT_WRITE),(MAP_ANONYMOUS|MAP_PRIVATE), -1, 0);
 #else /* WINDOWS */
 code->prog = (unsigned char *)malloc(sizeof(unsigned char)*code->codeSize);
@@ -2471,7 +2471,7 @@ void destructFunction(directCode_t *code) {
 	code->storagePosition = 0;
 	free(code->storage);
 	free(code->FPUstack);
-#ifdef WIN32
+#ifdef _WIN32
 	if(sizeof(void (*)()) == 4)
 	  free(code->prog);
 #endif

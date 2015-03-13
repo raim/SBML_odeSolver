@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define vsnprintf _vsnprintf
 #include "windows.h"
 #endif
@@ -271,7 +271,7 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
   return result ;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 void SolverError_storeLastWin32Error(const char *context)
 {
   LPVOID lpMsgBuf;
