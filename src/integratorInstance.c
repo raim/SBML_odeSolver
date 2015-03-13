@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2013-04-16 17:36:04 raim>
   $Id: integratorInstance.c,v 1.114 2011/05/04 18:51:24 raimc Exp $
@@ -1464,11 +1465,14 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
     dy_mean += fabs(evaluateAST(om->ode[i],data));
 
   dy_mean = dy_mean / om->neq;
-  for ( i=0; i<om->neq; i++ ) 
-    dy_var += MySQR(evaluateAST(om->ode[i],data) - dy_mean);
+  for ( i=0; i<om->neq; i++ )
+  {
+    double d = evaluateAST(om->ode[i],data) - dy_mean;
+    dy_var += d*d;
+  }
 
   dy_var = dy_var / (om->neq -1);
-  dy_std = MySQRT(dy_var);
+  dy_std = sqrt(dy_var);
 
   /* stop integrator if mean + std of rates of change are lower than
      1e-11/ steady state threshold */

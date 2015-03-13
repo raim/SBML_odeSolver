@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-10-26 17:39:56 raim>
   $Id: drawGraph.c,v 1.30 2008/11/07 08:51:53 raimc Exp $

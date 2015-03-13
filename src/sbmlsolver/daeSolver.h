@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-11-03 14:54:35 raim>
   $Id: daeSolver.h,v 1.2 2009/03/27 15:55:03 fbergmann Exp $

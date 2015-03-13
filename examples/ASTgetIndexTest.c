@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-24 14:40:15 raim>
   $Id: ASTgetIndexTest.c,v 1.7 2008/09/24 14:10:36 raimc Exp $

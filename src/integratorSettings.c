@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*   Last changed Time-stamp: <02-Feb-2011 13:48:51 raim> */
 /*   $Id: integratorSettings.c,v 1.53 2011/03/06 09:56:18 raimc Exp $ */
 /* 
@@ -49,7 +50,7 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/interpol.h"
 #include "sbmlsolver/util.h"
-
+#include "private/data.h"
 
 /** Creates a settings structure with default values
 */
@@ -557,7 +558,7 @@ static int read_time(char *file, double *timepoints)
       i--;
       continue;
     }
-    sscanf(token, "%lf",  &(timepoints[i]));  
+    timepoints[i] = scan_double(token);
     free(line);
   }
 
@@ -1002,11 +1003,12 @@ SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *set)
 /** Get non-linear solver method (BDF or ADAMS-MOULTON)
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getMethod(const cvodeSettings_t *set)
 {
-  char *meth[2];
-  meth[0] = "BDF";
-  meth[1] = "ADAMS-MOULTON";
+  static const char *meth[] = {
+    "BDF",
+    "ADAMS-MOULTON"
+  };
   return meth[set->CvodeMethod];
 }
 
@@ -1021,11 +1023,12 @@ SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *set)
 /** Get non-linear solver iteration type (NEWTON or FUNCTIONAL)
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getIterMethod(const cvodeSettings_t *set)
 {
-  char *meth[2];
-  meth[0] = "NEWTON";
-  meth[1] = "FUNCTIONAL";
+  static const char *meth[] = {
+    "NEWTON",
+    "FUNCTIONAL"
+  };
   return meth[set->IterMethod];
 }
 
@@ -1105,12 +1108,13 @@ SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *set)
 /** Get sensitivity method `simultaneous', `staggered'  or `staggered1'
 */
 
-SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *set)
+SBML_ODESOLVER_API const char *CvodeSettings_getSensMethod(const cvodeSettings_t *set)
 {
-  char *meth[3];
-  meth[0] = "simultaneous";
-  meth[1] = "staggered";
-  meth[2] = "staggered1";
+  static const char *meth[] = {
+    "simultaneous",
+    "staggered",
+    "staggered1"
+  };
   return meth[set->SensMethod];
 }
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-11-04 19:04:45 raim>
   $Id: nullSolver.h,v 1.3 2009/03/27 15:55:03 fbergmann Exp $

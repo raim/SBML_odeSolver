@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-11-03 11:03:51 raim>
   $Id: TwinIntegratorInstance.c,v 1.4 2006/03/09 17:23:49 afinney Exp $

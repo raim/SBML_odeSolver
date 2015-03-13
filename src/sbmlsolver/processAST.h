@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-09-24 12:18:17 raim>
   $Id: processAST.h,v 1.24 2009/03/27 15:55:03 fbergmann Exp $
@@ -45,8 +46,6 @@
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/charBuffer.h>
 
-#define MySQR(x) ((x)*(x))
-#define MySQRT(x) pow((x),(.5))
 #define child(x,y)  ASTNode_getChild(x,y)
 
 #ifdef __cplusplus

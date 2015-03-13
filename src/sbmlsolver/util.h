@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
  * Filename    : util.c
  * Revision    : $Id: util.h,v 1.4 2006/06/12 10:25:58 raimc Exp $
@@ -38,6 +39,7 @@
 #define SBMLSOLVER_UTIL_H_
 
 #include <sbmlsolver/exportdefs.h>
+#include <stdio.h>
 
 #ifdef WITH_DMALLOC
 /* use dmalloc library to check for memory management bugs */

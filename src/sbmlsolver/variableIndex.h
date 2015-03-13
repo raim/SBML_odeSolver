@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-05-09 17:36:09 raim>
   $Id: variableIndex.h,v 1.13 2008/05/09 15:46:37 raimc Exp $ 

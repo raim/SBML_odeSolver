@@ -94,7 +94,7 @@ AC_DEFUN([CONFIG_LIB_SUNDIALS],
   CPPFLAGS=$sundials_save_CPPFLAGS
   LDFLAGS=$sundials_save_LDFLAGS
   LIBS=$sundials_save_LIBS
-  AC_LANG_POP
+  AC_LANG_POP(C)
 
   dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
   AC_DEFINE_UNQUOTED([SUNDIALS_CPPFLAGS], "${with_sundials}/include",

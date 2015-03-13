@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <30-Sep-2010 11:05:29 raim>
   $Id: printModel.h,v 1.4 2010/09/30 09:15:16 raimc Exp $

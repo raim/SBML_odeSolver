@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-09-07 13:18:03 raim>
   $Id: interpol.c,v 1.10 2007/12/18 14:05:34 stefan_tbi Exp $
@@ -11,6 +12,7 @@
 #include <string.h>
 #include "sbmlsolver/util.h"
 #include "sbmlsolver/solverError.h"
+#include "private/data.h"
 
 #undef VERBOSE
 /* #define VERBOSE */
@@ -344,7 +346,7 @@ int read_columns(const char *file, int n_col, int *col, int *index,
 	}
 	
 	/* read value from column 0 into ts->time[i] */
-	sscanf(token, "%lf", ts->time+i);
+  ts->time[i] = scan_double(token);
 	
 	/* read other columns */
 	curr = 1;
@@ -353,7 +355,7 @@ int read_columns(const char *file, int n_col, int *col, int *index,
 		token = strtok(NULL, " ");
 	    
 	    /* read value from column col[j] into ts->data[index[j]][i] */
-	    sscanf(token, "%lf", ts->data[index[j]]+i);
+      ts->data[index[j]][i] = scan_double(token);
 	    curr = k;
 	}
 	free(line);

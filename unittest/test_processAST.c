@@ -1,9 +1,41 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: t; c-basic-offset: 4 -*- */
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 #include "unittest.h"
 
 #include <sbmlsolver/processAST.h>
+#include <sbmlsolver/cvodeData.h>
+#include <sbmlsolver/odeModel.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+/* fixtures */
+static odeModel_t *model;
+static cvodeData_t *data;
+
+static void setup_data(void)
+{
+	model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+	data = CvodeData_create(model);
+}
+
+static void teardown_data(void)
+{
+	CvodeData_free(data);
+	ODEModel_free(model);
+}
 
 /* helpers */
+#define CHECK_EVAL(input, expected) do {			\
+		ASTNode_t *node;							\
+		double v;									\
+		node = SBML_parseFormula(input);			\
+		ck_assert(node != NULL);					\
+		v = evaluateAST(node, data);				\
+		CHECK_DOUBLE_WITH_TOLERANCE(v, (expected));	\
+		ASTNode_free(node);							\
+	} while (0)
+
 #define CHECK_GEN(input, expected) do {								\
 		ASTNode_t *node;											\
 		charBuffer_t *buf;											\
@@ -125,6 +157,61 @@ static ASTNode_t *prepare_node(void)
 }
 
 /* test cases */
+START_TEST(test_evaluateAST)
+{
+  CHECK_EVAL("1 * -2 * -3", 6);
+  CHECK_EVAL("1 * 0 * -3", 0);
+  CHECK_EVAL("abs(1)", 1);
+  CHECK_EVAL("abs(-2)", 2);
+  CHECK_EVAL("arccosh(1)", 0);
+  CHECK_EVAL("arccosh(2)", log(2+sqrt(3)));
+	CHECK_EVAL("arccoth(2)", log(3)/2);
+	CHECK_EVAL("arccoth(-2)", log(1./3)/2);
+	CHECK_EVAL("arccsc(1)", M_PI/2);
+	CHECK_EVAL("arccsc(-1)", -M_PI/2);
+	CHECK_EVAL("arccsch(1)", log(1+sqrt(2)));
+	CHECK_EVAL("arccsch(-1)", log(-1+sqrt(2)));
+	CHECK_EVAL("arcsec(1)", 0);
+	CHECK_EVAL("arcsec(-1)", M_PI);
+  CHECK_EVAL("coth(1)", cosh(1)/sinh(1));
+  CHECK_EVAL("coth(-1)", cosh(-1)/sinh(-1));
+  CHECK_EVAL("factorial(0)", 1);
+  CHECK_EVAL("factorial(10)", 3628800);
+  CHECK_EVAL("eq(1)", 1);
+  CHECK_EVAL("eq(1, 2)", 0);
+  CHECK_EVAL("eq(1, 1)", 1);
+  CHECK_EVAL("eq(1, 0, 1)", 0);
+  CHECK_EVAL("eq(1, 1, 0)", 0);
+  CHECK_EVAL("eq(1, 1, 1, 1)", 1);
+  CHECK_EVAL("geq(1)", 1);
+  CHECK_EVAL("geq(1, 2)", 0);
+  CHECK_EVAL("geq(1, 1)", 1);
+  CHECK_EVAL("geq(1, 0, 1)", 0);
+  CHECK_EVAL("geq(1, 1, 0)", 1);
+  CHECK_EVAL("geq(2, 1, 0, 1)", 0);
+  CHECK_EVAL("gt(1)", 1);
+  CHECK_EVAL("gt(1, 2)", 0);
+  CHECK_EVAL("gt(1, 1)", 0);
+  CHECK_EVAL("gt(1, 0, -1)", 1);
+  CHECK_EVAL("gt(2, 1, 0)", 1);
+  CHECK_EVAL("gt(2, 1, 0, 0)", 0);
+  CHECK_EVAL("leq(1)", 1);
+  CHECK_EVAL("leq(1, 2)", 1);
+  CHECK_EVAL("leq(1, 1)", 1);
+  CHECK_EVAL("leq(1, 0, 1)", 0);
+  CHECK_EVAL("leq(0, 1, 2)", 1);
+  CHECK_EVAL("leq(0, 1, 2, -1)", 0);
+  CHECK_EVAL("lt(1)", 1);
+  CHECK_EVAL("lt(1, 2)", 1);
+  CHECK_EVAL("lt(1, 1)", 0);
+  CHECK_EVAL("lt(1, 0, 1)", 0);
+  CHECK_EVAL("lt(0, 1, 2)", 1);
+  CHECK_EVAL("lt(0, 1, 2, -1)", 0);
+  CHECK_EVAL("neq(0, -1)", 1);
+  CHECK_EVAL("neq(1, 1)", 0);
+}
+END_TEST
+
 START_TEST(test_generateAST)
 {
 	CHECK_GEN("1 + (x * x)", "((realtype)1) + (0.0 * 0.0)");
@@ -400,6 +487,7 @@ END_TEST
 Suite *create_suite_processAST(void)
 {
 	Suite *s;
+	TCase *tc_evaluateAST;
 	TCase *tc_generateAST;
 	TCase *tc_differentiateAST;
 	TCase *tc_copyAST;
@@ -412,6 +500,13 @@ Suite *create_suite_processAST(void)
 	TCase *tc_ASTNode_getIndexArray;
 
 	s = suite_create("processAST");
+
+	tc_evaluateAST = tcase_create("evaluateAST");
+	tcase_add_checked_fixture(tc_evaluateAST,
+							  setup_data,
+							  teardown_data);
+	tcase_add_test(tc_evaluateAST, test_evaluateAST);
+	suite_add_tcase(s, tc_evaluateAST);
 
 	tc_generateAST = tcase_create("generateAST");
 	tcase_add_test(tc_generateAST, test_generateAST);

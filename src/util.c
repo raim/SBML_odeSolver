@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /**
  * Filename    : util.c
  * Revision    : $Id: util.c,v 1.4 2008/09/12 20:02:49 raimc Exp $

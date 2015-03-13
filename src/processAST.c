@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2008-10-13 16:21:41 raim>
   $Id: processAST.c,v 1.65 2008/10/16 17:25:40 raimc Exp $
@@ -155,50 +156,13 @@ void AST_dump(const char *context, ASTNode_t *node)
 
 /** Copies the passed AST, including potential SOSlib ASTNodeIndex, and
     returns the copy.
+    Now this function is equivalent to ASTNode_deepCopy() because
+    the index is stored as its user data.
 */
 
 SBML_ODESOLVER_API ASTNode_t *copyAST(const ASTNode_t *f)
 {
-  unsigned int i;
-  ASTNode_t *copy;
-
-  copy = ASTNode_create();
-
-  /* DISTINCTION OF CASES */
-
-  /* integers, reals */
-  if ( ASTNode_isInteger(f) ) 
-    ASTNode_setInteger(copy, ASTNode_getInteger(f));
-  else if ( ASTNode_isReal(f) ) 
-    ASTNode_setReal(copy, ASTNode_getReal(f));
-  /* variables */
-  else if ( ASTNode_isName(f) )
-  {
-    if ( ASTNode_isSetIndex((ASTNode_t *)f) )
-    {
-      ASTNode_free(copy);
-      copy = ASTNode_createIndexName();
-      ASTNode_setIndex(copy, ASTNode_getIndex((ASTNode_t *)f));
-    }
-    ASTNode_setName(copy, ASTNode_getName(f));
-    /* time and delay nodes */
-    ASTNode_setType(copy, ASTNode_getType(f)); 
-    
-    if ( ASTNode_isSetData((ASTNode_t *)f) )
-      ASTNode_setData(copy);
-  }
-  /* constants, functions, operators */
-  else
-  {
-    ASTNode_setType(copy, ASTNode_getType(f));
-    /* user-defined functions: name must be set */
-    if ( ASTNode_getType(f) == AST_FUNCTION ) 
-      ASTNode_setName(copy, ASTNode_getName(f));
-    for ( i=0; i<ASTNode_getNumChildren(f); i++ ) 
-      ASTNode_addChild(copy, copyAST(ASTNode_getChild(f,i)));
-  }
-
-  return copy;
+	return ASTNode_deepCopy(f);
 }
 
 
@@ -236,6 +200,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   ASTNodeType_t type;
   /* ASTNode_t **child; */
 
+  /* value* are for intermediate values. */
   double value1, value2, value3, result;
 
   if ( n == NULL )
@@ -392,8 +357,11 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_TIMES:
     result = 1.0;
-    for ( i=0; i<childnum; i++) 
+    for ( i=0; i<childnum; i++)
+    {
       result *= evaluateAST(child(n,i),data);
+      if (result == 0.0) break; /* small optimization by skipping the rest of children */
+    }
     break;
   case AST_DIVIDE:
     result = evaluateAST(child(n,0),data) / evaluateAST(child(n,1),data);
@@ -434,7 +402,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     }
     break;
   case AST_FUNCTION_ABS:
-    result = (double) fabs(evaluateAST(child(n,0),data));
+    result = fabs(evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCCOS:
     result = acos(evaluateAST(child(n,0),data)) ;
@@ -448,30 +416,26 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_FUNCTION_ARCCOTH:
     /** arccoth x = 1/2 * ln((x+1)/(x-1)) */
-    result = ((1./2.)*log((evaluateAST(child(n,0),data)+1.) /
-			  (evaluateAST(child(n,0),data)-1.)) );
+    value1 = evaluateAST(child(n,0),data);
+    result = log((value1 + 1) / (value1 - 1))/2;
     break;
   case AST_FUNCTION_ARCCSC:
     /** arccsc(x) = Arctan(1 / sqrt((x - 1)(x + 1))) */
-    result = atan( 1. / MySQRT( (evaluateAST(child(n,0),data)-1.) *
-				(evaluateAST(child(n,0),data)+1.) ) );
+    value1 = evaluateAST(child(n,0),data);
+    result = atan(1/sqrt((value1-1)*(value1+1)));
     break;
   case AST_FUNCTION_ARCCSCH:
-    /** arccsch(x) = ln((1 + sqrt(1 + x^2)) / x) */
-    result = log((1.+MySQRT((1+MySQR(evaluateAST(child(n,0),data))))) /
-		 evaluateAST(child(n,0),data));
+    /** arccsch(x) = ln((1/x) + sqrt((1/(x*x)) + 1)) */
+    value1 = evaluateAST(child(n,0),data);
+    result = log(1/value1 + sqrt(1/(value1*value1)+1));
     break;
   case AST_FUNCTION_ARCSEC:
-    /** arcsec(x) = arctan(sqrt((x - 1)(x + 1))) */   
-    result = atan( MySQRT( (evaluateAST(child(n,0),data)-1.) *
-			   (evaluateAST(child(n,0),data)+1.) ) );
+    /** arcsec(x) = arccos(1/x) */
+    result = acos(1/evaluateAST(child(n,0),data));
     break;
   case AST_FUNCTION_ARCSECH:
     /* arcsech(x) = arccosh(1/x) */
     result = aCosh( 1. /  evaluateAST(child(n,0),data));
-    /** arcsech(x) = ln((1 + sqrt(1 - x^2)) / x) */
-    /* result = log( (1.+ MySQRT(1- MySQR( evaluateAST(child(n,0),data) ) ) )/ */
-/* 		 evaluateAST(child(n,0),data) );    */   
     break;
   case AST_FUNCTION_ARCSIN:
     result = asin(evaluateAST(child(n,0),data));
@@ -500,8 +464,7 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
     break;
   case AST_FUNCTION_COTH:
     /** coth x = cosh x / sinh x */
-    result = cosh(evaluateAST(child(n,0),data)) /
-      sinh(evaluateAST(child(n,0),data));
+    result = 1/tanh(evaluateAST(child(n,0),data));
     break;  
   case AST_FUNCTION_CSC:
     /** csc x = 1 / sin x */
@@ -517,8 +480,9 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_FUNCTION_FACTORIAL:
     {
       int j;
-      j = floor(evaluateAST(child(n,0),data));
-      if ( evaluateAST(child(n,0),data) != j )      
+      value1 = evaluateAST(child(n,0),data);
+      j = floor(value1);
+      if ( value1 != j )
 	SolverError_error(FATAL_ERROR_TYPE,
 			  SOLVER_ERROR_AST_EVALUATION_FAILED_FLOAT_FACTORIAL,
 			  "The factorial is only implemented."
@@ -637,39 +601,87 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
   case AST_RELATIONAL_EQ:
     /** n-ary: all children must be equal */
     result = 1.0;
-    for ( i=1; i<childnum; i++ ) 
-      if ( (evaluateAST(child(n,0),data)) != (evaluateAST(child(n,i),data)) ) 
-	result = 0.0;      
+    if (childnum <= 1) break;
+    value1 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+      if ( value1 != evaluateAST(child(n,i),data) )
+      {
+        result = 0.0;
+        break;
+      }
     break;
   case AST_RELATIONAL_GEQ:
     /** n-ary: each child must be greater than or equal to the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) < (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 < value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_GT:
     /** n-ary: each child must be greater than the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) <= (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 <= value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_LEQ:
     /** n-ary: each child must be lower than or equal to the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) > (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 > value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
     break;
   case AST_RELATIONAL_LT :
-    /* n-ary: each child must be lower the following */
+    /* n-ary: each child must be lower than the following */
     result = 1.0;
-    for ( i=0; i<childnum-1; i++ ) 
-      if ( (evaluateAST(child(n,i),data)) >= (evaluateAST(child(n,i+1),data)) )
-	result = 0.0;
+    if (childnum <= 1) break;
+    value2 = evaluateAST(child(n,0),data);
+    for ( i=1; i<childnum; i++ )
+    {
+      value1 = value2;
+      value2 = evaluateAST(child(n,i),data);
+      if (value1 >= value2)
+      {
+        result = 0.0;
+        break;
+      }
+    }
+    break;
+  case AST_RELATIONAL_NEQ:
+    /* binary "not equal" */
+    result = (evaluateAST(child(n, 0), data) != evaluateAST(child(n, 1), data));
     break;
   default:
+    SolverError_error(FATAL_ERROR_TYPE,
+                      SOLVER_ERROR_AST_UNKNOWN_NODE_TYPE,
+                      "evaluateAST: unknown ASTNode type: %d", type);
     result = 0;
     break;
   }
@@ -2577,16 +2589,14 @@ static void ASTNode_generateName(charBuffer_t *expressionStream, const ASTNode_t
 SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer)
 {
   /* was using
-     "#define asech(x) log((1.0 + MySQRT(1.0 - MySQR(x))) / (x))\n"\ */
+     "#define asech(x) log((1.0 + sqrt(1.0 - (x)*(x))) / (x))\n"\ */
 
   CharBuffer_append(buffer, 
-		    "#define MySQR(x) ((x)*(x))\n"\
-		    "#define MySQRT(x) pow((x),(.5))\n"\
 		    "#define acot(x) atan(1.0/(x))\n"\
 		    "#define acoth(x) (0.5*log(((x)+1.0)/((x)-1.0)))\n"\
-		    "#define acsc(x) atan(1.0/MySQRT(((x)-1.0)*((x)+1.0)))\n"\
-		    "#define acsch(x) log((1.0+MySQRT(1.0 + MySQR(x)))/(x))\n"\
-		    "#define asec(x) atan(MySQRT(((x) - 1.0)*((x) + 1.0)))\n"\
+		    "#define acsc(x) atan(1.0/sqrt(((x)-1.0)*((x)+1.0)))\n"\
+		    "#define acsch(x) log((1.0+sqrt(1.0 + (x)*(x)))/(x))\n"\
+		    "#define asec(x) atan(sqrt(((x) - 1.0)*((x) + 1.0)))\n"\
 		    "#define asech(x) acosh(1.0/(x))\n"\
 		    "#define cot(x) (1.0 / tan(x))\n"\
 		    "#define coth(x) (cosh(x) / sinh(x))\n"\

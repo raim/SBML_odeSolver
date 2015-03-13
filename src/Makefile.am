@@ -37,16 +37,15 @@ AM_CPPFLAGS = @SUNDIALS_CPPFLAGS@ \
 AM_LDFLAGS = @GRAPHVIZ_RPATH@ \
              @SBML_RPATH@
 AM_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
-AM_CXXFLAGS = -Wno-unknown-pragmas -Wall -Wextra
 lib_LTLIBRARIES = libODES.la
 
 libODES_la_LIBADD = @SBML_LDFLAGS@ @SBML_LIBS@ \
                     @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                     @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@ \
                     @GRACE_LDFLAGS@ @GRACE_LIBS@
-libODES_la_SOURCES = ASTIndexNameNode.cpp \
+libODES_la_SOURCES = ASTIndexNameNode.c \
                     arithmeticCompiler.c \
-                    charBuffer.cpp \
+                    charBuffer.c \
                     compiler.c \
                     cvodeData.c \
                     cvodeSolver.c \
@@ -65,7 +64,8 @@ libODES_la_SOURCES = ASTIndexNameNode.cpp \
                     sbmlResults.c \
                     sensSolver.c \
                     solverError.c \
-                    util.c
+                    util.c \
+                    private/data.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
                      sbmlsolver/arithmeticCompiler.h \
                      sbmlsolver/charBuffer.h \

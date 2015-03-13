@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2013-08-09 19:24:05 raim>
   $Id: modelSimplify.c,v 1.18 2008/10/07 17:18:02 raimc Exp $

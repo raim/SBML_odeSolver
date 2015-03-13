@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2009-02-12 18:14:31 raim>
   $Id: analyzeSensitivity.c,v 1.7 2009/02/12 09:31:12 raimc Exp $

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <02-Sep-2010 15:10:39 raim>
   $Id: options.c,v 1.12 2010/09/02 13:46:00 raimc Exp $

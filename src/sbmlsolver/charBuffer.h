@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2006-06-12 11:04:54 raim>
   $Id: charBuffer.h,v 1.4 2009/03/27 15:55:03 fbergmann Exp $
@@ -41,7 +42,7 @@ extern "C" {
 
   typedef struct charBuffer charBuffer_t;
 
-  charBuffer_t *CharBuffer_create();
+  charBuffer_t *CharBuffer_create(void);
   void CharBuffer_free(charBuffer_t *);
   void CharBuffer_append(charBuffer_t *, const char *);
   void CharBuffer_appendInt(charBuffer_t *, int);

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2010-04-12 10:24:41 raim>
   $Id: integratorSettings.h,v 1.41 2010/04/12 08:30:28 raimc Exp $ 
@@ -228,8 +229,8 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeSettings_getError(cvodeSettings_t *);
   SBML_ODESOLVER_API double CvodeSettings_getRError(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMxstep(cvodeSettings_t *);
-  SBML_ODESOLVER_API char *CvodeSettings_getMethod(cvodeSettings_t *);
-  SBML_ODESOLVER_API char *CvodeSettings_getIterMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API const char *CvodeSettings_getMethod(const cvodeSettings_t *);
+  SBML_ODESOLVER_API const char *CvodeSettings_getIterMethod(const cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getMaxOrder(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getCompileFunctions(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getResetCvodeOnEvent(cvodeSettings_t *);
@@ -241,7 +242,7 @@ extern "C" {
   SBML_ODESOLVER_API double CvodeSettings_getSteadyStateThreshold(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getStoreResults(cvodeSettings_t *);
   SBML_ODESOLVER_API int CvodeSettings_getSensitivity(cvodeSettings_t *);
-  SBML_ODESOLVER_API char *CvodeSettings_getSensMethod(cvodeSettings_t *);
+  SBML_ODESOLVER_API const char *CvodeSettings_getSensMethod(const cvodeSettings_t *);
 
   
 #ifdef __cplusplus

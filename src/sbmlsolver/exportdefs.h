@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2005-10-26 17:24:50 raim>
   $Id: exportdefs.h,v 1.5 2005/10/26 15:32:13 raimc Exp $

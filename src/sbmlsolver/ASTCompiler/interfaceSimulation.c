@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 #include <stdlib.h>
 /* defines all types of nodes in the abstract syntax tree, to work stand alone with the code generator */
 typedef enum {AST_INTEGER, AST_REAL, AST_REAL_E, AST_RATIONAL, AST_NAME,

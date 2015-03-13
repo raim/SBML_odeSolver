@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* IN THIS FILE EMULATES THE ENVIRONMENT FOR THE CODE GENERATOR AND MUST BE CHANGED IN THE FRAMEWORK */
 
 #define ARITHMETIC_TEST

@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2006-03-07 16:57:44 raim>
   $Id: definedTimeSeries.c,v 1.10 2006/03/07 15:58:35 raimc Exp $

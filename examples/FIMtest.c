@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2009-02-12 16:19:59 raim>
   $Id: FIMtest.c,v 1.5 2009/02/12 09:31:12 raimc Exp $

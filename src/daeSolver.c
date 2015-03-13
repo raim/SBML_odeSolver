@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
   Last changed Time-stamp: <2007-09-19 14:59:33 raim>
   $Id: daeSolver.c,v 1.14 2007/09/20 01:16:12 raimc Exp $
@@ -99,7 +100,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 
     if ( flag != IDA_SUCCESS )
       {
-	char *message[] =
+        static const char *message[] =
 	  {
 	    /*  0 IDA_SUCCESS */
 	    "Success",
