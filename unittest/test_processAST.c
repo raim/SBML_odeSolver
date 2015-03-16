@@ -89,31 +89,6 @@ static void teardown_data(void)
 		ASTNode_free(node);							\
 	} while (0)
 
-#define CHECK_SYMBOLS4(input, e1, e2, e3) do {					\
-		static const char * arr[] = {e1, e2, e3};				\
-		ASTNode_t *node;										\
-		List_t *symbols;										\
-		size_t len, i;											\
-		symbols = List_create();								\
-		node = SBML_parseFormula(input);						\
-		ck_assert(node != NULL);								\
-		ASTNode_getSymbols(node, symbols);						\
-		for (len=0;len<3;len++) {								\
-			if (!arr[len]) break;								\
-		}														\
-		ck_assert(List_size(symbols) == len);					\
-		for (i=0;i<len;i++) {									\
-			const char *s = (const char *)List_get(symbols, i);	\
-			ck_assert_str_eq(s, arr[i]);						\
-		}														\
-		ASTNode_free(node);										\
-		List_free(symbols);										\
-	} while (0)
-
-#define CHECK_SYMBOLS3(input, e1, e2) CHECK_SYMBOLS4(input, e1, e2, NULL)
-#define CHECK_SYMBOLS2(input, e1) CHECK_SYMBOLS3(input, e1, NULL)
-#define CHECK_SYMBOLS1(input) CHECK_SYMBOLS2(input, NULL)
-
 #define LINE0 "<?xml version='1.0' encoding='UTF-8'?>\n"
 #define MATH_OPEN "<math xmlns='http://www.w3.org/1998/Math/MathML'>\n"
 #define MATH_CLOSE "\n</math>"
@@ -391,16 +366,6 @@ START_TEST(test_simplifyAST)
 }
 END_TEST
 
-START_TEST(test_ASTNode_getSymbols)
-{
-	CHECK_SYMBOLS1("pi");
-	CHECK_SYMBOLS2("x", "x");
-	CHECK_SYMBOLS4("x + y/z", "x", "y", "z");
-	CHECK_SYMBOLS3("cos(time + foo)", "time", "foo");
-	CHECK_SYMBOLS4("foo + bar + foo", "foo", "bar", "foo"); /* TODO: intended? */
-}
-END_TEST
-
 START_TEST(test_ASTNode_containsTime)
 {
 	CONTAINS_TIME("<cn>0</cn>", 0);
@@ -493,7 +458,6 @@ Suite *create_suite_processAST(void)
 	TCase *tc_copyAST;
 	TCase *tc_simplifyAST;
 	TCase *tc_indexAST;
-	TCase *tc_ASTNode_getSymbols;
 	TCase *tc_ASTNode_containsTime;
 	TCase *tc_ASTNode_containsPiecewise;
 	TCase *tc_ASTNode_getIndices;
@@ -527,10 +491,6 @@ Suite *create_suite_processAST(void)
 	tc_indexAST = tcase_create("indexAST");
 	tcase_add_test(tc_indexAST, test_indexAST);
 	suite_add_tcase(s, tc_indexAST);
-
-	tc_ASTNode_getSymbols = tcase_create("ASTNode_getSymbols");
-	tcase_add_test(tc_ASTNode_getSymbols, test_ASTNode_getSymbols);
-	suite_add_tcase(s, tc_ASTNode_getSymbols);
 
 	tc_ASTNode_containsTime = tcase_create("ASTNode_containsTime");
 	tcase_add_test(tc_ASTNode_containsTime, test_ASTNode_containsTime);

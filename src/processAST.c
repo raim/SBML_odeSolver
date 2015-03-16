@@ -2311,19 +2311,6 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old)
   return new;
 }
 
-/* appends the symbols in the given AST to the given list.
-   'char *' strings are appended to the list these strings
-   should not be freed and exist as long as the AST. */
-void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols)
-{
-  unsigned int i;
-
-  if ( ASTNode_getType(node) == AST_NAME )
-    List_add(symbols, (char*) ASTNode_getName(node));
-
-  for ( i=0; i<ASTNode_getNumChildren(node); i++ )
-    ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
-}
 /* appends the indices in the given indexed AST to the given list. */
 int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 {
