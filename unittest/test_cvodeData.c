@@ -6,9 +6,21 @@
 /* fixtures */
 static odeModel_t *model;
 
+static cvodeResults_t *cr;
+
 static void teardown_model(void)
 {
 	ODEModel_free(model);
+}
+
+static void setup_cr(void)
+{
+  cr = calloc(1, sizeof(*cr));
+}
+
+static void teardown_cr(void)
+{
+  CvodeResults_free(cr);
 }
 
 /* test cases */
@@ -52,6 +64,20 @@ START_TEST(test_CvodeData_initialize)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_getTime)
+{
+  cr->time = calloc(4, sizeof(double));
+  cr->time[0] = 0.1;
+  cr->time[1] = 0.2;
+  cr->time[2] = 1.35;
+  cr->time[3] = 1.5;
+  ck_assert_int_eq(CvodeResults_getTime(cr, 0), 0.1);
+  ck_assert_int_eq(CvodeResults_getTime(cr, 1), 0.2);
+  ck_assert_int_eq(CvodeResults_getTime(cr, 2), 1.35);
+  ck_assert_int_eq(CvodeResults_getTime(cr, 3), 1.5);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -59,6 +85,7 @@ Suite *create_suite_cvodeData(void)
 	TCase *tc_CvodeData_create;
 	TCase *tc_CvodeData_initializeValues;
 	TCase *tc_CvodeData_initialize;
+  TCase *tc_CvodeResults_getTime;
 
 	s = suite_create("cvodeData");
 
@@ -82,6 +109,13 @@ Suite *create_suite_cvodeData(void)
 							  teardown_model);
 	tcase_add_test(tc_CvodeData_initialize, test_CvodeData_initialize);
 	suite_add_tcase(s, tc_CvodeData_initialize);
+
+  tc_CvodeResults_getTime = tcase_create("CvodeResults_getTime");
+  tcase_add_checked_fixture(tc_CvodeResults_getTime,
+                            setup_cr,
+                            teardown_cr);
+  tcase_add_test(tc_CvodeResults_getTime, test_CvodeResults_getTime);
+  suite_add_tcase(s, tc_CvodeResults_getTime);
 
 	return s;
 }
