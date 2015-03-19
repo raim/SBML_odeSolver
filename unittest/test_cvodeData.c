@@ -87,7 +87,8 @@ START_TEST(test_CvodeResults_getValue)
   vi->type_index = 0;
   vi->index = 1;
 
-  cr->value = calloc(3, sizeof(double *));
+  cr->nvalues = 3;
+  cr->value = calloc(cr->nvalues, sizeof(double *));
   cr->value[0] = calloc(4, sizeof(double));
   cr->value[1] = calloc(4, sizeof(double));
   cr->value[2] = calloc(4, sizeof(double));
