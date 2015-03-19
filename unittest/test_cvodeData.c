@@ -78,6 +78,41 @@ START_TEST(test_CvodeResults_getTime)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_getValue)
+{
+  variableIndex_t *vi;
+
+  vi = calloc(1, sizeof(*vi));
+  vi->type = ODE_VARIABLE;
+  vi->type_index = 0;
+  vi->index = 1;
+
+  cr->value = calloc(3, sizeof(double *));
+  cr->value[0] = calloc(4, sizeof(double));
+  cr->value[1] = calloc(4, sizeof(double));
+  cr->value[2] = calloc(4, sizeof(double));
+  cr->value[0][0] = 1;
+  cr->value[0][1] = 2;
+  cr->value[0][2] = 3;
+  cr->value[0][3] = 4;
+  cr->value[1][0] = 5;
+  cr->value[1][1] = 6;
+  cr->value[1][2] = 7;
+  cr->value[1][3] = 8;
+  cr->value[2][0] = 9;
+  cr->value[2][1] = 10;
+  cr->value[2][2] = 11;
+  cr->value[2][3] = 12;
+
+  ck_assert(CvodeResults_getValue(cr, vi, 0) == 5);
+  ck_assert(CvodeResults_getValue(cr, vi, 1) == 6);
+  ck_assert(CvodeResults_getValue(cr, vi, 2) == 7);
+  ck_assert(CvodeResults_getValue(cr, vi, 3) == 8);
+
+  free(vi);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -86,6 +121,7 @@ Suite *create_suite_cvodeData(void)
 	TCase *tc_CvodeData_initializeValues;
 	TCase *tc_CvodeData_initialize;
   TCase *tc_CvodeResults_getTime;
+  TCase *tc_CvodeResults_getValue;
 
 	s = suite_create("cvodeData");
 
@@ -116,6 +152,13 @@ Suite *create_suite_cvodeData(void)
                             teardown_cr);
   tcase_add_test(tc_CvodeResults_getTime, test_CvodeResults_getTime);
   suite_add_tcase(s, tc_CvodeResults_getTime);
+
+  tc_CvodeResults_getValue = tcase_create("CvodeResults_getValue");
+  tcase_add_checked_fixture(tc_CvodeResults_getValue,
+                            setup_cr,
+                            teardown_cr);
+  tcase_add_test(tc_CvodeResults_getValue, test_CvodeResults_getValue);
+  suite_add_tcase(s, tc_CvodeResults_getValue);
 
 	return s;
 }
