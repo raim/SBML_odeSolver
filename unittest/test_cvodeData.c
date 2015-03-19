@@ -113,6 +113,14 @@ START_TEST(test_CvodeResults_getValue)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_getNout)
+{
+  ck_assert_int_eq(CvodeResults_getNout(cr), 1);
+  cr->nout = 3;
+  ck_assert_int_eq(CvodeResults_getNout(cr), 4);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -122,6 +130,7 @@ Suite *create_suite_cvodeData(void)
 	TCase *tc_CvodeData_initialize;
   TCase *tc_CvodeResults_getTime;
   TCase *tc_CvodeResults_getValue;
+  TCase *tc_CvodeResults_getNout;
 
 	s = suite_create("cvodeData");
 
@@ -159,6 +168,13 @@ Suite *create_suite_cvodeData(void)
                             teardown_cr);
   tcase_add_test(tc_CvodeResults_getValue, test_CvodeResults_getValue);
   suite_add_tcase(s, tc_CvodeResults_getValue);
+
+  tc_CvodeResults_getNout = tcase_create("CvodeResults_getNout");
+  tcase_add_checked_fixture(tc_CvodeResults_getNout,
+                            setup_cr,
+                            teardown_cr);
+  tcase_add_test(tc_CvodeResults_getNout, test_CvodeResults_getNout);
+  suite_add_tcase(s, tc_CvodeResults_getNout);
 
 	return s;
 }
