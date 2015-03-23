@@ -243,7 +243,7 @@ SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *resul
 {
   if ( y >= results->neq ) return 0; 
   if ( i >= results->nsens ) return 0;
-  if ( timestep >= results->nout ) return 0;
+  if ( timestep > results->nout ) return 0;
   /* should be redundant with nsens check */
   if ( results->sensitivity == NULL ) return 0; 
   else return results->sensitivity[y][i][timestep];
