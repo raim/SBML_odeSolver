@@ -134,6 +134,35 @@ START_TEST(test_CvodeResults_getSensitivityByNum)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_getSensitivity)
+{
+  variableIndex_t *vi_y;
+  variableIndex_t *vi_s;
+
+  vi_y = calloc(1, sizeof(*vi_y));
+  vi_s = calloc(1, sizeof(*vi_s));
+
+  cr->nout = 3;
+  CvodeResults_allocateSens(cr, 2, 3, cr->nout);
+  cr->index_sens[0] = 0;
+  cr->index_sens[1] = 2;
+  cr->index_sens[2] = 17;
+  cr->sensitivity[0][1][3] = .7;
+  cr->sensitivity[1][2][3] = .8;
+
+  vi_y->index = 0;
+  vi_s->index = 16;
+  ck_assert(CvodeResults_getSensitivity(cr, vi_y, vi_s, 3) == 0);
+
+  vi_y->index = 1;
+  vi_s->index = 17;
+  ck_assert(CvodeResults_getSensitivity(cr, vi_y, vi_s, 3) == .8);
+
+  free(vi_y);
+  free(vi_s);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -145,6 +174,7 @@ Suite *create_suite_cvodeData(void)
   TCase *tc_CvodeResults_getValue;
   TCase *tc_CvodeResults_getNout;
   TCase *tc_CvodeResults_getSensitivityByNum;
+  TCase *tc_CvodeResults_getSensitivity;
 
 	s = suite_create("cvodeData");
 
@@ -196,6 +226,13 @@ Suite *create_suite_cvodeData(void)
                             teardown_cr);
   tcase_add_test(tc_CvodeResults_getSensitivityByNum, test_CvodeResults_getSensitivityByNum);
   suite_add_tcase(s, tc_CvodeResults_getSensitivityByNum);
+
+  tc_CvodeResults_getSensitivity = tcase_create("CvodeResults_getSensitivity");
+  tcase_add_checked_fixture(tc_CvodeResults_getSensitivity,
+                            setup_cr,
+                            teardown_cr);
+  tcase_add_test(tc_CvodeResults_getSensitivity, test_CvodeResults_getSensitivity);
+  suite_add_tcase(s, tc_CvodeResults_getSensitivity);
 
 	return s;
 }
