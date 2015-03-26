@@ -163,6 +163,53 @@ START_TEST(test_CvodeResults_getSensitivity)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_computeDirectional)
+{
+  static const double dp[] = {
+    1.0,
+    0.5,
+    2.0
+  };
+
+  cr->nout = 3;
+  CvodeResults_allocateSens(cr, 2, 3, cr->nout);
+  cr->sensitivity[0][0][0] = 1;
+  cr->sensitivity[0][0][1] = 2;
+  cr->sensitivity[0][0][2] = 3;
+  cr->sensitivity[0][0][3] = 4;
+  cr->sensitivity[0][1][0] = 5;
+  cr->sensitivity[0][1][1] = 6;
+  cr->sensitivity[0][1][2] = 7;
+  cr->sensitivity[0][1][3] = 8;
+  cr->sensitivity[0][2][0] = 9;
+  cr->sensitivity[0][2][1] = 10;
+  cr->sensitivity[0][2][2] = 11;
+  cr->sensitivity[0][2][3] = 12;
+  cr->sensitivity[1][0][0] = 13;
+  cr->sensitivity[1][0][1] = 14;
+  cr->sensitivity[1][0][2] = 15;
+  cr->sensitivity[1][0][3] = 16;
+  cr->sensitivity[1][1][0] = 17;
+  cr->sensitivity[1][1][1] = 18;
+  cr->sensitivity[1][1][2] = 19;
+  cr->sensitivity[1][1][3] = 20;
+  cr->sensitivity[1][2][0] = 21;
+  cr->sensitivity[1][2][1] = 22;
+  cr->sensitivity[1][2][2] = 23;
+  cr->sensitivity[1][2][3] = 24;
+
+  CvodeResults_computeDirectional(cr, dp);
+  ck_assert(cr->directional[0][0] == 21.5);
+  ck_assert(cr->directional[0][1] == 25);
+  ck_assert(cr->directional[0][2] == 28.5);
+  ck_assert(cr->directional[0][3] == 32);
+  ck_assert(cr->directional[1][0] == 63.5);
+  ck_assert(cr->directional[1][1] == 67);
+  ck_assert(cr->directional[1][2] == 70.5);
+  ck_assert(cr->directional[1][3] == 74);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -175,6 +222,7 @@ Suite *create_suite_cvodeData(void)
   TCase *tc_CvodeResults_getNout;
   TCase *tc_CvodeResults_getSensitivityByNum;
   TCase *tc_CvodeResults_getSensitivity;
+  TCase *tc_CvodeResults_computeDirectional;
 
 	s = suite_create("cvodeData");
 
@@ -233,6 +281,13 @@ Suite *create_suite_cvodeData(void)
                             teardown_cr);
   tcase_add_test(tc_CvodeResults_getSensitivity, test_CvodeResults_getSensitivity);
   suite_add_tcase(s, tc_CvodeResults_getSensitivity);
+
+  tc_CvodeResults_computeDirectional = tcase_create("CvodeResults_computeDirectional");
+  tcase_add_checked_fixture(tc_CvodeResults_computeDirectional,
+                            setup_cr,
+                            teardown_cr);
+  tcase_add_test(tc_CvodeResults_computeDirectional, test_CvodeResults_computeDirectional);
+  suite_add_tcase(s, tc_CvodeResults_computeDirectional);
 
 	return s;
 }
