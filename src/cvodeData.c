@@ -70,7 +70,7 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq);
 static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
 static void CvodeData_freeSensitivities(cvodeData_t *);
 static void CvodeResults_freeSensitivities(cvodeResults_t *);
-/* static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq); */
+static int CvodeResults_allocateAdjSens(cvodeResults_t *, int, int, int);
 
 
 
