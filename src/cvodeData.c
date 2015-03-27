@@ -578,7 +578,7 @@ int CvodeResults_allocateSens(cvodeResults_t *results,
 
 
 
-int CvodeResults_allocateAdjSens(cvodeResults_t *results,
+static int CvodeResults_allocateAdjSens(cvodeResults_t *results,
 				 int neq, int nadjsens, int nout)
 {
   int i;
