@@ -54,7 +54,7 @@ main (int argc, char *argv[]){
   odeModel_t *om;
   cvodeSettings_t *set;
   integratorInstance_t *ii;
-  const cvodeResults_t *results;
+  cvodeResults_t *results;
   variableIndex_t *p;
   char *sbml_file, *objfun_file, *data_file; 
   int flag;
@@ -164,7 +164,7 @@ main (int argc, char *argv[]){
   printf("#time  ");
   IntegratorInstance_dumpNames(ii);
   
-  results = IntegratorInstance_getResults(ii);
+  results = IntegratorInstance_createResults(ii);
 
   CvodeResults_computeDirectional(results, dp);
   
