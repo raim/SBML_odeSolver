@@ -10,13 +10,7 @@ if test -f "VERSION.txt"; then
 fi
 AC_INIT([odeSolver],ODES_VERSION, [{raim,xtof}@tbi.univie.ac.at], [SBML_odeSolver])
 AC_CONFIG_AUX_DIR(config)
-dnl Reference custom macros
-m4_include([config/cvode.m4])
-m4_include([config/grace.m4])
-m4_include([config/graphviz.m4])
-m4_include([config/sbml.m4])
-m4_include([config/sundials.m4])
-dnl m4_include([config/tcc.m4])
+AC_CONFIG_MACRO_DIR(config)
 
 AC_CONFIG_SRCDIR(src/util.c)
 AC_CONFIG_HEADERS(src/config.h)

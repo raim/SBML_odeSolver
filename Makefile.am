@@ -28,6 +28,9 @@
 ## Contributor(s):
 ##     Rainer Machne
 ##
+
+ACLOCAL_AMFLAGS = -I config
+
 ##if MAKE_BINDINGS
 ##   SUBDIRS = src odeSolver bindings
 ##else
