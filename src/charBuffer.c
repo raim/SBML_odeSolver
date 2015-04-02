@@ -76,7 +76,7 @@ void CharBuffer_append(charBuffer_t *buffer, const char *s)
     /* TODO: reporting error */
     return;
   }
-  strncpy(p + buffer->length, s, len);
+  memcpy(p + buffer->length, s, len);
   buffer->p = p;
   buffer->length += len;
 }
