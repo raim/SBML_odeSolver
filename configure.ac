@@ -72,7 +72,6 @@ AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_CC_C_O # deprecated as of automake 1.14
 AC_PROG_CPP
-dnl AC_PROG_RANLIB obsolete because of AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
