@@ -256,6 +256,8 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t
 SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *resA)
 {
   int i;  
+
+  if (!resA) return;
   for ( i=0; i<resA->size; i++ )
     SBMLResults_free(resA->results[i]);
   

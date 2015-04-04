@@ -225,6 +225,18 @@ START_TEST(test_SBMLResults_dumpFluxes)
 }
 END_TEST
 
+START_TEST(test_SBMLResults_free)
+{
+  SBMLResults_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
+START_TEST(test_SBMLResultsArray_free)
+{
+  SBMLResultsArray_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 START_TEST(test_SBMLResultsArray_getNumResults)
 {
   SBMLResultsArray_t *ra;
@@ -272,6 +284,8 @@ Suite *create_suite_sbmlResults(void)
   TCase *tc_SBMLResults_dumpCompartments;
   TCase *tc_SBMLResults_dumpParameters;
   TCase *tc_SBMLResults_dumpFluxes;
+  TCase *tc_SBMLResults_free;
+  TCase *tc_SBMLResultsArray_free;
   TCase *tc_SBMLResultsArray_getNumResults;
   TCase *tc_SBMLResultsArray_getResults;
 
@@ -395,6 +409,14 @@ Suite *create_suite_sbmlResults(void)
                 teardown_model);
   tcase_add_test(tc_SBMLResults_dumpFluxes, test_SBMLResults_dumpFluxes);
   suite_add_tcase(s, tc_SBMLResults_dumpFluxes);
+
+  tc_SBMLResults_free = tcase_create("SBMLResults_free");
+  tcase_add_test(tc_SBMLResults_free, test_SBMLResults_free);
+  suite_add_tcase(s, tc_SBMLResults_free);
+
+  tc_SBMLResultsArray_free = tcase_create("SBMLResultsArray_free");
+  tcase_add_test(tc_SBMLResultsArray_free, test_SBMLResultsArray_free);
+  suite_add_tcase(s, tc_SBMLResultsArray_free);
 
   tc_SBMLResultsArray_getNumResults = tcase_create("SBMLResultsArray_getNumResults");
   tcase_add_test(tc_SBMLResultsArray_getNumResults, test_SBMLResultsArray_getNumResults);
