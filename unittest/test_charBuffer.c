@@ -17,6 +17,12 @@ START_TEST(test_CharBuffer_create)
 }
 END_TEST
 
+START_TEST(test_CharBuffer_free)
+{
+  CharBuffer_free(NULL); /* deleting NULL is safe */
+}
+END_TEST
+
 START_TEST(test_CharBuffer_append)
 {
   charBuffer_t *cb;
@@ -84,6 +90,7 @@ Suite *create_suite_charBuffer(void)
 {
   Suite *s;
   TCase *tc_CharBuffer_create;
+  TCase *tc_CharBuffer_free;
   TCase *tc_CharBuffer_append;
   TCase *tc_CharBuffer_appendInt;
   TCase *tc_CharBuffer_appendDouble;
@@ -93,6 +100,10 @@ Suite *create_suite_charBuffer(void)
   tc_CharBuffer_create = tcase_create("CharBuffer_create");
   tcase_add_test(tc_CharBuffer_create, test_CharBuffer_create);
   suite_add_tcase(s, tc_CharBuffer_create);
+
+  tc_CharBuffer_free = tcase_create("CharBuffer_free");
+  tcase_add_test(tc_CharBuffer_free, test_CharBuffer_free);
+  suite_add_tcase(s, tc_CharBuffer_free);
 
   tc_CharBuffer_append = tcase_create("CharBuffer_append");
   tcase_add_test(tc_CharBuffer_append, test_CharBuffer_append);
