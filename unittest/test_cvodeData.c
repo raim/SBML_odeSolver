@@ -39,6 +39,12 @@ START_TEST(test_CvodeData_create)
 }
 END_TEST
 
+START_TEST(test_CvodeData_free)
+{
+  CvodeData_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 START_TEST(test_CvodeData_initializeValues)
 {
   cvodeData_t *cd;
@@ -215,6 +221,7 @@ Suite *create_suite_cvodeData(void)
 {
   Suite *s;
   TCase *tc_CvodeData_create;
+  TCase *tc_CvodeData_free;
   TCase *tc_CvodeData_initializeValues;
   TCase *tc_CvodeData_initialize;
   TCase *tc_CvodeResults_getTime;
@@ -232,6 +239,10 @@ Suite *create_suite_cvodeData(void)
                 teardown_model);
   tcase_add_test(tc_CvodeData_create, test_CvodeData_create);
   suite_add_tcase(s, tc_CvodeData_create);
+
+  tc_CvodeData_free = tcase_create("CvodeData_free");
+  tcase_add_test(tc_CvodeData_free, test_CvodeData_free);
+  suite_add_tcase(s, tc_CvodeData_free);
 
   tc_CvodeData_initializeValues = tcase_create("CvodeData_initializeValues");
   tcase_add_checked_fixture(tc_CvodeData_initializeValues,
