@@ -216,6 +216,12 @@ START_TEST(test_CvodeResults_computeDirectional)
 }
 END_TEST
 
+START_TEST(test_CvodeResults_free)
+{
+  CvodeResults_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_cvodeData(void)
 {
@@ -230,6 +236,7 @@ Suite *create_suite_cvodeData(void)
   TCase *tc_CvodeResults_getSensitivityByNum;
   TCase *tc_CvodeResults_getSensitivity;
   TCase *tc_CvodeResults_computeDirectional;
+  TCase *tc_CvodeResults_free;
 
   s = suite_create("cvodeData");
 
@@ -299,6 +306,10 @@ Suite *create_suite_cvodeData(void)
                             teardown_cr);
   tcase_add_test(tc_CvodeResults_computeDirectional, test_CvodeResults_computeDirectional);
   suite_add_tcase(s, tc_CvodeResults_computeDirectional);
+
+  tc_CvodeResults_free = tcase_create("CvodeResults_free");
+  tcase_add_test(tc_CvodeResults_free, test_CvodeResults_free);
+  suite_add_tcase(s, tc_CvodeResults_free);
 
   return s;
 }
