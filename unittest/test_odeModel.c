@@ -358,6 +358,12 @@ START_TEST(test_ODEModel_createFromFile_repressilator)
 }
 END_TEST
 
+START_TEST(test_ODEModel_free)
+{
+  ODEModel_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 START_TEST(test_topoSort_1)
 {
   static int *matrix[1];
@@ -927,15 +933,30 @@ START_TEST(test_ODEModel_constructSensitivity_repressilator)
 }
 END_TEST
 
+START_TEST(test_VariableIndex_free)
+{
+  VariableIndex_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
+START_TEST(test_ODESense_free)
+{
+  ODESense_free(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
   Suite *s;
   TCase *tc_ODEModel_createFromFile;
+  TCase *tc_ODEModel_free;
   TCase *tc_topoSort;
   TCase *tc_ODEModel_constructJacobian;
   TCase *tc_ODEModel_constructDeterminant;
   TCase *tc_ODEModel_constructSensitivity;
+  TCase *tc_VariableIndex_free;
+  TCase *tc_ODESense_free;
 
   s = suite_create("odeModel");
 
@@ -951,6 +972,10 @@ Suite *create_suite_odeModel(void)
   tcase_add_test(tc_ODEModel_createFromFile, test_ODEModel_createFromFile_huang96);
   tcase_add_test(tc_ODEModel_createFromFile, test_ODEModel_createFromFile_repressilator);
   suite_add_tcase(s, tc_ODEModel_createFromFile);
+
+  tc_ODEModel_free = tcase_create("ODEModel_free");
+  tcase_add_test(tc_ODEModel_free, test_ODEModel_free);
+  suite_add_tcase(s, tc_ODEModel_free);
 
   tc_topoSort = tcase_create("topoSort");
   tcase_add_test(tc_topoSort, test_topoSort_1);
@@ -1002,6 +1027,14 @@ Suite *create_suite_odeModel(void)
   tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_huang96);
   tcase_add_test(tc_ODEModel_constructSensitivity, test_ODEModel_constructSensitivity_repressilator);
   suite_add_tcase(s, tc_ODEModel_constructSensitivity);
+
+  tc_VariableIndex_free = tcase_create("VariableIndex_free");
+  tcase_add_test(tc_VariableIndex_free, test_VariableIndex_free);
+  suite_add_tcase(s, tc_VariableIndex_free);
+
+  tc_ODESense_free = tcase_create("ODESense_free");
+  tcase_add_test(tc_ODESense_free, test_ODESense_free);
+  suite_add_tcase(s, tc_ODESense_free);
 
   return s;
 }
