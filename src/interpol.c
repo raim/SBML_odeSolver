@@ -25,6 +25,8 @@ void free_data(time_series_t* ts)
 {
     int i;
 
+    if (!ts) return;
+
     /* free data */
     for ( i=0; i<ts->n_var; i++ )
 	{

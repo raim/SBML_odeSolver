@@ -72,6 +72,12 @@ START_TEST(test_read_columns)
 }
 END_TEST
 
+START_TEST(test_free_data)
+{
+  free_data(NULL); /* freeing NULL is safe */
+}
+END_TEST
+
 START_TEST(test_read_data)
 {
   time_series_t *ts;
@@ -212,6 +218,7 @@ Suite *create_suite_interpol(void)
   Suite *s;
   TCase *tc_read_header_line;
   TCase *tc_read_columns;
+  TCase *tc_free_data;
   TCase *tc_read_data;
   TCase *tc_bisection;
   TCase *tc_hunt;
@@ -228,6 +235,10 @@ Suite *create_suite_interpol(void)
   tc_read_columns = tcase_create("read_columns");
   tcase_add_test(tc_read_columns, test_read_columns);
   suite_add_tcase(s, tc_read_columns);
+
+  tc_free_data = tcase_create("free_data");
+  tcase_add_test(tc_free_data, test_free_data);
+  suite_add_tcase(s, tc_free_data);
 
   tc_read_data = tcase_create("read_data");
   tcase_add_test(tc_read_data, test_read_data);
