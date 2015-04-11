@@ -19,9 +19,6 @@ AM_INIT_AUTOMAKE
 
 AC_CANONICAL_HOST
 
-TestDataDirectory="\$(srcdir)"
-dnl SHAREDLIBEXT="so"
-
 case $host_os in
   *linux*)
     HOST_TYPE="linux"
@@ -51,10 +48,8 @@ case $host_os in
   *darwin*)
     HOST_TYPE="darwin"
     SHAREDLIBEXT="dylib"
-    TestDataDirectory="."
     ;;
 esac
-AC_SUBST(TestDataDirectory)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
 AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
