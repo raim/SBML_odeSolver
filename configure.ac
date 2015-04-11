@@ -9,7 +9,7 @@ if test -f "VERSION.txt"; then
        m4_esyscmd(cat VERSION.txt  | sed 's/\-.*$//' | tr -d '\n\r'))
 fi
 AC_INIT([odeSolver],ODES_VERSION, [{raim,xtof}@tbi.univie.ac.at], [SBML_odeSolver])
-AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_AUX_DIR(build-aux)
 AC_CONFIG_MACRO_DIR(config)
 
 AC_CONFIG_SRCDIR(src/util.c)
