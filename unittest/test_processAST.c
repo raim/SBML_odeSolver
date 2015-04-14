@@ -267,8 +267,8 @@ START_TEST(test_differentiateAST)
   CHECK_DIFF("arccosh(x)", "1 / sqrt(x^2 - 1)");
   CHECK_DIFF("arccot(x)", "-(1 / (1 + x^2))");
   CHECK_DIFF("arccoth(x)", "-(1 / (x^2 - 1))");
-  CHECK_DIFF("arccsc(x)", "-(1 / (abs(x) * sqrt(x^2 - 1)))"); /* wrong */
-  CHECK_DIFF("arccsch(x)", "-(1 * x * sqrt(x^2 + 1))"); /* wrong */
+  CHECK_DIFF("arccsc(x)", "-(1 / (abs(x) * sqrt(x^2 - 1)))");
+  CHECK_DIFF("arccsch(x)", "-(1 / (x^2 * sqrt(1 + 1 / x^2)))");
   CHECK_DIFF("arcsec(x)", "x * sqrt(x^2 - 1)"); /* wrong */
   CHECK_DIFF("arcsech(x)", "-(1 * x * sqrt(1 - x^2))"); /* wrong */
   CHECK_DIFF("arcsin(x)", "1 / sqrt(1 - x^2)");
