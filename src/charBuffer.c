@@ -26,6 +26,8 @@
 
 #include "sbmlsolver/charBuffer.h"
 
+#include "private/error.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,15 +40,20 @@ struct charBuffer
   size_t length;
 };
 
+static void *realloc_or_die(void *ptr, size_t size)
+{
+  void *p = realloc(ptr, size);
+  if (!p) report_error_and_die("failed to realloc");
+  return p;
+}
+
 /** create an unbounded buffer */
 charBuffer_t *CharBuffer_create(void)
 {
   charBuffer_t *buf;
 
   buf = calloc(1, sizeof(*buf));
-  if (!buf) {
-    /* TODO: reporting error */
-  }
+  if (!buf) report_error_and_die("failed to calloc");
   return buf;
 }
 
@@ -66,16 +73,12 @@ void CharBuffer_append(charBuffer_t *buffer, const char *s)
   char *p;
 
   if (!s) {
-    /* TODO: reporting error */
+    /* nothing to do */
     return;
   }
   len = strlen(s);
   if (len == 0) return;
-  p = realloc(buffer->p, buffer->length + len);
-  if (!p) {
-    /* TODO: reporting error */
-    return;
-  }
+  p = realloc_or_die(buffer->p, buffer->length + len);
   memcpy(p + buffer->length, s, len);
   buffer->p = p;
   buffer->length += len;
@@ -87,11 +90,7 @@ void CharBuffer_appendInt(charBuffer_t *buffer, int i)
   int len;
   char *p;
 
-  p = realloc(buffer->p, buffer->length + 32);
-  if (!p) {
-    /* TODO: reporting error */
-    return;
-  }
+  p = realloc_or_die(buffer->p, buffer->length + 32);
   len = sprintf(p + buffer->length, "%d", i);
   buffer->p = p;
   buffer->length += len;
@@ -103,11 +102,7 @@ void CharBuffer_appendDouble(charBuffer_t *buffer, double f)
   int len;
   char *p;
 
-  p = realloc(buffer->p, buffer->length + 32);
-  if (!p) {
-    /* TODO: reporting error */
-    return;
-  }
+  p = realloc_or_die(buffer->p, buffer->length + 32);
   len = sprintf(p + buffer->length, "%g", f);
   buffer->p = p;
   buffer->length += len;
@@ -119,11 +114,7 @@ const char *CharBuffer_getBuffer(charBuffer_t *buffer)
   char *s;
 
   if (!buffer->p) return "";
-  s = realloc(buffer->s, buffer->length + 1);
-  if (!s) {
-    /* TODO: reporting error */
-    return NULL;
-  }
+  s = realloc_or_die(buffer->s, buffer->length + 1);
   memcpy(s, buffer->p, buffer->length);
   s[buffer->length] = '\0';
   buffer->s = s;
