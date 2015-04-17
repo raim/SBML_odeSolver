@@ -94,7 +94,7 @@ SBML_ODESOLVER_API Model_t*Model_reduceToOdes(Model_t *m)
   Model_copyOdes(m, ode);
 
   /**!!! TODO : SBML L2V2 - constraints */
-  /**!!! TODO : supress ODE construction for algebraic rule
+  /**!!! TODO : suppress ODE construction for algebraic rule
          defined variables !!! */
   
   

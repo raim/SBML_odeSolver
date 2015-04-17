@@ -609,7 +609,7 @@ void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
   {
     Warn(stderr, "Jacobi matrix is not available - %s\n",
 	 data->model->jacobianFailed ?
-	 "differentiation failed." : "construction supressed.");
+	 "differentiation failed." : "construction suppressed.");
     return;
   }
 
