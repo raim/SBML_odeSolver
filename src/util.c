@@ -52,7 +52,8 @@ static void nrerror(const char message[])
   exit(EXIT_FAILURE);
 }
 
-/*-------------------------------------------------------------------------*/
+#ifndef WITH_DMALLOC
+
 void *space(unsigned size) {
   void *pointer;
   
@@ -68,11 +69,6 @@ void *space(unsigned size) {
   }
   return  pointer;
 }
-
-#ifdef WITH_DMALLOC
-#include "dmalloc.h"
-#define space(S) calloc(1,(S))
-#endif
 
 #undef xrealloc
 /* dmalloc.h #define's xrealloc */
@@ -92,6 +88,8 @@ void *xrealloc (void *p, unsigned size) {
   }
   return p;
 }
+
+#endif
 
 /*-------------------------------------------------------------------------*/
 char *get_line(FILE *fp)
