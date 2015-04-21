@@ -169,7 +169,7 @@ extern "C" {
   cvodeSettings_t *CvodeSettings_createFromTimeSettings(timeSettings_t *time);
 
   /* create and free, get and set cvodeSettings */
-  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create();
+  SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create(void);
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWithTime(double Time, int PrintStep);
   SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_createWith(double EndTime, int PrintStep, double Error, double RError, int Mxstep, int Method, int IterMethod, int UseJacobian, int Indefinitely, int HaltOnEvent, int SteadyState, int StoreResults, int Sensitivity, int SensMethod);
   SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *, double EndTime, int PrintStep);

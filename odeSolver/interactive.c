@@ -80,7 +80,7 @@ static integratorInstance_t *callIntegrator(odeModel_t *, cvodeSettings_t *);
 */
 
 void
-interactive() {
+interactive(void) {
   
   char *sbmlFilename;
   char *select;
