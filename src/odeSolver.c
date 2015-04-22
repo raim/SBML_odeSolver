@@ -162,7 +162,6 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
   odeModel_t *om;
   integratorInstance_t *ii; 
   SBMLResults_t *results;
-  int errorCode = 0;
   
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs. SBML RateRules,
@@ -199,7 +198,7 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
       The function will also handle events and
       check for steady states.
   */
-  while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+  while ( !IntegratorInstance_timeCourseCompleted(ii) )
     if ( !IntegratorInstance_integrateOneStep(ii) )
       break;
   
@@ -238,8 +237,6 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
   SBMLResultsArray_t *resA;
 
   char *local_param;
-  
-  int errorCode = 0;
 
 
   resA = SBMLResultsArray_allocate(vs->nrdesignpoints);
@@ -314,7 +311,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     for ( j=0; j<vs->nrparams; j++ )
       IntegratorInstance_setVariableValue(ii, vi[j], vs->params[i][j]);
     
-    while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+    while ( !IntegratorInstance_timeCourseCompleted(ii) )
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	break;
     /*!!! TODO : on fatals: above created structures should be freed
