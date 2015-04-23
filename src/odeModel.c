@@ -76,8 +76,6 @@ static int ODEModel_freeDiscontinuities(odeModel_t *);
 static void ODEModel_initializeValuesFromSBML(odeModel_t *, Model_t *);
 
 /* rule sorting */
-typedef struct assignmentStage assignmentStage_t ;
-static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *);
 static int ODEModel_topologicalRuleSort(odeModel_t *);
 
 
