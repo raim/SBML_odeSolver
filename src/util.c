@@ -184,7 +184,6 @@ void xfree (void *ptr)
     return;
   }
   free (ptr);
-  ptr = NULL;
 }
 
 /* End of file */

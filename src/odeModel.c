@@ -2295,7 +2295,6 @@ SBML_ODESOLVER_API void ODESense_free(odeSense_t *os)
       os->compiledCVODESensitivityCode = NULL;
     }
     free(os);
-    os = NULL;
   }
 }
 
