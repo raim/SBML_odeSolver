@@ -217,7 +217,8 @@ SBML_ODESOLVER_API char *SolverError_dumpToString(void)
   }
 
   if ( memoryExhaustion )
-    result = "Fatal Error\t30000\tNo more memory avaliable\n";
+    /* N.b. the following magic number is SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE */
+    result = "Fatal Error\t130000\tNo more memory avaliable\n";
   else
     SolverError_dumpHelper(result);
 
