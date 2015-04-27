@@ -61,7 +61,7 @@ static timeCourse_t *TimeCourse_create(int timepoints);
 static void TimeCourse_free(timeCourse_t *);
 static timeCourse_t *TimeCourseArray_getTimeCourse(const char *,
 						   timeCourseArray_t *);
-static void TimeCourseArray_dump(timeCourseArray_t *, timeCourse_t *);
+static void TimeCourseArray_dump(const timeCourseArray_t *, const timeCourse_t *);
 
 
 /** results as returned by _odeSolver ***/
@@ -79,7 +79,7 @@ SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *results)
 /** Returns the number of time points, including initial time
 */
 
-SBML_ODESOLVER_API int SBMLResults_getNout(SBMLResults_t *res)
+SBML_ODESOLVER_API int SBMLResults_getNout(const SBMLResults_t *res)
 {
   return res->time->timepoints;
 }
@@ -89,7 +89,7 @@ SBML_ODESOLVER_API int SBMLResults_getNout(SBMLResults_t *res)
     sensitivities have been calculated
 */
 
-SBML_ODESOLVER_API int SBMLResults_getNumSens(SBMLResults_t *res)
+SBML_ODESOLVER_API int SBMLResults_getNumSens(const SBMLResults_t *res)
 {
   return res->nsens;
 }
@@ -100,7 +100,7 @@ SBML_ODESOLVER_API int SBMLResults_getNumSens(SBMLResults_t *res)
     0 <= i < SBMLResults_getNumSens
 */
 
-SBML_ODESOLVER_API const char *SBMLResults_getSensParam(SBMLResults_t *res, int i)
+SBML_ODESOLVER_API const char *SBMLResults_getSensParam(const SBMLResults_t *res, int i)
 {
   return res->param[i];
 }
@@ -177,7 +177,7 @@ SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *results)
 /** Prints the timeCourses of all SBML species
 */
 
-SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *results)
+SBML_ODESOLVER_API void SBMLResults_dumpSpecies(const SBMLResults_t *results)
 {
   printf("## Printing Species time courses\n");
   TimeCourseArray_dump(results->species, results->time);
@@ -187,7 +187,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *results)
 /** Prints the timeCourses of all variable SBML compartments
 */
 
-SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *results)
+SBML_ODESOLVER_API void SBMLResults_dumpCompartments(const SBMLResults_t *results)
 {
   printf("## Printing Variable Compartment time courses\n");
   TimeCourseArray_dump(results->compartments, results->time);
@@ -197,7 +197,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *results)
 /** Prints the timeCourses of all variable SBML parameters.
 */
 
-SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
+SBML_ODESOLVER_API void SBMLResults_dumpParameters(const SBMLResults_t *results)
 {
   printf("## Printing Variable Parameter time courses\n");
   TimeCourseArray_dump(results->parameters, results->time);
@@ -207,7 +207,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *results)
 /**  Prints the timeCourses of all SBML reaction fluxes
 */
 
-SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
+SBML_ODESOLVER_API void SBMLResults_dumpFluxes(const SBMLResults_t *results)
 {
   printf("## Printing Reaction Flux time courses\n");
   TimeCourseArray_dump(results->fluxes, results->time);
@@ -218,7 +218,7 @@ SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *results)
     compartments and parameters, and of reaction fluxes  
 */
 
-SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
+SBML_ODESOLVER_API void SBMLResults_dump(const SBMLResults_t *results)
 {
   printf("### Printing All Results \n");
   SBMLResults_dumpCompartments(results);
@@ -235,7 +235,7 @@ SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *results)
     returned by batch function
 */
 
-SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *resA)
+SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(const SBMLResultsArray_t *resA)
 {
   return resA->size;  
 }
@@ -280,7 +280,7 @@ SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *resA)
 /** Returns the variable name (SBML ID) of a timeCourse
 */
 
-SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
+SBML_ODESOLVER_API const char*TimeCourse_getName(const timeCourse_t *tc)
 {
   return (const char*) tc->name;
 }
@@ -289,7 +289,7 @@ SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *tc)
 /** Returns the number of timepoints in a timeCourse
 */
 
-SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
+SBML_ODESOLVER_API int TimeCourse_getNumValues(const timeCourse_t *tc)
 {
   return tc->timepoints;
 }
@@ -299,7 +299,7 @@ SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *tc)
      0 <= i < TimeCourse_getNumValues
 */
 
-SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
+SBML_ODESOLVER_API double TimeCourse_getValue(const timeCourse_t *tc, int i)
 {
   return tc->values[i];
 }
@@ -309,7 +309,7 @@ SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *tc, int i)
      0 <= j < TimeCourse_getNumValues
 */
 
-SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *tc, int i, int j)
+SBML_ODESOLVER_API double TimeCourse_getSensitivity(const timeCourse_t *tc, int i, int j)
 {
   return tc->sensitivity[i][j];
 }
@@ -469,7 +469,7 @@ static void TimeCourse_free(timeCourse_t *tc)
 
 /* */
 static
-void TimeCourseArray_dump(timeCourseArray_t *tcA, timeCourse_t *time)
+void TimeCourseArray_dump(const timeCourseArray_t *tcA, const timeCourse_t *time)
 {
   int i, j;
   timeCourse_t *tc;

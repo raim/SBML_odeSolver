@@ -110,24 +110,24 @@ extern "C" {
 
   SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTime(SBMLResults_t *);  
   SBML_ODESOLVER_API timeCourse_t *SBMLResults_getTimeCourse(SBMLResults_t *, const char *);
-  SBML_ODESOLVER_API int SBMLResults_getNout(SBMLResults_t *);
-  SBML_ODESOLVER_API int SBMLResults_getNumSens(SBMLResults_t *);
-  SBML_ODESOLVER_API const char *SBMLResults_getSensParam(SBMLResults_t *, int);
+  SBML_ODESOLVER_API int SBMLResults_getNout(const SBMLResults_t *);
+  SBML_ODESOLVER_API int SBMLResults_getNumSens(const SBMLResults_t *);
+  SBML_ODESOLVER_API const char *SBMLResults_getSensParam(const SBMLResults_t *, int);
   SBML_ODESOLVER_API timeCourse_t *Compartment_getTimeCourse(Compartment_t *, SBMLResults_t *);
   SBML_ODESOLVER_API timeCourse_t *Species_getTimeCourse(Species_t *, SBMLResults_t *);
   SBML_ODESOLVER_API timeCourse_t *Parameter_getTimeCourse(Parameter_t *, SBMLResults_t *);
-  SBML_ODESOLVER_API const char*TimeCourse_getName(timeCourse_t *);
-  SBML_ODESOLVER_API int TimeCourse_getNumValues(timeCourse_t *);
-  SBML_ODESOLVER_API double TimeCourse_getValue(timeCourse_t *, int);
-  SBML_ODESOLVER_API double TimeCourse_getSensitivity(timeCourse_t *, int, int);
-  SBML_ODESOLVER_API void SBMLResults_dump(SBMLResults_t *);
-  SBML_ODESOLVER_API void SBMLResults_dumpSpecies(SBMLResults_t *);
-  SBML_ODESOLVER_API void SBMLResults_dumpCompartments(SBMLResults_t *);
-  SBML_ODESOLVER_API void SBMLResults_dumpParameters(SBMLResults_t *);
-  SBML_ODESOLVER_API void SBMLResults_dumpFluxes(SBMLResults_t *);
+  SBML_ODESOLVER_API const char*TimeCourse_getName(const timeCourse_t *);
+  SBML_ODESOLVER_API int TimeCourse_getNumValues(const timeCourse_t *);
+  SBML_ODESOLVER_API double TimeCourse_getValue(const timeCourse_t *, int);
+  SBML_ODESOLVER_API double TimeCourse_getSensitivity(const timeCourse_t *, int, int);
+  SBML_ODESOLVER_API void SBMLResults_dump(const SBMLResults_t *);
+  SBML_ODESOLVER_API void SBMLResults_dumpSpecies(const SBMLResults_t *);
+  SBML_ODESOLVER_API void SBMLResults_dumpCompartments(const SBMLResults_t *);
+  SBML_ODESOLVER_API void SBMLResults_dumpParameters(const SBMLResults_t *);
+  SBML_ODESOLVER_API void SBMLResults_dumpFluxes(const SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResults_free(SBMLResults_t *);
   SBML_ODESOLVER_API void SBMLResultsArray_free(SBMLResultsArray_t *);
-  SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(SBMLResultsArray_t *);
+  SBML_ODESOLVER_API int SBMLResultsArray_getNumResults(const SBMLResultsArray_t *);
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsArray_getResults(SBMLResultsArray_t *, int i);
   /* not yet implemented */
   SBML_ODESOLVER_API SBMLResults_t *SBMLResultsMatrix_getResults(SBMLResultsMatrix_t *, int i, int j);
