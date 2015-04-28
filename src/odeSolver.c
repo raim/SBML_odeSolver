@@ -67,8 +67,8 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/variableIndex.h"
 
-static int globalizeParameter(Model_t *, char *id, char *rid);
-static int localizeParameter(Model_t *, char *id, char *rid);
+static int globalizeParameter(Model_t *, const char *id, const char *rid);
+static int localizeParameter(Model_t *, const char *id, const char *rid);
 static int SBMLResults_createSens(SBMLResults_t *, cvodeData_t *);
 
 /** Solves the timeCourses for a SBML model, passed via a libSBML
@@ -347,7 +347,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
 
 }
 
-static int globalizeParameter(Model_t *m, char *id, char *rid)
+static int globalizeParameter(Model_t *m, const char *id, const char *rid)
 {
   unsigned int i;
   int found;
@@ -357,7 +357,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
   ASTNode_t *math;
   char *newname;
  
-  r = Model_getReactionById (m, (const char *) rid);
+  r = Model_getReactionById(m, rid);
   
   if ( r == NULL ) return(0);
   
@@ -366,7 +366,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
 
   ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
   sprintf(newname, "r_%s_%s", rid, id);
-  AST_replaceNameByName(math, (const char *) id,  (const char *) newname);
+  AST_replaceNameByName(math, id,  (const char *) newname);
 
   found = 0;
   
@@ -386,7 +386,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
   return (found);
 }
 
-static int localizeParameter(Model_t *m, char *id, char *rid)
+static int localizeParameter(Model_t *m, const char *id, const char *rid)
 {
   int found;
   Reaction_t *r;
@@ -396,7 +396,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
   ASTNode_t *math;
   char *newname;
   
-  r = Model_getReactionById (m, (const char *) rid);
+  r = Model_getReactionById(m, rid);
   
   if ( r == NULL ) return 0;
   
@@ -404,7 +404,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
   math = (ASTNode_t *)KineticLaw_getMath(kl);  
   ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
   sprintf(newname, "r_%s_%s", rid, id);
-  AST_replaceNameByName(math, (const char *) newname, (const char *) id);
+  AST_replaceNameByName(math, (const char *) newname, id);
 
   /* just freeing the last parameter, one for each `rid',
      only if the globalized parameter is present */
