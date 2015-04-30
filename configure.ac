@@ -105,12 +105,8 @@ dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
 AC_ARG_ENABLE(unittest,
               [AS_HELP_STRING([--enable-unittest],
                               [turn on unit tests. [default=no]])],
-              [AC_CHECK_HEADER([check.h],
-                               [AC_CHECK_LIB(check,
-                                             check_fork,
-                                             [enable_unittest=yes],
-                                             [AC_MSG_ERROR([could not link to libcheck])])],
-                               [AC_MSG_ERROR([could not find Check's header file <check.h>])])],
+              [PKG_CHECK_MODULES([CHECK],[check >= 0.9.8],[enable_unittest=yes],
+                                 [AC_MSG_ERROR([failed to find Check])])],
               [enable_unittest=no])
 AM_CONDITIONAL([UNITTEST], [test "x$enable_unittest" = "xyes"])
 
