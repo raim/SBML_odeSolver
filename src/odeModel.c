@@ -2562,18 +2562,6 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 
 /****************COMPILATION*******************/
 
-/* appends a compilable expression for the given AST to the given buffer
-   assuming that the node has not been indexed */
-void ODEModel_generateASTWithoutIndex(odeModel_t *om,
-				      charBuffer_t *buffer,
-				      ASTNode_t *node)
-{
-  ASTNode_t *index = indexAST(node, om->neq + om->nass +
-			      om->nconst, om->names);
-  generateAST(buffer, index);
-  ASTNode_free(index);
-}
-
 /* appends a compilable assignment to the buffer.
    The assignment is made to the 'value' array item indexed by 'index'.
    The value assigned is computed from the given AST. */
@@ -2602,20 +2590,6 @@ static void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
   {
     nonzeroElem_t *ordered = orderedList[i];
     ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
-  }
-}
-
-void ODEModel_generateAssignmentRuleCodeOUTDATED(odeModel_t *om,
-						 int *requiredAssignments,
-						 charBuffer_t *buffer)
-{
-  int i ;
-
-  for ( i=0; i<om->nass; i++ )
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    if ( !requiredAssignments || requiredAssignments[ordered->i - om->neq] )
-      ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
   }
 }
 
