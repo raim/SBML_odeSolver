@@ -2415,14 +2415,10 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
    an index occurs in the given indexed AST */
 int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
 {
-  int i;
   int *result;
   List_t *indices = List_create();
 
   ASSIGN_NEW_MEMORY_BLOCK(result, nvalues, int, NULL);
-  /* init. with 0 */
-  for ( i=0; i<nvalues; i++ ) result[i] = 0;
-
   if ( node != NULL )
   {
     /* get indices from equation */
