@@ -2577,7 +2577,7 @@ void ODEModel_generateASTWithoutIndex(odeModel_t *om,
 /* appends a compilable assignment to the buffer.
    The assignment is made to the 'value' array item indexed by 'index'.
    The value assigned is computed from the given AST. */
-void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
+static void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
 				     charBuffer_t *buffer)
 {
   CharBuffer_append(buffer, "value[");
@@ -2592,7 +2592,7 @@ void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
    given model however the set generated is determined by the
    given 'requiredAssignments' boolean array which is indexed in the same
    order as the 'assignment' array on the given model. */
-void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
+static void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
 					 nonzeroElem_t **orderedList,
 					 charBuffer_t *buffer)
 {
@@ -2624,7 +2624,7 @@ void ODEModel_generateAssignmentRuleCodeOUTDATED(odeModel_t *om,
     evaluation event triggers and assignment rules required for event
     triggers and event assignments.
 */
-void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i, j, idx;
   ASTNode_t *trigger, *assignment;
@@ -2697,7 +2697,7 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_RHS_FUNCTION_NAME' which calculates the
    right hand side ODE values for the set of ODEs being solved. */
-void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i ;
 
@@ -2779,7 +2779,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_ADJRHS_FUNCTION_NAME' which calculates the
    right hand side ODE values for the adjoint ODEs being solved. */
-void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i,j ;
   ASTNode_t *jacob_ji;
@@ -2864,7 +2864,7 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 /* appends compiled code to the given buffer for the function called by
    the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
    calculates the Jacobian for the set of ODEs being solved. */
-void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
+static void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 					    charBuffer_t *buffer)
 {
   int i, j ;
@@ -2947,7 +2947,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 /* appends compiled code to the given buffer for the function called by
    the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
    calculates the Jacobian for the set of ODEs being solved. */
-void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
+static void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 						   charBuffer_t *buffer)
 {
   int i, j ;
@@ -3018,7 +3018,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
    by the value of 'COMPILED_SENSITIVITY_FUNCTION_NAME' which
    calculates the sensitivities (derived from Jacobian and parametrix
    matrices) for the set of ODEs being solved. */
-void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
+static void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
   int i, j, k;
@@ -3129,7 +3129,7 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_ADJOINT_QUAD_FUNCTION_NAME' */
-void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
+static void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
   int i, k;
