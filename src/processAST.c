@@ -2416,11 +2416,11 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
 {
   int *result;
-  List_t *indices = List_create();
+  List_t *indices;
 
   ASSIGN_NEW_MEMORY_BLOCK(result, nvalues, int, NULL);
-  if ( node != NULL )
-  {
+  if ( !node ) return result;
+  indices = List_create();
     /* get indices from equation */
     ASTNode_getIndices(node, indices);
     
@@ -2432,7 +2432,6 @@ int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
       result[*k] = 1;
       free(k);
     }
-  }  
   List_free(indices);
 
   return result;

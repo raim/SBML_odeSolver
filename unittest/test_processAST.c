@@ -448,6 +448,19 @@ START_TEST(test_ASTNode_getIndexArray)
 }
 END_TEST
 
+START_TEST(test_ASTNode_getIndexArray__null)
+{
+  int *arr;
+  int i;
+  arr = ASTNode_getIndexArray(NULL, 7);
+  ck_assert(arr != NULL);
+  for (i=0; i<7; i++) {
+    ck_assert_int_eq(arr[i], 0);
+  }
+  free(arr);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_processAST(void)
 {
@@ -506,6 +519,7 @@ Suite *create_suite_processAST(void)
 
   tc_ASTNode_getIndexArray = tcase_create("ASTNode_getIndexArray");
   tcase_add_test(tc_ASTNode_getIndexArray, test_ASTNode_getIndexArray);
+  tcase_add_test(tc_ASTNode_getIndexArray, test_ASTNode_getIndexArray__null);
   suite_add_tcase(s, tc_ASTNode_getIndexArray);
 
   return s;
