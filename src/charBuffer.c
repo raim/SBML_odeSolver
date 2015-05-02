@@ -96,7 +96,7 @@ void CharBuffer_appendInt(charBuffer_t *buffer, int i)
   buffer->length += len;
 }
 
-/** add the given integer in scientific string form to the end of the given unbounded buffer */
+/** add the given double in scientific string form to the end of the given unbounded buffer */
 void CharBuffer_appendDouble(charBuffer_t *buffer, double f)
 {
   int len;
