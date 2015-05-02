@@ -2400,8 +2400,8 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 
   if ( ASTNode_isSetIndex(node) )
   {
-    int *idx;
-    ASSIGN_NEW_MEMORY(idx, int, 0);
+    unsigned int *idx;
+    ASSIGN_NEW_MEMORY(idx, unsigned int, 0);
     *idx = ASTNode_getIndex(node);
     List_add(indices, idx);
   }
@@ -2427,8 +2427,8 @@ int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
     /* set indices to 1 and free list items */
     while ( List_size(indices) )
     {
-      int *k;
-      k = (int *) List_remove(indices, 0);
+      unsigned int *k;
+      k = (unsigned int *)List_remove(indices, 0);
       result[*k] = 1;
       free(k);
     }

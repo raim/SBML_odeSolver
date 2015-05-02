@@ -76,7 +76,7 @@ struct odeModel
   char **names;
   /** matrix of the DAG of all variable/parameter
       of assignment and initial assignment rules */
-  int **dependencyMatrix;
+  unsigned int **dependencyMatrix;
   int hasCycle;
   
   int nconst; /**< number of constant parameters */
