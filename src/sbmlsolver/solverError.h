@@ -200,7 +200,7 @@ extern "C" {
   /* create an error */
   SBML_ODESOLVER_API void SolverError_error(errorType_t, errorCode_t, const char *format, ...);
 
-#ifdef WIN32
+#ifdef _WIN32
   /* create an error from the last windows error */
   SBML_ODESOLVER_API void SolverError_storeLastWin32Error(const char *context);
 #endif

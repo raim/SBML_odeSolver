@@ -1862,7 +1862,7 @@ Sensitivities OF variable MKKK to above parameters and variables
 30  61.6227  1.49687 0.37616 0.097418 
 
 
-Free Jacobian matrix via ODEModel_free(om) and supress
+Free Jacobian matrix via ODEModel_free(om) and suppress
 use of Jacobian matrix via CvodeSettings_setJacobian(set, 0)
 Consequently the parametric matrix can't be used.
 and instead CVODES internal approximation is active.

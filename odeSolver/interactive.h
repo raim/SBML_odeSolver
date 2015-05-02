@@ -37,7 +37,7 @@
 #ifndef _INTERACTIVE_H_
 #define _INTERACTIVE_H_
 
-void interactive();
+void interactive(void);
 
 #endif
 

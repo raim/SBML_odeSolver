@@ -70,7 +70,7 @@ int main(void)
         
         assert(ASTNode_isIndexName(node));
         assert(ASTNode_isSetIndex(node));
-        printf("index of %s is %d\n", ASTNode_getName(node), ASTNode_getIndex(node));
+        printf("index of %s is %u\n", ASTNode_getName(node), ASTNode_getIndex(node));
     }
 
     formula = SBML_formulaToString(top);

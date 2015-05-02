@@ -65,7 +65,8 @@ libODES_la_SOURCES = ASTIndexNameNode.c \
                     sensSolver.c \
                     solverError.c \
                     util.c \
-                    private/data.c
+                    private/data.c \
+                    private/error.c
 pkginclude_HEADERS = sbmlsolver/ASTIndexNameNode.h \
                      sbmlsolver/arithmeticCompiler.h \
                      sbmlsolver/charBuffer.h \

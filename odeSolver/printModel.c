@@ -45,7 +45,7 @@
 
 /* System specific definitions,
    created by configure script */
-#ifndef WIN32
+#ifndef _WIN32
 #include "../src/config.h"
 #endif
 
@@ -609,7 +609,7 @@ void printJacobianTimeCourse(cvodeData_t *data, FILE *f)
   {
     Warn(stderr, "Jacobi matrix is not available - %s\n",
 	 data->model->jacobianFailed ?
-	 "differentiation failed." : "construction supressed.");
+	 "differentiation failed." : "construction suppressed.");
     return;
   }
 
@@ -734,6 +734,7 @@ void printOdeTimeCourse(cvodeData_t *data, FILE *f)
 void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
 {
   unsigned int i, j;
+  int k, n;
   cvodeResults_t *results;
   Reaction_t *r;
   KineticLaw_t *kl;
@@ -775,12 +776,12 @@ void printReactionTimeCourse(cvodeData_t *data, Model_t *m, FILE *f)
   }
   fprintf(f, "\n");
   fprintf(f, "##REACTION RATES\n"); 
-  for ( i=0; i<=results->nout; ++i )
+  for ( k=0; k<=results->nout; ++k )
   {
-    fprintf(f, "%g ", results->time[i]);
-    data->currenttime = results->time[i];
-    for ( j=0; j<data->model->neq; j++ )
-      data->value[j] = results->value[j][i];
+    fprintf(f, "%g ", results->time[k]);
+    data->currenttime = results->time[k];
+    for ( n=0; n<data->model->neq; n++ )
+      data->value[n] = results->value[n][k];
     for ( j=0; j<Model_getNumReactions(m); j++ )      
       fprintf(f, "%g ", evaluateAST(kls[j], data));
 

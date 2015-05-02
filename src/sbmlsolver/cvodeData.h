@@ -184,7 +184,6 @@ extern "C" {
   SBML_ODESOLVER_API int CvodeResults_getNout(const cvodeResults_t *);
   SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *,  int value, int parameter, int timestep);
   SBML_ODESOLVER_API double CvodeResults_getSensitivity(cvodeResults_t *,  variableIndex_t *y,  variableIndex_t *p, int timestep);
-  SBML_ODESOLVER_API double** CvodeResults_getFisherInformationMatrix(cvodeResults_t *results); /* FIM */
   SBML_ODESOLVER_API void CvodeResults_computeDirectional(cvodeResults_t *results, const double *dp);
   SBML_ODESOLVER_API void CvodeResults_free(cvodeResults_t *);
 

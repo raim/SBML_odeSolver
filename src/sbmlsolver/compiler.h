@@ -37,7 +37,7 @@
 #ifndef SBMLSOLVER_COMPILER_H_
 #define SBMLSOLVER_COMPILER_H_
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -47,7 +47,7 @@
 extern "C" {
 #endif
   
-#ifndef WIN32
+#ifndef _WIN32
 #define MAX_PATH 256
 #endif
 
@@ -66,11 +66,11 @@ extern "C" {
 #if USE_TCC == 1
     TCCState *s;
 #else
-#ifdef WIN32
+#ifdef _WIN32
     HMODULE dllHandle;
 #else
     void *dllHandle;
-#endif /* WIN32 */
+#endif /* _WIN32 */
     char *dllFileName;
 #endif /* USE_TCC == 1 */
 

@@ -173,7 +173,7 @@ main(void)
   IntegratorInstance_reset(ii);
   IntegratorInstance_integrate(ii);
 
-  printf("\n\nFree Jacobian matrix via ODEModel_free(om) and supress\n");
+  printf("\n\nFree Jacobian matrix via ODEModel_free(om) and suppress\n");
   printf("use of Jacobian matrix via CvodeSettings_setJacobian(set, 0)\n");
 
   CvodeSettings_setJacobian(set, 0);

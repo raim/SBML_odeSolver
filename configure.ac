@@ -9,14 +9,8 @@ if test -f "VERSION.txt"; then
        m4_esyscmd(cat VERSION.txt  | sed 's/\-.*$//' | tr -d '\n\r'))
 fi
 AC_INIT([odeSolver],ODES_VERSION, [{raim,xtof}@tbi.univie.ac.at], [SBML_odeSolver])
-AC_CONFIG_AUX_DIR(config)
-dnl Reference custom macros
-m4_include([config/cvode.m4])
-m4_include([config/grace.m4])
-m4_include([config/graphviz.m4])
-m4_include([config/sbml.m4])
-m4_include([config/sundials.m4])
-dnl m4_include([config/tcc.m4])
+AC_CONFIG_AUX_DIR(build-aux)
+AC_CONFIG_MACRO_DIR(config)
 
 AC_CONFIG_SRCDIR(src/util.c)
 AC_CONFIG_HEADERS(src/config.h)
@@ -24,9 +18,6 @@ AC_CONFIG_HEADERS(src/config.h)
 AM_INIT_AUTOMAKE
 
 AC_CANONICAL_HOST
-
-TestDataDirectory="\$(srcdir)"
-dnl SHAREDLIBEXT="so"
 
 case $host_os in
   *linux*)
@@ -57,10 +48,8 @@ case $host_os in
   *darwin*)
     HOST_TYPE="darwin"
     SHAREDLIBEXT="dylib"
-    TestDataDirectory="."
     ;;
 esac
-AC_SUBST(TestDataDirectory)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
 AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
@@ -78,7 +67,6 @@ AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_CC_C_O # deprecated as of automake 1.14
 AC_PROG_CPP
-dnl AC_PROG_RANLIB obsolete because of AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -117,12 +105,8 @@ dnl AM_CONDITIONAL(MAKE_BINDINGS, test "$with_bindings" = "yes")
 AC_ARG_ENABLE(unittest,
               [AS_HELP_STRING([--enable-unittest],
                               [turn on unit tests. [default=no]])],
-              [AC_CHECK_HEADER([check.h],
-                               [AC_CHECK_LIB(check,
-                                             check_fork,
-                                             [enable_unittest=yes],
-                                             [AC_MSG_ERROR([could not link to libcheck])])],
-                               [AC_MSG_ERROR([could not find Check's header file <check.h>])])],
+              [PKG_CHECK_MODULES([CHECK],[check >= 0.9.8],[enable_unittest=yes],
+                                 [AC_MSG_ERROR([failed to find Check])])],
               [enable_unittest=no])
 AM_CONDITIONAL([UNITTEST], [test "x$enable_unittest" = "xyes"])
 

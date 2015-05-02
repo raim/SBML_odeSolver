@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define vsnprintf _vsnprintf
 #include "windows.h"
 #endif
@@ -217,7 +217,8 @@ SBML_ODESOLVER_API char *SolverError_dumpToString(void)
   }
 
   if ( memoryExhaustion )
-    result = "Fatal Error\t30000\tNo more memory avaliable\n";
+    /* N.b. the following magic number is SOLVER_ERROR_NO_MORE_MEMORY_AVAILABLE */
+    result = "Fatal Error\t130000\tNo more memory avaliable\n";
   else
     SolverError_dumpHelper(result);
 
@@ -271,7 +272,7 @@ SBML_ODESOLVER_API void *SolverError_calloc(size_t num, size_t size)
   return result ;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 void SolverError_storeLastWin32Error(const char *context)
 {
   LPVOID lpMsgBuf;

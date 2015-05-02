@@ -36,7 +36,7 @@
 
 /* System specific definitions,
    created by configure script */
-#ifndef WIN32
+#ifndef _WIN32
 #include "config.h"
 #endif
 
@@ -76,8 +76,6 @@ static int ODEModel_freeDiscontinuities(odeModel_t *);
 static void ODEModel_initializeValuesFromSBML(odeModel_t *, Model_t *);
 
 /* rule sorting */
-typedef struct assignmentStage assignmentStage_t ;
-static nonzeroElem_t *copyNonzeroElem(nonzeroElem_t *);
 static int ODEModel_topologicalRuleSort(odeModel_t *);
 
 
@@ -2297,7 +2295,6 @@ SBML_ODESOLVER_API void ODESense_free(odeSense_t *os)
       os->compiledCVODESensitivityCode = NULL;
     }
     free(os);
-    os = NULL;
   }
 }
 
@@ -2565,22 +2562,10 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 
 /****************COMPILATION*******************/
 
-/* appends a compilable expression for the given AST to the given buffer
-   assuming that the node has not been indexed */
-void ODEModel_generateASTWithoutIndex(odeModel_t *om,
-				      charBuffer_t *buffer,
-				      ASTNode_t *node)
-{
-  ASTNode_t *index = indexAST(node, om->neq + om->nass +
-			      om->nconst, om->names);
-  generateAST(buffer, index);
-  ASTNode_free(index);
-}
-
 /* appends a compilable assignment to the buffer.
    The assignment is made to the 'value' array item indexed by 'index'.
    The value assigned is computed from the given AST. */
-void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
+static void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
 				     charBuffer_t *buffer)
 {
   CharBuffer_append(buffer, "value[");
@@ -2595,7 +2580,7 @@ void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
    given model however the set generated is determined by the
    given 'requiredAssignments' boolean array which is indexed in the same
    order as the 'assignment' array on the given model. */
-void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
+static void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
 					 nonzeroElem_t **orderedList,
 					 charBuffer_t *buffer)
 {
@@ -2608,26 +2593,12 @@ void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
   }
 }
 
-void ODEModel_generateAssignmentRuleCodeOUTDATED(odeModel_t *om,
-						 int *requiredAssignments,
-						 charBuffer_t *buffer)
-{
-  int i ;
-
-  for ( i=0; i<om->nass; i++ )
-  {
-    nonzeroElem_t *ordered = om->assignmentOrder[i];
-    if ( !requiredAssignments || requiredAssignments[ordered->i - om->neq] )
-      ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
-  }
-}
-
 /** appends compiled code to the given buffer for the function called by
     the value of 'COMPILED_EVENT_FUNCTION_NAME' which implements the
     evaluation event triggers and assignment rules required for event
     triggers and event assignments.
 */
-void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i, j, idx;
   ASTNode_t *trigger, *assignment;
@@ -2700,7 +2671,7 @@ void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_RHS_FUNCTION_NAME' which calculates the
    right hand side ODE values for the set of ODEs being solved. */
-void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i ;
 
@@ -2782,7 +2753,7 @@ void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buffer)
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_ADJRHS_FUNCTION_NAME' which calculates the
    right hand side ODE values for the adjoint ODEs being solved. */
-void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
+static void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buffer)
 {
   int i,j ;
   ASTNode_t *jacob_ji;
@@ -2867,7 +2838,7 @@ void ODEModel_generateCVODEAdjointRHSFunction(odeModel_t *om, charBuffer_t *buff
 /* appends compiled code to the given buffer for the function called by
    the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
    calculates the Jacobian for the set of ODEs being solved. */
-void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
+static void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 					    charBuffer_t *buffer)
 {
   int i, j ;
@@ -2950,7 +2921,7 @@ void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
 /* appends compiled code to the given buffer for the function called by
    the value of 'COMPILED_JACOBIAN_FUNCTION_NAME' which
    calculates the Jacobian for the set of ODEs being solved. */
-void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
+static void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
 						   charBuffer_t *buffer)
 {
   int i, j ;
@@ -3021,7 +2992,7 @@ void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
    by the value of 'COMPILED_SENSITIVITY_FUNCTION_NAME' which
    calculates the sensitivities (derived from Jacobian and parametrix
    matrices) for the set of ODEs being solved. */
-void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
+static void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
   int i, j, k;
@@ -3132,7 +3103,7 @@ void ODESense_generateCVODESensitivityFunction(odeSense_t *os,
 
 /* appends compiled code to the given buffer for the function called
    by the value of 'COMPILED_ADJOINT_QUAD_FUNCTION_NAME' */
-void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
+static void ODESense_generateCVODEAdjointQuadFunction(odeSense_t *os,
 					       charBuffer_t *buffer)
 {
   int i, k;
@@ -3231,7 +3202,7 @@ int ODEModel_compileCVODEFunctions(odeModel_t *om)
     om->compiledCVODEFunctionCode = NULL;
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   CharBuffer_append(buffer,
 		    "#include <windows.h>\n"\
 		    "#include <math.h>\n"\
@@ -3331,7 +3302,7 @@ int ODESense_compileCVODESenseFunctions(odeSense_t *os)
 {
   charBuffer_t *buffer = CharBuffer_create();
 
-#ifdef WIN32
+#ifdef _WIN32
   CharBuffer_append(buffer,
 		    "#include <windows.h>\n"\
 		    "#include <math.h>\n"\

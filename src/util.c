@@ -52,7 +52,8 @@ static void nrerror(const char message[])
   exit(EXIT_FAILURE);
 }
 
-/*-------------------------------------------------------------------------*/
+#ifndef WITH_DMALLOC
+
 void *space(unsigned size) {
   void *pointer;
   
@@ -68,11 +69,6 @@ void *space(unsigned size) {
   }
   return  pointer;
 }
-
-#ifdef WITH_DMALLOC
-#include "dmalloc.h"
-#define space(S) calloc(1,(S))
-#endif
 
 #undef xrealloc
 /* dmalloc.h #define's xrealloc */
@@ -93,25 +89,34 @@ void *xrealloc (void *p, unsigned size) {
   return p;
 }
 
+#endif
+
 /*-------------------------------------------------------------------------*/
 char *get_line(FILE *fp)
 {
-  char s[512], *line, *cp;
-  
-  line = NULL;
+  static const int BUFFER_SIZE = 512;
+  char *line, *cp, *ep;
+  size_t len;
+
+  line = space(BUFFER_SIZE);
+  line[0] = '\0';
+  ep = line;
+  len = BUFFER_SIZE;
+  if ( fgets(ep, BUFFER_SIZE, fp) == NULL) {
+    xfree(line);
+    return NULL;
+  }
   do {
-    if (fgets(s, 512, fp)==NULL) break;
-    cp = strchr(s, '\n');
-    if (cp != NULL) *cp = '\0';
-    if (line==NULL)
-      line = space(strlen(s)+1); /*!!! TODO: valgrind: "Use of
-                                       uninitialised value of size
-                                       8" in adjsenstest_ContDiscData*/
-    else
-      line = (char *) xrealloc(line, strlen(s)+strlen(line)+1);
-    strcat(line, s);
-  } while(cp==NULL);
-  
+    cp = strchr(ep, '\n');
+    if (cp) {
+      *cp = '\0';
+      break;
+    }
+    if (strlen(ep) < BUFFER_SIZE - 1) break;
+    len += BUFFER_SIZE - 1;
+    ep += BUFFER_SIZE - 1;
+    line = (char *)xrealloc(line, len);
+  } while ( fgets(ep, BUFFER_SIZE, fp) != NULL);
   return line;
 }
 
@@ -179,7 +184,6 @@ void xfree (void *ptr)
     return;
   }
   free (ptr);
-  ptr = NULL;
 }
 
 /* End of file */

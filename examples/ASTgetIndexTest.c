@@ -46,7 +46,7 @@ void printIndex(ASTNode_t *f)
   unsigned int i;
   if (ASTNode_isSetIndex(f))
   {
-    printf("index of %s is %d\n", ASTNode_getName(f), ASTNode_getIndex(f));
+    printf("index of %s is %u\n", ASTNode_getName(f), ASTNode_getIndex(f));
   }
   else
   {  

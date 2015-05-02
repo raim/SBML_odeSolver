@@ -6,9 +6,10 @@ unittest_CPPFLAGS = -DEXAMPLES=$(srcdir)/../examples \
                     -I$(srcdir)/../src \
                     @SUNDIALS_CPPFLAGS@ \
                     @SBML_CPPFLAGS@
-unittest_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
+unittest_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990 \
+                  @CHECK_CFLAGS@
 unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
-unittest_LDADD = -lcheck \
+unittest_LDADD = @CHECK_LIBS@ \
                  ../src/libODES.la \
                  @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
                  @SBML_LDFLAGS@ @SBML_LIBS@ \

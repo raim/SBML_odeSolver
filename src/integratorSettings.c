@@ -55,7 +55,7 @@
 /** Creates a settings structure with default values
 */
 
-SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create()
+SBML_ODESOLVER_API cvodeSettings_t *CvodeSettings_create(void)
 {
   return CvodeSettings_createWithTime(1., 10);
 }

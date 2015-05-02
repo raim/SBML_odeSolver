@@ -64,7 +64,6 @@ extern "C" {
   
   ASTNode_t *indexAST(const ASTNode_t *f, int nvalues, char ** names);
   void AST_dump(const char *context, ASTNode_t *node);
-  void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols);
   int ASTNode_containsTime(const ASTNode_t *node);
   int ASTNode_containsPiecewise(const ASTNode_t *node);
   int ASTNode_getIndices(const ASTNode_t *node, List_t *indices);

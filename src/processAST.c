@@ -53,7 +53,7 @@
 
 /* System specific definitions,
    created by configure script */
-#ifndef WIN32
+#ifndef _WIN32
 #include "config.h"
 #endif
 
@@ -691,6 +691,219 @@ SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data)
 
 /* ------------------------------------------------------------------------ */
 
+static ASTNode_t *getDerivArccsc(ASTNode_t *f, char *x)
+{
+  /** f(x)=arccsc(a(x)) => f' = - a' / (abs(a) * sqrt(a^2 - 1)) */
+
+  ASTNode_t *f0;
+  ASTNode_t *g, *g0, *g1, *g10, *g11, *g111, *g1110, *g1111;
+
+  f0 = ASTNode_getChild(f, 0);
+
+  g = ASTNode_create();
+  ASTNode_setType(g, AST_DIVIDE);
+
+  g0 = ASTNode_create();
+  ASTNode_addChild(g, g0);
+  ASTNode_setType(g0, AST_MINUS);
+  ASTNode_addChild(g0, differentiateAST(f0, x));
+
+  g1 = ASTNode_create();
+  ASTNode_addChild(g, g1);
+  ASTNode_setType(g1, AST_TIMES);
+
+  g10 = ASTNode_create();
+  ASTNode_addChild(g1, g10);
+  ASTNode_setType(g10, AST_FUNCTION_ABS);
+  ASTNode_addChild(g10, copyAST(f0));
+
+  g11 = ASTNode_create();
+  ASTNode_addChild(g1, g11);
+  ASTNode_setType(g11, AST_FUNCTION_ROOT);
+  ASTNode_addChild(g11, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g11, 0), 2);
+
+  g111 = ASTNode_create();
+  ASTNode_addChild(g11, g111);
+  ASTNode_setType(g111, AST_MINUS);
+
+  g1110 = ASTNode_create();
+  ASTNode_addChild(g111, g1110);
+  ASTNode_setType(g1110, AST_POWER);
+  ASTNode_addChild(g1110, copyAST(f0));
+  ASTNode_addChild(g1110, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g1110, 1), 2);
+
+  g1111 = ASTNode_create();
+  ASTNode_addChild(g111, g1111);
+  ASTNode_setInteger(g1111, 1);
+
+  return g;
+}
+
+static ASTNode_t *getDerivArccsch(ASTNode_t *f, char *x)
+{
+  /** f(x)=arccsch(a(x)) => f' = - a' / (a^2 * sqrt(1 + 1/a^2)) */
+
+  ASTNode_t *f0;
+  ASTNode_t *p2a, *p2b;
+  ASTNode_t *g, *g0, *g1, *g11, *g111, *g1111;
+
+  f0 = ASTNode_getChild(f, 0);
+
+  p2a = ASTNode_create();
+  ASTNode_setType(p2a, AST_POWER);
+  ASTNode_addChild(p2a, copyAST(f0));
+  ASTNode_addChild(p2a, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(p2a, 1), 2);
+
+  p2b = copyAST(p2a);
+
+  g = ASTNode_create();
+  ASTNode_setType(g, AST_DIVIDE);
+
+  g0 = ASTNode_create();
+  ASTNode_addChild(g, g0);
+  ASTNode_setType(g0, AST_MINUS);
+  ASTNode_addChild(g0, differentiateAST(f0, x));
+
+  g1 = ASTNode_create();
+  ASTNode_addChild(g, g1);
+  ASTNode_setType(g1, AST_TIMES);
+  ASTNode_addChild(g1, p2a);
+
+  g11 = ASTNode_create();
+  ASTNode_addChild(g1, g11);
+  ASTNode_setType(g11, AST_FUNCTION_ROOT);
+  ASTNode_addChild(g11, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g11, 0), 2);
+
+  g111 = ASTNode_create();
+  ASTNode_addChild(g11, g111);
+  ASTNode_setType(g111, AST_PLUS);
+  ASTNode_addChild(g111, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g111, 0), 1);
+
+  g1111 = ASTNode_create();
+  ASTNode_addChild(g111, g1111);
+  ASTNode_setType(g1111, AST_DIVIDE);
+  ASTNode_addChild(g1111, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g1111, 0), 1);
+  ASTNode_addChild(g1111, p2b);
+
+  return g;
+}
+
+static ASTNode_t *getDerivArcsec(ASTNode_t *f, char *x)
+{
+  /** f(x)=arcsec(a(x)) => f' = - a' / (a^2 * sqrt(1 - 1/a^2)) */
+
+  ASTNode_t *f0;
+  ASTNode_t *p2a, *p2b;
+  ASTNode_t *g, *g0, *g1, *g11, *g111, *g1111;
+
+  f0 = ASTNode_getChild(f, 0);
+
+  p2a = ASTNode_create();
+  ASTNode_setType(p2a, AST_POWER);
+  ASTNode_addChild(p2a, copyAST(f0));
+  ASTNode_addChild(p2a, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(p2a, 1), 2);
+
+  p2b = copyAST(p2a);
+
+  g = ASTNode_create();
+  ASTNode_setType(g, AST_DIVIDE);
+
+  g0 = ASTNode_create();
+  ASTNode_addChild(g, g0);
+  ASTNode_setType(g0, AST_MINUS);
+  ASTNode_addChild(g0, differentiateAST(f0, x));
+
+  g1 = ASTNode_create();
+  ASTNode_addChild(g, g1);
+  ASTNode_setType(g1, AST_TIMES);
+  ASTNode_addChild(g1, p2a);
+
+  g11 = ASTNode_create();
+  ASTNode_addChild(g1, g11);
+  ASTNode_setType(g11, AST_FUNCTION_ROOT);
+  ASTNode_addChild(g11, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g11, 0), 2);
+
+  g111 = ASTNode_create();
+  ASTNode_addChild(g11, g111);
+  ASTNode_setType(g111, AST_MINUS);
+  ASTNode_addChild(g111, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g111, 0), 1);
+
+  g1111 = ASTNode_create();
+  ASTNode_addChild(g111, g1111);
+  ASTNode_setType(g1111, AST_DIVIDE);
+  ASTNode_addChild(g1111, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g1111, 0), 1);
+  ASTNode_addChild(g1111, p2b);
+
+  return g;
+}
+
+static ASTNode_t *getDerivArcsech(ASTNode_t *f, char *x)
+{
+  /** f(x)=arcsech(a(x)) => f' = a' * (sqrt((1-a)/(1+a)) / (a * (a-1)))
+   */
+
+  ASTNode_t *f0;
+  ASTNode_t *g, *g1, *g10, *g11, *g101, *g1010, *g1011, *g111;
+
+  f0 = ASTNode_getChild(f, 0);
+
+  g = ASTNode_create();
+  ASTNode_setType(g, AST_TIMES);
+  ASTNode_addChild(g, differentiateAST(f0, x));
+
+  g1 = ASTNode_create();
+  ASTNode_addChild(g, g1);
+  ASTNode_setType(g1, AST_DIVIDE);
+
+  g10 = ASTNode_create();
+  ASTNode_addChild(g1, g10);
+  ASTNode_setType(g10, AST_FUNCTION_ROOT);
+  ASTNode_addChild(g10, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g10, 0), 2);
+
+  g101 = ASTNode_create();
+  ASTNode_addChild(g10, g101);
+  ASTNode_setType(g101, AST_DIVIDE);
+
+  g1010 = ASTNode_create();
+  ASTNode_addChild(g101, g1010);
+  ASTNode_setType(g1010, AST_MINUS);
+  ASTNode_addChild(g1010, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g1010, 0), 1);
+  ASTNode_addChild(g1010, copyAST(f0));
+
+  g1011 = ASTNode_create();
+  ASTNode_addChild(g101, g1011);
+  ASTNode_setType(g1011, AST_PLUS);
+  ASTNode_addChild(g1011, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g1011, 0), 1);
+  ASTNode_addChild(g1011, copyAST(f0));
+
+  g11 = ASTNode_create();
+  ASTNode_addChild(g1, g11);
+  ASTNode_setType(g11, AST_TIMES);
+  ASTNode_addChild(g11, copyAST(f0));
+
+  g111 = ASTNode_create();
+  ASTNode_addChild(g11, g111);
+  ASTNode_setType(g111, AST_MINUS);
+  ASTNode_addChild(g111, copyAST(f0));
+  ASTNode_addChild(g111, ASTNode_create());
+  ASTNode_setInteger(ASTNode_getChild(g111, 1), 1);
+
+  return g;
+}
+
 /** Returns the derivative f' of the passed formula f with respect to
     the passed variable x, using basic differentiation rules.
 */
@@ -1117,147 +1330,16 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
       ASTNode_setInteger( child3(fprime,1,1,1), 2);    
       break;
     case AST_FUNCTION_ARCCSC:
-      /** f(x)=arccsc(a(x)) => f' = - a' * a * sqrt(a^2 - 1)  */
-      ASTNode_setType(fprime,AST_TIMES);
-      /*  - a' * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
-      ASTNode_addChild(ASTNode_getChild(fprime,0),
-		       differentiateAST(ASTNode_getChild(f,0),x));
-      /* ... a * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);    
-      ASTNode_addChild(ASTNode_getChild(fprime,1),
-		       copyAST(ASTNode_getChild(f,0)));    
-      /*  sqrt(...)  */
-      ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(child3(fprime,1,1,0), 2);
-      /* a^2 - 1 */
-      /*  a^2  - */
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
-    
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0), AST_POWER);
-   
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       copyAST(ASTNode_getChild(f,0)));
-    
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       ASTNode_create());
-      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1), 2);
-      /*  1  */
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
+      fprime = getDerivArccsc(f, x);
       break;
     case AST_FUNCTION_ARCCSCH:
-      /** f(x)=arccos(a(x)) => f' = - a' * a * sqrt(a^2 + 1)  */
-      ASTNode_setType(fprime,AST_TIMES);
-      /*  - a' * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
-      ASTNode_addChild(ASTNode_getChild(fprime,0),
-		       differentiateAST(ASTNode_getChild(f,0),x));
-      /* ... a * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);    
-      ASTNode_addChild(ASTNode_getChild(fprime,1),
-		       copyAST(ASTNode_getChild(f,0)));    
-      /*  sqrt(...)  */
-      ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(child3(fprime,1,1,0), 2);
-      /* a^2 + 1 */
-      /*  a^2  + */
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setType(child3(fprime,1,1,1), AST_PLUS );
-    
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0), AST_POWER);
-   
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       copyAST(ASTNode_getChild(f,0)));
-    
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       ASTNode_create());
-      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1), 2);
-      /*  1  */
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
+      fprime = getDerivArccsch(f, x);
       break;
     case AST_FUNCTION_ARCSEC:
-      /** f(x)=arcsec(a(x)) => f' = a' * a * sqrt(a^2 - 1)  */
-      ASTNode_setType(fprime,AST_TIMES);
-      /*  a' * ... */
-      ASTNode_addChild(fprime, differentiateAST(ASTNode_getChild(f,0),x));
-      /* ... a * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);    
-      ASTNode_addChild(ASTNode_getChild(fprime,1),
-		       copyAST(ASTNode_getChild(f,0)));    
-      /*  sqrt(...)  */
-      ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);    
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(child3(fprime,1,1,0), 2);
-      /* a^2 - 1 */
-      /*  a^2  - */
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
-    
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());    
-      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),0), AST_POWER);
-   
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       copyAST(ASTNode_getChild(f,0)));
-    
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),0),
-		       ASTNode_create());
-      ASTNode_setInteger(child2(child3(fprime,1,1,1),0,1), 2);
-      /*  1  */
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),1), 1);
+      fprime = getDerivArcsec(f, x);
       break;
     case AST_FUNCTION_ARCSECH:
-      /** f(x)=arcsech(a(x)) => f' = - a' * a * sqrt(1 - a^2)  */
-      ASTNode_setType(fprime,AST_TIMES);
-      /*  - a' * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,0), AST_MINUS);
-      ASTNode_addChild(ASTNode_getChild(fprime,0),
-		       differentiateAST(ASTNode_getChild(f,0),x));
-      /* ... a * ... */
-      ASTNode_addChild(fprime, ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(fprime,1), AST_TIMES);
-      ASTNode_addChild(ASTNode_getChild(fprime,1),
-		       copyAST(ASTNode_getChild(f,0)));
-      /*  sqrt(...)  */
-      ASTNode_addChild(ASTNode_getChild(fprime,1), ASTNode_create());
-      ASTNode_setType(child2(fprime,1,1), AST_FUNCTION_ROOT);
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setInteger(child3(fprime,1,1,0), 2);
-      /*  1  - */
-      ASTNode_addChild(child2(fprime,1,1), ASTNode_create());
-      ASTNode_setType(child3(fprime,1,1,1), AST_MINUS );
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
-      ASTNode_setInteger(ASTNode_getChild(child3(fprime,1,1,1),0), 1);
-      /*  a^2  */
-      ASTNode_addChild(child3(fprime,1,1,1), ASTNode_create());
-      ASTNode_setType(ASTNode_getChild(child3(fprime,1,1,1),1), AST_POWER);
-   
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
-		       copyAST(ASTNode_getChild(f,0)));
-    
-      ASTNode_addChild(ASTNode_getChild(child3(fprime,1,1,1),1),
-		       ASTNode_create());
-      ASTNode_setInteger(child2(child3(fprime,1,1,1),1,1), 2);
-      /* SolverError_error(WARNING_ERROR_TYPE, */
-/* 			SOLVER_ERROR_AST_DIFFERENTIATION_FAILED_LAMBDA, */
-/*                         "differentiateAST: arcsech: not implemented"); */
-/*       ASTNode_setName(fprime, "differentiation_failed"); */
+      fprime = getDerivArcsech(f, x);
       break;
     case AST_FUNCTION_ARCSIN:
       /** f(x)=arcsin(a(x)) => f' = a' / sqrt(1 - a^2)  */
@@ -2311,19 +2393,6 @@ static ASTNode_t *ASTNode_cutRoot(ASTNode_t *old)
   return new;
 }
 
-/* appends the symbols in the given AST to the given list.
-   'char *' strings are appended to the list these strings
-   should not be freed and exist as long as the AST. */
-void ASTNode_getSymbols(const ASTNode_t *node, List_t *symbols)
-{
-  unsigned int i;
-
-  if ( ASTNode_getType(node) == AST_NAME )
-    List_add(symbols, (char*) ASTNode_getName(node));
-
-  for ( i=0; i<ASTNode_getNumChildren(node); i++ )
-    ASTNode_getSymbols(ASTNode_getChild(node, i), symbols);
-}
 /* appends the indices in the given indexed AST to the given list. */
 int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 {
@@ -2331,8 +2400,8 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
 
   if ( ASTNode_isSetIndex(node) )
   {
-    int *idx;
-    ASSIGN_NEW_MEMORY(idx, int, 0);
+    unsigned int *idx;
+    ASSIGN_NEW_MEMORY(idx, unsigned int, 0);
     *idx = ASTNode_getIndex(node);
     List_add(indices, idx);
   }
@@ -2346,28 +2415,23 @@ int ASTNode_getIndices(const ASTNode_t *node, List_t *indices)
    an index occurs in the given indexed AST */
 int *ASTNode_getIndexArray(const ASTNode_t *node, int nvalues)
 {
-  int i;
   int *result;
-  List_t *indices = List_create();
+  List_t *indices;
 
   ASSIGN_NEW_MEMORY_BLOCK(result, nvalues, int, NULL);
-  /* init. with 0 */
-  for ( i=0; i<nvalues; i++ ) result[i] = 0;
-
-  if ( node != NULL )
-  {
+  if ( !node ) return result;
+  indices = List_create();
     /* get indices from equation */
     ASTNode_getIndices(node, indices);
     
     /* set indices to 1 and free list items */
     while ( List_size(indices) )
     {
-      int *k;
-      k = (int *) List_remove(indices, 0);
+      unsigned int *k;
+      k = (unsigned int *)List_remove(indices, 0);
       result[*k] = 1;
       free(k);
     }
-  }  
   List_free(indices);
 
   return result;

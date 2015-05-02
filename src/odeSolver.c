@@ -49,7 +49,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 #include <string.h>
@@ -67,8 +67,8 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/variableIndex.h"
 
-static int globalizeParameter(Model_t *, char *id, char *rid);
-static int localizeParameter(Model_t *, char *id, char *rid);
+static int globalizeParameter(Model_t *, const char *id, const char *rid);
+static int localizeParameter(Model_t *, const char *id, const char *rid);
 static int SBMLResults_createSens(SBMLResults_t *, cvodeData_t *);
 
 /** Solves the timeCourses for a SBML model, passed via a libSBML
@@ -162,7 +162,6 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
   odeModel_t *om;
   integratorInstance_t *ii; 
   SBMLResults_t *results;
-  int errorCode = 0;
   
   /** At first, ODEModel_create, attempts to construct a simplified
      SBML model with reactions replaced by ODEs. SBML RateRules,
@@ -199,7 +198,7 @@ SBML_ODESOLVER_API SBMLResults_t *Model_odeSolver(Model_t *m, cvodeSettings_t *s
       The function will also handle events and
       check for steady states.
   */
-  while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+  while ( !IntegratorInstance_timeCourseCompleted(ii) )
     if ( !IntegratorInstance_integrateOneStep(ii) )
       break;
   
@@ -238,8 +237,6 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
   SBMLResultsArray_t *resA;
 
   char *local_param;
-  
-  int errorCode = 0;
 
 
   resA = SBMLResultsArray_allocate(vs->nrdesignpoints);
@@ -314,7 +311,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
     for ( j=0; j<vs->nrparams; j++ )
       IntegratorInstance_setVariableValue(ii, vi[j], vs->params[i][j]);
     
-    while ( !IntegratorInstance_timeCourseCompleted(ii) && !errorCode )
+    while ( !IntegratorInstance_timeCourseCompleted(ii) )
       if ( !IntegratorInstance_integrateOneStep(ii) )
 	break;
     /*!!! TODO : on fatals: above created structures should be freed
@@ -350,7 +347,7 @@ SBML_ODESOLVER_API SBMLResultsArray_t *Model_odeSolverBatch(Model_t *m, cvodeSet
 
 }
 
-static int globalizeParameter(Model_t *m, char *id, char *rid)
+static int globalizeParameter(Model_t *m, const char *id, const char *rid)
 {
   unsigned int i;
   int found;
@@ -360,7 +357,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
   ASTNode_t *math;
   char *newname;
  
-  r = Model_getReactionById (m, (const char *) rid);
+  r = Model_getReactionById(m, rid);
   
   if ( r == NULL ) return(0);
   
@@ -369,7 +366,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
 
   ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
   sprintf(newname, "r_%s_%s", rid, id);
-  AST_replaceNameByName(math, (const char *) id,  (const char *) newname);
+  AST_replaceNameByName(math, id,  (const char *) newname);
 
   found = 0;
   
@@ -389,7 +386,7 @@ static int globalizeParameter(Model_t *m, char *id, char *rid)
   return (found);
 }
 
-static int localizeParameter(Model_t *m, char *id, char *rid)
+static int localizeParameter(Model_t *m, const char *id, const char *rid)
 {
   int found;
   Reaction_t *r;
@@ -399,7 +396,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
   ASTNode_t *math;
   char *newname;
   
-  r = Model_getReactionById (m, (const char *) rid);
+  r = Model_getReactionById(m, rid);
   
   if ( r == NULL ) return 0;
   
@@ -407,7 +404,7 @@ static int localizeParameter(Model_t *m, char *id, char *rid)
   math = (ASTNode_t *)KineticLaw_getMath(kl);  
   ASSIGN_NEW_MEMORY_BLOCK(newname, strlen(id) + strlen(rid) + 4, char , 0);
   sprintf(newname, "r_%s_%s", rid, id);
-  AST_replaceNameByName(math, (const char *) newname, (const char *) id);
+  AST_replaceNameByName(math, (const char *) newname, id);
 
   /* just freeing the last parameter, one for each `rid',
      only if the globalized parameter is present */

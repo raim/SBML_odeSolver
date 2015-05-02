@@ -39,7 +39,7 @@
 #include "sbmlsolver/solverError.h"
 #include "sbmlsolver/processAST.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <windows.h>
 #include <tchar.h>
@@ -53,10 +53,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#endif /* end WIN32 */
+#endif /* end _WIN32 */
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 compiled_code_t *Compiler_compile_win32_tcc(const char *sourceCode)
 {
@@ -416,7 +416,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   return (code);
 }
 
-#endif /* end WIN32 */
+#endif /* end _WIN32 */
 
 /**
    Returns a pointer to code that is compiled from the given source code
@@ -425,7 +425,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 {
   compiled_code_t *code = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 
   /* code = Compiler_compile_with_tcc(sourceCode); */
 
@@ -437,7 +437,7 @@ compiled_code_t *Compiler_compile(const char *sourceCode)
 
   code = Compiler_compile_with_gcc(sourceCode);
 
-#endif /* end WIN32 */
+#endif /* end _WIN32 */
 
   return (code);
 }
@@ -449,7 +449,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 {
   void *result = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
   
   result = GetProcAddress(code->dllHandle, symbol);
 
@@ -473,7 +473,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 		      "dlsym(): couldn't get symbol %s from shared library %s",
 		      symbol, code->dllFileName);    
 
-#endif /* end WIN32 */
+#endif /* end _WIN32 */
   
   return (result);
 }
@@ -484,7 +484,7 @@ void *CompiledCode_getFunction(compiled_code_t *code, const char *symbol)
 void CompiledCode_free(compiled_code_t *code)
 {
 
-#ifdef WIN32
+#ifdef _WIN32
 
   FreeLibrary(code->dllHandle);
   remove(code->dllFileName);
@@ -498,6 +498,6 @@ void CompiledCode_free(compiled_code_t *code)
   free(code->dllFileName);
   free(code);
 
-#endif /* end WIN32 */
+#endif /* end _WIN32 */
 
 }

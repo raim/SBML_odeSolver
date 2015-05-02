@@ -70,7 +70,7 @@ static cvodeData_t *CvodeData_allocate(int nvalues, int nevents, int neq);
 static int CvodeData_allocateSens(cvodeData_t *, int neq, int nsens);
 static void CvodeData_freeSensitivities(cvodeData_t *);
 static void CvodeResults_freeSensitivities(cvodeResults_t *);
-/* static int CvodeData_allocateAdjSens(cvodeData_t *data, int neq); */
+static int CvodeResults_allocateAdjSens(cvodeResults_t *, int, int, int);
 
 
 
@@ -243,7 +243,7 @@ SBML_ODESOLVER_API double CvodeResults_getSensitivityByNum(cvodeResults_t *resul
 {
   if ( y >= results->neq ) return 0; 
   if ( i >= results->nsens ) return 0;
-  if ( timestep >= results->nout ) return 0;
+  if ( timestep > results->nout ) return 0;
   /* should be redundant with nsens check */
   if ( results->sensitivity == NULL ) return 0; 
   else return results->sensitivity[y][i][timestep];
@@ -578,7 +578,7 @@ int CvodeResults_allocateSens(cvodeResults_t *results,
 
 
 
-int CvodeResults_allocateAdjSens(cvodeResults_t *results,
+static int CvodeResults_allocateAdjSens(cvodeResults_t *results,
 				 int neq, int nadjsens, int nout)
 {
   int i;

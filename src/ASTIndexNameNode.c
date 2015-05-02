@@ -26,6 +26,8 @@
 
 #include "sbmlsolver/ASTIndexNameNode.h"
 
+#include <stdio.h>
+
 /*
  * The index is stored in the user data with an ASTNode.
  * The LSB of the user data is on, meaning "this is an indexed ASTNode".
@@ -46,44 +48,49 @@
 */
 ASTNode_t *ASTNode_createIndexName(void)
 {
-	ASTNode_t *node;
-	node = ASTNode_createWithType(AST_NAME);
-	ASTNode_setUserData(node, (void *)1u);
-	return node;
+  ASTNode_t *node;
+  node = ASTNode_createWithType(AST_NAME);
+  ASTNode_setUserData(node, (void *)1u);
+  return node;
+}
+
+static void report_argument_error(void)
+{
+  fprintf(stderr, "error: given node is not an indexed AST_NAME\n");
 }
 
 /** Returns the index of an indexed AST_NAME node (ASTIndexNameNode)
  */
 unsigned int ASTNode_getIndex(const ASTNode_t *node)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) {
-		/* TODO: reporting error */
-		return 0;
-	}
-	ud = GET_USER_DATA(node);
-	if (!IS_INDEX_NAME(ud)) {
-		/* TODO: reporting error */
-		return 0;
-	}
-	return GET_INDEX(ud);
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) {
+    report_argument_error();
+    return 0;
+  }
+  ud = GET_USER_DATA(node);
+  if (!IS_INDEX_NAME(ud)) {
+    report_argument_error();
+    return 0;
+  }
+  return GET_INDEX(ud);
 }
 
 /** Sets the index of an indexed AST_NAME node
  */
 void ASTNode_setIndex(ASTNode_t *node, unsigned int index)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) {
-		/* TODO: reporting error */
-		return;
-	}
-	ud = GET_USER_DATA(node);
-	if (!IS_INDEX_NAME(ud)) {
-		/* TODO: reporting error */
-		return;
-	}
-	ASTNode_setUserData(node, (void *)((index<<3)|(ud&4u)|3u));
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) {
+    report_argument_error();
+    return;
+  }
+  ud = GET_USER_DATA(node);
+  if (!IS_INDEX_NAME(ud)) {
+    report_argument_error();
+    return;
+  }
+  ASTNode_setUserData(node, (void *)((index<<3)|(ud&4u)|3u));
 }
 
 /*! \addtogroup simplifyAST
@@ -94,10 +101,10 @@ void ASTNode_setIndex(ASTNode_t *node, unsigned int index)
  */
 SBML_ODESOLVER_API int ASTNode_isIndexName(const ASTNode_t *node)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) return 0;
-	ud = GET_USER_DATA(node);
-	return IS_INDEX_NAME(ud);
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) return 0;
+  ud = GET_USER_DATA(node);
+  return IS_INDEX_NAME(ud);
 }
 
 /** Returns true (1) if the an indexed ASTNode has
@@ -105,10 +112,10 @@ SBML_ODESOLVER_API int ASTNode_isIndexName(const ASTNode_t *node)
 */
 SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(const ASTNode_t *node)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) return 0;
-	ud = GET_USER_DATA(node);
-	return IS_INDEX_NAME(ud) && HAS_INDEX(ud);
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) return 0;
+  ud = GET_USER_DATA(node);
+  return IS_INDEX_NAME(ud) && HAS_INDEX(ud);
 }
 
 
@@ -122,27 +129,27 @@ SBML_ODESOLVER_API unsigned int ASTNode_isSetIndex(const ASTNode_t *node)
 */
 SBML_ODESOLVER_API unsigned int ASTNode_isSetData(const ASTNode_t *node)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) return 0;
-	ud = GET_USER_DATA(node);
-	return IS_INDEX_NAME(ud) && HAS_DATA(ud);
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) return 0;
+  ud = GET_USER_DATA(node);
+  return IS_INDEX_NAME(ud) && HAS_DATA(ud);
 }
 
 /** Sets the data of an indexed AST_NAME node
  */
 void ASTNode_setData(ASTNode_t *node)
 {
-	unsigned int ud;
-	if (ASTNode_getType(node) != AST_NAME) {
-		/* TODO: reporting error */
-		return;
-	}
-	ud = GET_USER_DATA(node);
-	if (!IS_INDEX_NAME(ud)) {
-		/* TODO: reporting error */
-		return;
-	}
-	ASTNode_setUserData(node, (void *)(ud|4u));
+  unsigned int ud;
+  if (ASTNode_getType(node) != AST_NAME) {
+    report_argument_error();
+    return;
+  }
+  ud = GET_USER_DATA(node);
+  if (!IS_INDEX_NAME(ud)) {
+    report_argument_error();
+    return;
+  }
+  ASTNode_setUserData(node, (void *)(ud|4u));
 }
 
 
