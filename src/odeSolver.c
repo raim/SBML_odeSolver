@@ -436,7 +436,8 @@ static int localizeParameter(Model_t *m, const char *id, const char *rid)
 
 SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integratorInstance_t *ii)
 {
-  unsigned int i, j, k;
+  unsigned int i;
+  int j, k, n;
   int flag;
   Reaction_t *r;
   KineticLaw_t *kl;
@@ -470,14 +471,14 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
   
   
   /*  filling results for each calculated timepoint.  */
-  for ( i=0; i<sbml_results->time->timepoints; i++ )
+  for ( n=0; n<sbml_results->time->timepoints; n++ )
   {    
     /* writing time steps */
-    sbml_results->time->values[i] = cv_results->time[i];
+    sbml_results->time->values[n] = cv_results->time[n];
     
     /* updating time and values in cvodeData_t *for calculations */
-    data->currenttime = cv_results->time[i]; 
-    for ( j=0; j<data->nvalues; j++ ) data->value[j] = cv_results->value[j][i];
+    data->currenttime = cv_results->time[n];
+    for ( j=0; j<data->nvalues; j++ ) data->value[j] = cv_results->value[j][n];
 
     /* filling time courses for SBML species  */
     tcA = sbml_results->species;  
@@ -487,7 +488,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
 	if ( (strcmp(tc->name, om->names[k]) == 0) )
-	  tc->values[i] = cv_results->value[k][i];
+	  tc->values[n] = cv_results->value[k][n];
     }
     
     /* filling variable compartment time courses */
@@ -498,7 +499,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ )
 	if ( (strcmp(tc->name, om->names[k]) == 0) )
-	  tc->values[i] = cv_results->value[k][i];
+	  tc->values[n] = cv_results->value[k][n];
     }         
 
     /* filling variable parameter time courses */
@@ -509,7 +510,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
       /* search in cvodeData_t for values */
       for ( k=0; k<data->nvalues; k++ ) 
 	if ( (strcmp(tc->name, om->names[k]) == 0) ) 
-	  tc->values[i] = cv_results->value[k][i];
+	  tc->values[n] = cv_results->value[k][n];
     }
 
     /* filling reaction flux time courses */
@@ -517,7 +518,7 @@ SBML_ODESOLVER_API SBMLResults_t *SBMLResults_fromIntegrator(Model_t *m, integra
     for ( j=0; j<tcA->num_val; j++ )
     {
       tc = tcA->tc[j];
-      tc->values[i] = evaluateAST(kls[j], data);
+      tc->values[n] = evaluateAST(kls[j], data);
     }
 
   }
