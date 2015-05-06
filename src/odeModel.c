@@ -443,6 +443,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
   int i, j, k, l, nvalues, **matrix, *tmpIndex, *idx,
     *changedBySolver, *requiredForODEs, *requiredForEvents;
+  unsigned int n;
   List_t *dependencyList;
   ASTNode_t *math;
 
@@ -501,10 +502,10 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   k = 0;
   l = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
-    if ( i == 0 ) /* create structures */
+    idx = List_get(dependencyList, n);
+    if ( n == 0 ) /* create structures */
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass,
 			      nonzeroElem_t *, -1);
@@ -616,9 +617,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
@@ -628,9 +629,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /*!!! TODO : instead of creating new nonzeroElem's the array could point
 	into the global ordering assignmentOrder */
   k = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
       nonzeroElem_t *ordered;
@@ -733,9 +734,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
@@ -744,9 +745,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentsBeforeEvents, k, nonzeroElem_t *, -1);
 
   k = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
       nonzeroElem_t *ordered;
