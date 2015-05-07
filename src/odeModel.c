@@ -3248,7 +3248,7 @@ int ODEModel_compileCVODEFunctions(odeModel_t *om)
     FILE *src;
     char *srcname =  "rhsfunctions.c";
     src = fopen(srcname, "w");
-    fprintf(src, CharBuffer_getBuffer(buffer));
+    fprintf(src, "%s", CharBuffer_getBuffer(buffer));
     fclose(src);
   }
 #endif
@@ -3340,7 +3340,7 @@ int ODESense_compileCVODESenseFunctions(odeSense_t *os)
     FILE *src;
     char *srcname =  "sensfunctions.c";
     src = fopen(srcname, "w");
-    fprintf(src, CharBuffer_getBuffer(buffer));
+    fprintf(src, "%s", CharBuffer_getBuffer(buffer));
     fclose(src);
   }
 #endif
