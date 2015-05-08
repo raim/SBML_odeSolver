@@ -124,7 +124,7 @@ processOptions (int argc, char *argv[])
   int c, option_index = 0;
 
   /* memorize program name */  
-  if (sscanf(argv[0], "%s", Opt.ExeName) == 0) {
+  if (argv[0] == NULL || sscanf(argv[0], "%s", Opt.ExeName) == 0) {
     Warn (stderr, "%s:%d processOptions(): No ExeName found",
 	  __FILE__, __LINE__);
     usage (EXIT_FAILURE);
