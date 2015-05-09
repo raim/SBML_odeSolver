@@ -1718,12 +1718,6 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
     ASTNode_setName(fprime, "differentiation_failed");
   }
 
-/*   printf(" f(%s)= %s; df/dx= %s\n", */
-/* 	 x, */
-/* 	 SBML_formulaToString(f), */
-/* 	 SBML_formulaToString(fprime)); */
-  
-/*   return fprime; */
   simple = simplifyAST(fprime);
   ASTNode_free(fprime);
   return simple;

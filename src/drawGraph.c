@@ -818,9 +818,12 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
-	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
-	  agxset (e, a->index, SBML_formulaToString(math));	
+        char *formula;
+        math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
+        formula = SBML_formulaToString(math);
+        if ( strcmp(formula, "1") != 0 )
+          agxset(e, a->index, formula);
+        free(formula);
       }
       else
 	if ( SpeciesReference_getStoichiometry(sref) != 1 )
@@ -868,9 +871,12 @@ SBML_ODESOLVER_API int drawModel(Model_t *m, char* file, char *format)
       
       if ( SpeciesReference_isSetStoichiometryMath(sref) )
       {
-	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
-	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
-	  agxset (e, a->index, SBML_formulaToString(math));	
+        char *formula;
+        math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
+        formula = SBML_formulaToString(math);
+        if ( strcmp(formula, "1") != 0 )
+          agxset(e, a->index, formula);
+        free(formula);
       }
       else      
 	if ( SpeciesReference_getStoichiometry(sref) != 1 )
@@ -989,9 +995,12 @@ static int drawModelTxt(Model_t *m, char *file)
       
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
-	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
-	  fprintf(f ,"%s", SBML_formulaToString(math));
+        char *formula;
+        math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
+        formula = SBML_formulaToString(math);
+        if ( strcmp(formula, "1") != 0 )
+          fprintf(f, "%s", formula);
+        free(formula);
       }
       else 
 	if ( SpeciesReference_getStoichiometry(sref) != 1)
@@ -1012,10 +1021,12 @@ static int drawModelTxt(Model_t *m, char *file)
 	      Reaction_getId(re), SpeciesReference_getSpecies(sref));
       if ( (SpeciesReference_isSetStoichiometryMath(sref)) )
       {
-	math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
-	if ( (strcmp(SBML_formulaToString(math),"1") != 0) ) 
-	  fprintf(f ,"%s ", SBML_formulaToString(math));
-	
+        char *formula;
+        math = StoichiometryMath_getMath(SpeciesReference_getStoichiometryMath(sref));
+        formula = SBML_formulaToString(math);
+        if ( strcmp(formula, "1") != 0 )
+          fprintf(f, "%s ", formula);
+        free(formula);
       }
       else 
 	if ( SpeciesReference_getStoichiometry(sref) != 1) 

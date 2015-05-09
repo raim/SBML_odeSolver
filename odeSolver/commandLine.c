@@ -215,13 +215,16 @@ odeSolver (int argc, char *argv[])
     */
     if ( Opt.Determinant == 1 && Opt.PrintModel == 1 )
     {
+      char *formula;
       om = ODEModel_create(m);
       ODEModel_constructJacobian(om);
       det = ODEModel_constructDeterminant(om);
       /* slight change in behaviour any errors cause halt - AMF 23rd June 05
          used to continue with empty model */
       /* SolverError_haltOnErrors(); */
-      fprintf(outfile, "det(J) = %s\n", SBML_formulaToString(det));
+      formula = SBML_formulaToString(det);
+      fprintf(outfile, "det(J) = %s\n", formula);
+      free(formula);
       ODEModel_free(om);
       xfree(sbmlFilename);
       SBMLDocument_free(d);

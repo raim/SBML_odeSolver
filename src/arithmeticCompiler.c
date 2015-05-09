@@ -286,8 +286,11 @@ void popAddress (directCode_t*code)
 /* pushs the element in the xmm0 register to the external stack */
 void pushStorage64 (directCode_t*c)
 {
-  if ( c->FPUstackPosition >= c->FPUstackSize )
-    printf("code->FPUstack overflow:\n\tpos.: %d  >= size: %d\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, SBML_formulaToString(c->eqn));
+  if ( c->FPUstackPosition >= c->FPUstackSize ) {
+    char *formula = SBML_formulaToString(c->eqn);
+    printf("code->FPUstack overflow:\n\tpos.: %d  >= size: %d\n\tc->prog: %s\n\tODE: %s\n", c->FPUstackPosition,  c->FPUstackSize, c->prog, formula);
+    free(formula);
+  }
   ass_MOV_rax;
   addAddress(c, (long long)&c->FPUstack[c->FPUstackPosition++]); /* code->FPUstack place */
   addByte(c, 0xf2); addByte(c, 0x0f); addByte(c, 0x11); addByte(c, 0x00); /* MOVSD xmm0 (rax) */
