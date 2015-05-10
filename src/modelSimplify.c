@@ -42,6 +42,7 @@
 */
 /** @{ */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,15 +184,14 @@ SBML_ODESOLVER_API void AST_replaceFunctionDefinition(ASTNode_t *math, const cha
 
   for ( i=0; i<n; i++ )
   {
+    const char *old_name;
+
     new = copyAST(ASTNode_getRightChild(function)); /* holds function r.h.s */
     old = List_get(names, n-i-1);
-    
+    old_name = ASTNode_getName(old);
+    assert(old_name != NULL);
     /* if `old' is the searched function defintion ... */
-    if ( ASTNode_getName(old) == NULL ) {
-      /* TODO: bug for model MODEL1303260018.xml a function without a name
-	 is passed. Is it a bug of the model or of SOSlib? */
-      fprintf(stdout, "WARNING\t%s has no name but is interpreted as a function!?\n",SBML_formulaToString(old));
-    } else if ( strcmp(ASTNode_getName(old), name) == 0 )
+    if ( strcmp(old_name, name) == 0 )
     {
       /* replace the arguments of the function definition copied to `new', 
 	with the arguments passed by the function call(s) in `math' */
