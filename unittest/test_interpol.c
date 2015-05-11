@@ -165,6 +165,8 @@ START_TEST(test_splint)
   int j;
   y2 = calloc(n_xs, sizeof(*y2));
   (void)spline(n_xs, xs, ys, y2);
+  splint(n_xs, xs, ys, y2, -0.5, &y, &j);
+  ck_assert_int_eq(j, -1);
   splint(n_xs, xs, ys, y2, 0.0, &y, &j);
   CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
   ck_assert_int_eq(j, 0);
@@ -181,7 +183,6 @@ START_TEST(test_splint)
   CHECK_DOUBLE_WITH_TOLERANCE(y, 1.37825174825174845417);
   ck_assert_int_eq(j, 4);
   splint(n_xs, xs, ys, y2, 16.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
   ck_assert_int_eq(j, 5);
   free(y2);
 }
@@ -191,6 +192,8 @@ START_TEST(test_linint)
 {
   double y;
   int j;
+  linint(n_xs, xs, ys, -0.5, &y, &j);
+  ck_assert_int_eq(j, -1);
   linint(n_xs, xs, ys, 0.0, &y, &j);
   CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
   ck_assert_int_eq(j, 0);
@@ -207,7 +210,6 @@ START_TEST(test_linint)
   CHECK_DOUBLE_WITH_TOLERANCE(y, 1.60000000000000008882);
   ck_assert_int_eq(j, 4);
   linint(n_xs, xs, ys, 16.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
   ck_assert_int_eq(j, 5);
 }
 END_TEST
