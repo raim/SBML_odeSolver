@@ -220,8 +220,6 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
   
   unsigned int j;
 
-  math   = NULL;
-  
   for ( j=0; j<Model_getNumRules(m); j++ )
   {
     rl = Model_getRule(m,j);
@@ -264,7 +262,6 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
 
   errors = 0;
   found  = 0;
-  s      = NULL;
   math   = NULL;
 
 
