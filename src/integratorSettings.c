@@ -41,6 +41,7 @@
 */
 /*@{*/
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -403,14 +404,17 @@ SBML_ODESOLVER_API void CvodeSettings_setSwitches(cvodeSettings_t *set, int UseJ
 
 
 /** Calculates a time point series from Endtime and Printstep and sets
-    the time series in cvodeSettings. Returns 1, if sucessful and 0, if
-    not.
+    the time series in cvodeSettings.
+    PrintStep must be positive.
+    Returns 1, if sucessful and 0, if not.
 */
 
 SBML_ODESOLVER_API int CvodeSettings_setTime(cvodeSettings_t *set, double EndTime, int PrintStep)
 {
   int i, j;
   double *timeseries;
+
+  assert(PrintStep > 0);
   ASSIGN_NEW_MEMORY_BLOCK(timeseries, PrintStep, double, 0);
 
   /* suppress multiple printsteps for EndTime 0, such that only the
@@ -1150,11 +1154,14 @@ cvodeSettings_t *CvodeSettings_createFromTimeSettings(timeSettings_t *time)
 
 
 /* for when timeSettings might become a separate structure,
- not used at the moment */
+   not used at the moment.
+   nout must be positive.
+ */
 timeSettings_t *TimeSettings_create(double t0, double tend, int nout) {
 
   timeSettings_t *time;
-  
+
+  assert(nout > 0);
   time = (timeSettings_t *)calloc(1, sizeof(timeSettings_t));
 
   time->t0 = t0;
