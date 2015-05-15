@@ -30,12 +30,16 @@
 ##
 AM_CPPFLAGS = -I$(srcdir)/../src @SBML_CPPFLAGS@ @SUNDIALS_CPPFLAGS@
 AM_CFLAGS  = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990
-AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
+AM_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@ \
+             @SUNDIALS_LDFLAGS@ \
+             @SBML_LDFLAGS@ \
+             @GRACE_LDFLAGS@ \
+             @GRAPHVIZ_LDFLAGS@
 LDADD = ../src/libODES.la \
-    @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
-    @SBML_LDFLAGS@ @SBML_LIBS@ \
-    @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-    @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
+    @SUNDIALS_LIBS@ \
+    @SBML_LIBS@ \
+    @GRACE_LIBS@ \
+    @GRAPHVIZ_LIBS@
 
 noinst_PROGRAMS = defSeries integrate sensitivity adj_sensitivity batchIntegrate \
                simpleIntInst changeIntInst changeParamInt ASTIndexTest ASTgetIndexTest\

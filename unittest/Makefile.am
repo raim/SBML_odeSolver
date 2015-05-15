@@ -8,13 +8,17 @@ unittest_CPPFLAGS = -DEXAMPLES=$(srcdir)/../examples \
                     @SBML_CPPFLAGS@
 unittest_CFLAGS = -Wno-unknown-pragmas -Wall -Wextra -ansi -std=iso9899:1990 \
                   @CHECK_CFLAGS@
-unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@
+unittest_LDFLAGS = @GRAPHVIZ_RPATH@ @GRACE_RPATH@ @SBML_RPATH@ \
+                   @SUNDIALS_LDFLAGS@ \
+                   @SBML_LDFLAGS@ \
+                   @GRACE_LDFLAGS@ \
+                   @GRAPHVIZ_LDFLAGS@
 unittest_LDADD = @CHECK_LIBS@ \
                  ../src/libODES.la \
-                 @SUNDIALS_LDFLAGS@ @SUNDIALS_LIBS@ \
-                 @SBML_LDFLAGS@ @SBML_LIBS@ \
-                 @GRACE_LDFLAGS@ @GRACE_LIBS@ \
-                 @GRAPHVIZ_LDFLAGS@ @GRAPHVIZ_LIBS@
+                 @SUNDIALS_LIBS@ \
+                 @SBML_LIBS@ \
+                 @GRACE_LIBS@ \
+                 @GRAPHVIZ_LIBS@
 unittest_SOURCES = main.c \
                    test_ASTIndexNameNode.c \
                    test_charBuffer.c \
