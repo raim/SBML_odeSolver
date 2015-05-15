@@ -1170,7 +1170,7 @@ SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char *x)
 	  ASTNode_addChild(prod, differentiateAST(ASTNode_getChild(f, i) , x));
 	  helper = ASTNode_getChild(prod, 0);
 	  ASTNode_setType (helper, AST_FUNCTION);
-	  ASSIGN_NEW_MEMORY_BLOCK(dfname, strlen(fname)+5, char, NULL);
+	  ASSIGN_NEW_MEMORY_BLOCK(dfname, strlen(fname)+3+32, char, NULL);
 	  sprintf(dfname, "d%i_%s", i, fname);
 	  ASTNode_setName(helper, dfname);
 	  free(dfname);
