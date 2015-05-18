@@ -104,7 +104,7 @@ SBML_ODESOLVER_API void AST_replaceNameByParameters(ASTNode_t *math, ListOf_t *l
   for ( i=0; i<ListOf_size(lp); i++ ) 
   {
     p = (Parameter_t *)ListOf_get(lp, i);
-    if ( Parameter_getConstant(p) != 1 ) continue;
+    if ( !Parameter_getConstant(p) ) continue;
 
     names = ASTNode_getListOfNodes(math,(ASTNodePredicate) ASTNode_isName);
 
