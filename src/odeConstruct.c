@@ -213,8 +213,7 @@ static Model_t *Model_copyInits(Model_t *old)
    adds them as RateRules to the model `ode' */
 static void Model_copyOdes(Model_t *m, Model_t*ode )
 {  
-  Rule_t *rl;
-  Rule_t *rr, *rl_new;
+  Rule_t *rl, *rl_new;
   SBMLTypeCode_t type;
   ASTNode_t *math;
   
@@ -226,8 +225,7 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
     type = SBase_getTypeCode((SBase_t *)rl);
     if ( type == SBML_RATE_RULE )
     {
-      rr = rl;
-      if ( Rule_isSetMath(rl) && Rule_isSetVariable(rr) )
+      if ( Rule_isSetMath(rl) && Rule_isSetVariable(rl) )
       {
 	math = copyAST(Rule_getMath(rl));
 #if LIBSBML_VERSION >= 40000
@@ -235,9 +233,9 @@ static void Model_copyOdes(Model_t *m, Model_t*ode )
 #else
 	rl_new = Rule_createRate();
 #endif
-	Rule_setVariable(rl_new, Rule_getVariable(rr));
-	Rule_setMath((Rule_t *)rl_new, math);
-	Model_addRule(ode, (Rule_t *)rl_new);
+	Rule_setVariable(rl_new, Rule_getVariable(rl));
+	Rule_setMath(rl_new, math);
+	Model_addRule(ode, rl_new);
 	Rule_free(rl_new);
 	ASTNode_free(math);
       }
@@ -332,8 +330,8 @@ static int Model_createOdes(Model_t *m, Model_t *ode)
 	  rule_new = Rule_createRate();
 #endif
 	  Rule_setVariable(rule_new, Species_getId(s));
-	  Rule_setMath((Rule_t *)rule_new, math);
-	  Model_addRule(ode, (Rule_t *)rule_new);
+	  Rule_setMath(rule_new, math);
+	  Model_addRule(ode, rule_new);
 	  ASTNode_free(math);
 	  Rule_free(rule_new);
 	}
@@ -686,8 +684,8 @@ static void Model_copyAssignmentRules(Model_t *m, Model_t*ode)
 	ar_new = Rule_createAssignment();
 #endif
 	Rule_setVariable(ar_new, Rule_getVariable(rl));
-	Rule_setMath((Rule_t *)ar_new, math);
-	Model_addRule(ode, (Rule_t *)ar_new);
+	Rule_setMath(ar_new, math);
+	Model_addRule(ode, ar_new);
 	ASTNode_free(math);
 	Rule_free(ar_new);
       }
