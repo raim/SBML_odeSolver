@@ -2366,9 +2366,9 @@ int ODEModel_getVariableIndexFields(const odeModel_t *om, const char *symbol)
 
   nvalues = om->neq + om->nass + om->nconst + om->nalg;
 
-  for ( i=0; i<nvalues && strcmp(symbol, om->names[i]); i++ );
-  if (i<nvalues)
-    return i;
+  for ( i=0; i<nvalues; i++ )
+    if (strcmp(symbol, om->names[i]) == 0)
+      return i;
   return -1;
 }
 

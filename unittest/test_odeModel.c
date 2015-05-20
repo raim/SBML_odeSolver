@@ -945,6 +945,17 @@ START_TEST(test_ODESense_free)
 }
 END_TEST
 
+START_TEST(test_ODEModel_getVariableIndexFields)
+{
+  model = ODEModel_createFromFile(EXAMPLES_FILENAME("MAPK.xml"));
+  ck_assert_int_eq(ODEModel_getVariableIndexFields(model, "MKKK"), 0);
+  ck_assert_int_eq(ODEModel_getVariableIndexFields(model, "MAPK"), 5);
+  ck_assert_int_eq(ODEModel_getVariableIndexFields(model, "J0"), 8);
+  ck_assert_int_eq(ODEModel_getVariableIndexFields(model, "K1"), 21);
+  ck_assert_int_eq(ODEModel_getVariableIndexFields(model, "no_such_variable"), -1);
+}
+END_TEST
+
 /* public */
 Suite *create_suite_odeModel(void)
 {
@@ -957,6 +968,7 @@ Suite *create_suite_odeModel(void)
   TCase *tc_ODEModel_constructSensitivity;
   TCase *tc_VariableIndex_free;
   TCase *tc_ODESense_free;
+  TCase *tc_ODEModel_getVariableIndexFields;
 
   s = suite_create("odeModel");
 
@@ -1035,6 +1047,13 @@ Suite *create_suite_odeModel(void)
   tc_ODESense_free = tcase_create("ODESense_free");
   tcase_add_test(tc_ODESense_free, test_ODESense_free);
   suite_add_tcase(s, tc_ODESense_free);
+
+  tc_ODEModel_getVariableIndexFields = tcase_create("ODEModel_getVariableIndexFields");
+  tcase_add_checked_fixture(tc_ODEModel_getVariableIndexFields,
+                            NULL,
+                            teardown_model);
+  tcase_add_test(tc_ODEModel_getVariableIndexFields, test_ODEModel_getVariableIndexFields);
+  suite_add_tcase(s, tc_ODEModel_getVariableIndexFields);
 
   return s;
 }
