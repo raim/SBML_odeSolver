@@ -44,7 +44,8 @@ libODES_la_LIBADD = @SBML_LIBS@ \
                     @SUNDIALS_LIBS@ \
                     @GRAPHVIZ_LIBS@ \
                     @GRACE_LIBS@
-libODES_la_LDFLAGS = @SBML_LDFLAGS@ \
+libODES_la_LDFLAGS = -no-undefined \
+                     @SBML_LDFLAGS@ \
                      @SUNDIALS_LDFLAGS@ \
                      @GRAPHVIZ_LDFLAGS@ \
                      @GRACE_LDFLAGS@
