@@ -162,7 +162,7 @@ START_TEST(test_splint)
 {
   double *y2;
   double y;
-  int j;
+  int j = 0;
   y2 = calloc(n_xs, sizeof(*y2));
   (void)spline(n_xs, xs, ys, y2);
   splint(n_xs, xs, ys, y2, -0.5, &y, &j);
@@ -191,7 +191,7 @@ END_TEST
 START_TEST(test_linint)
 {
   double y;
-  int j;
+  int j = 0;
   linint(n_xs, xs, ys, -0.5, &y, &j);
   ck_assert_int_eq(j, -1);
   linint(n_xs, xs, ys, 0.0, &y, &j);
