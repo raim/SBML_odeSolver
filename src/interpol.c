@@ -563,6 +563,8 @@ void hunt(int n, const double *x, double x_, int *low)
 {
     int high, med, inc;
 
+    assert(low != NULL);
+    assert(0 <= *low && *low < n);
     inc = 1;
     if ( x_ >= x[*low] )
 	{
