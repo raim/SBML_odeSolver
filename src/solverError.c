@@ -157,8 +157,9 @@ SBML_ODESOLVER_API void SolverError_dumpAndClearErrors(void)
 SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCode,
 										  const char *fmt, ...)
 {
+  static const size_t BUFFER_SIZE = 2000;
   List_t *errors = solverErrors[type];
-  char buffer[2000], *variableLengthBuffer;
+  char buffer[BUFFER_SIZE], *variableLengthBuffer;
   va_list args;
   solverErrorMessage_t *message =
     (solverErrorMessage_t *)malloc(sizeof(solverErrorMessage_t));
@@ -168,7 +169,7 @@ SBML_ODESOLVER_API void SolverError_error(errorType_t type, errorCode_t errorCod
   else
   {
     va_start(args, fmt);
-    vsnprintf(buffer, 2000, fmt, args);
+    vsnprintf(buffer, BUFFER_SIZE, fmt, args);
     va_end(args);
 
     variableLengthBuffer = (char *)malloc(strlen(buffer) + 1);
