@@ -62,7 +62,7 @@ dnl ---------------------------------------------------------------------------
 dnl Checks for various programs and packages.
 dnl ---------------------------------------------------------------------------
 
-LT_INIT
+LT_INIT([win32-dll disable-static pic-only])
 AC_PROG_CXX
 AC_PROG_CC
 AM_PROG_CC_C_O # deprecated as of automake 1.14

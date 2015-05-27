@@ -162,27 +162,50 @@ START_TEST(test_splint)
 {
   double *y2;
   double y;
+  int i;
   int j;
   y2 = calloc(n_xs, sizeof(*y2));
   (void)spline(n_xs, xs, ys, y2);
-  splint(n_xs, xs, ys, y2, 0.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
-  ck_assert_int_eq(j, 0);
-  splint(n_xs, xs, ys, y2, 1.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
-  ck_assert_int_eq(j, 1);
-  splint(n_xs, xs, ys, y2, 2.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
-  ck_assert_int_eq(j, 2);
-  splint(n_xs, xs, ys, y2, 4.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 0.99383741258741253866);
-  ck_assert_int_eq(j, 3);
-  splint(n_xs, xs, ys, y2, 8.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 1.37825174825174845417);
-  ck_assert_int_eq(j, 4);
-  splint(n_xs, xs, ys, y2, 16.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
-  ck_assert_int_eq(j, 5);
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, -0.5, &y, &j);
+    ck_assert_int_eq(j, -1);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 0.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
+    ck_assert_int_eq(j, 0);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 1.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
+    ck_assert_int_eq(j, 1);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 2.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
+    ck_assert_int_eq(j, 2);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 4.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 0.99383741258741253866);
+    ck_assert_int_eq(j, 3);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 8.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 1.37825174825174845417);
+    ck_assert_int_eq(j, 4);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    splint(n_xs, xs, ys, y2, 16.0, &y, &j);
+    ck_assert_int_eq(j, 5);
+  }
   free(y2);
 }
 END_TEST
@@ -190,25 +213,48 @@ END_TEST
 START_TEST(test_linint)
 {
   double y;
+  int i;
   int j;
-  linint(n_xs, xs, ys, 0.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
-  ck_assert_int_eq(j, 0);
-  linint(n_xs, xs, ys, 1.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
-  ck_assert_int_eq(j, 1);
-  linint(n_xs, xs, ys, 2.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
-  ck_assert_int_eq(j, 2);
-  linint(n_xs, xs, ys, 4.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 0.625);
-  ck_assert_int_eq(j, 3);
-  linint(n_xs, xs, ys, 8.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 1.60000000000000008882);
-  ck_assert_int_eq(j, 4);
-  linint(n_xs, xs, ys, 16.0, &y, &j);
-  CHECK_DOUBLE_WITH_TOLERANCE(y, 3.20000000000000017764);
-  ck_assert_int_eq(j, 5);
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, -0.5, &y, &j);
+    ck_assert_int_eq(j, -1);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 0.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, -2.5);
+    ck_assert_int_eq(j, 0);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 1.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 1.5);
+    ck_assert_int_eq(j, 1);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 2.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, -0.5);
+    ck_assert_int_eq(j, 2);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 4.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 0.625);
+    ck_assert_int_eq(j, 3);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 8.0, &y, &j);
+    CHECK_DOUBLE_WITH_TOLERANCE(y, 1.60000000000000008882);
+    ck_assert_int_eq(j, 4);
+  }
+  for (i=0;i<n_xs;i++) {
+    j = i;
+    linint(n_xs, xs, ys, 16.0, &y, &j);
+    ck_assert_int_eq(j, 5);
+  }
 }
 END_TEST
 

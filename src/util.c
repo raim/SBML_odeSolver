@@ -94,7 +94,7 @@ void *xrealloc (void *p, unsigned size) {
 /*-------------------------------------------------------------------------*/
 char *get_line(FILE *fp)
 {
-  static const int BUFFER_SIZE = 512;
+  static const size_t BUFFER_SIZE = 512;
   char *line, *cp, *ep;
   size_t len;
 
@@ -113,9 +113,9 @@ char *get_line(FILE *fp)
       break;
     }
     if (strlen(ep) < BUFFER_SIZE - 1) break;
+    line = xrealloc(line, len + BUFFER_SIZE - 1);
+    ep = &line[len - 1];
     len += BUFFER_SIZE - 1;
-    ep += BUFFER_SIZE - 1;
-    line = (char *)xrealloc(line, len);
   } while ( fgets(ep, BUFFER_SIZE, fp) != NULL);
   return line;
 }

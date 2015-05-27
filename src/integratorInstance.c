@@ -1444,6 +1444,12 @@ SBML_ODESOLVER_API int IntegratorInstance_checkSteadyState(integratorInstance_t 
   odeModel_t *om = engine->om;
   cvodeSettings_t *opt= engine->opt;
 
+  assert(om != NULL);
+  if (om->neq == 0) { /* in case of no ODEs */
+    data->steadystate = 0;
+    return 0;
+  }
+
   if ( !data->allRulesUpdated )
     for ( i=0; i<om->nassbeforeodes; i++ )
     {

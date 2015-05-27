@@ -7,6 +7,7 @@
 /* written 2005 by stefan mueller */
 /* revised 2007 by sm */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -483,8 +484,17 @@ void splint(int n, const double *x, const double *y, const double *y2,
     double h, b, a;
 
     hunt(n, x, x_, j);
-    
+
+    if (*j == -1) {
+      /* TODO */
+      return;
+    }
+    if (*j == n-1) {
+      /* TODO */
+      return;
+    }
     h = x[*j+1] - x[*j];
+    assert(h > 0); /* x is strictly increasing */
     a = (x[*j+1] - x_) / h;
     b = (x_ - x[*j]) / h;
     *y_ = a * y[*j] + b * y[*j+1]
@@ -500,8 +510,17 @@ void linint(int n, const double *x, const double *y, double x_,
     double h, b, a;
 
     hunt(n, x, x_, j);
-    
+
+    if (*j == -1) {
+      /* TODO */
+      return;
+    }
+    if (*j == n-1) {
+      /* TODO */
+      return;
+    }
     h = x[*j+1] - x[*j];
+    assert(h > 0); /* x is strictly increasing */
     a = (x[*j+1] - x_) / h;
     b = (x_ - x[*j]) / h;
     *y_ = a * y[*j] + b * y[*j+1];
@@ -544,6 +563,8 @@ void hunt(int n, const double *x, double x_, int *low)
 {
     int high, med, inc;
 
+    assert(low != NULL);
+    assert(0 <= *low && *low < n);
     inc = 1;
     if ( x_ >= x[*low] )
 	{

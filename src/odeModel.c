@@ -443,6 +443,7 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 {
   int i, j, k, l, nvalues, **matrix, *tmpIndex, *idx,
     *changedBySolver, *requiredForODEs, *requiredForEvents;
+  unsigned int n;
   List_t *dependencyList;
   ASTNode_t *math;
 
@@ -501,10 +502,10 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
 
   k = 0;
   l = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
-    if ( i == 0 ) /* create structures */
+    idx = List_get(dependencyList, n);
+    if ( n == 0 ) /* create structures */
     {
       ASSIGN_NEW_MEMORY_BLOCK(om->assignmentOrder, om->nass,
 			      nonzeroElem_t *, -1);
@@ -616,9 +617,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
@@ -628,9 +629,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /*!!! TODO : instead of creating new nonzeroElem's the array could point
 	into the global ordering assignmentOrder */
   k = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
       nonzeroElem_t *ordered;
@@ -733,9 +734,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   /* generate ordered array of rule set before ODEs */
   k = 0;
   /* count assignment rules */
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
       k++;
   }
@@ -744,9 +745,9 @@ static int ODEModel_topologicalRuleSort(odeModel_t *om)
   ASSIGN_NEW_MEMORY_BLOCK(om->assignmentsBeforeEvents, k, nonzeroElem_t *, -1);
 
   k = 0;
-  for ( i=0; i<List_size(dependencyList); i++ )
+  for ( n=0; n<List_size(dependencyList); n++ )
   {
-    idx = List_get(dependencyList, i);
+    idx = List_get(dependencyList, n);
     if ( *idx >= om->neq && *idx < om->neq + om->nass ) /* assignments */
     {
       nonzeroElem_t *ordered;
@@ -2365,9 +2366,9 @@ int ODEModel_getVariableIndexFields(const odeModel_t *om, const char *symbol)
 
   nvalues = om->neq + om->nass + om->nconst + om->nalg;
 
-  for ( i=0; i<nvalues && strcmp(symbol, om->names[i]); i++ );
-  if (i<nvalues)
-    return i;
+  for ( i=0; i<nvalues; i++ )
+    if (strcmp(symbol, om->names[i]) == 0)
+      return i;
   return -1;
 }
 
@@ -2565,7 +2566,7 @@ SBML_ODESOLVER_API void VariableIndex_free(variableIndex_t *vi)
 /* appends a compilable assignment to the buffer.
    The assignment is made to the 'value' array item indexed by 'index'.
    The value assigned is computed from the given AST. */
-static void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t *node,
+static void ODEModel_generateAssignmentCode(int index, ASTNode_t *node,
 				     charBuffer_t *buffer)
 {
   CharBuffer_append(buffer, "value[");
@@ -2580,7 +2581,7 @@ static void ODEModel_generateAssignmentCode(odeModel_t *om, int index, ASTNode_t
    given model however the set generated is determined by the
    given 'requiredAssignments' boolean array which is indexed in the same
    order as the 'assignment' array on the given model. */
-static void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
+static void ODEModel_generateAssignmentRuleCode(int nass,
 					 nonzeroElem_t **orderedList,
 					 charBuffer_t *buffer)
 {
@@ -2589,7 +2590,7 @@ static void ODEModel_generateAssignmentRuleCode(odeModel_t *om, int nass,
   for ( i=0; i<nass; i++ )
   {
     nonzeroElem_t *ordered = orderedList[i];
-    ODEModel_generateAssignmentCode(om, ordered->i, ordered->ij, buffer);
+    ODEModel_generateAssignmentCode(ordered->i, ordered->ij, buffer);
   }
 }
 
@@ -2611,7 +2612,7 @@ static void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 		    "    int fired = 0;\n"\
 		    "    int *trigger = data->trigger;\n");
 
-  ODEModel_generateAssignmentRuleCode(om, om->nassbeforeevents,
+  ODEModel_generateAssignmentRuleCode(om->nassbeforeevents,
 				      om->assignmentsBeforeEvents, buffer);
 
   for ( i=0; i<om->nevents; i++ )
@@ -2637,7 +2638,7 @@ static void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
       assignment = om->eventAssignment[i][j];
       idx = om->eventIndex[i][j];
       CharBuffer_append(buffer, "    ");
-      ODEModel_generateAssignmentCode(om, idx, assignment, buffer);
+      ODEModel_generateAssignmentCode(idx, assignment, buffer);
 
       /* identify cases which modify variables computed by solver which
 	 set the solver into an invalid state : NOT CORRECT : solver
@@ -2661,7 +2662,7 @@ static void ODEModel_generateEventFunction(odeModel_t *om, charBuffer_t *buffer)
 
   /* NOT REQUIRED : complete rule set evaluated where required */
   /*   CharBuffer_append(buffer, "if ( fired )\n{\n"); */
-  /*   ODEModel_generateAssignmentRuleCode(om, om->nassafterevents, */
+  /*   ODEModel_generateAssignmentRuleCode(om->nassafterevents, */
   /*			      om->assignmentsAfterEvents, buffer); */
   /*   CharBuffer_append(buffer, "\n}\n"); */
 
@@ -2714,13 +2715,13 @@ static void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buff
 		    "  for ( i=0; i<data->nsens; i++ )\n"\
 		    "    value[data->os->index_sens[i]] = data->p[i];\n");
 
-  ODEModel_generateAssignmentRuleCode(om, om->nass,
+  ODEModel_generateAssignmentRuleCode(om->nass,
 				      om->assignmentOrder, buffer);
 
   /* in case sensitivity or jacobi matrix are available */
   /* CharBuffer_append(buffer, "\n printf(\"HALLO\\n\");\n"); */
   CharBuffer_append(buffer, "\n}\nelse\n{\n");
-  ODEModel_generateAssignmentRuleCode(om, om->nassbeforeodes,
+  ODEModel_generateAssignmentRuleCode(om->nassbeforeodes,
 				      om->assignmentsBeforeODEs, buffer);
   CharBuffer_append(buffer, "}\n");
 
@@ -2741,7 +2742,7 @@ static void ODEModel_generateCVODERHSFunction(odeModel_t *om, charBuffer_t *buff
 		    "  for ( i=0; i<data->nsens; i++ )\n"\
 		    "    value[data->os->index_sens[i]] = data->p_orig[i];\n");
 
-  ODEModel_generateAssignmentRuleCode(om, om->nass,
+  ODEModel_generateAssignmentRuleCode(om->nass,
 				      om->assignmentOrder, buffer);
   CharBuffer_append(buffer, "}\n");
 
@@ -3247,7 +3248,7 @@ int ODEModel_compileCVODEFunctions(odeModel_t *om)
     FILE *src;
     char *srcname =  "rhsfunctions.c";
     src = fopen(srcname, "w");
-    fprintf(src, CharBuffer_getBuffer(buffer));
+    fprintf(src, "%s", CharBuffer_getBuffer(buffer));
     fclose(src);
   }
 #endif
@@ -3339,7 +3340,7 @@ int ODESense_compileCVODESenseFunctions(odeSense_t *os)
     FILE *src;
     char *srcname =  "sensfunctions.c";
     src = fopen(srcname, "w");
-    fprintf(src, CharBuffer_getBuffer(buffer));
+    fprintf(src, "%s", CharBuffer_getBuffer(buffer));
     fclose(src);
   }
 #endif
