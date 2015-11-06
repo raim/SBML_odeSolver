@@ -66,6 +66,8 @@
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/daeSolver.h"
 
+#include "private/macro.h"
+
 /* Prototypes of functions called by IDA */
 
 static int fRes(realtype tres, N_Vector yy, N_Vector yp,
@@ -170,7 +172,7 @@ SBML_ODESOLVER_API int IntegratorInstance_idaOneStep(integratorInstance_t *engin
 	SolverError_error(
 			  ERROR_ERROR_TYPE,
 			  flag,
-			  message[flag * -1],
+			  (abs(flag) < NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
 			  solver->tout);
 	SolverError_error(
 			  WARNING_ERROR_TYPE,
