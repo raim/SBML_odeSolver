@@ -53,7 +53,7 @@ esac
 AC_SUBST(HOST_TYPE)
 AC_SUBST(SHAREDLIBEXT)
 AC_DEFINE_UNQUOTED([SHAREDLIBEXT], ".${SHAREDLIBEXT}",
-				    [shared library extrension])
+    			    [shared library extrension])
 
 dnl Adding global compilation parameters
 AC_SEARCH_LIBS([dlopen],[dl])
