@@ -56,7 +56,6 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/processAST.h"
