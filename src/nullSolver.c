@@ -33,6 +33,10 @@
  * Contributor(s):
  *     Lukas Endler
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*! \defgroup nullSolver KINSOL Root Finder:  f(x,p,t) = dx/dt = 0
   \ingroup integrator
   \brief NOT FUNCTIONAL YET: An interface to SUNDIALS KinSolver

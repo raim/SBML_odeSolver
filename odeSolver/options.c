@@ -3,6 +3,10 @@
   Last changed Time-stamp: <02-Sep-2010 15:10:39 raim>
   $Id: options.c,v 1.12 2010/09/02 13:46:00 raimc Exp $
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>

@@ -1,4 +1,8 @@
 /* -*- Mode: C; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "private/data.h"
 
 #include "sbmlsolver/util.h"

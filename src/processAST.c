@@ -32,6 +32,9 @@
  * Contributor(s):
  *     Stefan Müller
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*! \defgroup processAST Formula Processing: f(x), df/dx
   \ingroup symbolic
