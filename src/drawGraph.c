@@ -33,6 +33,10 @@
  * Contributor(s):
  *     Christoph Flamm
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*! \defgroup drawGraph Graph Drawing
     \brief This optional module contains all functions to draw SBML and ODE
     Model structures as a graph with diverse output formats.

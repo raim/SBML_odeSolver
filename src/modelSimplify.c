@@ -33,6 +33,10 @@
  * Contributor(s):
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*! \defgroup simplifyAST AST Manipulations
     \ingroup processAST
     \brief Diverse Functions to manipulate libSBML Abstract Syntax Trees.

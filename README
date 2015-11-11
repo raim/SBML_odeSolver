@@ -1,14 +1,14 @@
 
-		              SOSlib
+                              SOSlib
                    The SBML ODE SOLVER LIBRARY
 
        For more information about the SBML ODE Solver Library,
-       
+
                                see:
            http://www.tbi.univie.ac.at/~raim/odeSolver/
-         		or send email to:
-		      odes@tbi.univie.ac.at 
-		     
+                         or send email to:
+                      odes@tbi.univie.ac.at
+
 
 
 INTRODUCTION
@@ -18,7 +18,7 @@ programming library for (1) constructing a system of ordinary differential
 equations (ODE) from chemical reaction networks and (2) numerically
 integrating the time course of concentrations of chemical species and (3)
 basic visualization of model structure and integration results. It is based
-on SBML, the XML standard for description of biological reaction networks, 
+on SBML, the XML standard for description of biological reaction networks,
 the SBML library libSBML for parsing SBML and constructing the ODE system,
 and on CVODE for numerical integration of the derived system of
 ODEs. Optional data visualization modules allow printing of integration
@@ -27,12 +27,12 @@ Jacobian interaction graph of the ODE system via graphviz' graph drawing
 library.
 
 The SBML ODE Solver can be used as a programming library, similar in style
-to the use of libSBML. Please, see the examples directory for usage within 
+to the use of libSBML. Please, see the examples directory for usage within
 other programs, and linking issues.
 
-INSTALLATION 
- 
-The file INSTALL in the main directory gives instructions how to 
+INSTALLATION
+
+The file INSTALL in the main directory gives instructions how to
 build SOSlib with GNU Tools autoconf/automake.
 
 The file README.txt in folder Win32 gives instructions how to
@@ -51,29 +51,29 @@ Please start the program with option -h/--help (type `odeSolver -h')
 for more information on program and output control via command-line options.
 
 Short tutorials on usage of this and other SOSlib applications can be
-found online at 
+found online at
 http://www.tbi.univie.ac.at/~raim/odeSolver/doc/app.html
 
 ARCHITECTURE
 
-Currently, the SOSlib has been tested on Fedora Linux, 
+Currently, the SOSlib has been tested on Fedora Linux,
 Mac OS X/Darwin and Windows. It is written in pure ISO C and
-should thus also run on other systems. 
-We would highly appreciate any reports! 
+should thus also run on other systems.
+We would highly appreciate any reports!
 
 BUG REPORTS
-Please see online at 
+Please see online at
 http://www.tbi.univie.ac.at/~raim/odeSolver/support/
 
 BASIC FUNCTIONALITY
 
 The SOSlib takes a SBML file of level 1 or level 2 (see
-http://sbml.org/documents/) as an input. A SBML file describes networks of 
-chemical reactions and initial amounts/concentrations of the participating 
-chemicals; additionally it can include predefined events and rules. 
-The chemical reactions can have a mathemitcal definition of its rate law, 
-which is represented by a `kinetic law' in SBML. The `kinetic law' differs 
-from a usual rate law, in that it describes change of amount instead of 
+http://sbml.org/documents/) as an input. A SBML file describes networks of
+chemical reactions and initial amounts/concentrations of the participating
+chemicals; additionally it can include predefined events and rules.
+The chemical reactions can have a mathemitcal definition of its rate law,
+which is represented by a `kinetic law' in SBML. The `kinetic law' differs
+from a usual rate law, in that it describes change of amount instead of
 concentrations.
 
 The SOSlib then constructs a set of ordinary differential equations (ODEs)
@@ -87,14 +87,14 @@ equations are differentiable (i.e. continuous).
 
 The ODE system is constructed as another SBML model, which can also be
 printed out when option -o or --printsbml is given.
-This SBML can however ignore SBML intentions: the resulting `species' 
-can also describe parameters or compartments, and not only chemcial 
-species. Every ODE is represented as an SBML `rate rule'. 
+This SBML can however ignore SBML intentions: the resulting `species'
+can also describe parameters or compartments, and not only chemcial
+species. Every ODE is represented as an SBML `rate rule'.
 Such a pure ODE model, encoded in SBML, could also be directly passed to
 the program.
 
-NOTE THAT: the SOSlib can thus also be used as a SOLVER for 
-ANY ODE SYSTEM, if the user is willing to ignore SBML definitions and 
+NOTE THAT: the SOSlib can thus also be used as a SOLVER for
+ANY ODE SYSTEM, if the user is willing to ignore SBML definitions and
 describe her ODE system in (potentially wrong!) SBML.
 
 
@@ -103,18 +103,18 @@ integrate the ODEs, i.e. calculate the time development of concentrations.
 CVODE uses the generated Jacobian matrix or an internal approximation, if one
 or more ODEs contain discontinuous expressions, or the user has chosen so.
 
-The results can be printed to the calling terminal (stdout), to a file or 
+The results can be printed to the calling terminal (stdout), to a file or
 to XMGRACE, if the optional grace module has been installed.
 
 Additionally the reaction network can be drawn as a bipartite graph, using
 the optional module based on GRAPHVIZ graph drawing algorithms and its
 graphical output. The dependecies of rates on species concentrations
 as given by the Jacobian matrix (if defined), can also be drawn as a graph.
-This can sometime be useful to get a quick impression of relevant 
+This can sometime be useful to get a quick impression of relevant
 interactions, e.g. feedback loops, in the system.
 
-Please await the (upcoming) detailed documentation in the `doc' 
-directory of one of the next versions of this distribution, 
+Please await the (upcoming) detailed documentation in the `doc'
+directory of one of the next versions of this distribution,
 for more details on the procedure and usage. Contact the authors (email
 adresses above), if you have further questions.
 

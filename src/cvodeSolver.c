@@ -212,7 +212,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
       SolverError_error(ERROR_ERROR_TYPE,
                         flag,
-                        (abs(flag) < NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
+                        (abs(flag) < (int)NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
                         solver->tout,
                         opt->Mxstep);
       SolverError_error(WARNING_ERROR_TYPE,
@@ -344,7 +344,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       {
         SolverError_error(ERROR_ERROR_TYPE,
                           flag,
-                          (abs(flag) < NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
+                          (abs(flag) < (int)NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
                           opt->Mxstep,
                           solver->tout);
         SolverError_error(WARNING_ERROR_TYPE,
@@ -357,7 +357,7 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	flag = flag + 100;
         SolverError_error(ERROR_ERROR_TYPE,
                           flag,
-                          (abs(flag) < NUMBER_OF_ELEMENTS(message2)) ? message2[abs(flag)] : "???",
+                          (abs(flag) < (int)NUMBER_OF_ELEMENTS(message2)) ? message2[abs(flag)] : "???",
                           solver->tout,
                           opt->Mxstep);
         SolverError_error(WARNING_ERROR_TYPE,

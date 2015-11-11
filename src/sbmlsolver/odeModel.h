@@ -39,7 +39,6 @@
 
 typedef struct odeModel odeModel_t;
 typedef struct odeSense odeSense_t;
-typedef struct objFunc objFunc_t;
 typedef struct nonzeroElem nonzeroElem_t;
 typedef int (*EventFn)(void *, int *); /* RM: replaced cvodeData_t
 					    pointer with void pointer
@@ -256,32 +255,6 @@ struct odeSense
   CVQuadRhsFnB current_AdjQAD;
 };
   
-struct objFunc
-{
-  /* adjoint */
-  /* Adjoint: Given a parameter to observation map F(p),
-     computes the adjoint operator applied to the vector v, F'*(p)v.
-     v is given by a symbolic expression involving x and observation data. */
-
-
-  int discrete_observation_data;    /**< 0: data observed is of
-				       continuous type (i.e., interpolated)
-				       1: data observed is of
-				       discrete type  */
-
-  int compute_vector_v;            /*  if evaluateAST is called to
-				       computed vector_v  */
-
-  time_series_t *time_series;  /**< time series of observation data
-				  or of vector v */
-
-  ASTNode_t **vector_v;     /**< the vector v, expressiing linear
-			       objective used in sensitivity solvers */
-  ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
-				    objective function */
- 
-};
-
 /** Stores a variable index and equations defining this index.
     Arrays of this structure are used to specify subsets
     of equations (in the correct order) for evaluation.

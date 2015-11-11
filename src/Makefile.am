@@ -57,6 +57,7 @@ libODES_la_SOURCES = ASTIndexNameNode.c \
                     cvodeSolver.c \
                     daeSolver.c \
                     drawGraph.c \
+                    evaluateAST.c \
                     integratorInstance.c \
                     integratorSettings.c \
                     interpol.c \

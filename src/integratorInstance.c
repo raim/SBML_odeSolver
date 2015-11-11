@@ -34,6 +34,9 @@
  *     Andrew M. Finney
  *     Christoph Flamm
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*! \defgroup integration Numerical Analysis */
 /*! \defgroup integrator ODE/DAE Integrator Interface

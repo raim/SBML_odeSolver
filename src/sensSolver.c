@@ -33,6 +33,9 @@
  * Contributor(s):
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*! \defgroup sensi CVODES Forward Sensitivity:  dx(t)/dp
   \ingroup cvode

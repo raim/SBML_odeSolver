@@ -42,8 +42,8 @@ AC_DEFUN([AC_SUNDIALS_PATH],
 ])
 
 dnl
-dnl Check --with-libsundials-cvodes[=PREFIX] is specified
-dnl and libsundials is installed.
+dnl Check --with-sundials[=PREFIX] is specified
+dnl and SUNDIALS is installed.
 dnl
 AC_DEFUN([CONFIG_LIB_SUNDIALS],
 [ AC_PREREQ(2.57)dnl

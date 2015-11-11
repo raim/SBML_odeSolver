@@ -40,6 +40,7 @@
 
 typedef struct cvodeData cvodeData_t ;
 typedef struct cvodeResults cvodeResults_t ;
+typedef struct objFunc objFunc_t;
 
 #include <sbmlsolver/integratorSettings.h>
 #include <sbmlsolver/exportdefs.h>
@@ -48,6 +49,32 @@ typedef struct cvodeResults cvodeResults_t ;
 
 /* required for realtype */
 #include <sundials/sundials_types.h>
+
+struct objFunc
+{
+  /* adjoint */
+  /* Adjoint: Given a parameter to observation map F(p),
+     computes the adjoint operator applied to the vector v, F'*(p)v.
+     v is given by a symbolic expression involving x and observation data. */
+
+
+  int discrete_observation_data;    /**< 0: data observed is of
+				       continuous type (i.e., interpolated)
+				       1: data observed is of
+				       discrete type  */
+
+  int compute_vector_v;            /*  if evaluateAST is called to
+				       computed vector_v  */
+
+  time_series_t *time_series;  /**< time series of observation data
+				  or of vector v */
+
+  ASTNode_t **vector_v;     /**< the vector v, expressiing linear
+			       objective used in sensitivity solvers */
+  ASTNode_t *ObjectiveFunction;  /**< expression for a general (nonlinear)
+				    objective function */
+ 
+};
 
 /** Contains the data needed for AST formula evaluation and odeModel
     integration and usually corresponds to an odeModel

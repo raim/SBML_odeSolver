@@ -33,6 +33,9 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*! \defgroup symbolic Symbolic Analysis */
 /*! \defgroup odeConstruct ODE Construction: SBML reactions -> SBML rate rules
@@ -56,7 +59,6 @@
 
 #include <sbml/SBMLTypes.h>
 
-#include "sbmlsolver/cvodeData.h"
 #include "sbmlsolver/odeConstruct.h"
 #include "sbmlsolver/modelSimplify.h"
 #include "sbmlsolver/processAST.h"
