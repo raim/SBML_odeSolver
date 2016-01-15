@@ -32,9 +32,9 @@ NOTE: configure Sundials with the --enable-shared option!
 	        
  Optional libraries (data visualization):
 	GRAPHVIZ:       http://www.graphviz.org
-                        Version: 2.0 or higher
+                        Version: 2.0
 	GRACE:          http://plasma-gate.weizmann.ac.il/Grace/
-                        Version: 5.1.18 or higher
+                        Version: 5.1.18
 		      
 
 2B) COMPILE AND INSTALL SOSlib with GNU TOOLS
