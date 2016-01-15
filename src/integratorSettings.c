@@ -31,6 +31,10 @@
  * Contributor(s):
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*! \defgroup setttings Integrator Settings
     \ingroup integration 
     \brief This module contains all functions to set integration options

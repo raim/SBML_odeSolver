@@ -46,7 +46,8 @@ typedef struct directCode directCode_t;
    circular include problem, but struct declarations needs to
    be after includes, however some compilers require struct before typedef */
 #include <sbmlsolver/ASTIndexNameNode.h>
-#include <sbmlsolver/cvodeData.h>
+
+struct cvodeData;
 
 struct directCode
 {
@@ -54,7 +55,7 @@ struct directCode
   int codePosition, FPUstackPosition, storagePosition;
   unsigned char *prog;
   double *FPUstack, *storage;
-  double (*evaluate)(cvodeData_t*);
+  double (*evaluate)(struct cvodeData *);
   ASTNode_t *eqn;
   long long *temp;
 } ;

@@ -2,6 +2,10 @@
 #ifndef UNITTEST_UNITTEST_H_
 #define UNITTEST_UNITTEST_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <float.h>
 #include <math.h>

@@ -59,6 +59,8 @@
 #include "sbmlsolver/cvodeSolver.h"
 #include "sbmlsolver/sensSolver.h"
 
+#include "private/macro.h"
+
 static int fQ(realtype t, N_Vector y, N_Vector qdot, void *fQ_data);
 static int f(realtype t, N_Vector y, N_Vector ydot, void *f_data);
 static int JacODE(long int N, DenseMat J, realtype t,
@@ -209,7 +211,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 	    
 
       SolverError_error(ERROR_ERROR_TYPE,
-			flag, message[flag * -1], solver->tout, opt->Mxstep);
+                        flag,
+                        (abs(flag) < (int)NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
+                        solver->tout,
+                        opt->Mxstep);
       SolverError_error(WARNING_ERROR_TYPE,
 			SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
 			"Integration not successful. Results are not "
@@ -338,8 +343,11 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
 
       if( flag > -100)
       {
-	SolverError_error(ERROR_ERROR_TYPE,
-			  flag, message[flag * -1], opt->Mxstep, solver->tout);
+        SolverError_error(ERROR_ERROR_TYPE,
+                          flag,
+                          (abs(flag) < (int)NUMBER_OF_ELEMENTS(message)) ? message[abs(flag)] : "???",
+                          opt->Mxstep,
+                          solver->tout);
         SolverError_error(WARNING_ERROR_TYPE,
 			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
 			  "Adjoint integration not successful. Results are not "
@@ -349,7 +357,10 @@ SBML_ODESOLVER_API int IntegratorInstance_cvodeOneStep(integratorInstance_t *eng
       {
 	flag = flag + 100;
         SolverError_error(ERROR_ERROR_TYPE,
-			  flag, message2[flag* -1], solver->tout, opt->Mxstep);
+                          flag,
+                          (abs(flag) < (int)NUMBER_OF_ELEMENTS(message2)) ? message2[abs(flag)] : "???",
+                          solver->tout,
+                          opt->Mxstep);
         SolverError_error(WARNING_ERROR_TYPE,
 			  SOLVER_ERROR_INTEGRATION_NOT_SUCCESSFUL,
 			  "Adjoint integration not successful. Results are not "

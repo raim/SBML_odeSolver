@@ -42,9 +42,10 @@
 
 /* own header files */
 #include <sbmlsolver/odeModel.h>
-#include <sbmlsolver/cvodeData.h>
 #include <sbmlsolver/exportdefs.h>
 #include <sbmlsolver/charBuffer.h>
+
+struct cvodeData;
 
 #define child(x,y)  ASTNode_getChild(x,y)
 
@@ -52,7 +53,7 @@
 extern "C" {
 #endif
   
-  SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, cvodeData_t *data);
+  SBML_ODESOLVER_API double evaluateAST(ASTNode_t *n, struct cvodeData *data);
   SBML_ODESOLVER_API void generateMacros(charBuffer_t *buffer);
   SBML_ODESOLVER_API void generateAST(charBuffer_t *buffer, const ASTNode_t *n);
   SBML_ODESOLVER_API ASTNode_t *differentiateAST(ASTNode_t *f, char*x);

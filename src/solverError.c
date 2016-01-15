@@ -32,6 +32,9 @@
  *
  * Contributor(s):
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*! \defgroup errors SOSlib Error Management
   \brief This optional module contains all functions to set and

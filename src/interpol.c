@@ -6,6 +6,9 @@
 
 /* written 2005 by stefan mueller */
 /* revised 2007 by sm */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <assert.h>
 #include <stdio.h>

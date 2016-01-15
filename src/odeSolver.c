@@ -38,6 +38,10 @@
  *     Andrew Finney
  *     Norihiro Kikuchi
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*! \defgroup odeSolver High Level Interfaces
     \brief This module contains high level interfaces to SOSlib, which
     take an SBML model and integratorSettings as input and return results

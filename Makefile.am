@@ -44,7 +44,7 @@ endif
 EXTRA_DIST = Win32/* \
              OUTLOOK \
              SOSlib.doxy \
-	     odeSolver.doxy \
+             odeSolver.doxy \
              odeSolver/*.c \
              odeSolver/*.h \
              odeSolver/Makefile.am \
@@ -53,19 +53,19 @@ EXTRA_DIST = Win32/* \
              sbml/*.xsd \
              doc/README \
              Test/simple.sh \
-	     Test/testsuite/README \
+             Test/testsuite/README \
              Test/testsuite/odeSolver-wrapper.bsh \
              Test/testsuite/odeSolver-wrapper-once.pl \
              Test/testsuite/workingtests.txt \
              examples/README \
-	     examples/MAPK.xml \
+             examples/MAPK.xml \
              examples/basic-model1-forward-l2.xml \
-	     examples/*.c \
-	     examples/*objfun \
-	     examples/*pt.dat \
+             examples/*.c \
+             examples/*objfun \
+             examples/*pt.dat \
              examples/Makefile.am \
              examples/Makefile.in \
-	     examples/Makefile.batch \
+             examples/Makefile.batch \
              examples/Makefile.integrate \
              tutorial/Makefile.am \
              tutorial/Makefile.in \
