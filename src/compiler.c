@@ -33,6 +33,7 @@
  * Contributor(s):
  *    Christoph Flamm, Rainer Machne
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -232,7 +233,7 @@ compiled_code_t *Compiler_compile_with_xlc(const char *sourceCode)
   fclose(cFile);
   
   /* construct command for compiling */
-  sprintf(command, "%s -I%s -I%s %s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
+  sprintf(command, "%s -I%s -I%s -I%s -I../src -G -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
 	  gccFileName,
 	  SOSLIB_CPPFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CPPFLAGS,
@@ -348,7 +349,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
   /* construct command for compiling */
 #if defined (__APPLE__) && defined (__MACH__)
   sprintf(command,
-	  "%s -I%s -I%s %s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
+	  "%s -I%s -I%s -I%s -I../src -pipe -O -dynamiclib -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CPPFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CPPFLAGS,
@@ -360,7 +361,7 @@ compiled_code_t *Compiler_compile_with_gcc(const char *sourceCode)
 	  SOSLIB_LDFLAGS);
 #else
   sprintf(command,
-	  "%s -I%s -I%s %s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
+	  "%s -I%s -I%s -I%s -I../src -pipe -O -shared -fPIC -o %s %s -L../src -L%s -L%s -L%s -lODES -lsbml -lm",
  	  gccFileName,
 	  SOSLIB_CPPFLAGS, /* changed order: SOSLIB first */
 	  SUNDIALS_CPPFLAGS,
@@ -497,7 +498,9 @@ void CompiledCode_free(compiled_code_t *code)
 #else /* default case gcc */
 
   dlclose(code->dllHandle);
+#ifndef _DEBUG
   remove(code->dllFileName);
+#endif
   free(code->dllFileName);
   free(code);
 
