@@ -26,12 +26,13 @@ concentrations (and other variable parameters or compartments, if a model
 includes such), and reaction fluxes in 100 time steps (producing 101 time
 points, including the initial conditions).
 
-./batchIntegrate MAPK.xml 1000 2 0 1 5 V2 J1
+./batchIntegrate MAPK.xml 1000 2 1 10 5 J1 1 10 10 k4 J3
 
 will do the same integration as above, with 2 time steps to time 1000,
 but in 6 different integration runs, varying the initial
-concentration of the paramer with Id `V2' in reaction with Id `J1' 
-from 0 to 1 in 5 steps. 
+concentration of the global parameter `J1' paramer from 1 to 10 in 5 steps,
+and local reaction parameter `k4' in reaction `J3' 
+from 1 to 10 in 10 steps. 
 It will then print out one timecourse after the other. 
 Parameter variation can be done for species, compartments, global and local
 parameters, where for the latter the reaction Id must be given as in the 
