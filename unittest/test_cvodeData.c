@@ -74,13 +74,13 @@ START_TEST(test_CvodeResults_getTime)
 {
   cr->time = calloc(4, sizeof(double));
   cr->time[0] = 0.1;
-  cr->time[1] = 0.2;
-  cr->time[2] = 1.35;
+  cr->time[1] = 0.25;
+  cr->time[2] = 1.25;
   cr->time[3] = 1.5;
-  ck_assert_int_eq(CvodeResults_getTime(cr, 0), 0.1);
-  ck_assert_int_eq(CvodeResults_getTime(cr, 1), 0.2);
-  ck_assert_int_eq(CvodeResults_getTime(cr, 2), 1.35);
-  ck_assert_int_eq(CvodeResults_getTime(cr, 3), 1.5);
+  ck_assert(CvodeResults_getTime(cr, 0) == 0.1);
+  ck_assert(CvodeResults_getTime(cr, 1) == 0.25);
+  ck_assert(CvodeResults_getTime(cr, 2) == 1.25);
+  ck_assert(CvodeResults_getTime(cr, 3) == 1.5);
 }
 END_TEST
 
