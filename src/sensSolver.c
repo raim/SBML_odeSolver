@@ -337,14 +337,13 @@ IntegratorInstance_createCVODESSolverStructures(integratorInstance_t *engine)
     flag = CVodeSetSensParams(solver->cvode_mem, data->p, NULL, NULL);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensParams", 1);
     
-    /* set tolerances for sensitivity equations */
-   /*  CVodeSetSensTolerances(solver->cvode_mem, CV_SS, */
-/*     			   NV_Ith_S(solver->senstol,0), &(opt->AdjError)); */
-    
+    /* estimate tolerances for sensitivity variables */
+    flag = CVodeSensEEtolerances(solver->cvode_mem);
+    CVODE_HANDLE_ERROR(&flag, "CVodeSensEEtolerances", 1);
+
     /* difference FALSE/TRUE ? */
     flag = CVodeSetSensErrCon(solver->cvode_mem, FALSE);
     CVODE_HANDLE_ERROR(&flag, "CVodeSetSensErrCon", 1);
-    
 
     /*  If linear functional exists, initialize quadrature computation  */
     if ( !opt->doFIM )
