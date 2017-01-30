@@ -33,6 +33,7 @@
  * Contributor(s):
  *     Andrew M. Finney
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -3224,7 +3225,11 @@ int ODEModel_compileCVODEFunctions(odeModel_t *om)
 		    "#include \"nvector/nvector_serial.h\"\n"
 		    "#include \"sbmlsolver/cvodeData.h\"\n"
 		    "#include \"sbmlsolver/processAST.h\"\n"
-		    "#define DLL_EXPORT\n\n");
+#if __GNUC__ >= 4
+        "#define DLL_EXPORT extern \"C\" __attribute__ ((visibility (\"default\")))\n\n");
+#else
+        "#define DLL_EXPORT\n\n");
+#endif
 #endif
 
   generateMacros(buffer);
@@ -3324,7 +3329,11 @@ int ODESense_compileCVODESenseFunctions(odeSense_t *os)
 		    "#include \"nvector/nvector_serial.h\"\n"
 		    "#include \"sbmlsolver/cvodeData.h\"\n"
 		    "#include \"sbmlsolver/processAST.h\"\n"
+#if __GNUC__ >= 4
+        "#define DLL_EXPORT extern \"C\" __attribute__ ((visibility (\"default\")))\n\n");
+#else
 		    "#define DLL_EXPORT\n\n");
+#endif
 #endif
 
   generateMacros(buffer);

@@ -78,6 +78,9 @@ main (int argc, char *argv[]){
   time = atof(argv[2]);
   printstep = atoi(argv[3]);
   
+  printf("### Integrating model %s until time %f in %f steps\n",
+         model, time, printstep);
+
   start1 = atof(argv[4]);
   end1 = atof(argv[5]);
   steps1 = atoi(argv[6]);
@@ -85,7 +88,7 @@ main (int argc, char *argv[]){
    
 
   printf("### Varying parameter %s from %f to %f in %f steps\n",
-	 parameter1, start1, end1, steps1);
+         parameter1, start1, end1, steps1);
 
   if ( argc > 8 )
   {

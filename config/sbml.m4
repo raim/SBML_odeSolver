@@ -8,14 +8,15 @@ AC_DEFUN([AC_SBML_PATH],
 [ AC_MSG_CHECKING([for SBML Library headers])
   for ac_dir in             \
     /usr                    \
+    /usr/local              \
     /usr/local/include      \
     /usr/include            \
     /usr/local/share        \
     /opt                    \
     ;                       \
   do
-    if test -r "$ac_dir/sbml/SBMLTypes.h"; then
-      ac_SBML_includes="$ac_dir"
+    if test -r "$ac_dir/include/sbml/SBMLTypes.h"; then
+      ac_SBML_includes="${ac_dir}/include"
       with_libsbml="$ac_dir"
       SBML_CPPFLAGS="-I$ac_SBML_includes"
       AC_MSG_RESULT([yes])
@@ -193,7 +194,7 @@ AC_DEFUN([CONFIG_LIB_SBML],
   AC_LANG_POP([C++])
 
   dnl add the CPPFLAGS and LDFLAGS for tcc online compilation
-  AC_DEFINE_UNQUOTED([SBML_CPPFLAGS], "${with_libsbml}/include",
+  AC_DEFINE_UNQUOTED([SBML_CPPFLAGS], "${with_libsbml}/include/sbml",
             [SBML include directories])
   AC_DEFINE_UNQUOTED([SBML_CPPFLAGS2], "${with_libsbml}/include/sbml",
             [SBML include directories])
