@@ -245,7 +245,7 @@ fi
 echo ""
 echo "NOTE:"
 echo "     SOSlib has the following dependencies:"
-echo "     (*) SUNDIALS suite v2.3.0"
+echo "     (*) SUNDIALS suite v2.4.0"
 echo "     (*) libSBML v3.4.1 or later"
 dnl echo "     (*) libxerces-c v2.7.0 or expat v2.0.0"
 dnl echo "     (*) tcc from http://savannah.nongnu.org/projects/tinycc"
