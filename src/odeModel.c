@@ -2847,8 +2847,8 @@ static void ODEModel_generateCVODEJacobianFunction(odeModel_t *om,
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
-		    "(long int N, DenseMat J, realtype t,\n"\
-		    "    N_Vector y, N_Vector fy, void *jac_data,\n"\
+		    "(long int N, realtype t,\n"\
+		    "    N_Vector y, N_Vector fy, DlsMat J, void *jac_data,\n"\
 		    "    N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3)\n"\
 		    "{\n"\
 		    "  \n"\
@@ -2930,8 +2930,8 @@ static void ODEModel_generateCVODEAdjointJacobianFunction(odeModel_t *om,
   CharBuffer_append(buffer,"DLL_EXPORT int ");
   CharBuffer_append(buffer,COMPILED_ADJOINT_JACOBIAN_FUNCTION_NAME);
   CharBuffer_append(buffer,
-		    "(long int NB, DenseMat JB, realtype t, N_Vector y,\n" \
-		    "    N_Vector yB,  N_Vector fyB, void *jac_dataB,\n" \
+		    "(long int NB, realtype t, N_Vector y,\n" \
+		    "    N_Vector yB,  N_Vector fyB, DlsMat JB, void *jac_dataB,\n" \
 		    "    N_Vector tmpB, N_Vector tmp2B, N_Vector tmp3B)\n" \
 		    "{\n"						\
 		    "  \n"						\
